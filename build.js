@@ -1115,6 +1115,20 @@ fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
 fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
+
+/* The custom domain has to be written INTO dist/, not just set in Settings > Pages.
+   GitHub's settings page writes a CNAME file to the repo root, which works when Pages
+   serves a branch — but this site is deployed as an Actions artifact built from dist/, and
+   the artifact is the whole published site. A CNAME sitting in the repo root is not in it,
+   so the domain silently reverts to <user>.github.io on the next deploy. Writing it here
+   means the domain survives every build. Blank it out to go back to a github.io URL. */
+const DOMAIN = 'm--k.me';
+if (DOMAIN) fs.writeFileSync(path.join(DIST, 'CNAME'), DOMAIN + '\n');
+
+/* Pages runs Jekyll over an artifact unless told not to, and Jekyll drops any file or
+   folder whose name starts with an underscore. Nothing here starts with one today, but a
+   silently missing asset is a miserable thing to debug later. */
+fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 fs.writeFileSync(path.join(DIST, '.buildstamp'), String(Date.now()));
 console.log(`Built ${1 + cases.length} pages → dist/ (${cases.map(c => c.slug).join(', ')})`);
 if (fitWarnings.length) {
