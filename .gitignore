@@ -3,5 +3,11 @@
 # touches an image.
 dist/
 
+# Pre-compression originals of the case-study videos, kept on disk so the re-encode is
+# reversible. 21MB of video that must never enter the history — git keeps blobs forever, so
+# one `git add .` would permanently bloat the repo. Deliberately NOT under assets/ either,
+# because build.js copies assets/ into dist/ wholesale and it would ship to Pages.
+_orig-backup/
+
 node_modules/
 .DS_Store
