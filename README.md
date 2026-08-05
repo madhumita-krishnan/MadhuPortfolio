@@ -63,6 +63,26 @@ The text stays in the DOM in a visually-hidden span for screen readers and searc
 is no font tooling on this machine, so only fixed strings can be set in her hand — for a
 reusable typeface from the A-Z sheet she photographed, use Calligraphr.
 
+**Changing the wording**: `tools/set-hero-line.js` re-flows the four written lines from
+`hero-line-handwritten-4line.png` (the untouched cut) into a new sentence, reusing the
+words she has already written and building only the ones she has not. Edit `SOURCE` and
+`TARGET` at the top of that file, run it, and paste the aspect-ratio it prints into
+`.hero-line` in `build.js`. Two things to know first:
+
+- A word that has to be built should be built out of her WRITING, not the alphabet sheet —
+  `LETTER_SOURCES` names the word each letter is cut from. The sheet block was lifted soft
+  (its fringe outnumbers its solid core four to one) and she draws isolated letters bigger
+  and lighter than the same letters inside a word, so letters taken from it land oversized
+  and spindly next to her real ones. The tool will still fall back to the sheet and
+  normalise it, but a cut from her writing is always better.
+- **Look at the cut before trusting it**: `node tools/set-hero-line.js --letters` writes a
+  contact sheet of every letter it will stamp. A split in the wrong place puts a visibly
+  wrong letter in her handwriting and only the eye catches it — her `o` comes away as an
+  open arch from most words and only really closes in "workflows".
+
+If she photographs a sentence outright, prefer that over any of this. A straight lift beats
+a composite every time.
+
 The hero also carries painted florals from `tools/make-flowers.js`. They all sit to the
 right of the text column and are cropped by the section edge on purpose; the copy is
 left-aligned, so a bloom on the left lands on the headline.
@@ -113,6 +133,31 @@ any background. Sizes come from `DEVICE_MOCKUP_SPEC.md`.
 - Add `"autoplay": true` to a `phone-video` to make it loop whenever it is on screen,
   on any device — GIF behaviour without a GIF.
 
+## Deploying
+
+Pushing to `main` is the deploy. `.github/workflows/pages.yml` runs `node build.js` on a
+clean Ubuntu box and publishes `dist/` to GitHub Pages — no install step, because the build
+has no dependencies. Edit a JSON file in `data/`, push, and the live site updates in about
+a minute. The Actions tab has a "Deploy to GitHub Pages" run you can re-trigger by hand.
+
+`dist/` is **not** committed (see `.gitignore`); CI rebuilds it every time. Keeping it in
+the history would double the size of every commit that touches an image.
+
+The custom domain is `m--k.me`, and `build.js` writes it into `dist/CNAME` on every build.
+That is deliberate and it matters: GitHub's Settings ▸ Pages ▸ Custom domain box writes a
+`CNAME` file to the repo *root*, which is how Pages works when it serves a branch. This
+site is deployed as an artifact built from `dist/`, and the artifact is the whole published
+site — a `CNAME` in the repo root is not in it, so the domain would silently revert to the
+`github.io` URL on the next deploy. Change the domain by editing `DOMAIN` in `build.js`;
+set it to `''` to go back to a `github.io` URL. `dist/.nojekyll` is written for the same
+belt-and-braces reason: Pages runs Jekyll over an artifact unless told not to, and Jekyll
+drops anything whose name starts with an underscore.
+
+DNS for an apex domain needs four `A` records at the registrar, pointing `@` at
+`185.199.108.153`, `185.199.109.153`, `185.199.110.153` and `185.199.111.153`, plus
+optionally a `CNAME` on `www` pointing at `<user>.github.io`. Tick **Enforce HTTPS** in
+Settings ▸ Pages once the certificate has been issued.
+
 ## Design systems
 
 The whole look is versioned. `node tools/design-system.js list` shows the snapshots;
@@ -127,31 +172,41 @@ makeCSS()/makeJS() — restoring tokens alone would drop a palette onto the wron
 
 ## The monkey story
 
-The section above About is a GIF: a monkey in India stole her pijamas and tried to dress
-her baby in them. `assets/story/` holds the whole thing, all of it lifted off photographs
-of her notebook.
+A monkey in India stole her pijamas and tried to dress her baby in them. It is **not on the
+site** (2026-08-05) — it is a standalone GIF that builds to `monkey-gif/`, deliberately
+outside `assets/` so it is never copied into `dist/` and shipped. All of it is lifted off
+photographs of her notebook.
 
 ```
-node tools/lift-story.js                     # notebook photos (~/Downloads) → alpha masks
-node tools/glyphs.js                         # verify the letter/word cut, pass or fail per row
-node tools/make-story-gif.js                 # → monkey-story.gif + poster (desktop)
-node tools/make-story-gif.js --variant tall  # → monkey-story-tall.gif + poster (phones)
-node tools/make-story-gif.js --at 7.0        # one frame, for checking a beat
+node tools/lift-story.js               # notebook photos (~/Downloads) → alpha masks
+node tools/glyphs.js                   # verify the letter/word cut, pass or fail per row
+node tools/make-story-gif.js           # → monkey-gif/monkey-story.gif + poster
+node tools/make-story-gif.js --at 7.0  # one frame, for checking a beat
 ```
 
-**Two GIFs, and both must be rebuilt after any change.** Side by side, her handwriting is
-about a third of the frame's width, which on a phone lands at ~120px and stops being
-readable — and this section's content *is* the handwriting. The `tall` variant stacks the
-drawing over the text so the words get the full column; `<picture>` in `build.js` serves
-whichever fits, plus a still for `prefers-reduced-motion`. The lifted masks live in
-`story-src/`, deliberately outside `assets/` — everything under `assets/` is copied into
-`dist/`, and there is no reason to ship 1.2 MB of source ink nobody downloads.
+The renderer still reads `site.json`'s `story` block if there is one, so putting the
+section back is a matter of restoring that key and pointing it at a shipped copy of the
+GIF. There is one layout now rather than a wide/tall pair: turned on its side the drawing
+is landscape, and with no phone column to design for the second cut had no job left.
 
-Both files are around 2 MB, which is most of what this section costs. Almost all of it is
-the monkeys moving: a GIF diffs only against the previous frame, so every frame of
-continuously-moving line art pays for itself. If it needs to get smaller, in order of
-effect: tighten the two warp radii, drop `FPS`, shrink the canvas, shorten the holds in
-`BEATS`. Widening the warp radii by a third cost a megabyte and read no better.
+**The drawing is turned 90° anticlockwise.** She photographed it with the tree running down
+the page — the mother above, the baby below, the trunk vertical. Turned, the trunk is a
+*branch* the two of them sit along, and two beats come for free: her downward shove becomes
+a sideways one (`FIELDS.press.axis`), and the baby's legs, which were at the bottom, end up
+on top where the kick belongs. `I.rotate90ccw` does the turn; every coordinate in
+`story.js` is in the turned-and-extended space, so nothing is rotated at render time.
+
+**The branch is extended off the left edge.** Her branch stops in a ragged tip a little way
+in, which reads as a stick they are balanced on rather than a branch running out of shot.
+`extendBranch()` mirrors a clear length of it onto its left end — mirrored rather than
+repeated, because a repeat of a hand-drawn squiggle shows up as a pattern instantly, and a
+mirror joins cleanly on a shared cross-section. Take the source strip from x 40–240 only:
+the mother's tail starts at x≈280 and copying any of it puts a blob out on the left.
+
+Around 1.8 MB, almost all of it the monkeys moving: a GIF diffs only against the previous
+frame, so every frame of continuously-moving line art pays for itself. To shrink it, in
+order of effect: tighten the two warp radii, drop `FPS`, shrink the canvas, shorten the
+holds in `BEATS`. Widening the warp radii by a third cost a megabyte and read no better.
 
 Three things here are worth knowing before changing any of it.
 
@@ -174,6 +229,31 @@ typeface among four handwritten lines reads as the odd one out, so `tools/glyphs
 whole words out of writing she has done and falls back to single letters for the rest. It
 is a compositor for one sentence, **not a font**: no metrics, no kerning, no OpenType. If
 she ever wants real type from her hand that is a different job with different tools.
+
+That line is the weakest thing in the piece, and it is worth knowing why before trying to
+fix it again. It draws on **three** sources, not two, and no two of them agree:
+
+| source | what it gives | how it differs |
+|---|---|---|
+| `paragraph.png` | most of the words | she wrote small and tight |
+| `alphabet.png`, the sentence on top | the rest of the words | ~40% bigger — a different photo distance |
+| `alphabet.png`, the A–Z block | every letter | bigger again, and lighter |
+
+`normaliseHand()` puts all three on one scale, one pen weight and one baseline before a
+single stamp is placed — measure each source's x-height (lower quartile of trimmed heights,
+since a plain median lands on cap-height in a source that is half capitals), scale the
+others down to the smallest, then dilate each back to a common weight, because a scale
+alone leaves the shrunk sources spindly. Single letters also get their baseline put at
+their own bottom edge: the least-squares fit through a row of isolated letters is loose
+enough to hand her `m` a 23px descender, and that stagger reads worse than the size ever
+did. Words keep the fitted baseline — a word box spans ascender to descender, so its bottom
+edge is not its baseline, and forcing the rule onto words throws every word with a
+descender off the line.
+
+Even so, "pijamas" comes out muddy — its word cut is one of the ones `wordLibrary` rejects,
+so it is built letter by letter out of the softest of the three sources. **The real fix is
+a photograph**: if she writes that one sentence in the notebook and shoots it like the
+other four, `lift-story.js` will take it and the compositor can be retired.
 
 `tools/gif.js` is a from-scratch GIF89a encoder (LZW, one global ramp palette, inter-frame
 differencing against the changed rectangle) because this machine has no ffmpeg,
