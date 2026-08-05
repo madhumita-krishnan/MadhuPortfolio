@@ -151,7 +151,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   position:relative;
   background:linear-gradient(150deg, rgba(255,255,255,.50) 0%, ${g['light-bg']} 52%, rgba(255,255,255,.26) 100%);
   -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate});
+  backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
   border:1px solid ${g['light-border']};
   box-shadow:
     inset 0 1.5px 1.5px -1px rgba(255,255,255,.98),
@@ -174,7 +174,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
 .glass-dark{
   background:linear-gradient(150deg, rgba(255,255,255,.14) 0%, ${g['dark-bg']} 52%, rgba(18,35,32,.44) 100%);
   -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate});
+  backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
   border:1px solid ${g['dark-border']};
   box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.55), inset 0 -2px 2px -1px rgba(255,255,255,.22),
              0 10px 30px rgba(0,0,0,.25);
@@ -197,6 +197,13 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
+/* The SVG displacement warp lives HERE and nowhere else. Every element carrying
+   backdrop-filter:url() costs a full backdrop snapshot + turbulence + displacement pass,
+   and there were twelve of them (nav, every button, every chip, the play button). The nav
+   is the only one big enough for a 5px displacement to be visible at all — on a 46px pill
+   the warp is imperceptible but costs the same. Buttons and chips keep blur+saturate.
+   Do not promote this to .glass. */
+nav.bar.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
 .wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
 .nav-links a{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
@@ -245,14 +252,20 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* all three sit to the right of the text column — the copy is left-aligned, so a bloom
    on the left lands on the headline. Each is cropped by the section edge on purpose. */
 .hero-flora img{position:absolute;display:block;opacity:.9}
-.flora-a{top:-16%;right:9%;width:clamp(180px,20vw,300px);transform:rotate(-5deg)}
-.flora-b{bottom:-20%;right:-5%;width:clamp(180px,21vw,320px);transform:rotate(4deg)}
-.flora-s{top:16%;right:31%;width:clamp(80px,9vw,130px);opacity:.42;transform:rotate(7deg)}
-@media (max-width:1100px){.flora-s{display:none}.flora-a{right:2%}}
+/* SCALE: in her reference a single bloom is about a third of the frame and runs off the
+   edge — the hard crop is the whole effect, and at the old clamp(180px,20vw,300px) these
+   sat in the margin as small complete pictures, which is half of why they read as clip
+   art. They are deliberately large and deliberately cropped by .hero-flora's overflow.
+   The old floating .flora-s (bare crossing stems at .42 opacity) is gone: with nothing
+   hanging off them they read as a stray scratch across the copy. Stems now only ever
+   arrive attached to a bloom. */
+.flora-a{top:-22%;right:4%;width:clamp(260px,33vw,470px);transform:rotate(-5deg)}
+.flora-b{bottom:-26%;right:-9%;width:clamp(260px,34vw,500px);transform:rotate(4deg)}
+@media (max-width:1100px){.flora-a{right:-4%}.flora-b{right:-16%}}
 /* on a phone the copy runs full width, so the blooms come almost all the way off the
    edge — a sliver of colour rather than a picture behind the text */
 @media (max-width:760px){.hero-flora{opacity:.34}
-  .flora-a{width:120px;top:-3%;right:-19%}.flora-b{width:130px;right:-22%;bottom:-4%}}
+  .flora-a{width:210px;top:-4%;right:-26%}.flora-b{width:220px;right:-30%;bottom:-5%}}
 .w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
 .revealed .w{opacity:1;transform:none}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -745,22 +758,21 @@ ${svgFilters()}
    rule still gives blur+saturate, so the glass degrades to frosted, never to nothing. */
 function svgFilters() {
   return `<svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
-  <!-- droplet cursor: one octave of very low-frequency noise = a few broad, smooth
-       swells, so the backdrop reads as refracted through water, not scrambled -->
-  <filter id="dropletWarp" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.008" numOctaves="1" seed="5" result="n">
-      <animate attributeName="baseFrequency" dur="16s" repeatCount="indefinite"
-               values="0.006 0.008;0.009 0.006;0.005 0.009;0.006 0.008"/>
-    </feTurbulence>
-    <feGaussianBlur in="n" stdDeviation="1.4" result="ns"/>
-    <feDisplacementMap in="SourceGraphic" in2="ns" scale="11" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-  <!-- nav / buttons / chips: the same idea, much gentler -->
+  <!-- nav: one octave of very low-frequency noise = a few broad, smooth swells, so the
+       backdrop reads as refracted through glass, not scrambled.
+
+       PERFORMANCE, do not re-add the <animate> that used to live in here. Animating
+       baseFrequency means the browser regenerates fractal noise and re-runs the
+       displacement map over the whole backdrop EVERY frame, forever, on every element
+       that references this filter — it pinned the page to 43fps while sitting idle
+       doing nothing. A static warp still bends what is behind the panel, which is the
+       part of the look that matters; "it is never perfectly still" is carried by the
+       .float translate instead, which the compositor does for free.
+
+       The old #dropletWarp filter was deleted with it: the droplet cursor was cut, so
+       nothing referenced it, but its indefinite <animate> was still in the DOM. -->
   <filter id="glassWarp" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.007" numOctaves="1" seed="9" result="n">
-      <animate attributeName="baseFrequency" dur="22s" repeatCount="indefinite"
-               values="0.005 0.007;0.008 0.005;0.005 0.007"/>
-    </feTurbulence>
+    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.007" numOctaves="1" seed="9" result="n"/>
     <feGaussianBlur in="n" stdDeviation="1.8" result="ns"/>
     <feDisplacementMap in="SourceGraphic" in2="ns" scale="5" xChannelSelector="R" yChannelSelector="G"/>
   </filter>
@@ -847,9 +859,11 @@ function renderHome() {
   const heroHTML = `
 <section class="hero" id="hero">
   <div class="hero-flora" aria-hidden="true">
-    <img class="flora-a" src="assets/hero/flower-a.svg" alt="" width="560" height="780" loading="eager" decoding="async">
-    <img class="flora-s" src="assets/hero/stem-a.svg" alt="" width="320" height="700" loading="eager" decoding="async">
-    <img class="flora-b" src="assets/hero/flower-b.svg" alt="" width="520" height="740" loading="eager" decoding="async">
+    <!-- ?v= for the same reason the handwriting mask carries it: the artwork is regenerated
+         in place by tools/make-flowers.js, so without a version a returning visitor (or the
+         person iterating on the art) keeps being served the previous bloom out of cache. -->
+    <img class="flora-a" src="assets/hero/flower-a.svg?v=${BUILD_V}" alt="" width="560" height="720" loading="eager" decoding="async">
+    <img class="flora-b" src="assets/hero/flower-b.svg?v=${BUILD_V}" alt="" width="540" height="700" loading="eager" decoding="async">
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
