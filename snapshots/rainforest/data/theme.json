@@ -1,0 +1,50 @@
+{
+  "_readme": "Every design token for the whole site lives here. Edit a value, run `node build.js`, refresh. Nothing else to touch.",
+  "colors": {
+    "bg-base": "#F2F5EE",
+    "bg-raised": "#FBFCF8",
+    "bg-deep": "#0E211A",
+    "bg-deep-raised": "#163328",
+    "text-primary": "#182620",
+    "text-secondary": "#51635A",
+    "text-on-deep": "#F0F6EF",
+    "text-on-deep-secondary": "#A8BFB0",
+    "accent": "#1B6E49",
+    "accent-deep": "#0F5236",
+    "accent-bright": "#3FA772",
+    "accent-wash": "#D5E6D7",
+    "sun": "#C4892F",
+    "line": "rgba(24,38,32,.14)",
+    "line-on-deep": "rgba(240,246,239,.16)"
+  },
+  "glass": {
+    "light-bg": "rgba(255,255,255,.44)",
+    "light-border": "rgba(255,255,255,.62)",
+    "light-highlight": "rgba(255,255,255,.85)",
+    "dark-bg": "rgba(14,33,26,.38)",
+    "dark-border": "rgba(255,255,255,.22)",
+    "dark-highlight": "rgba(255,255,255,.38)",
+    "blur": "20px",
+    "saturate": "1.5"
+  },
+  "fonts": {
+    "display": "'Instrument Serif',Georgia,serif",
+    "body": "'DM Sans',-apple-system,'Helvetica Neue',sans-serif",
+    "utility": "'Space Mono','SF Mono',monospace",
+    "google-css": "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Mono&family=Gloria+Hallelujah&display=swap",
+    "crayon": "'Gloria Hallelujah',cursive"
+  },
+  "radii": {
+    "card": "18px",
+    "media": "14px",
+    "pill": "999px"
+  },
+  "motion": {
+    "fast": "180ms",
+    "base": "320ms",
+    "slow": "640ms",
+    "ease-standard": "cubic-bezier(.33,0,.2,1)",
+    "ease-enter": "cubic-bezier(.2,.7,.2,1)"
+  },
+  "space": "8px"
+}

@@ -1,0 +1,165 @@
+{
+  "slug": "spotify-mix",
+  "name": "Spotify Mix",
+  "order": 2,
+  "title": "What if your playlist knew how to DJ?",
+  "tagline": "Helping listeners understand — and trust — Spotify's mixing recommendations.",
+  "heroTone": "deep",
+  "heroMedia": {
+    "type": "phone-video",
+    "src": "assets/case-studies/spotify/mix-recording.mp4",
+    "poster": "assets/case-studies/spotify-recording-poster.jpg",
+    "alt": "The redesigned Spotify Mix edit-transition screen in motion"
+  },
+  "meta": [
+    {
+      "label": "Role",
+      "value": "UX Designer"
+    },
+    {
+      "label": "Interface",
+      "value": "Mobile app, inside Spotify's design system"
+    },
+    {
+      "label": "Methods",
+      "value": "Quant survey · moderated testing · confidence scoring"
+    }
+  ],
+  "tags": [
+    "Concept",
+    "Interaction design",
+    "Research-led"
+  ],
+  "intro": [
+    "Spotify Mix lets listeners craft smooth transitions between songs — matching keys, aligning BPM, choosing blend curves. Powerful, and built on knowledge most listeners simply don't have.",
+    "I redesigned the experience so that understanding arrives in context, at the moment you need it — designed inside Spotify's existing system, not around it."
+  ],
+  "stats": [
+    {
+      "value": "9 of 11",
+      "label": "survey respondents who tried to learn the feature still felt confused or uncertain afterward"
+    },
+    {
+      "value": "2.6 → 3.7",
+      "label": "average confidence rating out of 5, after the redesign"
+    },
+    {
+      "value": "11 / 11",
+      "label": "every participant preferred the redesign over Spotify's current experience"
+    }
+  ],
+  "sections": [
+    {
+      "label": "The problem",
+      "heading": "Smooth transitions required knowledge most listeners didn't have",
+      "body": [
+        "Mixing well means understanding BPM compatibility, key matching, and what makes a transition sound intentional. In my survey, most respondents reported little or no familiarity with mixing terminology — and 9 of 11 who tried to learn the feature still felt confused afterward.",
+        "In moderated testing the pattern sharpened: multiple participants didn't realize Spotify even had a Smart Reorder feature moments after confidently reviewing the full interface, and participants repeatedly hunted for explanations whenever an unfamiliar concept appeared."
+      ]
+    },
+    {
+      "label": "The opportunity",
+      "heading": "Make mixing approachable without dumbing it down",
+      "body": [
+        "The redesign focused on reducing the cognitive load of mixing: simplifying decisions, providing guidance when users needed it, and keeping the full editing power in place for people who wanted it.",
+        "Two moments carried most of the confusion — editing a transition, and understanding what the system had already done for you. Those became the redesign's spine."
+      ]
+    },
+    {
+      "label": "Foundation",
+      "heading": "Simplifying transition editing",
+      "body": [
+        "Many participants reported limited familiarity with mixing terminology, and primarily used presets when creating transitions. The redesigned editing experience keeps the dual-waveform view but promotes presets to the primary path, labels actions in plain language, and tucks advanced controls behind a deliberate step — accessible, not ambient."
+      ],
+      "media": {
+        "type": "phones",
+        "frame": "phone",
+        "wash": "deep",
+        "items": [
+          {
+            "src": "assets/case-studies/spotify/raw/2-spotify-main-mix-screen.png",
+            "alt": "Redesigned edit-transition screen: dual waveform, blend curves, presets, plain-language actions"
+          },
+          {
+            "src": "assets/case-studies/spotify/raw/1-hero-image.png",
+            "alt": "'Making mixing easy' onboarding sheet: match key color and keep BPM close"
+          }
+        ],
+        "caption": "The core edit screen, and the onboarding sheet that frames the two rules that matter: match the key color, keep BPM close."
+      }
+    },
+    {
+      "label": "Foundation",
+      "heading": "Bringing Smart Reorder forward",
+      "body": [
+        "Smart Reorder — Spotify reordering your playlist for better transitions — was the feature participants loved most and found last. During testing, people simply couldn't find it, and once they did, the system's reasoning was invisible.",
+        "The redesign surfaces it as a first-class action and explains what changed and why, so the automation builds trust instead of suspicion."
+      ],
+      "media": {
+        "type": "phones",
+        "frame": "phone",
+        "wash": "wash",
+        "items": [
+          {
+            "src": "assets/case-studies/spotify/raw/3-smart-reorder-pop-up-screen.png",
+            "alt": "Smart Reorder confirmation showing what will change and why"
+          }
+        ],
+        "caption": "Smart Reorder, surfaced — with its reasoning made visible before you commit."
+      }
+    },
+    {
+      "label": "Education",
+      "heading": "Tap to learn more — teaching inside the moment",
+      "body": [
+        "Simplifying alone doesn't build understanding. Wherever a concept like BPM or key compatibility appears, it's tappable: a short contextual explanation opens right where the question occurred, then gets out of the way.",
+        "In testing, participants successfully applied BPM and key concepts after receiving these contextual explanations — knowledge that a settings-buried help page had failed to transfer."
+      ],
+      "media": {
+        "type": "phones",
+        "frame": "phone",
+        "wash": "deep",
+        "items": [
+          {
+            "src": "assets/case-studies/spotify/raw/4-learning-in-context.png",
+            "alt": "Learning in context — tapping an unfamiliar term opens a short inline explanation"
+          }
+        ],
+        "caption": "Concepts explain themselves where they appear — not in a help center."
+      }
+    },
+    {
+      "label": "Problems to solutions",
+      "heading": "Fixing a rough transition, step by step",
+      "body": [
+        "The hardest task in testing was recovering from a transition that sounded bad. One participant put it plainly: \"This is not as helpful… I have to try to figure it out on my own.\"",
+        "The redesign flags the hard blend directly on the timeline and offers a labeled fix — including adding a bridge song when two tracks simply don't want to meet. Directly labeled actions replaced guesswork."
+      ],
+      "media": {
+        "type": "phones",
+        "frame": "phone",
+        "wash": "wash",
+        "items": [
+          {
+            "src": "assets/case-studies/spotify/raw/5a-hard-blend-highlight-screen.png",
+            "alt": "A hard blend flagged and highlighted on the transition timeline"
+          },
+          {
+            "src": "assets/case-studies/spotify/raw/5b-add-a-bridge-song-screen.png",
+            "alt": "The add-a-bridge-song flow suggesting a track to smooth the transition"
+          }
+        ],
+        "caption": "The rough-transition story: the problem is pointed at, and the fix is one labeled action away."
+      }
+    }
+  ],
+  "reflection": {
+    "label": "Reflection",
+    "heading": "Design for different levels of involvement",
+    "body": [
+      "Across usability testing, participants consistently rated the redesign higher than Spotify's current experience for confidence and understanding — average confidence moved from 2.6 to 3.7 out of 5, and every participant preferred the redesign.",
+      "The deeper lesson: some users wanted quick answers, others wanted detailed control. The redesign works because it serves both from the same screens — high-level clarity by default, depth one deliberate tap away."
+    ]
+  },
+  "next": "stack"
+}
