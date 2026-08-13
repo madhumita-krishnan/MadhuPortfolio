@@ -1,12 +1,15 @@
 {
-  "_readme": "Every design token for the whole site lives here. Edit a value, run `node build.js`, refresh. Nothing else to touch. Current system: 'terracotta' (2026-08-05) — warm cream, fired-clay rust, sage stems, taken from Madhu's Orange & Mellow reference. The previous emerald system is saved whole: `node tools/design-system.js restore rainforest`.",
+  "_readme": "Every design token for the whole site lives here. Edit a value, run `node build.js`, refresh. Nothing else to touch. Current system: 'terracotta' (2026-08-05) — warm cream, fired-clay rust, sage stems, taken from Madhu's Orange & Mellow reference. 'ink-blue' is the wordmark blue from that same reference — it sets the handwritten hero line and the display headings; change that one hex to retune every blue word on the site. 'brand-blue' is the lighter baby blue the client logo wall is masked to (hover deepens to ink-blue); it is deliberately quiet — the logos are credentials, not headlines. The previous emerald system is saved whole: `node tools/design-system.js restore rainforest`.",
   "colors": {
     "bg-base": "#F6F0E2",
     "bg-raised": "#FCF8EF",
     "bg-deep": "#1E3634",
     "bg-deep-raised": "#2A4744",
+    "bg-deep-shade": "#122320",
     "text-primary": "#26332F",
     "text-secondary": "#6B7268",
+    "ink-blue": "#3C6B76",
+    "brand-blue": "#6FA8BC",
     "text-on-deep": "#F6F0E2",
     "text-on-deep-secondary": "#B3C6C0",
     "accent": "#A94E2C",
@@ -17,7 +20,12 @@
     "sage-deep": "#7E9E98",
     "sun": "#C4892F",
     "line": "rgba(38,51,47,.16)",
-    "line-on-deep": "rgba(246,240,226,.18)"
+    "line-on-deep": "rgba(246,240,226,.18)",
+    "line-accent": "rgba(169,78,44,.26)",
+    "shadow-soft": "rgba(30,54,52,.12)",
+    "shadow-mid": "rgba(30,54,52,.28)",
+    "shadow-strong": "rgba(30,54,52,.42)",
+    "shadow-clay": "rgba(126,50,24,.38)"
   },
   "glass": {
     "light-bg": "rgba(255,252,244,.42)",

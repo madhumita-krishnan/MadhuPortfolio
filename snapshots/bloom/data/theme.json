@@ -1,0 +1,63 @@
+{
+  "_readme": "Every design token for the whole site lives here. Edit a value, run `node build.js`, refresh. Current system: 'bloom' (2026-08-05) — pulled pixel-by-pixel off assets/hero/flower-source.jpg, the white bloom standing on red felt. THE HIERARCHY IS THE PHOTOGRAPH'S: red is the ground and it now leads (the whole hero is a field of it, and the deep surfaces that used to be teal are oxblood); the petal cream is the one bright thing on that red and so carries every headline over it; the stem green is the quiet second colour and carries display type on the cream pages; the clay accent is unchanged because the photo's lit ground already sat on it. 'ink-display' is that stem green — change that one hex to retune every display heading on the site. 'brand-ink' is the paler sage the client logo wall is masked to (hover deepens to ink-display); it is deliberately quiet — the logos are credentials, not headlines. The 'field-*' four are the hero's red, and they are not free: they are the colours the flower photograph's own background fades out on, so .hero-band's gradient has to arrive at them. Re-run `node tools/make-hero-flower.js` to re-measure them if the crop moves. Previous systems are saved whole: `node tools/design-system.js restore terracotta` (cream + rust + teal-blue display type) or `restore rainforest`.",
+  "colors": {
+    "bg-base": "#F5F0E4",
+    "bg-raised": "#FCF8EF",
+    "bg-deep": "#5A1A0C",
+    "bg-deep-raised": "#8A3520",
+    "bg-deep-shade": "#2E0B04",
+    "text-primary": "#2E2A22",
+    "text-secondary": "#6E6A57",
+    "ink-display": "#4E5A22",
+    "brand-ink": "#93A06E",
+    "text-on-deep": "#F7F6F0",
+    "text-on-deep-secondary": "#DFC8B8",
+    "accent": "#A94E2C",
+    "accent-deep": "#7A2C15",
+    "accent-bright": "#C05239",
+    "accent-wash": "#EFE2CD",
+    "sage": "#A0AB7F",
+    "sage-deep": "#626D25",
+    "sun": "#C9A544",
+    "field-lit": "#BD5137",
+    "field": "#8E3019",
+    "field-deep": "#5A190C",
+    "field-edge": "#461208",
+    "line": "rgba(46,42,34,.16)",
+    "line-on-deep": "rgba(247,246,240,.18)",
+    "line-accent": "rgba(169,78,44,.26)",
+    "shadow-soft": "rgba(74,20,9,.12)",
+    "shadow-mid": "rgba(74,20,9,.26)",
+    "shadow-strong": "rgba(46,11,4,.40)",
+    "shadow-clay": "rgba(122,44,21,.38)"
+  },
+  "glass": {
+    "light-bg": "rgba(255,252,244,.42)",
+    "light-border": "rgba(255,255,255,.60)",
+    "light-highlight": "rgba(255,255,255,.85)",
+    "dark-bg": "rgba(74,20,9,.38)",
+    "dark-border": "rgba(255,255,255,.24)",
+    "dark-highlight": "rgba(255,255,255,.40)",
+    "blur": "20px",
+    "saturate": "1.5"
+  },
+  "fonts": {
+    "display": "'Cormorant Garamond',Georgia,serif",
+    "body": "'DM Sans',-apple-system,'Helvetica Neue',sans-serif",
+    "utility": "'DM Sans',-apple-system,sans-serif",
+    "google-css": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"
+  },
+  "radii": {
+    "card": "18px",
+    "media": "14px",
+    "pill": "999px"
+  },
+  "motion": {
+    "fast": "180ms",
+    "base": "320ms",
+    "slow": "640ms",
+    "ease-standard": "cubic-bezier(.33,0,.2,1)",
+    "ease-enter": "cubic-bezier(.2,.7,.2,1)"
+  },
+  "space": "8px"
+}

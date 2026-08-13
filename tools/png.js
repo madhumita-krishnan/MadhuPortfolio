@@ -72,13 +72,47 @@ function decode(buf) {
   return { width: w, height: h, data: out };
 }
 
+/* Per-row filtering. This used to write filter 0 (none) for every row on the theory that
+   deflate would sort it out, which is true for flat graphics — the handwriting mask barely
+   moves. It is very much NOT true for the painted blooms lifted out of Madhu's reference:
+   those are continuous-tone brushwork, where each pixel is a small delta from its neighbour
+   and storing the deltas instead of the values roughly halves the file (1231kb → 655kb on
+   bloom-left). Standard PNG, so nothing downstream needs to know.
+   Row filter is chosen by the minimum-sum-of-absolute-differences heuristic from the PNG
+   spec: encode the row five ways, keep whichever has the least energy left in it. */
+function filterRows(w, h, data) {
+  const bpp = 4, stride = w * 4;
+  const out = Buffer.alloc((stride + 1) * h), cand = Buffer.alloc(stride);
+  for (let y = 0; y < h; y++) {
+    let bestType = 0, bestScore = Infinity, bestRow = null;
+    for (let f = 0; f < 5; f++) {
+      let score = 0;
+      for (let x = 0; x < stride; x++) {
+        const raw = data[y * stride + x];
+        const a = x >= bpp ? data[y * stride + x - bpp] : 0;      // left
+        const b = y > 0 ? data[(y - 1) * stride + x] : 0;          // up
+        const c = x >= bpp && y > 0 ? data[(y - 1) * stride + x - bpp] : 0; // up-left
+        let v;
+        if (f === 0) v = raw;
+        else if (f === 1) v = raw - a;
+        else if (f === 2) v = raw - b;
+        else if (f === 3) v = raw - ((a + b) >> 1);
+        else v = raw - paeth(a, b, c);
+        v &= 0xff;
+        cand[x] = v;
+        score += v < 128 ? v : 256 - v;   // treat bytes as signed distance from zero
+      }
+      if (score < bestScore) { bestScore = score; bestType = f; bestRow = Buffer.from(cand); }
+    }
+    out[y * (stride + 1)] = bestType;
+    bestRow.copy(out, y * (stride + 1) + 1);
+  }
+  return out;
+}
+
 /** {width,height,data:RGBA} → Buffer */
 function encode({ width: w, height: h, data }) {
-  const stride = w * 4, raw = Buffer.alloc((stride + 1) * h);
-  for (let y = 0; y < h; y++) {
-    raw[y * (stride + 1)] = 0;                       // filter: none — the deflate stage
-    data.copy(raw, y * (stride + 1) + 1, y * stride, (y + 1) * stride); // handles it fine here
-  }
+  const raw = filterRows(w, h, data);
   const chunk = (tag, body) => {
     const c = Buffer.alloc(12 + body.length);
     c.writeUInt32BE(body.length, 0);

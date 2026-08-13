@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 200" fill="none">
+  <!-- Traced from Madhu's own frog in her hero mockup: a low, wide, squat frog with two
+       round eyes sitting right on top of the body, loose single-weight ballpoint line.
+       Swap this file for a scan of the original drawing whenever it's to hand. -->
+  <!-- soft body fill so the line drawing reads against a dark leaf -->
+  <path d="M126 66 C 100 82, 84 104, 90 124 C 98 148, 148 160, 208 156
+           C 266 152, 304 134, 300 110 C 296 90, 262 72, 234 66
+           C 224 40, 176 38, 168 60 Z" fill="#F1F6EC" opacity=".93"/>
+  <circle cx="150" cy="52" r="26" fill="#F1F6EC" opacity=".95"/>
+  <circle cx="212" cy="48" r="24" fill="#F1F6EC" opacity=".95"/>
+  <g stroke="#22201D" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- eyes, sitting on top of the head -->
+    <circle cx="150" cy="52" r="26" stroke-width="6"/>
+    <circle cx="212" cy="48" r="24" stroke-width="6"/>
+    <circle cx="150" cy="52" r="10" fill="#22201D" stroke="none"/>
+    <circle cx="212" cy="48" r="9.5" fill="#22201D" stroke="none"/>
+    <!-- little dip of the brow between the eyes -->
+    <path d="M176 60 C 182 50, 188 50, 192 58" stroke-width="5"/>
+
+    <!-- wide low body: over the top of the head, sweeping back to the right haunch -->
+    <path d="M126 66 C 100 82, 84 104, 90 124 C 98 148, 148 160, 208 156
+             C 266 152, 304 134, 300 110 C 296 90, 262 72, 234 66" stroke-width="6.5"/>
+    <!-- mouth line -->
+    <path d="M110 112 C 152 132, 216 132, 268 112" stroke-width="5"/>
+    <!-- front foot, left -->
+    <path d="M96 140 C 84 152, 74 160, 76 168 C 80 174, 96 172, 106 164" stroke-width="5.5"/>
+    <path d="M76 168 C 68 170, 60 172, 54 176" stroke-width="4"/>
+    <path d="M80 160 C 70 158, 62 158, 54 160" stroke-width="4"/>
+    <!-- back foot, right -->
+    <path d="M268 150 C 276 162, 288 168, 300 164 C 310 160, 312 150, 306 142" stroke-width="5.5"/>
+    <path d="M300 164 C 304 172, 306 178, 304 184" stroke-width="4"/>
+    <path d="M308 158 C 316 162, 322 166, 326 172" stroke-width="4"/>
+    <!-- haunch curve -->
+    <path d="M256 100 C 282 108, 296 124, 290 140" stroke-width="4" opacity=".7"/>
+  </g>
+</svg>

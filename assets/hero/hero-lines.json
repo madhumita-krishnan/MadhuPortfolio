@@ -1,0 +1,49 @@
+{
+  "source": "hero-line-handwritten.png",
+  "sheet": {
+    "w": 1416,
+    "h": 772
+  },
+  "lines": [
+    {
+      "file": "assets/hero/hero-line-1.png",
+      "w": 1363,
+      "h": 209,
+      "lead": 0.0169,
+      "span": 0.9626,
+      "top": 0.0233,
+      "vh": 0.2707,
+      "blobs": 19
+    },
+    {
+      "file": "assets/hero/hero-line-2.png",
+      "w": 1294,
+      "h": 206,
+      "lead": 0.0169,
+      "span": 0.9138,
+      "top": 0.263,
+      "vh": 0.2668,
+      "blobs": 16
+    },
+    {
+      "file": "assets/hero/hero-line-3.png",
+      "w": 1112,
+      "h": 112,
+      "lead": 0.0169,
+      "span": 0.7853,
+      "top": 0.5181,
+      "vh": 0.1451,
+      "blobs": 18
+    },
+    {
+      "file": "assets/hero/hero-line-4.png",
+      "w": 998,
+      "h": 132,
+      "lead": 0.0169,
+      "span": 0.7048,
+      "top": 0.7966,
+      "vh": 0.171,
+      "blobs": 17
+    }
+  ]
+}

@@ -53,15 +53,40 @@ attributes and single words. `text-wrap:pretty` handles the rest.
 
 ## The hero
 
-Eyebrow, headline, one sentence, two buttons — then a masked logo wall. The scroll-driven
-droplet/leaf/frog story that used to live here was removed on 2026-08-03; the drawings are
-still in `assets/hero/` and `tools/make-leaves.js` if it is ever wanted back.
+Cream page, copy stepped in from the left, and one of her painted blooms hanging off each
+screen edge — the composition of her `color pallete I like.png` reference. Eyebrow, headline,
+one sentence, two buttons, then a masked logo wall below.
 
-The sentence is **Madhu's own handwriting**, lifted off a photo of her notebook and used
-as a CSS mask (`assets/hero/hero-line-handwritten.png`) so it takes the design-system ink.
-The text stays in the DOM in a visually-hidden span for screen readers and search. There
-is no font tooling on this machine, so only fixed strings can be set in her hand — for a
-reusable typeface from the A-Z sheet she photographed, use Calligraphr.
+Two ~500px blooms plus a 640px copy is more than a 1440px page holds, so the copy overlaps
+the art by design (*"its ok if things overlap — that looks good as long as its readable"*).
+The offsets exist to land that overlap on thin splayed petal tips and keep the solid middle of
+each flower off the edge. The blooms retreat further as the page narrows, because a section
+caps at 1240px: above that the auto margins keep pushing the copy inboard while the blooms
+keep growing with `vw`, below it they close on the copy instead. Watch the rust eyebrow in
+particular — rust type on a rust petal is the one pairing on this site with no contrast at all.
+
+Dead ends still on disk, referenced by nothing: `tools/make-leaves.js`, `tools/make-flowers.js`
+and `tools/make-hero-flower.js`, with their output in `assets/hero/`. The scroll-driven
+droplet/leaf/frog story went on 2026-08-03; the drawn florals that replaced it went on
+2026-08-05 — see below, and don't redraw them.
+
+The sentence is **Madhu's own handwriting, and since 2026-08-07 it is real text set in a
+real typeface** — `assets/fonts/madhu-hand.woff`, built out of her own sheets by
+`tools/make-hand-font.js` (+ `trace.js`, `ttf.js`). It is no longer a CSS mask, so the copy
+lives in `data/site.json` -> `hero.lines` and reflows like any other paragraph; changing the
+wording no longer needs her to write anything out. **Everything below about masks, about
+`set-hero-line.js`, and about there being no font tooling on this machine is history** —
+kept because it is the record of how the sheets were cut, not because it is still wired in.
+
+The font has **no digits and no dashes**, because she has never written any: a missing
+character comes out as a gap, not a tofu box. So hero copy has to spell its numbers
+("one client to four"), and any figure that has to appear as a numeral belongs in the
+body copy, which is set in DM Sans.
+
+Run `node tools/make-hand-font.js --proof --glyphs --audit` after any change to it. The
+audit answers "does any letter have a gap in it" by counting islands of ink per glyph and
+measuring the narrowest place each one passes through — a question an eye cannot answer at
+reading size, where a hairline join and a two-pixel skip look identical.
 
 **Changing the wording**: `tools/set-hero-line.js` re-flows the four written lines from
 `hero-line-handwritten-4line.png` (the untouched cut) into a new sentence, reusing the
@@ -83,9 +108,104 @@ words she has already written and building only the ones she has not. Edit `SOUR
 If she photographs a sentence outright, prefer that over any of this. A straight lift beats
 a composite every time.
 
-The hero also carries painted florals from `tools/make-flowers.js`. They all sit to the
-right of the text column and are cropped by the section edge on purpose; the copy is
-left-aligned, so a bloom on the left lands on the headline.
+### The flowers are cut out of her reference, not drawn
+
+**Do not generate flower art for this site.** Several attempts drew blooms from a written
+description of Madhu's reference and she rejected every one, most bluntly: *"you keep re
+making the flowers. i need use the literal flowers from the picture as is."* The hero art is
+now cut out of `color pallete I like.png` pixel-for-pixel by `node tools/lift-flowers.js`,
+which writes `assets/hero/bloom-left.png` and `bloom-right.png`. If the art needs to change,
+move the crop rectangles in `CUTS` — do not reach for a drawing tool.
+
+Four things in that script are load-bearing, each one a build that looked wrong first:
+
+1. **Key, don't threshold.** The paper is exactly `#F5EAD3` and every petal edge is a soft
+   brush blend into it. A hard threshold gives a jagged sticker outline; alpha instead ramps
+   over a colour-distance window so a brush edge stays a brush edge.
+2. **Unpremultiply.** An edge pixel is `C = a*ink + (1-a)*paper`. Ship it as-is and every
+   bloom carries a ring of the original cream. Solving back for `F = (C - (1-a)*paper)/a`
+   gives straight alpha that composites over anything.
+3. **Re-crisp after upscaling.** The source bloom is ~260px wide and the hero runs it off the
+   screen edge, so it grows 3x. Resampling on *premultiplied* values avoids a dark halo, and
+   steepening the alpha ramp afterwards wins back the sharp silhouette. Sharp edge with a
+   soft interior is what reads as paint; soften both and it reads as a blurry JPEG.
+4. **Drop the orphans.** A rectangular cut always clips through a neighbouring stem, and a
+   stem with no flower on the end of it reads as a scratch across the copy. Anything under
+   18% of the biggest blob in the cut is dropped — not "keep the largest blob", because the
+   top-left bloom is painted as two petal masses that never quite touch.
+
+`bg-base` in `data/theme.json` must stay equal to that paper colour. The cream showing
+through the gaps inside a petal *is the page*, so if the token drifts, every gap turns into a
+visible patch. Same reason the blooms carry `?v=` — the art regenerates in place, and without
+a version she keeps being served the previous bloom out of cache while judging the new one.
+
+The hero is `min-height:100vh` on purpose: `.hero-flora` is a 100vw box that clips its blooms
+at the screen edge, and at any shorter height that clip lands as a visible horizontal line
+partway up the page instead of on the fold.
+
+Weight matters because both PNGs load eagerly above the fold. Unpremultiplying leaves
+amplified colour noise in pixels that are 2% opaque, and full 8-bit colour keeps gradations
+no eye can see at 82% opacity — so `slim()` flattens the invisible pixels and quantises to 64
+levels per channel. With the adaptive row filtering added to `tools/png.js` at the same time,
+the pair went from 2.4MB to 734KB with no visible change to the brushwork.
+
+### No decorative gradients
+
+Her instruction: *"dont use gradients — think more paint strokes texture."* The `.atmosphere`
+layer and every case-study panel used to be shaded from corner to corner. They are now flat
+palette tokens with her own brush swatch masked over them — `node tools/make-paint-wash.js`
+turns `paint strokes texture.png` into `assets/hero/paint-wash.png`, subtracting the swatch's
+own top-to-bottom shading (it is itself a gradient) and mirror-quilting it so it tiles
+seamlessly. The PNG is alpha-only; the colour comes from a token painted through it, so retune
+the wash by editing `--accent-wash`, never the file.
+
+Gradients that survive are materials, not decoration: the light caught on the glass rim, the
+titanium phone rail, the screen dots, the browser chrome — and `.panel::after`, which is the
+scrim that keeps cream type legible over an arbitrary photograph.
+
+### Superseded: the flower photograph
+
+Kept because the `bloom` design-system snapshot still restores it. Not in the current build.
+
+The photograph is `hero-src/flower.jpg` — kept out of `assets/` on purpose, because build.js
+copies `assets/` into `dist/` wholesale and the untouched 122KB original would ship to Pages
+on every deploy for nothing. `node tools/make-hero-flower.js` turns it into
+`assets/hero/hero-flower.jpg`, the crop that is actually used.
+
+The picture is 736x920 and the hero is much wider, so the page paints the red itself
+(`.hero-band`) and the crop is dissolved into it. Four things have to agree for that to be
+invisible, and getting three of them right still leaves a visible rectangle — each one below
+was a build that looked wrong:
+
+1. **Colour at the rim.** The outer ring of the crop is graded to one flat colour, the
+   `field` token, read out of `data/theme.json` by the script so the two cannot drift.
+   Compositing a pixel over an identical colour is a no-op, so the boundary stops existing.
+2. **Level across the whole crop, not just the rim.** The photo is vignetted, so even a
+   perfect rim leaves the ground *inside* darker than the field it lies on. The script
+   estimates the lit felt under every pixel and subtracts it. The estimate takes a high
+   percentile of each block rather than a median, so the cast shadow survives instead of
+   being flattened away as if it were ground.
+3. **Shape.** Two straight ramps still leave four corners. The fade is those ramps
+   intersected with an ellipse, so the picture goes out as an oval.
+4. **Texture.** The last one, and the least obvious: with colour and level matched to within
+   4% the join was still plain to see, because felt has about seven times the grain of a CSS
+   gradient and the eye reads texture starting as an edge. `.hero-band::before` lays matching
+   grain *under* the photograph. Matching its amplitude was not enough — it has to match the
+   frequency too, or it reads as speckle against felt. Both were fitted against the
+   photograph's structure function; the numbers are in the comment on that rule.
+
+The script prints what it did and what `.hero-band` has to hold to match. **If you move
+`CROP`, re-run it and paste its last three lines into `HERO_BLOOM_MASK` in build.js**, and
+check that the flower still sits inside the flat plateau of `.hero-band`'s gradient — at
+narrow widths the flower stacks under the copy, which is why the `max-width:900px` block
+re-centres both the plateau and `.hero-light` on it.
+
+`.hero-light` is the pool of light that step 2 took out, put back over the field and the
+photograph together so it no longer stops at the edge of the crop.
+
+One known limitation: the source is only 736x920, so on a Retina display the flower is
+upscaled about 2x and is correspondingly soft. A higher-resolution original is the only
+real fix — do not upscale this one.
 
 ## Glass and the cursor
 
@@ -165,7 +285,14 @@ The whole look is versioned. `node tools/design-system.js list` shows the snapsh
 
 - **rainforest** — the emerald/misty system, Instrument Serif, glass droplet cursor.
 - **terracotta** — current. Warm cream, fired-clay rust, sage, deep teal case-study heroes,
-  Cormorant Garamond, her handwriting, painted florals.
+  teal-blue display type, Cormorant Garamond + DM Sans, her handwriting. The palette is
+  *sampled* out of `color pallete I like.png` rather than matched by eye: `bg-base` is that
+  file's paper, `accent` the mean of both rust blooms, `sage` the mean of the teal stems. The
+  hero carries the literal cut-out flowers and there are no decorative gradients anywhere.
+- **bloom** — the red-felt photographic hero. Every value taken off `hero-src/flower.jpg`:
+  red leads, petal cream carries headlines on it, stem green carries display type on the cream
+  pages, oxblood case-study heroes. Superseded on 2026-08-05 when she asked to go back to the
+  reference-image palette.
 
 `build.js` is snapshotted alongside `data/` because half the design system lives in
 makeCSS()/makeJS() — restoring tokens alone would drop a palette onto the wrong structure.
@@ -227,8 +354,9 @@ Timing lives next to it in `press()`, `wriggle()` and `BEATS`.
 moments are straight photographs. The fifth — the opening sentence — she never wrote, and a
 typeface among four handwritten lines reads as the odd one out, so `tools/glyphs.js` cuts
 whole words out of writing she has done and falls back to single letters for the rest. It
-is a compositor for one sentence, **not a font**: no metrics, no kerning, no OpenType. If
-she ever wants real type from her hand that is a different job with different tools.
+is a compositor for one sentence, **not a font**: no metrics, no kerning, no OpenType.
+(She did want real type from her hand, and it is a different job with different tools —
+`tools/make-hand-font.js`. The monkey story still uses this compositor; the hero does not.)
 
 That line is the weakest thing in the piece, and it is worth knowing why before trying to
 fix it again. It draws on **three** sources, not two, and no two of them agree:

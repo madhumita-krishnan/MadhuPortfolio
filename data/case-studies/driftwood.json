@@ -2,13 +2,13 @@
   "slug": "driftwood",
   "name": "Driftwood",
   "order": 1,
-  "title": "The product was working. The website was losing the room.",
-  "tagline": "Repositioning and rebuilding the site for an AI sales agent — researched, coded, and shipped in 18 hours.",
+  "title": "Prospects were misunderstanding the product, and it was costing the founder clients",
+  "tagline": "People rarely know when they have misunderstood something — they are busy, so they dismiss it and move on. Repositioning the product around feedback from real pitches won the founder three more clients.",
   "heroTone": "deep",
   "heroMedia": {
     "type": "image",
-    "src": "assets/case-studies/driftwood/site-hero.jpg",
-    "alt": "The new driftwood.sh homepage — 'Ship a custom demo in every cold message' beside the live product dashboard",
+    "src": "assets/case-studies/driftwood-home-poster.jpg",
+    "alt": "The shipped driftwood.sh homepage — 'Ship tailored demos to every prospect' beside a real thread where the agent sends a prospect their own demo",
     "frame": "browser",
     "url": "driftwood.sh"
   },
@@ -61,6 +61,24 @@
       "body": [
         "Prospects who saw the old site assumed Driftwood generated one generic demo of your product and blasted it out. That reading made it just another AI outbound tool — easy to dismiss in a market drowning in AI slop.",
         "The reality is the opposite: Driftwood builds a new custom demo, tailored to every single client it contacts. That's the whole value. And it was the one thing visitors consistently didn't take away."
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/case-studies/driftwood/site-hero.jpg",
+          "wash": "wash",
+          "alt": "The old driftwood.sh hero: a headline about shipping a custom demo beside a dense screenshot of the product dashboard",
+          "frame": "browser",
+          "url": "driftwood.sh",
+          "caption": "The hero it replaced. Visitors could not tell what the product actually did — and the dashboard sitting next to the headline was too busy, and too unexplained, to carry a hero."
+        },
+        {
+          "type": "image",
+          "src": "assets/case-studies/driftwood/aislop.jpg",
+          "wash": "wash",
+          "alt": "The old site's 'Don't send out AI slop' section — a generic cold email on the left, the message Driftwood sent on the right",
+          "caption": "The old AI-slop comparison. The argument was right and the proof was real, but it read as raw screenshots rather than a polished product, and the value took too long to land."
+        }
       ]
     },
     {
@@ -69,14 +87,7 @@
       "body": [
         "Instead of redesigning on instinct, we took new language and framing into in-person conversations with potential clients and watched where understanding clicked — and where it broke.",
         "Once the framing corrected the misconception, the founder landed three more clients — before a single pixel of the new site existed. That was the green light: the message was validated with revenue, and the site's only job was to deliver it."
-      ],
-      "media": {
-        "type": "image",
-        "src": "assets/case-studies/driftwood/aislop.jpg",
-        "wash": "wash",
-        "alt": "Side-by-side on the new site: the generic AI-written cold email everyone else sends, versus the researched, demo-backed message Driftwood sent",
-        "caption": "The reframe, made visible: what everyone else sends vs. what Driftwood sent — same leads, 14× the replies in week one at Autosana."
-      }
+      ]
     },
     {
       "label": "The pivotal moment",

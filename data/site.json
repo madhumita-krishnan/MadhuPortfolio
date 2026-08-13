@@ -6,19 +6,19 @@
   "location": "New York",
   "fullName": "Madhumita Krishnan",
   "hero": {
-    "eyebrow": "Madhu — Product Designer",
+    "eyebrow": "Portfolio",
     "headline": "Hi, I'm Madhu",
     "lines": [
-      "As a product designer, I'm curious about",
-      "how design helps our mind process",
-      "complex workflows."
+      "Architecture taught me how to guide people with design.",
+      "Brand strategy taught me to study why they believe in that guidance.",
+      "As a product designer I combine both disciplines to help people navigate digital complexity with confidence."
     ],
     "ctaPrimary": {
       "label": "say hey",
       "href": "https://calendly.com/meet-madhu"
     },
     "ctaSecondary": {
-      "label": "View resume",
+      "label": "Resume",
       "href": "assets/resume.pdf"
     }
   },
@@ -72,7 +72,7 @@
       {
         "slug": "driftwood",
         "name": "Driftwood",
-        "outcome": "Repositioned and rebuilt driftwood.sh in 18 hours — researched, coded, and shipped; clients grew from 1 to 4.",
+        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
         "tags": "Shipped · Web · Strategy + code",
         "media": {
           "type": "browser",
@@ -85,7 +85,7 @@
       {
         "slug": "spotify-mix",
         "name": "Spotify Mix redesign",
-        "outcome": "Rebuilt Spotify's mixing flow around listener confidence — ratings rose 2.6 → 3.7 out of 5, and 11 of 11 testers preferred it.",
+        "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it.",
         "tags": "Concept · Mobile · Interaction design",
         "media": {
           "type": "phone-video",
@@ -98,7 +98,7 @@
       {
         "slug": "stack",
         "name": "Budgeting app",
-        "outcome": "Designed a budgeting app around decisions instead of reports — SUS scores rose 47%, from 55 to 81, across two rounds of testing.",
+        "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, not reports, to make the product more valuable between paychecks.",
         "tags": "Research · Mobile · Usability testing",
         "media": {
           "type": "phone-image",
@@ -109,7 +109,7 @@
       {
         "slug": "message-testing",
         "name": "Atlantic Health",
-        "outcome": "Found the messaging that doubled physician referral intent — 16% → 32% — for a $65M proton therapy center.",
+        "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment.",
         "tags": "Healthcare · Brand strategy · Research",
         "media": {
           "type": "landscape-video",
@@ -186,12 +186,21 @@
   "about": {
     "eyebrow": "About",
     "headshot": "assets/hero/headshot.jpg",
-    "title": "Architecture taught me systems. Brand taught me story. Product is where they meet.",
-    "body": "I'm Madhumita Krishnan, a product designer in New York with a background in architecture and brand strategy. I care about simplifying complexity in products through design.",
+    "title": "What draws me to product design is the same concept that has drawn me to tutoring",
+    "body": [
+      "I'm interested in the moments where we lose the learner — when someone is excited to understand something, but along the way, starts questioning whether they can.",
+      "There's something comforting about helping people feel understood. I love designing experiences that make it easier for people to stay curious."
+    ],
     "resumeLabel": "View my resume"
   },
   "footer": {
-    "note": "Madhumita Krishnan · New York"
+    "note": "Madhumita Krishnan · New York",
+    "links": [
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com/in/madhumitak/"
+      }
+    ]
   },
   "calendly": "https://calendly.com/meet-madhu"
 }

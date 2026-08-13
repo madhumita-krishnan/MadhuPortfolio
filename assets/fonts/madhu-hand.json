@@ -1,0 +1,17 @@
+{
+  "source": [
+    "story-src/alphabet.png",
+    "story-src/paragraph.png"
+  ],
+  "unitsPerEm": 1000,
+  "ascender": 760,
+  "descender": -656,
+  "capHeight": 739,
+  "xHeight": 532,
+  "capRatio": 0.739,
+  "xRatio": 0.532,
+  "wordSpace": 0.592,
+  "sidebearing": 0.037,
+  "characters": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'’",
+  "glyphs": 58
+}

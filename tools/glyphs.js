@@ -42,7 +42,14 @@ const SHEET = {
      is denser than a stroke — but so is her `l` — so no density or size rule tells it from
      a letter. It is a one-off mark on a known page; name it and move on.
      Coordinates are in the alphabet block, i.e. relative to alphabet.y0. */
-  ignore: [{ x0: 1740, x1: 1845, y0: 655, y1: 775 }],
+  ignore: [
+    { x0: 1712, x1: 1845, y0: 655, y1: 775 },
+    /* Two pen specks on the last lowercase row, both sitting above the letters and both
+       large enough to survive minArea. Left in, they ride along with the w and the x —
+       harmless in a composed sentence, a permanent fleck once these become a typeface. */
+    { x0: 1396, x1: 1426, y0: 860, y1: 886 },
+    { x0: 1544, x1: 1569, y0: 878, y1: 904 },
+  ],
 };
 
 const PARAGRAPH = [

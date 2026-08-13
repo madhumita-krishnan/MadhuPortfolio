@@ -11,6 +11,11 @@ const readJSON = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 
 const theme = readJSON(path.join(ROOT, 'data/theme.json'));
 const site = readJSON(path.join(ROOT, 'data/site.json'));
+/* The hero sentence used to be read from assets/hero/hero-lines.json — one PNG per line of
+   her handwriting, cut by tools/slice-hero-lines.js. It is now set as text in her own
+   typeface (tools/make-hand-font.js), so nothing here reads the slices any more. The slicer
+   and its output are left in place: they are the record of how the sheet was cut, and the
+   raw lift beside them is still the source the font was measured from. */
 const csDir = path.join(ROOT, 'data/case-studies');
 const cases = fs.readdirSync(csDir).filter(f => f.endsWith('.json'))
   .map(f => readJSON(path.join(csDir, f)))
@@ -18,6 +23,15 @@ const cases = fs.readdirSync(csDir).filter(f => f.endsWith('.json'))
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const BUILD_V = Date.now().toString(36); // cache-buster: every rebuild gets fresh CSS/JS
+
+/* The same stamp on every piece of MEDIA, for the same reason it is on the CSS. Half the
+   images and clips on this site are regenerated in place by a tool — the flowers are cut out
+   of her reference photo, the pot and her handwriting are lifted off a phone snap, the
+   driftwood poster is grabbed out of its own video — so the bytes at a path change while the
+   path does not, and a browser that already has the old ones is entitled to keep showing
+   them. That is not a theoretical problem here: she has judged new art while being served
+   the previous version out of cache, twice. Anything a tool can rewrite gets ?v=. */
+const asset = p => (p ? `${p}${p.includes('?') ? '&' : '?'}v=${BUILD_V}` : '');
 
 /* ---- intrinsic size of a local PNG/JPEG, so phone screens can be aspect-checked ---- */
 const SCREEN_AR = 9 / 19.5; // 0.4615 — a modern iPhone screen
@@ -40,6 +54,10 @@ function imageSize(rel) {
   return null;
 }
 const fitWarnings = [];
+/* Hand-lifted artwork that build.js expects but cannot generate itself. Collected rather
+   than thrown: a missing drawing should not stop the site building, but it must be said
+   out loud, because the alternative is a section silently rendering without it. */
+const missingArt = [];
 /* Spec §3: if the source is within ~5% of 9:19.5 the mismatch is invisible when the
    image is stretched, and stretching keeps the whole screen — status bar AND tab bar.
    Beyond that, cover-crop from the top instead of distorting the design. */
@@ -73,11 +91,23 @@ ${Object.entries(c).map(([k, v]) => `  --${k}:${v};`).join('\n')}
   --font-display:${f.display};
   --font-body:${f.body};
   --font-utility:${f.utility};
+  --font-hand:${f.hand};
   --r-card:${r.card};--r-media:${r.media};--r-pill:${r.pill};
   --motion-fast:${m.fast};--motion-base:${m.base};--motion-slow:${m.slow};
   --ease-standard:${m['ease-standard']};--ease-enter:${m['ease-enter']};
   --space:${theme.space};
 }
+/* Her hand, as a typeface — cut from the sheets in story-src by tools/make-hand-font.js.
+   Self-hosted and tiny (14kb), so it is fetched from the same origin as the page and there is
+   no third party in the critical path for the one line of copy the hero exists to deliver.
+   swap, not block: the fallback is a rounded system face at a similar x-height, and a
+   sentence that arrives late in the wrong face beats a sentence that is invisible for 3s. */
+@font-face{font-family:'Madhu Hand';font-style:normal;font-weight:400;font-display:swap;
+  src:url(assets/fonts/madhu-hand.woff?v=${BUILD_V}) format('woff')}
+/* madhu-hand.ttf ships beside it but is deliberately NOT listed here. WOFF is the same
+   outlines compressed and every browser since IE9 reads it, so a second src only gets both
+   files fetched. The .ttf is there to be downloaded and installed — it is her typeface, and
+   she should be able to use it in Figma. */
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -125,12 +155,16 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
   to{transform:translate(-50%,-50%) scale(1.35);opacity:0}}
 @media (hover:none),(pointer:coarse){.dc{display:none}body.dc-on{cursor:auto}}
 
-/* warm light across the cream field + paper grain */
+/* Brushed colour across the cream field + paper grain.
+   This was three big radial-gradients standing in for warm light. She asked for "no
+   gradients — think more paint strokes texture", so it is now her own brush swatch: the
+   texture is an alpha-only mask (tools/make-paint-wash.js strips the swatch's own shading
+   and mirror-quilts it so it tiles), and the COLOUR comes from a palette token painted
+   through it. Retune the wash by editing --accent-wash, not the PNG. */
 .atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(58vw 42vh at 12% -6%, rgba(169,78,44,.07), transparent 62%),
-    radial-gradient(46vw 38vh at 88% 4%, rgba(157,186,180,.13), transparent 60%),
-    radial-gradient(70vw 52vh at 55% 110%, rgba(196,137,47,.07), transparent 64%);}
+  background:var(--accent-wash);opacity:.55;
+  -webkit-mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px;
+  mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.045;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
@@ -171,39 +205,129 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   mask:linear-gradient(#000,#000) content-box exclude,linear-gradient(#000,#000);
   padding:1.5px;mix-blend-mode:screen;opacity:.9}
 .glass>*{position:relative;z-index:1}
-.glass-dark{
-  background:linear-gradient(150deg, rgba(255,255,255,.14) 0%, ${g['dark-bg']} 52%, rgba(18,35,32,.44) 100%);
-  -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  border:1px solid ${g['dark-border']};
-  box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.55), inset 0 -2px 2px -1px rgba(255,255,255,.22),
-             0 10px 30px rgba(0,0,0,.25);
-  color:var(--text-on-deep);
-}
-/* it floats — a couple of pixels over eight seconds, out of phase per element */
-.float{animation:glassFloat 9s ease-in-out infinite}
-.float:nth-of-type(even){animation-duration:11s;animation-delay:-3s}
-@keyframes glassFloat{0%,100%{translate:0 0}33%{translate:.5px -2px}66%{translate:-.5px 1px}}
-.btn{font-family:var(--font-utility);font-size:.8rem;letter-spacing:.04em;text-decoration:none;
-  padding:0 22px;border-radius:var(--r-pill);min-height:46px;display:inline-flex;align-items:center;gap:8px;
-  color:var(--text-primary);cursor:pointer;position:relative;
-  transition:transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard)}
-.btn:hover,.btn:focus-visible{transform:translateY(-1px);box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.98), inset 0 -2px 2px -1px rgba(255,255,255,.62), 0 14px 34px var(--shadow-soft)}
-.btn.solid{background:var(--accent);border-color:var(--accent-deep);color:var(--text-on-deep);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 10px 26px var(--shadow-clay)}
-.btn.solid:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 14px 32px var(--shadow-clay)}
-.glass-dark.btn{color:var(--text-on-deep)}
+/* .glass-dark and .float were both dropped with the button rework and are not referenced by
+   any markup or script. .glass-dark existed only for the case-study tags, which are now
+   chips from the button system; .float was the slow bob on the hero CTAs, which the control
+   sheet rules out — a flat control that drifts contradicts "solid fills only". The glass
+   material itself is untouched and still carries the nav and the panels. */
+
+/* ------------------------------------------------ buttons
+   From Madhu's control sheet. The governing note on it is "solid fills only — the label
+   always sits on flat colour, so it stays readable. The watercolour lives in the artwork,
+   not in the controls." So everything a control could borrow from the hero — glass, paint
+   texture, the drawn ink outline, drop shadows — is deliberately absent. A button is a
+   flat fill or a flat outline, and nothing else. The art and the UI stay separate.
+
+   Three ranks, in order of how loud they are:
+     .solid    terracotta fill, cream label     — one per view, the thing to actually do
+     .outline  terracotta line, terracotta label — the alternative
+     .teal     baby-teal line, teal label        — quiet; case studies, tags, icons
+
+   Labels are uppercase and widely letterspaced, so the glyph count is small and the
+   letterforms carry the weight — which is why the size steps below move padding and
+   tracking together rather than just font-size. */
+.btn{font-family:var(--font-utility);font-weight:500;font-size:.75rem;letter-spacing:.14em;
+  text-transform:uppercase;text-decoration:none;white-space:nowrap;
+  padding:0 26px;border-radius:var(--r-pill);min-height:48px;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  border:1.5px solid transparent;background:none;color:var(--text-primary);
+  cursor:pointer;position:relative;
+  transition:background-color var(--motion-fast) var(--ease-standard),
+             border-color var(--motion-fast) var(--ease-standard),
+             color var(--motion-fast) var(--ease-standard)}
+
+/* PRIMARY. The hover and pressed steps are the accent walked down in value, not the accent
+   plus a shadow — on a flat control the only honest way to show depression is that the
+   colour gets heavier. --accent-deep is already the bottom of that walk, so pressed lands
+   there and hover sits between the two. */
+.btn.solid{background:var(--accent);color:var(--text-on-deep)}
+.btn.solid:hover{background:var(--accent-press)}
+.btn.solid:active{background:var(--accent-deep)}
+
+/* SECONDARY. Fills with --accent-press rather than --accent on hover: a cream label on the
+   plain accent measures 4.47:1, which is a hair under the 4.5 small text wants, and the
+   hover state is supposed to be the darker one anyway. */
+.btn.outline{border-color:var(--accent);color:var(--accent)}
+.btn.outline:hover{background:var(--accent-press);border-color:var(--accent-press);color:var(--text-on-deep)}
+.btn.outline:active{background:var(--accent-deep);border-color:var(--accent-deep);color:var(--text-on-deep)}
+
+/* TERTIARY — the baby teal. The LINE is --teal-baby and the LABEL is --ink-blue, which is
+   what the sheet shows and is also the only version that passes contrast: baby teal is a
+   tint, and a tint that reads correctly as a 1.5px line on cream is far too pale to set
+   small letterspaced type in. On hover the line fills and the label flips to cream.
+   The hover fill is --ink-blue and not --teal-baby for the same reason: a cream label on
+   baby teal is only 3.6:1, whereas on the full ink-blue it is 5.4:1. */
+.btn.teal{border-color:var(--teal-baby);color:var(--ink-blue)}
+.btn.teal:hover{background:var(--ink-blue);border-color:var(--ink-blue);color:var(--text-on-deep)}
+.btn.teal:active{background:var(--bg-deep);border-color:var(--bg-deep);color:var(--text-on-deep)}
+
+/* SIZES */
+.btn.sm{min-height:38px;padding:0 20px;font-size:.68rem;letter-spacing:.12em}
+.btn.lg{min-height:62px;padding:0 40px;font-size:.9rem;letter-spacing:.16em}
+
+/* ICON — a circle, so it is sized rather than padded. aspect-ratio keeps it round whatever
+   the min-height above resolves to. */
+.btn.icon{padding:0;width:56px;min-width:56px;height:56px;min-height:56px;aspect-ratio:1;
+  border-radius:50%;font-size:1rem;letter-spacing:0}
+.btn.icon.sm{width:42px;min-width:42px;height:42px;min-height:42px;font-size:.85rem}
+
+/* CHIP — a label, not a control: no hover state and no pointer, because nothing happens
+   when you click it. Two jobs, so the dot is opt-in rather than built in:
+     .chip        taxonomy — the three tags under a case study title
+     .chip.live   status   — "OPEN TO WORK", where the dot is the point
+   A dot on every case-study tag would read as three bullet points in a row. */
+.chip{font-family:var(--font-utility);font-weight:500;font-size:.72rem;letter-spacing:.13em;
+  text-transform:uppercase;display:inline-flex;align-items:center;gap:10px;
+  padding:0 20px;min-height:40px;border-radius:var(--r-pill);
+  border:1.5px solid var(--teal-baby);color:var(--ink-blue)}
+.chip.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal-baby);flex:none}
+.chip.accent{border-color:var(--accent-baby);color:var(--accent)}
+.chip.accent.live::before{background:var(--accent)}
+
+/* LINK — the quietest rank. The rule is drawn with a border rather than text-decoration so
+   it sits clear of the letterforms and can animate its colour independently. */
+.btn-link{font-family:var(--font-utility);font-weight:500;font-size:.78rem;letter-spacing:.14em;
+  text-transform:uppercase;text-decoration:none;color:var(--accent);cursor:pointer;
+  display:inline-flex;align-items:center;gap:12px;padding-bottom:7px;
+  border-bottom:1.5px solid var(--accent);background:none;
+  transition:color var(--motion-fast) var(--ease-standard),
+             border-color var(--motion-fast) var(--ease-standard),
+             gap var(--motion-fast) var(--ease-standard)}
+.btn-link:hover{color:var(--accent-deep);border-color:var(--accent-deep);gap:18px}
+.btn-link.teal{color:var(--ink-blue);border-color:var(--teal-baby)}
+.btn-link.teal:hover{color:var(--ink-blue);border-color:var(--ink-blue)}
+
+/* DISABLED. Colour only — a disabled control must still be legible enough to read what it
+   would have done, so this is the accent desaturated toward the paper rather than made
+   transparent (which would let the blooms show through a control). */
+.btn[disabled],.btn[aria-disabled="true"]{background:var(--accent-mute);border-color:transparent;
+  color:var(--bg-raised);cursor:not-allowed;pointer-events:none}
+
+/* FOCUS. One ring for every control on the site, teal so it never disappears against a
+   terracotta fill, and offset so it reads as a ring around the button rather than as part
+   of its outline. */
+.btn:focus-visible,.btn-link:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
+
+/* On the dark case-study bands the terracotta line is too close in value to the ground, so
+   both quiet ranks switch to the cream inks that are already used for type down there. */
+.on-deep .btn.outline,.btn.outline.on-deep{border-color:var(--text-on-deep-secondary);color:var(--text-on-deep)}
+.on-deep .btn.outline:hover,.btn.outline.on-deep:hover{background:var(--text-on-deep);color:var(--bg-deep)}
+.on-deep .chip,.chip.on-deep{border-color:var(--line-on-deep);color:var(--text-on-deep-secondary)}
+.on-deep .chip::before,.chip.on-deep::before{background:var(--text-on-deep-secondary)}
 
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
-/* The SVG displacement warp lives HERE and nowhere else. Every element carrying
-   backdrop-filter:url() costs a full backdrop snapshot + turbulence + displacement pass,
-   and there were twelve of them (nav, every button, every chip, the play button). The nav
-   is the only one big enough for a 5px displacement to be visible at all — on a 46px pill
-   the warp is imperceptible but costs the same. Buttons and chips keep blur+saturate.
-   Do not promote this to .glass. */
-nav.bar.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
+/* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
+   Every element carrying backdrop-filter:url() costs a full backdrop snapshot + turbulence +
+   displacement pass, and there were twelve of them once (nav, every button, every chip, the
+   play button), which is why this is a list and not a property of .glass. The nav has always
+   been on it. The four company chips joined it 2026-08-12, at her ask — they carried .glass
+   already, but .glass without the warp is a frosted pill, and a frosted pill on flat cream
+   has nothing to frost. What was missing was the one thing that reads as glass rather than as
+   translucency: the edges of what is behind it moving as it passes.
+   Five warped elements, all static filters. Do not promote this to .glass. */
+nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
 .wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
 .nav-links a{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
@@ -221,51 +345,163 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .below-fold{}
 
 /* ------------------------------------------------ hero */
-.hero{padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:min(88vh,860px);
+/* Full viewport height so the flora's clip edge lands exactly on the fold. At any shorter
+   height the bottom bloom gets sliced by a visible horizontal line partway up the screen,
+   which reads as the edge of a box rather than as art running off the page. */
+.hero{padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:100vh;
   display:flex;flex-direction:column;justify-content:center;isolation:isolate}
+/* The copy sits in a clear column between the two blooms — no longer over them.
+   The overlap used to be defended as "on thin petal tips only", but at 1440 it put the rust
+   eyebrow flat on a rust petal, which is the one pairing on this site with no contrast at
+   all, and ran petals through the last handwritten line. So the rule is now simply: type
+   never touches paint. The blooms hold the outer margins (see --flora-keep below) and the
+   copy owns everything between them.
+
+   The indent is DERIVED from the keep-out rather than being its own hand-tuned clamp. It
+   used to be clamp(0px,13vw,190px), which happened to clear the blooms at 1440 and closed
+   to a 6px gap around 1200, because the two numbers grew at different rates and nothing
+   tied them together. Now the copy simply starts one gutter past wherever the left bloom is
+   allowed to reach, and the arithmetic converts that viewport position into a margin on the
+   section box — a section is capped at 1240px and centred, so its own left edge moves with
+   the viewport too and has to be subtracted back out. max(0px,…) is the narrow case, where
+   the section already starts outside the keep-out and no indent is wanted at all.
+
+   --copy-max closes the same trap on the other side. Indenting the copy past the left bloom
+   without also capping its width just pushes its right edge into the RIGHT bloom instead:
+   at a fixed 640px the two would have collided at about 950px of viewport, which is exactly
+   the class of width-dependent overlap this rule exists to abolish. So the cap is whatever
+   is left of the viewport once both keep-outs, both gutters and the indent are taken out —
+   the copy is never allowed to be wider than its own channel. */
+.hero{--section-left:calc(max(0px,(100vw - 1240px)/2) + var(--space)*6);
+  --flora-gutter:46px;
+  --copy-indent:max(0px,calc(var(--flora-keep) + var(--flora-gutter) - var(--section-left)));
+  --copy-max:calc(100vw - var(--flora-keep) - var(--flora-gutter) - var(--section-left) - var(--copy-indent))}
+/* 640px was the width of the old copy block, chosen when it was sitting ON the blooms and
+   had to stay narrow to keep off them. In a clear channel that same 640 leaves a dead strip
+   between the last handwritten line and the right bloom, and unused space at this scale
+   reads as a mistake rather than as air. The block now takes most of its channel and lets
+   her own line lengths — which shorten 96% → 70% down the paragraph — open the space
+   diagonally, away from the bloom rising into the bottom right corner. */
+.hero>:not(.hero-flora){position:relative;margin-left:var(--copy-indent);
+  max-width:min(100%,760px,var(--copy-max))}
 .hero .eyebrow{margin-bottom:calc(var(--space)*4)}
 /* display type is the reference blue, the way the wordmark is on her Orange & Mellow
    sheet — body copy stays the warm near-black so long paragraphs still read easily */
 .hero h1{font-family:var(--font-display);font-weight:300;font-size:clamp(3.2rem,8vw,7rem);
   line-height:1;letter-spacing:-.005em;color:var(--ink-blue)}
-/* Madhu's own handwriting, lifted off a photo of her notebook and used as a mask so it
-   takes the design-system ink rather than being a flat black picture — which is what lets
-   it be the reference blue instead of the near-black it was photographed in. The sentence
-   is still in the DOM for screen readers and search — see .vh.
-   Despeckled, re-spaced and punctuated by tools/clean-handwriting.js; the untouched lift
-   is kept beside it as hero-line-handwritten-raw.png, and the aspect-ratio below belongs
-   to the cleaned file (the extra leading made it taller). */
-.hero-line{width:min(100%,640px);aspect-ratio:1416/772;margin-top:calc(var(--space)*5);
-  background:var(--ink-blue);
-  /* versioned like the CSS and JS: the sentence itself lives in this file, so a returning
-     visitor holding the old PNG in cache would keep reading the old copy */
-  -webkit-mask:url(assets/hero/hero-line-handwritten.png?v=${BUILD_V}) left center/contain no-repeat;
-  mask:url(assets/hero/hero-line-handwritten.png?v=${BUILD_V}) left center/contain no-repeat}
+/* Madhu's own handwriting — and now actually SET, not photographed.
+
+   It used to be four PNG masks cut out of a sheet she wrote (tools/slice-hero-lines.js), one
+   per written line, dropped back at the exact fractions her hand put them at. That was the
+   only way to show her writing when her writing was a picture, and it had the cost you would
+   expect: the copy could not change without her writing it out again, the line breaks were
+   baked into the image so they could not respond to the viewport, and none of it was text.
+
+   tools/make-hand-font.js turns the same sheets into a real typeface, so this is now a
+   paragraph. It re-flows, it selects, it is read aloud correctly, it is indexed, and the copy
+   lives in data/site.json where the rest of the words live.
+
+   SET SMALLER AND WIDER than the old block, which she asked for and the type agrees with: at
+   620px the old sentence ran only five or six words to the line. At 860px and this size it
+   runs ten or eleven, which is a paragraph measure rather than a pull quote — and it stays
+   under 75 characters, so the eye still finds the next line.
+
+   THE SIZE WENT UP 15% when the ascenders were fixed, and it had to. Her x-height used to be
+   60% of the em because the font was built with ascenders barely above it; giving b d h k l
+   their real rise puts the x-height at 53%, which is an ordinary number for a typeface but
+   means the same font-size renders visibly smaller. Same optical size, taller letters.
+
+   line-height has to be generous and is: her descenders reach 64% of the em below the baseline
+   and her f goes further still, so at anything tighter the tail of a g lands in the line
+   underneath. 1.75 clears everything except the f, which is allowed to reach — it does on her
+   page too. */
+.hero-line{font-family:var(--font-hand);color:var(--ink-blue);
+  width:min(100%,860px);margin-top:calc(var(--space)*5);
+  font-size:clamp(1.18rem,1.78vw,1.52rem);line-height:1.75;
+  letter-spacing:.005em;text-wrap:pretty}
+/* Each sentence is its own line of thought, so it starts on its own line — but as a block
+   the three still read as one paragraph, so the space between them is smaller than the space
+   between the paragraph and anything else. */
+.hero-line span.hs{display:block}
+.hero-line span.hs + span.hs{margin-top:.5em}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
 .hero-cta-row{margin-top:calc(var(--space)*7);display:flex;gap:14px;flex-wrap:wrap}
 
-/* florals. Absolutely placed and behind everything, bleeding off the frame the way they
-   do in her reference — the crop is what makes them feel like a printed field rather
-   than clip art dropped on a page. */
-.hero-flora{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-/* all three sit to the right of the text column — the copy is left-aligned, so a bloom
-   on the left lands on the headline. Each is cropped by the section edge on purpose. */
-.hero-flora img{position:absolute;display:block;opacity:.9}
-/* SCALE: in her reference a single bloom is about a third of the frame and runs off the
-   edge — the hard crop is the whole effect, and at the old clamp(180px,20vw,300px) these
-   sat in the margin as small complete pictures, which is half of why they read as clip
-   art. They are deliberately large and deliberately cropped by .hero-flora's overflow.
-   The old floating .flora-s (bare crossing stems at .42 opacity) is gone: with nothing
-   hanging off them they read as a stray scratch across the copy. Stems now only ever
-   arrive attached to a bloom. */
-.flora-a{top:-22%;right:4%;width:clamp(260px,33vw,470px);transform:rotate(-5deg)}
-.flora-b{bottom:-26%;right:-9%;width:clamp(260px,34vw,500px);transform:rotate(4deg)}
-@media (max-width:1100px){.flora-a{right:-4%}.flora-b{right:-16%}}
+/* florals. The composition is her reference's: one bloom hanging from the top and running
+   off the LEFT edge, one rising from the bottom and running off the RIGHT, with the copy in
+   the open diagonal channel between them.
+
+   The container is 100vw, not the section box. A section is capped at 1240px, so a bloom
+   pinned inside it stops ~100px short of the screen on a wide display and reads as a framed
+   picture. The whole effect is the hard crop AT THE SCREEN EDGE, so the flora spans the
+   viewport and clips there. (body already sets overflow-x:hidden, so 100vw is safe.) */
+.hero-flora{position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);
+  z-index:-1;pointer-events:none;overflow:hidden}
+/* height:auto is load-bearing — the width/height attributes on the tags reserve the right
+   box before the PNGs land, but without it the CSS width fights the height attribute and
+   each bloom stretches into a 1680px-tall smear. */
+.hero-flora img{position:absolute;display:block;height:auto}
+/* KEEP-OUT. The blooms used to be placed by nudging left/right offsets until it looked
+   about right, and the result was that at 1440 they covered most of the frame and the copy
+   was set on top of them. This is the same composition — one bloom hanging from the top
+   left, one rising from the bottom right — but stated as a rule instead of a nudge:
+
+     a bloom may reach --flora-keep in from its own edge of the viewport, and no further.
+
+   Everything else follows from that. Each bloom's inner edge is pinned at --flora-keep, so
+   its width can change with the viewport (or be clamped at the ends) without ever
+   re-entering the copy: widening a bloom pushes it further off-screen rather than inward.
+   That is what makes "type never touches paint" a property of the layout and not a
+   coincidence that has to be re-checked at every width. The copy column starts outside it
+   — see the margin-left on .hero's children — and the gap between the two is the channel.
+
+   Roughly half of each bloom hangs off its edge, which is what keeps them reading as art
+   running off the page rather than as two pictures placed in two corners. */
+/* The WIDTHS are capped at what the artwork can actually pay for. bloom-left.png is 786px
+   wide, so on a 2x screen it can fill 393 CSS px before the browser starts inventing
+   detail — and inventing detail is precisely the softness she is objecting to. 27vw lands
+   on 389px at 1440. There is no more resolution to be had: the source sheet is 486px wide
+   and these are already upscaled 3x from it, so the display size is the last lever.
+   Note this does not change how much bloom is on screen — that is --flora-keep, and it is
+   independent. A narrower flower at the same keep-out simply hangs less far off the edge,
+   so slightly more of the whole bloom is visible. */
+:root{--flora-keep:16.5vw;--flora-a-w:clamp(280px,27vw,393px);--flora-b-w:clamp(280px,28vw,396px)}
+.flora-a{top:-11%;width:var(--flora-a-w);left:calc(var(--flora-keep) - var(--flora-a-w))}
+.flora-b{bottom:-12%;width:var(--flora-b-w);right:calc(var(--flora-keep) - var(--flora-b-w))}
+/* They ran at 82% because the copy was on top of them and two inks of near-identical
+   luminance cannot share a pixel. Nothing overlaps now, so the paint is at full strength —
+   which is also most of what she meant by "sharper": a bloom faded into the cream loses its
+   darkest edge first, and the dark rust line around each petal IS the definition. */
+.hero-flora img{opacity:1}
+/* Below ~1180 the copy column and the two keep-outs stop fitting side by side on one line,
+   so the blooms give up width rather than the type giving up its channel. */
+@media (max-width:1180px){:root{--flora-keep:13vw;--flora-a-w:clamp(260px,26vw,360px);--flora-b-w:clamp(260px,27vw,380px)}}
 /* on a phone the copy runs full width, so the blooms come almost all the way off the
-   edge — a sliver of colour rather than a picture behind the text */
-@media (max-width:760px){.hero-flora{opacity:.34}
-  .flora-a{width:210px;top:-4%;right:-26%}.flora-b{width:220px;right:-30%;bottom:-5%}}
+   edge — a sliver of colour at each margin rather than a picture behind the text */
+@media (max-width:760px){.hero-flora img{opacity:.5}
+  /* Same keep-out rule, just a much smaller one — and it is the one place on the site where
+     type does end up over paint, because a phone has no room for both a full-width column
+     and a channel either side of it. Hence the 50%: at a sliver's width and half strength
+     the blooms read as colour at the margin rather than as a picture behind the words. */
+  :root{--flora-keep:7vw;--flora-a-w:230px;--flora-b-w:240px}
+  .flora-a{top:-6%}.flora-b{bottom:-4%}
+  /* the indent that keeps the copy clear of the blooms on a desktop is pure lost margin on a
+     phone, where the blooms are slivers at the edges and the copy needs the full width */
+  .hero>:not(.hero-flora){margin-left:0;max-width:none}}
+/* the stick figure's canvas — spans the hero exactly, which is also its cage: it is drawn
+   here and nowhere else, and pointer-events:none means every real control under it keeps
+   working; stick.js listens on the hero itself. The say-hey button stays a real anchor —
+   the figure only holds a drawn post under it, so the control sheet is untouched.
+   Written as .hero>.stick-cv, not bare .stick-cv: the ".hero>:not(.hero-flora)" copy-column
+   rule is specificity 0,2,0 and would otherwise win, putting the canvas back IN FLOW —
+   which grows the hero, which resizes the canvas, which grows the hero, forever. Same
+   specificity + later in the sheet, plus explicit resets of the column's margin and cap.
+   width/height 100% is not decor: a canvas is a replaced element, so inset:0 alone leaves
+   it at its intrinsic bitmap size (device pixels — double size on Retina) instead of
+   stretching it to the hero. */
+.hero>.stick-cv{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;margin-left:0;max-width:none}
+.hero.stick-dragging{user-select:none;-webkit-user-select:none}
 .w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
 .revealed .w{opacity:1;transform:none}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -291,6 +527,36 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;
   transition:background var(--motion-base) var(--ease-standard)}
 .brand:hover{background:var(--ink-blue)}
+
+/* THE WALL INTRODUCES ITSELF. Nine marks that are simply present when you arrive at them
+   read as wallpaper; the same nine arriving one after another read as a list of people who
+   hired her, which is what they are.
+
+   Each logo sits in a slot with a hard bottom edge and starts BELOW it, so what you see is
+   not a logo fading in — it is a logo coming up from behind a line that is not drawn. The
+   slot is exactly the height of the mark, so overflow:hidden IS the line: there is nothing to
+   draw and nothing to keep in register.
+
+   The cascade is 65ms a step, left to right, set from --i on the slot. That is slow enough to
+   read as one-after-another and quick enough that the ninth is up within six tenths of a
+   second — a longer step turns a credential list into a performance. The rise is a fraction
+   over its own height so the mark clears the edge before it starts easing, and the fade
+   finishes early, so it is the movement you notice rather than the opacity. */
+.brand-slot{overflow:hidden;display:block;line-height:0}
+/* display:block, and it is load-bearing rather than tidy: .brand used to be a grid item,
+   which blockifies it, and putting it inside a slot made it an inline span again — where
+   height:38px does not apply, the box collapses to nothing, and translateY(118%) of nothing
+   is 0. The logos simply faded, with no movement at all. */
+.brand-slot .brand{display:block;transform:translateY(118%);opacity:0;
+  transition:background var(--motion-base) var(--ease-standard),
+             transform 620ms var(--ease-enter) calc(var(--i) * 65ms),
+             opacity 380ms var(--ease-standard) calc(var(--i) * 65ms)}
+.brands-row.visible .brand{transform:none;opacity:1}
+/* The row itself carries the observer but not the movement — the logos do that, and a row
+   that also slid up would set every mark going before its own delay had run. */
+.brands-row.fade{opacity:1;transform:none;transition:none}
+.settled .brand,.rm-mode .brand{transform:none;opacity:1}
+@media (prefers-reduced-motion:reduce){.brand{transform:none !important;opacity:1 !important;transition:background var(--motion-base) var(--ease-standard) !important}}
 @media (max-width:600px){.brands-row{gap:calc(var(--space)*4)}.brand{height:28px}}
 
 /* ------------------------------------------------ work cards (outcome statements) */
@@ -457,30 +723,107 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* display type is the reference blue, same rule as .hero h1 and .section-title — this is
    the architecture/brand sentence, and it is a headline, not body copy */
 .about-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.9vw,2.3rem);line-height:1.25;margin-bottom:calc(var(--space)*2);max-width:30ch;color:var(--ink-blue)}
-.about-body{color:var(--text-secondary);line-height:1.6;max-width:62ch;margin-bottom:calc(var(--space)*3)}
+/* The about copy is a short essay, not a blurb, so it is set as paragraphs. The gap between
+   them is one line of its own leading — enough to separate two thoughts, not so much that
+   the three read as three separate blocks — and only the last one carries the full space
+   down to the resume button. */
+.about-body{color:var(--text-secondary);line-height:1.6;max-width:62ch;margin-bottom:1.6em}
+.about-body:last-of-type{margin-bottom:calc(var(--space)*3)}
 @media (max-width:700px){.about-band{grid-template-columns:1fr}.about-band .headshot{width:130px;height:130px}}
+
+/* ---- the pot ---------------------------------------------------------------------------
+   Madhu's ink drawing, standing on the rule that runs across the top of the footer, so it
+   reads as an object resting on a surface rather than as an image placed near one.
+
+   bottom:100% is what does that. An absolutely positioned child is laid out against its
+   containing block's PADDING box, and the footer's 1px rule is drawn just outside that — so
+   bottom:100% puts the base of the pot exactly on the underside of the line, and the line
+   passes behind its foot. Tying it to the footer rather than to the section above also means
+   it stays on the line if the about copy ever changes length.
+
+   A MASK rather than an <img>: the drawing is ink on paper photographed on a phone, and the
+   page is cream, so a plain image would land a grey rectangle above the footer.
+   tools/lift-pot.js rebuilds the alpha from the photo's local contrast and the colour comes
+   from the palette here — same treatment as her handwriting in the hero and the client logos.
+
+   transform-origin is the bottom centre because that is exactly where the pot meets the
+   line it is standing on; rotating about anything else reads as it pivoting in mid-air
+   rather than tipping on its base. The rocking is integrated in JS — see makeJS. */
+/* The shelf is the footer rule, and align-items:flex-end is what puts the pot's foot on it
+   and keeps it there whatever the drawing's height does. --pot-base is the single size knob.
+   It went up by half (116 -> 172px at the top of the ramp) when the dog was taken off the
+   line: the old number was chosen so the pot would not be dwarfed by an animal 3.5x its
+   height standing next to it, and with nothing beside it that size reads as a leftover
+   rather than as an object. */
+.footer-shelf{position:absolute;bottom:100%;right:clamp(8px,5vw,76px);
+  --pot-base:clamp(112px,12vw,172px);
+  display:flex;align-items:flex-end;pointer-events:none}
+.footer-shelf>*{pointer-events:auto}
+
+.pot{width:var(--pot-base);aspect-ratio:var(--pot-w)/var(--pot-h);
+  background:var(--ink-blue);
+  -webkit-mask:var(--pot) center bottom/contain no-repeat;
+  mask:var(--pot) center bottom/contain no-repeat;
+  transform-origin:50% 100%;will-change:transform;cursor:pointer}
+
+/* THE DOG THAT USED TO STAND HERE IS GONE (her ask, 2026-08-12) — with it went .dog,
+   .dog-l, .dog-head, the four stacked masks and the three-spring bark in makeJS. The pot is
+   now the only thing on the shelf, which is why it has grown: at the old size it was scaled
+   to sit beside an animal three and a half times its height, and alone on the line that
+   reads as an ornament that got left behind. tools/lift-dog.js and assets/about/dog*.png
+   are still on disk; nothing references them. */
+
+@media (max-width:640px){.footer-shelf{right:clamp(6px,4vw,32px);--pot-base:clamp(92px,17vw,124px)}}
 .resume-band{text-align:center}
 .big-link{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.6rem);color:var(--text-primary);text-decoration:none;transition:color var(--motion-fast) var(--ease-standard)}
 .big-link:hover,.big-link:focus-visible{color:var(--accent)}
 footer{border-top:1px solid var(--line);padding:calc(var(--space)*5) calc(var(--space)*6);display:flex;justify-content:space-between;align-items:center;gap:16px;max-width:1240px;margin:0 auto;position:relative;z-index:1}
 footer a{color:var(--text-primary);text-decoration:none;font-size:.92rem;transition:color var(--motion-fast) var(--ease-standard)}
 footer a:hover{color:var(--accent)}
+.foot-links{display:flex;align-items:center;gap:calc(var(--space)*3);flex-wrap:wrap;justify-content:center}
 .foot-mark{font-family:var(--font-display);font-size:1.3rem}
 .foot-note{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.08em;color:var(--text-secondary)}
 @media (max-width:640px){footer{flex-direction:column;gap:10px;text-align:center}
   section{padding-left:calc(var(--space)*3);padding-right:calc(var(--space)*3);padding-top:calc(var(--space)*10);padding-bottom:calc(var(--space)*10)}}
 
+/* ------------------------------------------------ painted panels
+   Every decorative panel gradient on the case-study pages is gone: she asked for paint
+   texture rather than gradients. Each surface is now a flat palette token with her own
+   brush swatch laid over it, so a big block of colour still has grain and brush direction
+   without being shaded from one corner to another.
+   The ::before sits at z-index:-1 inside the panel's own isolated stacking context, which
+   paints it above the panel's background but below its content — so text stays crisp.
+   ONE gradient survives on purpose: the scrim on .panel::after. That one is not decoration,
+   it is what keeps cream type legible over an arbitrary photograph. */
+.cs-hero-band,.cs-next-card,.cs-media-inner.deep,
+.cs-stats-band,.cs-media-inner.wash,.cmp-col.after{position:relative;isolation:isolate}
+.cs-hero-band::before,.cs-next-card::before,.cs-media-inner.deep::before,
+.cs-stats-band::before,.cs-media-inner.wash::before,.cmp-col.after::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+  background:var(--paint-ink);opacity:.5;
+  -webkit-mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px;
+  mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px}
+/* the brush ink is one step off the panel's own fill, so the texture reads as brushwork in
+   the same colour rather than as a stain in a different one */
+.cs-hero-band,.cs-next-card,.cs-media-inner.deep{--paint-ink:var(--bg-deep-raised)}
+.cs-hero-band.light,.cs-stats-band,.cs-media-inner.wash,.cmp-col.after{--paint-ink:var(--bg-raised)}
+
 /* ================================================ case study pages */
 .cs-hero{position:relative;z-index:1;padding:96px 16px 0}
 .cs-hero-band{max-width:1240px;margin:0 auto;border-radius:24px;overflow:hidden;position:relative;
-  background:
-    radial-gradient(80% 120% at 15% 0%, var(--bg-deep-raised) 0%, var(--bg-deep) 55%, var(--bg-deep-shade) 100%);
-  color:var(--text-on-deep);padding:clamp(28px,4.5vw,56px)}
-.cs-hero-band.light{background:linear-gradient(160deg,var(--bg-raised) 0%,var(--accent-wash) 100%);color:var(--text-primary)}
+  background:var(--bg-deep);color:var(--text-on-deep);padding:clamp(28px,4.5vw,56px)}
+.cs-hero-band.light{background:var(--accent-wash);color:var(--text-primary)}
 .cs-kicker{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:14px}
 .cs-hero-band.light .cs-kicker{color:var(--accent-deep)}
-.cs-title{font-family:var(--font-display);font-weight:400;font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.12;max-width:22ch;margin-bottom:12px}
-.cs-tagline{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.5;max-width:58ch;color:var(--text-on-deep-secondary)}
+.cs-title{font-family:var(--font-display);font-weight:400;font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.12;max-width:22ch;text-wrap:balance;margin-bottom:12px}
+/* A HEADLINE THAT STATES THE BUSINESS PROBLEM IS LONGER THAN ONE THAT ASKS A QUESTION.
+   "What if your playlist knew how to DJ?" fits a 22ch measure at 3.6rem in two lines; the
+   Atlantic headline is a full sentence with the number in it and would run to six. Rather
+   than cut her copy, a long one steps down a size and out to a wider measure — the same
+   move a magazine makes, and it still reads as the loudest thing on the band. The cut is at
+   72 characters because that is where 22ch × 3.6rem stops fitting three lines. */
+.cs-title.long{font-size:clamp(1.65rem,3.1vw,2.5rem);line-height:1.2;max-width:32ch}
+.cs-tagline{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.5;max-width:58ch;text-wrap:balance;color:var(--text-on-deep-secondary)}
 .cs-hero-band.light .cs-tagline{color:var(--text-secondary)}
 .cs-hero-media{margin-top:clamp(24px,4vw,44px);border-radius:var(--r-media);overflow:hidden;box-shadow:0 30px 80px var(--shadow-strong)}
 .cs-hero-media img,.cs-hero-media video{width:100%;height:auto}
@@ -496,11 +839,13 @@ footer a:hover{color:var(--accent)}
 .cs-meta dt{font-family:var(--font-utility);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px}
 .cs-meta dd{font-size:.95rem}
 .cs-meta a{color:var(--accent-deep)}
-.cs-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
-.cs-tag{font-family:var(--font-utility);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:var(--r-pill)}
+/* The tags under a case study title are the button sheet's chip — same shape, same rank, so
+   they now carry .chip and this rule only lays them out. They used to be glass pills, which
+   put a frosted panel treatment on a piece of taxonomy and made them read as controls. */
+.cs-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 
 .cs-stats{max-width:1240px;margin:calc(var(--space)*6) auto 0;padding:0 calc(var(--space)*2)}
-.cs-stats-band{border-radius:24px;background:linear-gradient(150deg,var(--accent-wash),var(--bg-raised));padding:clamp(20px,3.5vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.cs-stats-band{border-radius:24px;background:var(--accent-wash);padding:clamp(20px,3.5vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .stat-card{border-radius:var(--r-card);padding:22px 22px 20px}
 .stat-value{font-family:var(--font-display);font-size:clamp(1.9rem,3.4vw,2.8rem);color:var(--accent-deep);line-height:1.05;margin-bottom:8px}
 .stat-label{font-size:.88rem;line-height:1.45;color:var(--text-secondary)}
@@ -510,7 +855,13 @@ footer a:hover{color:var(--accent)}
 /* the case-study equivalent of .section-title, so it takes the same reference blue.
    .cs-title is deliberately NOT blue — it sits on the deep teal band, where the blue goes
    muddy; on that band the light cream is the display colour. */
-.cs-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.8vw,2.2rem);line-height:1.2;margin-bottom:calc(var(--space)*3);max-width:26ch;color:var(--ink-blue)}
+/* a section heading breaks as AT MOST two lines: an inline per-heading
+   max-width (see twoLine() in the case-study template — titles, taglines and
+   captions get the same treatment) forces the wrap on long strings, and balance
+   splits the pair evenly instead of leaving a one-word second line. A heading
+   short enough to fit this 34ch measure on one line gets no inline clamp and
+   stays a single line — never stretch a short heading across two. */
+.cs-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.8vw,2.2rem);line-height:1.2;margin-bottom:calc(var(--space)*3);max-width:34ch;text-wrap:balance;color:var(--ink-blue)}
 .cs-body p{color:var(--text-secondary);line-height:1.65;font-size:1.02rem;margin-bottom:calc(var(--space)*2.5);max-width:62ch}
 .cs-quote{border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:calc(var(--space)*3) 0}
 .cs-quote p{font-family:var(--font-display);font-size:clamp(1.2rem,2vw,1.6rem);line-height:1.35;color:var(--text-primary);margin-bottom:8px}
@@ -519,21 +870,28 @@ footer a:hover{color:var(--accent)}
 
 .cs-media-band{max-width:1240px;margin:calc(var(--space)*7) auto 0;padding:0 calc(var(--space)*2)}
 .cs-media-inner{border-radius:24px;padding:clamp(20px,4vw,56px);display:flex;flex-direction:column;align-items:center;gap:18px}
-.cs-media-inner.wash{background:linear-gradient(150deg,var(--bg-raised),var(--accent-wash))}
-.cs-media-inner.deep{background:radial-gradient(90% 130% at 20% 0%,var(--bg-deep-raised) 0%,var(--bg-deep) 60%,var(--bg-deep-shade) 100%)}
+.cs-media-inner.wash{background:var(--accent-wash)}
+.cs-media-inner.deep{background:var(--bg-deep)}
 .cs-media-frame{border-radius:var(--r-media);overflow:hidden;width:100%;box-shadow:0 24px 60px var(--shadow-mid);position:relative}
 .cs-media-frame img,.cs-media-frame video{width:100%;height:auto}
 .cs-phones{display:flex;justify-content:center;gap:clamp(14px,3vw,40px);width:100%;align-items:flex-start}
 .cs-phones>img{width:min(42%,300px);height:auto;filter:drop-shadow(0 22px 40px var(--shadow-mid))}
 .cs-phones .phone-media{width:min(42%,218px);max-width:218px}
-.cs-caption{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;line-height:1.6;color:var(--text-secondary);max-width:64ch;text-align:center}
+.cs-phone-col{display:flex;flex-direction:column;align-items:center;gap:12px;width:min(42%,218px)}
+.cs-phone-col .phone-media{width:100%;max-width:218px}
+.cs-phone-label{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-caption)}
+.cs-media-inner.deep .cs-phone-label{color:var(--text-on-deep-secondary)}
+/* 1rem = 12pt — the floor for caption legibility. --text-caption exists because
+   --text-secondary is only 3.9:1 on the accent-wash band these captions sit on;
+   the darker step clears WCAG AA (4.5:1) on both wash and raised fills. */
+.cs-caption{font-family:var(--font-utility);font-size:1rem;letter-spacing:.03em;line-height:1.6;color:var(--text-caption);max-width:58ch;text-wrap:balance;text-align:center}
 .cs-media-inner.deep .cs-caption{color:var(--text-on-deep-secondary)}
 
 /* before / after compare */
 .cs-compare{max-width:1100px;margin:calc(var(--space)*6) auto 0;padding:0 calc(var(--space)*6);display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .cmp-col{border-radius:var(--r-card);padding:clamp(18px,2.6vw,30px)}
 .cmp-col.before{background:var(--bg-raised);border:1px solid var(--line)}
-.cmp-col.after{background:linear-gradient(160deg,var(--bg-raised),var(--accent-wash));border:1px solid var(--line-accent)}
+.cmp-col.after{background:var(--accent-wash);border:1px solid var(--line-accent)}
 .cmp-head{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px;color:var(--text-secondary)}
 .cmp-col.after .cmp-head{color:var(--accent-deep)}
 .cmp-item{margin-bottom:20px}
@@ -546,16 +904,25 @@ footer a:hover{color:var(--accent)}
 
 .cs-next{max-width:1240px;margin:calc(var(--space)*12) auto 0;padding:0 calc(var(--space)*2) calc(var(--space)*4)}
 .cs-next-card{display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
-  background:radial-gradient(90% 140% at 15% 0%,var(--bg-deep-raised) 0%,var(--bg-deep) 60%,var(--bg-deep-shade) 100%);color:var(--text-on-deep)}
+  background:var(--bg-deep);color:var(--text-on-deep)}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
 .cs-next-card .arrow{font-size:clamp(1.6rem,3vw,2.4rem);transition:transform var(--motion-base) var(--ease-standard)}
 .cs-next-card:hover .arrow{transform:translate(6px,-6px)}
 
-.play-btn{position:absolute;bottom:16px;right:16px;z-index:6;width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
-  font-size:1.05rem;display:none;align-items:center;justify-content:center;color:var(--text-primary)}
-.phone-media .play-btn{bottom:9cqw;right:50%;transform:translateX(50%);width:34px;height:34px;font-size:.8rem}
-.rm-mode .play-btn{display:flex}
+/* A play button is .play-btn + .btn.icon.solid — the shape, size and colour all come from
+   the button system, and this rule only says where it sits and when it appears. It carries
+   .solid rather than the sheet's teal outline because it is the one control that does not
+   sit on the page cream: it floats over a screenshot or a video frame, and a transparent
+   pill with a 1.5px line disappears against arbitrary artwork. A filled terracotta disc is
+   the same system saying the same thing on an unknown background. */
+.play-btn{position:absolute;bottom:16px;right:16px;z-index:6;display:none}
+/* min-width/height too, or .btn's own min-height wins and the disc turns into a stadium */
+.phone-media .play-btn.icon{bottom:9cqw;right:50%;transform:translateX(50%);
+  width:36px;min-width:36px;height:36px;min-height:36px;font-size:.8rem}
+.rm-mode .play-btn{display:inline-flex}
+/* the button system brings its own teal focus ring (see .btn:focus-visible); this is the
+   catch-all for every other link and control on the site */
 a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
 /* settle fail-safe: nothing ever stays invisible, even if transitions never run */
@@ -611,6 +978,100 @@ function makeJS() {
     });
     requestAnimationFrame(()=>setTimeout(()=>hero.classList.add('revealed'),120));
   }
+
+  /* ---- the damped spring the pot rocks on -----------------------------------------------
+     The pot moves by being knocked and then settling, which is an equation and not an easing
+     curve:
+
+       theta'' = -w0^2 * f(theta) - 2*zeta*w0*theta'
+
+     The first term is the restoring force, the second is the loss. zeta below 1 is
+     underdamped, which is the case where it oscillates at all, and the pot wants a low one so
+     that it rocks several times before it comes back to centre.
+
+     f() is the shape of the restoring force, and the pot passes sin, because gravity's pull
+     on a leaning body really does fall off as the sine of the tilt — which is most of why a
+     big lean takes visibly longer to come back than a small one. (The solver takes f as an
+     argument because the dog's neck, which used to stand beside it, was linear. The dog is
+     gone; the argument is kept because a spring solver that hard-codes its own force law is
+     the wrong shape of function.)
+
+     Integrated at a FIXED substep with semi-implicit Euler. Fixed, because stepping by the
+     frame delta makes the damping frame-rate dependent — the same nudge would settle faster
+     on a 120Hz display than on a 60Hz one. Semi-implicit (velocity first, then position from
+     the NEW velocity) because plain Euler slowly gains energy and these would never stop. */
+  const DT=1/240;
+  function spring(w0,zeta,shape){
+    const f=shape||(t=>t);
+    return {
+      x:0, v:0,
+      kick(dv){this.v+=dv},
+      advance(dt){
+        let acc=dt;
+        while(acc>=DT){
+          this.v+=(-w0*w0*f(this.x)-2*zeta*w0*this.v)*DT;
+          this.x+=this.v*DT;
+          acc-=DT;
+        }
+        return acc;
+      },
+      /* "still" has to be judged on BOTH position and velocity — a spring passing through
+         zero at full speed is momentarily at x=0 and is not remotely at rest */
+      resting(px,pv){return Math.abs(this.x)<px&&Math.abs(this.v)<pv},
+      w0:w0
+    };
+  }
+  /* One rAF loop per animated object, started on demand and cancelled the moment it settles —
+     this site has been bitten before by an idle animation costing frames. */
+  function driver(tick){
+    let raf=0,last=0,carry=0;
+    const frame=now=>{
+      raf=0;
+      /* clamp the delta: returning to a backgrounded tab hands you several seconds at once,
+         and integrating that in one go would fling things off the shelf */
+      const dt=Math.min((now-last)/1000,0.05)+carry; last=now;
+      carry=tick(dt,now);
+      if(carry===false)return;
+      raf=requestAnimationFrame(frame);
+    };
+    return ()=>{if(!raf){last=performance.now();carry=0;raf=requestAnimationFrame(frame)}};
+  }
+
+  /* ---- the pot rocks -------------------------------------------------------------------
+     Nudge it and it tips, swings back past centre, and each swing overshoots less than the
+     last until it is standing still again. w0 = 11 rad/s is about 1.75 swings a second, which
+     reads as something heavy and ceramic; zeta = 0.11 leaves roughly six visible swings, each
+     about 30% smaller than the one before. */
+  const pot=document.querySelector('.pot');
+  if(pot){
+    const KICK=3.05;   // rad/s per nudge → about a 16 degree first lean
+    const MAX=0.44;    // ~25 degrees, the most it will ever lean however hard you nudge it
+    const s=spring(11.0,0.11,Math.sin);
+    const start=driver(dt=>{
+      const carry=s.advance(dt);
+      if(s.resting(0.0015,0.012)){s.x=0;s.v=0;pot.style.transform='';return false}
+      pot.style.transform='rotate('+(s.x*180/Math.PI).toFixed(3)+'deg)';
+      return carry;
+    });
+    const nudge=e=>{
+      if(rmActive())return;
+      /* push it away from the side you came in on, so it reacts to you rather than always
+         falling the same way */
+      const r=pot.getBoundingClientRect();
+      const dir=(e&&typeof e.clientX==='number'&&e.clientX>r.left+r.width/2)?-1:1;
+      s.kick(dir*KICK);
+      // a second nudge adds energy, as it would in life — but never past the tipping point
+      const peak=Math.abs(s.x)+Math.abs(s.v)/s.w0;
+      if(peak>MAX)s.v*=MAX/peak;
+      start();
+    };
+    pot.addEventListener('mouseenter',nudge);
+    /* touch has no hover, and focus keeps it reachable from the keyboard */
+    pot.addEventListener('touchstart',()=>nudge(),{passive:true});
+    pot.addEventListener('focus',()=>nudge());
+    pot.tabIndex=0;
+  }
+
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
@@ -745,7 +1206,14 @@ function head(title, desc) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${theme.fonts['google-css']}" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=${BUILD_V}">
+<!-- .w is the word wrapper reveal-words puts around every word, and it starts at opacity 0
+     waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
+     is invisible to a no-JS visitor. It is real text now, so a reader with no JS still gets
+     the copy — but it would look like the hero simply has none. -->
 <noscript><style>.w{opacity:1;transform:none}.fade{opacity:1;transform:none}.dc{display:none}</style></noscript>
+<!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
+     14kb, so it is worth the early connection rather than waiting on the stylesheet -->
+<link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
 </head>
 <body>
 ${svgFilters()}
@@ -792,14 +1260,22 @@ function navBar(kind) {
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark" href="index.html">${esc(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
-  <a class="btn glass solid" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey</a>
+  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey</a>
 </nav></div>`;
 }
 
-function footerHTML() {
-  return `<footer>
+function footerHTML(extra = '') {
+  /* Outbound profiles (LinkedIn) sit with the email as one group of ways to reach her,
+     rather than being scattered — so the footer reads mark / contact / place. They carry
+     rel=noopener like every other external link on the site. */
+  const links = (site.footer.links || []).map(l =>
+    `<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ');
+  return `<footer>${extra}
   <span class="foot-mark">${esc(site.wordmark)}</span>
-  <a href="mailto:${esc(site.email)}">${esc(site.email)}</a>
+  <span class="foot-links">
+    <a href="mailto:${esc(site.email)}">${esc(site.email)}</a>
+    ${links}
+  </span>
   <span class="foot-note">${esc(site.footer.note)}</span>
 </footer>
 <script src="app.js?v=${BUILD_V}" defer></script>
@@ -808,7 +1284,7 @@ function footerHTML() {
 }
 
 function videoTag(m, { eager = false } = {}) {
-  return `<video muted loop playsinline preload="none" data-src="${esc(m.src)}" poster="${esc(m.poster || '')}" aria-label="${esc(m.alt || '')}"></video>`;
+  return `<video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>`;
 }
 
 /* one phone frame for every phone screen on the site — geometry lives in the CSS,
@@ -833,10 +1309,10 @@ function phoneFrame(inner, { attrs = '', extra = '', island = true } = {}) {
 function browserFrame(m, { eager = false } = {}) {
   const isVideo = /\.(mp4|webm)$/.test(m.src || '');
   const body = isVideo
-    ? `<img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
-       <video muted loop playsinline preload="none" data-src="${esc(m.src)}" poster="${esc(m.poster || '')}" aria-label="${esc(m.alt || '')}"></video>
-       <button class="play-btn glass" type="button" aria-label="Play preview">▶</button>`
-    : `<img class="poster" src="${esc(m.src)}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
+    ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
+       <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>
+       <button class="play-btn btn icon solid" type="button" aria-label="Play preview">▶</button>`
+    : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
   const url = esc(m.url || '');
   return `<div class="browser">
       <div class="browser-chrome">
@@ -856,23 +1332,36 @@ function browserFrame(m, { eager = false } = {}) {
 function renderHome() {
   const h = site.hero;
 
+  /* Her sentences, set in her own hand — one span each so they break where the thought
+     breaks rather than wherever the measure happens to run out. reveal-words then writes
+     them on a word at a time, which is the one thing the old picture could never do and the
+     one thing handwriting most obviously should: it arrives the way it was written. */
+  const heroLinesHTML = h.lines.map(l => `<span class="hs">${typo(l)}</span>`).join('');
+
   const heroHTML = `
 <section class="hero" id="hero">
   <div class="hero-flora" aria-hidden="true">
-    <!-- ?v= for the same reason the handwriting mask carries it: the artwork is regenerated
-         in place by tools/make-flowers.js, so without a version a returning visitor (or the
-         person iterating on the art) keeps being served the previous bloom out of cache. -->
-    <img class="flora-a" src="assets/hero/flower-a.svg?v=${BUILD_V}" alt="" width="560" height="720" loading="eager" decoding="async">
-    <img class="flora-b" src="assets/hero/flower-b.svg?v=${BUILD_V}" alt="" width="540" height="700" loading="eager" decoding="async">
+    <!-- These are not drawings of her reference — they ARE her reference, cut out of
+         "color pallete I like.png" pixel-for-pixel by tools/lift-flowers.js. Every attempt
+         to redraw them got rejected; the brush striations and the blunt drooping petals
+         only look right because they are the actual paint.
+         ?v= for the same reason the handwriting mask carries it: the art is regenerated in
+         place, so without a version a returning visitor keeps being served the old bloom. -->
+    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="786" height="1680" loading="eager" decoding="async" fetchpriority="high">
+    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="792" height="1179" loading="eager" decoding="async" fetchpriority="high">
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
-  <p class="hero-line"><span class="vh">${esc(h.lines.join(' '))}</span></p>
+  <p class="hero-line reveal-words" data-seq="3">${heroLinesHTML}</p>
   <p class="hero-cta-row">
-    <a class="btn glass solid float" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener">${esc(h.ctaPrimary.label)}</a>
-    <a class="btn glass float" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener">${esc(h.ctaSecondary.label)}</a>
+    <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener">${esc(h.ctaPrimary.label)}</a>
+    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener">${esc(h.ctaSecondary.label)}</a>
   </p>
-</section>`;
+</section>
+<!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
+     defer keeps it after app.js, which must split the headline into .ch spans first —
+     the figure climbs those. -->
+<script src="stick.js?v=${BUILD_V}" defer></script>`;
 
   /* logo wall: masked to a single ink so nine marks in nine different house styles
      read as one row (see .brand). role=img + aria-label keeps the names available. */
@@ -883,26 +1372,26 @@ function renderHome() {
     <p>${typo(site.brands.sub)}</p>
   </div>
   <div class="brands-row fade">
-    ${site.brands.logos.map(l => `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')"></span>`).join('\n    ')}
+    ${site.brands.logos.map((l, i) => `<span class="brand-slot" style="--i:${i}"><span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')"></span></span>`).join('\n    ')}
   </div>
 </section>`;
 
   const projectMedia = p => {
     const m = p.media;
     if (m.type === 'phone-video') {
-      return phoneFrame(`<img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
+      return phoneFrame(`<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
           ${videoTag(m)}`, { attrs: ` data-video${m.autoplay ? ' data-autoplay' : ''}`, island: m.island !== false,
-            extra: '<button class="play-btn glass" type="button" aria-label="Play project preview">▶</button>' });
+            extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play project preview">▶</button>' });
     }
     if (m.type === 'phone-gif' || m.type === 'phone-image') {
-      return phoneFrame(`<img src="${esc(m.src)}" alt="${esc(m.alt)}"${screenFit(m.src)} loading="lazy" decoding="async">`,
+      return phoneFrame(`<img src="${esc(asset(m.src))}" alt="${esc(m.alt)}"${screenFit(m.src)} loading="lazy" decoding="async">`,
         { island: m.island !== false });
     }
     if (m.type === 'browser') return browserFrame(m, { lazy: true });
     return `<div class="project-media" data-video>
-      <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
+      <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
       ${videoTag(m)}
-      <button class="play-btn glass" type="button" aria-label="Play project preview">▶</button>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play project preview">▶</button>
     </div>`;
   };
 
@@ -962,6 +1451,24 @@ function renderHome() {
   </figure>
 </section>`;
 
+  /* Her ink drawing of the pot. It stands ON the rule that separates the about section from
+     the footer, so it belongs to the footer and not to the about section — that line is the
+     surface it is resting on, and anchoring it to anything else would leave it floating the
+     moment the section above changed height. Home page only: the about section is only here,
+     and a pot standing on the footer of a case study would be a non sequitur.
+
+     It is a mask, not a picture (tools/lift-pot.js), so it takes a palette ink and composites
+     onto the cream — see .pot. Rendered only when the asset exists: the drawing is lifted off
+     a photo by hand, and a missing file should leave a clean footer rather than a broken image. */
+  const potSrc = 'assets/about/pot.png';
+  const potDims = imageSize(potSrc);
+  const potHTML = !potDims ? '' : `<span class="pot" style="--pot:url(${potSrc}?v=${BUILD_V});--pot-w:${potDims.w};--pot-h:${potDims.h}"></span>`;
+  if (!potDims) missingArt.push(`  ${potSrc} — run: node tools/lift-pot.js`);
+
+  /* The shelf, anchored to the footer rule — see .footer-shelf. */
+  const shelfHTML = !potDims ? '' : `
+  <span class="footer-shelf" aria-hidden="false">${potHTML}</span>`;
+
   const aboutHTML = `
 <section id="about" class="below-fold">
   <div class="about-band fade">
@@ -969,8 +1476,8 @@ function renderHome() {
     <div>
       <p class="eyebrow">${esc(site.about.eyebrow)}</p>
       <h2 class="about-title">${typo(site.about.title)}</h2>
-      <p class="about-body">${typo(site.about.body)}</p>
-      <a class="btn glass" href="assets/resume.pdf" target="_blank" rel="noopener">${esc(site.about.resumeLabel)} <span aria-hidden="true">↗</span></a>
+      ${[].concat(site.about.body).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n      ')}
+      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener">${esc(site.about.resumeLabel)} <span aria-hidden="true">↗</span></a>
     </div>
   </div>
 </section>`;
@@ -985,36 +1492,61 @@ ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
 </main>
-` + footerHTML();
+` + footerHTML(shelfHTML);
 }
 
 /* ---------------------------------------------------------------- case study pages */
+/* A section can carry either one media object or an array of them. The array case exists for
+   evidence: "The misconception" has to show two different pieces of the OLD site side by
+   side, and each needs its own caption saying what was wrong with it — one shared caption
+   under a collage would not attach the reason to the artefact. */
+/* Case-study display text — headline, tagline, section headings, captions — breaks
+   as AT MOST two lines. No single CSS measure can do that (the strings run 33–220
+   chars), so each element gets an inline per-text max-width: k·length in ch, where
+   k sits between the font's per-character width (forces the wrap) and half of it
+   (fits in two). Measured: Cormorant renders 0.79–0.91ch per character → k 0.62;
+   DM Sans 0.64–0.71 → k 0.48. text-wrap:balance splits the pair evenly.
+
+   Short strings are left alone (her rule 2026-08-13: a heading that fits on one
+   line must not be stretched across two awkward lines). "Fits" is decided with the
+   font's UPPER per-char width (wide) against the class's own max-width measure, so
+   a string only skips the clamp when one line is guaranteed, not merely hoped for
+   — typo() still ties the last two words if a narrow viewport wraps it anyway.
+   If a new string ever renders 3 lines, re-measure its k — don't eyeball one. */
+const twoLine = (t, f, fitCh) =>
+  t.length * f.wide <= fitCh ? '' : ` style="max-width:${(t.length * f.k).toFixed(1)}ch"`;
+const CORMORANT = { k: 0.62, wide: 0.91 }, DMSANS = { k: 0.48, wide: 0.71 };
+
 function csMedia(m) {
+  if (Array.isArray(m)) return m.map(csMedia).join('\n');
   if (!m) return '';
-  const caption = m.caption ? `<p class="cs-caption">${typo(m.caption)}</p>` : '';
+  const caption = m.caption ? `<p class="cs-caption"${twoLine(m.caption, DMSANS, 58)}>${typo(m.caption)}</p>` : '';
   let inner = '';
   if (m.frame === 'browser') {
     inner = browserFrame(m);
   } else if (m.type === 'video') {
     inner = `<div class="cs-media-frame" data-video>
-      <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
       ${videoTag(m)}
-      <button class="play-btn glass" type="button" aria-label="Play video">▶</button>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>
     </div>`;
     /* the frame needs intrinsic size: use aspect ratio wrapper */
     inner = `<div class="cs-media-frame" data-video style="aspect-ratio:16/9;background:var(--bg-deep-shade)">
-      <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-      <video muted loop playsinline preload="none" data-src="${esc(m.src)}" poster="${esc(m.poster)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
-      <button class="play-btn glass" type="button" aria-label="Play video">▶</button>
+      <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>
     </div>`;
   } else if (m.type === 'image') {
-    inner = `<div class="cs-media-frame"><img src="${esc(m.src)}" alt="${esc(m.alt)}" loading="lazy" decoding="async"></div>`;
+    inner = `<div class="cs-media-frame"><img src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="lazy" decoding="async"></div>`;
   } else if (m.type === 'phones') {
     /* frame:"phone" wraps raw screens in the CSS frame. Screens that already have a
        device drawn into the PNG are dropped in as plain images — never double-frame. */
-    inner = `<div class="cs-phones">${m.items.map(it => m.frame === 'phone'
-      ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="lazy" decoding="async">`, { island: m.island !== false })
-      : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="lazy" decoding="async">`).join('')}</div>`;
+    inner = `<div class="cs-phones">${m.items.map(it => {
+      const ph = m.frame === 'phone'
+        ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="lazy" decoding="async">`, { island: m.island !== false })
+        : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="lazy" decoding="async">`;
+      return it.label ? `<div class="cs-phone-col"><p class="cs-phone-label">${esc(it.label)}</p>${ph}</div>` : ph;
+    }).join('')}</div>`;
   }
   return `<div class="cs-media-band fade"><div class="cs-media-inner ${esc(m.wash || 'wash')}">${inner}${caption}</div></div>`;
 }
@@ -1023,24 +1555,26 @@ function csHeroMedia(cs) {
   const m = cs.heroMedia;
   if (!m) return '';
   if (m.frame === 'browser') return `<div class="cs-hero-media" style="box-shadow:none;border-radius:0;overflow:visible">${browserFrame(m, { eager: true })}</div>`;
-  if (m.type === 'image') return `<div class="cs-hero-media"><img src="${esc(m.src)}" alt="${esc(m.alt)}" loading="eager" decoding="async" fetchpriority="high"></div>`;
+  if (m.type === 'image') return `<div class="cs-hero-media"><img src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="eager" decoding="async" fetchpriority="high"></div>`;
   if (m.type === 'video') return `<div class="cs-hero-media" data-video style="position:relative;aspect-ratio:16/9;background:var(--bg-deep-shade)">
-    <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-    <video muted loop playsinline preload="none" data-src="${esc(m.src)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
-    <button class="play-btn glass" type="button" aria-label="Play video">▶</button></div>`;
+    <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+    <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
+    <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button></div>`;
   if (m.type === 'phones') return `<div class="cs-hero-phones">${m.items.map(it => m.frame === 'phone'
     ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="eager" decoding="async">`, { island: m.island !== false })
     : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="eager" decoding="async">`).join('')}</div>`;
   if (m.type === 'phone-video') return `<div class="cs-hero-phone-video">${phoneFrame(
-    `<img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="eager" decoding="async">${videoTag(m)}`,
+    `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="eager" decoding="async">${videoTag(m)}`,
     { attrs: ' data-video', island: m.island !== false,
-      extra: '<button class="play-btn glass" type="button" aria-label="Play video">▶</button>' })}</div>`;
+      extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>' })}</div>`;
   return '';
 }
 
 function renderCase(cs) {
   const tone = cs.heroTone === 'light' ? 'light' : '';
-  const tagGlass = tone ? 'glass' : 'glass-dark';
+  /* the light hero band sits on cream, the default band is the deep green — so the chips
+     take the on-deep inks there, the same switch the rest of that band already makes */
+  const tagTone = tone ? '' : ' on-deep';
   const metaHTML = `<dl class="cs-meta fade">${cs.meta.map(m => `<div><dt>${esc(m.label)}</dt><dd>${m.href ? `<a href="${esc(m.href)}" target="_blank" rel="noopener">${esc(m.value)} ↗</a>` : esc(m.value)}</dd></div>`).join('')}</dl>`;
 
   const statsHTML = cs.stats ? `<div class="cs-stats fade"><div class="cs-stats-band">
@@ -1062,7 +1596,7 @@ function renderCase(cs) {
 <div class="cs-row fade">
   <p class="cs-label">${esc(s.label)}</p>
   <div>
-    <h2 class="cs-heading">${typo(s.heading)}</h2>
+    <h2 class="cs-heading"${twoLine(s.heading, CORMORANT, 34)}>${typo(s.heading)}</h2>
     <div class="cs-body">${s.body.map(p => `<p>${typo(p)}</p>`).join('')}</div>
     ${quote}
   </div>
@@ -1078,7 +1612,7 @@ function renderCase(cs) {
 <div class="cs-row fade">
   <p class="cs-label">${esc(cs.reflection.label || 'Reflection')}</p>
   <div>
-    <h2 class="cs-heading">${typo(cs.reflection.heading)}</h2>
+    <h2 class="cs-heading"${twoLine(cs.reflection.heading, CORMORANT, 34)}>${typo(cs.reflection.heading)}</h2>
     <div class="cs-body">${cs.reflection.body.map(p => `<p>${typo(p)}</p>`).join('')}</div>
   </div>
 </div>` : '';
@@ -1089,9 +1623,9 @@ ${navBar('case')}
 <header class="cs-hero">
   <div class="cs-hero-band ${tone}">
     <p class="cs-kicker">${esc(cs.name)}</p>
-    <h1 class="cs-title">${typo(cs.title)}</h1>
-    <p class="cs-tagline">${typo(cs.tagline)}</p>
-    <div class="cs-tags">${cs.tags.map(t => `<span class="cs-tag ${tagGlass}">${esc(t)}</span>`).join('')}</div>
+    <h1 class="cs-title${cs.title.length > 72 ? ' long' : ''}"${twoLine(cs.title, CORMORANT, cs.title.length > 72 ? 32 : 22)}>${typo(cs.title)}</h1>
+    <p class="cs-tagline"${twoLine(cs.tagline, DMSANS, 58)}>${typo(cs.tagline)}</p>
+    <div class="cs-tags">${cs.tags.map(t => `<span class="chip${tagTone}">${esc(t)}</span>`).join('')}</div>
     ${csHeroMedia(cs)}
   </div>
 </header>
@@ -1123,9 +1657,35 @@ function copyDir(src, dest) {
   }
 }
 
+/* The whole stylesheet is one long template literal with a lot of prose in it, so an unclosed
+   or double-closed comment is easy to introduce and invisible afterwards: CSS does not fail
+   loudly, it silently discards rules until the parser resynchronises. That is exactly what
+   happened to the .btn.teal and .btn.icon rules — a stray second `*​/` left the tertiary and
+   icon buttons rendering as bare text with no outline at all, and nothing reported it.
+   Scanning for balance costs nothing and turns a silent visual regression into a build error. */
+function checkComments(css) {
+  let i = 0, depth = 0, line = 1;
+  while (i < css.length) {
+    if (css[i] === '\n') line++;
+    if (css.startsWith('/*', i)) {
+      if (depth) throw new Error(`styles.css: nested "/*" at line ${line} — CSS comments do not nest`);
+      depth = 1; i += 2; continue;
+    }
+    if (css.startsWith('*/', i)) {
+      if (!depth) throw new Error(`styles.css: stray "*/" at line ${line} — every rule after it is silently dropped`);
+      depth = 0; i += 2; continue;
+    }
+    i++;
+  }
+  if (depth) throw new Error('styles.css: unclosed "/*" — the rest of the stylesheet is inside a comment');
+  return css;
+}
+
 fs.mkdirSync(DIST, { recursive: true });
-fs.writeFileSync(path.join(DIST, 'styles.css'), makeCSS());
+fs.writeFileSync(path.join(DIST, 'styles.css'), checkComments(makeCSS()));
 fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
+/* the stick figure ships as-is — it is hand-written client JS, not generated */
+fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
 fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
@@ -1145,6 +1705,10 @@ if (DOMAIN) fs.writeFileSync(path.join(DIST, 'CNAME'), DOMAIN + '\n');
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 fs.writeFileSync(path.join(DIST, '.buildstamp'), String(Date.now()));
 console.log(`Built ${1 + cases.length} pages → dist/ (${cases.map(c => c.slug).join(', ')})`);
+if (missingArt.length) {
+  console.log('Missing artwork — built without it:');
+  missingArt.forEach(w => console.log(w));
+}
 if (fitWarnings.length) {
   console.log('Phone screens (aspect check against 9:19.5 = 0.4615):');
   console.log([...new Set(fitWarnings)].join('\n'));

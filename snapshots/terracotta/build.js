@@ -92,7 +92,7 @@ p,h1,h2,h3,li,figcaption,blockquote{text-wrap:pretty}
 
 /* ------------------------------------------------ cursor
    A small solid dot. On a case-study card it does three quick flips and then rolls out
-   into a pill offering "click if curious".
+   into a pill offering "I'm curious".
    Three layers, because each needs its own transform: .dc is positioned by JS, .dc-spin
    owns the flips, .dc-body owns the shape. Stacking them on one element would mean the
    follow, the turn and the roll-out all fighting over 'transform'.
@@ -116,7 +116,8 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
 .dc-body span{opacity:0;transition:opacity .16s linear;padding:0 16px;
   font-family:var(--font-utility);font-weight:500;font-size:.62rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--bg-base)}
-.dc.pill .dc-body{width:186px;height:34px}
+/* width is hand-fitted to the label — the pill animates width, so it can't be auto */
+.dc.pill .dc-body{width:140px;height:34px}
 .dc.pill .dc-body span{opacity:1;transition-delay:.1s}
 .dc.go .dc-spin{animation:dcGo .34s var(--ease-standard) forwards}
 @keyframes dcGo{
@@ -124,12 +125,16 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
   to{transform:translate(-50%,-50%) scale(1.35);opacity:0}}
 @media (hover:none),(pointer:coarse){.dc{display:none}body.dc-on{cursor:auto}}
 
-/* warm light across the cream field + paper grain */
+/* Brushed colour across the cream field + paper grain.
+   This was three big radial-gradients standing in for warm light. She asked for "no
+   gradients — think more paint strokes texture", so it is now her own brush swatch: the
+   texture is an alpha-only mask (tools/make-paint-wash.js strips the swatch's own shading
+   and mirror-quilts it so it tiles), and the COLOUR comes from a palette token painted
+   through it. Retune the wash by editing --accent-wash, not the PNG. */
 .atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(58vw 42vh at 12% -6%, rgba(169,78,44,.07), transparent 62%),
-    radial-gradient(46vw 38vh at 88% 4%, rgba(157,186,180,.13), transparent 60%),
-    radial-gradient(70vw 52vh at 55% 110%, rgba(196,137,47,.07), transparent 64%);}
+  background:var(--accent-wash);opacity:.55;
+  -webkit-mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px;
+  mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.045;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
@@ -150,7 +155,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   position:relative;
   background:linear-gradient(150deg, rgba(255,255,255,.50) 0%, ${g['light-bg']} 52%, rgba(255,255,255,.26) 100%);
   -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate});
+  backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
   border:1px solid ${g['light-border']};
   box-shadow:
     inset 0 1.5px 1.5px -1px rgba(255,255,255,.98),
@@ -158,7 +163,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
     inset 1.5px 0 2px -1px rgba(255,255,255,.42),
     inset -1.5px 0 2px -1px rgba(255,255,255,.42),
     inset 0 0 18px rgba(255,255,255,.16),
-    0 10px 30px rgba(14,33,26,.10);
+    0 10px 30px var(--shadow-soft);
 }
 /* the prism rim. Sits on the edge only, so the middle of the panel stays clean. */
 .glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
@@ -171,9 +176,9 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   padding:1.5px;mix-blend-mode:screen;opacity:.9}
 .glass>*{position:relative;z-index:1}
 .glass-dark{
-  background:linear-gradient(150deg, rgba(255,255,255,.14) 0%, ${g['dark-bg']} 52%, rgba(10,26,20,.44) 100%);
+  background:linear-gradient(150deg, rgba(255,255,255,.14) 0%, ${g['dark-bg']} 52%, rgba(18,35,32,.44) 100%);
   -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate});
+  backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
   border:1px solid ${g['dark-border']};
   box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.55), inset 0 -2px 2px -1px rgba(255,255,255,.22),
              0 10px 30px rgba(0,0,0,.25);
@@ -187,63 +192,115 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   padding:0 22px;border-radius:var(--r-pill);min-height:46px;display:inline-flex;align-items:center;gap:8px;
   color:var(--text-primary);cursor:pointer;position:relative;
   transition:transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard)}
-.btn:hover,.btn:focus-visible{transform:translateY(-1px);box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.98), inset 0 -2px 2px -1px rgba(255,255,255,.62), 0 14px 34px rgba(14,33,26,.16)}
-.btn.solid{background:var(--accent);border-color:var(--accent-deep);color:#F4FAF3;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 10px 26px rgba(15,82,54,.35)}
-.btn.solid:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 14px 32px rgba(15,82,54,.45)}
+.btn:hover,.btn:focus-visible{transform:translateY(-1px);box-shadow:inset 0 1.5px 1.5px -1px rgba(255,255,255,.98), inset 0 -2px 2px -1px rgba(255,255,255,.62), 0 14px 34px var(--shadow-soft)}
+.btn.solid{background:var(--accent);border-color:var(--accent-deep);color:var(--text-on-deep);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 10px 26px var(--shadow-clay)}
+.btn.solid:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 14px 32px var(--shadow-clay)}
 .glass-dark.btn{color:var(--text-on-deep)}
 
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
+/* The SVG displacement warp lives HERE and nowhere else. Every element carrying
+   backdrop-filter:url() costs a full backdrop snapshot + turbulence + displacement pass,
+   and there were twelve of them (nav, every button, every chip, the play button). The nav
+   is the only one big enough for a 5px displacement to be visible at all — on a 46px pill
+   the warp is imperceptible but costs the same. Buttons and chips keep blur+saturate.
+   Do not promote this to .glass. */
+nav.bar.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
 .wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
 .nav-links a{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
   padding:10px 13px;border-radius:var(--r-pill);transition:color var(--motion-fast) var(--ease-standard),background var(--motion-fast) var(--ease-standard)}
-.nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep);background:rgba(255,255,255,.5)}
+.nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep);background:var(--accent-wash)}
 @media (max-width:700px){.nav-links a.optional{display:none}}
 
 /* ------------------------------------------------ shared sections */
 main{position:relative;z-index:1}
 section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;margin:0 auto;position:relative}
 .eyebrow{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:calc(var(--space)*3)}
-.section-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.8rem,3.4vw,2.7rem);line-height:1.2;max-width:26ch;margin-bottom:calc(var(--space)*7)}
+.section-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.8rem,3.4vw,2.7rem);line-height:1.2;max-width:26ch;margin-bottom:calc(var(--space)*7);color:var(--ink-blue)}
 .fade{opacity:0;transform:translateY(24px);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
 .fade.visible{opacity:1;transform:none}
 .below-fold{}
 
 /* ------------------------------------------------ hero */
-.hero{padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:min(88vh,860px);
+/* Full viewport height so the flora's clip edge lands exactly on the fold. At any shorter
+   height the bottom bloom gets sliced by a visible horizontal line partway up the screen,
+   which reads as the edge of a box rather than as art running off the page. */
+.hero{padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:100vh;
   display:flex;flex-direction:column;justify-content:center;isolation:isolate}
+/* The copy steps into the diagonal channel the two blooms leave between them: in from the
+   left so the headline clears the dense middle of the left bloom, and capped in width so it
+   stops before the right one. It still overlaps both at the corners, which she wants — the
+   indent is only there to keep the overlap on thin petal tips instead of solid paint. */
+.hero>:not(.hero-flora){position:relative;margin-left:clamp(0px,13vw,190px);max-width:min(100%,640px)}
 .hero .eyebrow{margin-bottom:calc(var(--space)*4)}
+/* display type is the reference blue, the way the wordmark is on her Orange & Mellow
+   sheet — body copy stays the warm near-black so long paragraphs still read easily */
 .hero h1{font-family:var(--font-display);font-weight:300;font-size:clamp(3.2rem,8vw,7rem);
-  line-height:1;letter-spacing:-.005em}
+  line-height:1;letter-spacing:-.005em;color:var(--ink-blue)}
 /* Madhu's own handwriting, lifted off a photo of her notebook and used as a mask so it
-   takes the design-system ink rather than being a flat black picture. The sentence is
-   still in the DOM for screen readers and search — see .vh. */
-.hero-line{width:min(100%,640px);aspect-ratio:1700/665;margin-top:calc(var(--space)*5);
-  background:var(--text-primary);
-  -webkit-mask:url(assets/hero/hero-line-handwritten.png) left center/contain no-repeat;
-  mask:url(assets/hero/hero-line-handwritten.png) left center/contain no-repeat}
+   takes the design-system ink rather than being a flat black picture — which is what lets
+   it be the reference blue instead of the near-black it was photographed in. The sentence
+   is still in the DOM for screen readers and search — see .vh.
+   Despeckled, re-spaced and punctuated by tools/clean-handwriting.js; the untouched lift
+   is kept beside it as hero-line-handwritten-raw.png, and the aspect-ratio below belongs
+   to the cleaned file (the extra leading made it taller). */
+.hero-line{width:min(100%,470px);aspect-ratio:1416/772;margin-top:calc(var(--space)*5);
+  background:var(--ink-blue);
+  /* versioned like the CSS and JS: the sentence itself lives in this file, so a returning
+     visitor holding the old PNG in cache would keep reading the old copy */
+  -webkit-mask:url(assets/hero/hero-line-handwritten.png?v=${BUILD_V}) left center/contain no-repeat;
+  mask:url(assets/hero/hero-line-handwritten.png?v=${BUILD_V}) left center/contain no-repeat}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
 .hero-cta-row{margin-top:calc(var(--space)*7);display:flex;gap:14px;flex-wrap:wrap}
 
-/* florals. Absolutely placed and behind everything, bleeding off the frame the way they
-   do in her reference — the crop is what makes them feel like a printed field rather
-   than clip art dropped on a page. */
-.hero-flora{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-/* all three sit to the right of the text column — the copy is left-aligned, so a bloom
-   on the left lands on the headline. Each is cropped by the section edge on purpose. */
-.hero-flora img{position:absolute;display:block;opacity:.9}
-.flora-a{top:-16%;right:9%;width:clamp(180px,20vw,300px);transform:rotate(-5deg)}
-.flora-b{bottom:-20%;right:-5%;width:clamp(180px,21vw,320px);transform:rotate(4deg)}
-.flora-s{top:16%;right:31%;width:clamp(80px,9vw,130px);opacity:.42;transform:rotate(7deg)}
-@media (max-width:1100px){.flora-s{display:none}.flora-a{right:2%}}
+/* florals. The composition is her reference's: one bloom hanging from the top and running
+   off the LEFT edge, one rising from the bottom and running off the RIGHT, with the copy in
+   the open diagonal channel between them.
+
+   The container is 100vw, not the section box. A section is capped at 1240px, so a bloom
+   pinned inside it stops ~100px short of the screen on a wide display and reads as a framed
+   picture. The whole effect is the hard crop AT THE SCREEN EDGE, so the flora spans the
+   viewport and clips there. (body already sets overflow-x:hidden, so 100vw is safe.) */
+.hero-flora{position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);
+  z-index:-1;pointer-events:none;overflow:hidden}
+/* height:auto is load-bearing — the width/height attributes on the tags reserve the right
+   box before the PNGs land, but without it the CSS width fights the height attribute and
+   each bloom stretches into a 1680px-tall smear. */
+.hero-flora img{position:absolute;display:block;height:auto}
+/* SCALE: in her reference one bloom is about a third of the frame. These are sized so that
+   roughly a quarter of each hangs off its edge — big enough that the two masses balance the
+   width of the page between them, which is what she meant by "visually balanced
+   horizontally". Sized in vw so the balance holds as the window changes.
+   Stems only ever arrive attached to a bloom (tools/lift-flowers.js enforces it): a bare
+   stem with nothing on the end reads as a scratch across the copy.
+   Neither bloom can be pulled far enough off-screen to leave the copy a clear channel: two
+   ~500px blooms plus a 660px copy is 1660px of demand on a 1440px page. Overlap is therefore
+   structural, not accidental — so these offsets are chosen to put the copy over the thin
+   splayed petal TIPS and keep the solid middle of each flower off the edge. */
+.flora-a{top:-18%;left:-13vw;width:clamp(340px,39vw,640px)}
+.flora-b{bottom:-14%;right:-11vw;width:clamp(330px,42vw,680px)}
+/* The copy overlaps the blooms and that is the point — but the h1 is deep teal and the
+   petals are rust, two inks of nearly identical luminance, so type ON the dense middle of a
+   petal would be unreadable. Easing the art back a little keeps the overlap legible without
+   washing the paint out into a tint. */
+.hero-flora img{opacity:.82}
+/* A section caps at 1240px, so above ~1340px the auto margins keep pushing the copy inboard
+   while the blooms keep growing with vw — below it they close on the copy instead. So the
+   blooms have to retreat as the page narrows, or the rust eyebrow ends up sitting on a rust
+   petal (the one pairing on this site with no contrast at all). */
+@media (max-width:1400px){.flora-a{left:-18vw}.flora-b{right:-16vw}}
+@media (max-width:1100px){.flora-a{left:-24vw}.flora-b{right:-22vw}}
 /* on a phone the copy runs full width, so the blooms come almost all the way off the
-   edge — a sliver of colour rather than a picture behind the text */
-@media (max-width:760px){.hero-flora{opacity:.34}
-  .flora-a{width:120px;top:-3%;right:-19%}.flora-b{width:130px;right:-22%;bottom:-4%}}
+   edge — a sliver of colour at each margin rather than a picture behind the text */
+@media (max-width:760px){.hero-flora img{opacity:.5}
+  .flora-a{width:230px;top:-6%;left:-24vw}.flora-b{width:240px;right:-26vw;bottom:-4%}
+  /* the indent that keeps the copy clear of the blooms on a desktop is pure lost margin on a
+     phone, where the blooms are slivers at the edges and the copy needs the full width */
+  .hero>:not(.hero-flora){margin-left:0;max-width:none}}
 .w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
 .revealed .w{opacity:1;transform:none}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -260,18 +317,24 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   grid-template-columns:repeat(auto-fit,minmax(80px,1fr));align-items:center;
   gap:calc(var(--space)*5) calc(var(--space)*3.5)}
 /* logos are a mixed bag of cream, black and full-colour marks — masking them to one
-   ink is the only way a row of nine reads as a set rather than a clip-art pile */
-.brand{height:38px;width:100%;background:var(--text-primary);opacity:.85;
+   ink is the only way a row of nine reads as a set rather than a clip-art pile.
+   The masks come from assets/logos/clean/, not the raw files: each original is a cream
+   mark with an opaque dark outline + drop shadow baked in, and an alpha mask can't tell
+   mark from shadow, so every glyph doubled and smeared. tools/clean-logos.js rebuilds
+   the alpha from luminance to recover just the letterforms. */
+.brand{height:38px;width:100%;background:var(--brand-blue);
   -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;
-  transition:opacity var(--motion-base) var(--ease-standard),background var(--motion-base) var(--ease-standard)}
-.brand:hover{opacity:1;background:var(--accent-deep)}
+  transition:background var(--motion-base) var(--ease-standard)}
+.brand:hover{background:var(--ink-blue)}
 @media (max-width:600px){.brands-row{gap:calc(var(--space)*4)}.brand{height:28px}}
 
 /* ------------------------------------------------ work cards (outcome statements) */
 .wproject{display:grid;grid-template-columns:1fr minmax(0,46%);gap:calc(var(--space)*8);align-items:center;margin-bottom:calc(var(--space)*13);
   text-decoration:none;color:inherit;border-radius:var(--r-card);padding:calc(var(--space)*3);
   transition:background var(--motion-base) var(--ease-standard)}
-.wproject:hover{background:rgba(255,255,255,.45)}
+/* hover wash is the terracotta wash token, not white — white is not in this palette and
+   read as a cold sheet laid over the warm cream */
+.wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
@@ -363,8 +426,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    34pt tabs, 12pt lights 8pt apart, 40pt toolbar, 28pt omnibox, 10pt window radius. */
 .browser{container-type:inline-size;width:100%;--u:.0781cqw;
   border-radius:calc(10*var(--u));overflow:hidden;background:#E6E8E3;
-  box-shadow:0 calc(24*var(--u)) calc(54*var(--u)) rgba(14,33,26,.22),
-             0 calc(2*var(--u)) calc(6*var(--u)) rgba(14,33,26,.14),
+  box-shadow:0 calc(24*var(--u)) calc(54*var(--u)) var(--shadow-mid),
+             0 calc(2*var(--u)) calc(6*var(--u)) var(--shadow-soft),
              inset 0 0 0 1px rgba(24,38,32,.10)}
 .browser-chrome{background:linear-gradient(#E9EBE6,#DFE1DC)}
 .browser-row{display:flex;align-items:flex-end;height:calc(40*var(--u));padding-left:calc(20*var(--u))}
@@ -397,28 +460,38 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   transition:flex-grow var(--motion-slow) var(--ease-enter);background:var(--bg-raised)}
 .panel.active{flex-grow:8}
 .panel img,.panel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.94)}
-.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,24,18,0) 38%,rgba(10,24,18,.85) 100%)}
+.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,35,32,0) 38%,rgba(18,35,32,.85) 100%)}
 .panel video{opacity:0;transition:opacity var(--motion-base) var(--ease-standard);z-index:1}
 .panel.active.has-video video{opacity:1}
 .panel-collapsed-label{position:absolute;bottom:calc(var(--space)*3);left:50%;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;
-  font-family:var(--font-utility);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#F0F6EF;white-space:nowrap;z-index:2;opacity:.9;
-  transition:opacity var(--motion-base) var(--ease-standard);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  font-family:var(--font-utility);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-deep);white-space:nowrap;z-index:2;opacity:.9;
+  transition:opacity var(--motion-base) var(--ease-standard);text-shadow:0 1px 6px var(--shadow-strong)}
 .panel.active .panel-collapsed-label{opacity:0;pointer-events:none}
 .panel-content{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:calc(var(--space)*4);opacity:0;transform:translateY(12px);
   transition:opacity var(--motion-base) var(--ease-enter) 120ms,transform var(--motion-base) var(--ease-enter) 120ms;pointer-events:none}
 .panel.active .panel-content{opacity:1;transform:none}
 .p-org{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:calc(var(--space)*1)}
-.p-title{font-family:var(--font-display);font-weight:400;color:#F5FAF3;font-size:clamp(1.3rem,2.2vw,1.9rem);line-height:1.2;margin-bottom:calc(var(--space)*1);max-width:24ch}
-.p-desc{color:rgba(240,246,239,.88);font-size:.98rem;line-height:1.5;max-width:52ch}
+.p-title{font-family:var(--font-display);font-weight:400;color:var(--text-on-deep);font-size:clamp(1.3rem,2.2vw,1.9rem);line-height:1.2;margin-bottom:calc(var(--space)*1);max-width:24ch}
+.p-desc{color:var(--text-on-deep-secondary);font-size:.98rem;line-height:1.5;max-width:52ch}
 @media (max-width:760px){.panels{flex-direction:column;height:auto}
   .panel{height:84px;flex:none;transition:height var(--motion-slow) var(--ease-enter)}
   .panel.active{height:360px;flex:none}
   .panel-collapsed-label{writing-mode:horizontal-tb;transform:translateX(-50%);bottom:auto;top:50%;margin-top:-.5em}}
 
+/* ------------------------------------------------ story */
+.story{margin:0}
+/* capped at its natural width so it is never upscaled — a soft GIF would undo the point */
+.story img{width:100%;max-width:1000px;height:auto}
+/* the stacked cut is a different shape, and <source> carries no dimensions — without this
+   the phone reserves the wide aspect and the page jumps when the GIF lands */
+@media (max-width:760px){.story img{aspect-ratio:660/1060;max-width:none}}
+
 /* ------------------------------------------------ about + footer */
 .about-band{display:grid;grid-template-columns:180px 1fr;gap:calc(var(--space)*7);align-items:center}
-.about-band .headshot{width:180px;height:180px;border-radius:50%;object-fit:cover;box-shadow:0 18px 40px rgba(14,33,26,.2)}
-.about-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.9vw,2.3rem);line-height:1.25;margin-bottom:calc(var(--space)*2);max-width:30ch}
+.about-band .headshot{width:180px;height:180px;border-radius:50%;object-fit:cover;box-shadow:0 18px 40px var(--shadow-mid)}
+/* display type is the reference blue, same rule as .hero h1 and .section-title — this is
+   the architecture/brand sentence, and it is a headline, not body copy */
+.about-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.9vw,2.3rem);line-height:1.25;margin-bottom:calc(var(--space)*2);max-width:30ch;color:var(--ink-blue)}
 .about-body{color:var(--text-secondary);line-height:1.6;max-width:62ch;margin-bottom:calc(var(--space)*3)}
 @media (max-width:700px){.about-band{grid-template-columns:1fr}.about-band .headshot{width:130px;height:130px}}
 .resume-band{text-align:center}
@@ -432,22 +505,42 @@ footer a:hover{color:var(--accent)}
 @media (max-width:640px){footer{flex-direction:column;gap:10px;text-align:center}
   section{padding-left:calc(var(--space)*3);padding-right:calc(var(--space)*3);padding-top:calc(var(--space)*10);padding-bottom:calc(var(--space)*10)}}
 
+/* ------------------------------------------------ painted panels
+   Every decorative panel gradient on the case-study pages is gone: she asked for paint
+   texture rather than gradients. Each surface is now a flat palette token with her own
+   brush swatch laid over it, so a big block of colour still has grain and brush direction
+   without being shaded from one corner to another.
+   The ::before sits at z-index:-1 inside the panel's own isolated stacking context, which
+   paints it above the panel's background but below its content — so text stays crisp.
+   ONE gradient survives on purpose: the scrim on .panel::after. That one is not decoration,
+   it is what keeps cream type legible over an arbitrary photograph. */
+.cs-hero-band,.cs-next-card,.cs-media-inner.deep,
+.cs-stats-band,.cs-media-inner.wash,.cmp-col.after{position:relative;isolation:isolate}
+.cs-hero-band::before,.cs-next-card::before,.cs-media-inner.deep::before,
+.cs-stats-band::before,.cs-media-inner.wash::before,.cmp-col.after::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+  background:var(--paint-ink);opacity:.5;
+  -webkit-mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px;
+  mask:url(assets/hero/paint-wash.png?v=${BUILD_V}) repeat center/504px 2032px}
+/* the brush ink is one step off the panel's own fill, so the texture reads as brushwork in
+   the same colour rather than as a stain in a different one */
+.cs-hero-band,.cs-next-card,.cs-media-inner.deep{--paint-ink:var(--bg-deep-raised)}
+.cs-hero-band.light,.cs-stats-band,.cs-media-inner.wash,.cmp-col.after{--paint-ink:var(--bg-raised)}
+
 /* ================================================ case study pages */
 .cs-hero{position:relative;z-index:1;padding:96px 16px 0}
 .cs-hero-band{max-width:1240px;margin:0 auto;border-radius:24px;overflow:hidden;position:relative;
-  background:
-    radial-gradient(80% 120% at 15% 0%, #1C4634 0%, var(--bg-deep) 55%, #0A1912 100%);
-  color:var(--text-on-deep);padding:clamp(28px,4.5vw,56px)}
-.cs-hero-band.light{background:linear-gradient(160deg,#E4EEDD 0%,var(--accent-wash) 100%);color:var(--text-primary)}
+  background:var(--bg-deep);color:var(--text-on-deep);padding:clamp(28px,4.5vw,56px)}
+.cs-hero-band.light{background:var(--accent-wash);color:var(--text-primary)}
 .cs-kicker{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:14px}
 .cs-hero-band.light .cs-kicker{color:var(--accent-deep)}
 .cs-title{font-family:var(--font-display);font-weight:400;font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.12;max-width:22ch;margin-bottom:12px}
 .cs-tagline{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.5;max-width:58ch;color:var(--text-on-deep-secondary)}
 .cs-hero-band.light .cs-tagline{color:var(--text-secondary)}
-.cs-hero-media{margin-top:clamp(24px,4vw,44px);border-radius:var(--r-media);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.cs-hero-media{margin-top:clamp(24px,4vw,44px);border-radius:var(--r-media);overflow:hidden;box-shadow:0 30px 80px var(--shadow-strong)}
 .cs-hero-media img,.cs-hero-media video{width:100%;height:auto}
 .cs-hero-phones{margin-top:clamp(24px,4vw,44px);display:flex;justify-content:center;gap:clamp(16px,3vw,42px);align-items:flex-start}
-.cs-hero-phones>img{width:min(38%,300px);height:auto;filter:drop-shadow(0 24px 44px rgba(14,33,26,.35))}
+.cs-hero-phones>img{width:min(38%,300px);height:auto;filter:drop-shadow(0 24px 44px var(--shadow-mid))}
 .cs-hero-phones .phone-media{width:min(38%,218px);max-width:218px}
 .cs-hero-phone-video{margin-top:clamp(24px,4vw,44px);display:flex;justify-content:center}
 .cs-hero-phone-video .phone-media{max-width:225px}
@@ -462,14 +555,17 @@ footer a:hover{color:var(--accent)}
 .cs-tag{font-family:var(--font-utility);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px;border-radius:var(--r-pill)}
 
 .cs-stats{max-width:1240px;margin:calc(var(--space)*6) auto 0;padding:0 calc(var(--space)*2)}
-.cs-stats-band{border-radius:24px;background:linear-gradient(150deg,var(--accent-wash),#E9F1E4);padding:clamp(20px,3.5vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.cs-stats-band{border-radius:24px;background:var(--accent-wash);padding:clamp(20px,3.5vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .stat-card{border-radius:var(--r-card);padding:22px 22px 20px}
 .stat-value{font-family:var(--font-display);font-size:clamp(1.9rem,3.4vw,2.8rem);color:var(--accent-deep);line-height:1.05;margin-bottom:8px}
 .stat-label{font-size:.88rem;line-height:1.45;color:var(--text-secondary)}
 
 .cs-row{max-width:1100px;margin:0 auto;padding:calc(var(--space)*10) calc(var(--space)*6) 0;display:grid;grid-template-columns:220px 1fr;gap:calc(var(--space)*6)}
 .cs-label{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);position:sticky;top:96px;align-self:start;padding-top:6px}
-.cs-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.8vw,2.2rem);line-height:1.2;margin-bottom:calc(var(--space)*3);max-width:26ch}
+/* the case-study equivalent of .section-title, so it takes the same reference blue.
+   .cs-title is deliberately NOT blue — it sits on the deep teal band, where the blue goes
+   muddy; on that band the light cream is the display colour. */
+.cs-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.8vw,2.2rem);line-height:1.2;margin-bottom:calc(var(--space)*3);max-width:26ch;color:var(--ink-blue)}
 .cs-body p{color:var(--text-secondary);line-height:1.65;font-size:1.02rem;margin-bottom:calc(var(--space)*2.5);max-width:62ch}
 .cs-quote{border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:calc(var(--space)*3) 0}
 .cs-quote p{font-family:var(--font-display);font-size:clamp(1.2rem,2vw,1.6rem);line-height:1.35;color:var(--text-primary);margin-bottom:8px}
@@ -478,12 +574,12 @@ footer a:hover{color:var(--accent)}
 
 .cs-media-band{max-width:1240px;margin:calc(var(--space)*7) auto 0;padding:0 calc(var(--space)*2)}
 .cs-media-inner{border-radius:24px;padding:clamp(20px,4vw,56px);display:flex;flex-direction:column;align-items:center;gap:18px}
-.cs-media-inner.wash{background:linear-gradient(150deg,#E9F1E4,var(--accent-wash))}
-.cs-media-inner.deep{background:radial-gradient(90% 130% at 20% 0%,#1C4634 0%,var(--bg-deep) 60%,#0A1912 100%)}
-.cs-media-frame{border-radius:var(--r-media);overflow:hidden;width:100%;box-shadow:0 24px 60px rgba(14,33,26,.28);position:relative}
+.cs-media-inner.wash{background:var(--accent-wash)}
+.cs-media-inner.deep{background:var(--bg-deep)}
+.cs-media-frame{border-radius:var(--r-media);overflow:hidden;width:100%;box-shadow:0 24px 60px var(--shadow-mid);position:relative}
 .cs-media-frame img,.cs-media-frame video{width:100%;height:auto}
 .cs-phones{display:flex;justify-content:center;gap:clamp(14px,3vw,40px);width:100%;align-items:flex-start}
-.cs-phones>img{width:min(42%,300px);height:auto;filter:drop-shadow(0 22px 40px rgba(10,24,18,.35))}
+.cs-phones>img{width:min(42%,300px);height:auto;filter:drop-shadow(0 22px 40px var(--shadow-mid))}
 .cs-phones .phone-media{width:min(42%,218px);max-width:218px}
 .cs-caption{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;line-height:1.6;color:var(--text-secondary);max-width:64ch;text-align:center}
 .cs-media-inner.deep .cs-caption{color:var(--text-on-deep-secondary)}
@@ -492,7 +588,7 @@ footer a:hover{color:var(--accent)}
 .cs-compare{max-width:1100px;margin:calc(var(--space)*6) auto 0;padding:0 calc(var(--space)*6);display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .cmp-col{border-radius:var(--r-card);padding:clamp(18px,2.6vw,30px)}
 .cmp-col.before{background:var(--bg-raised);border:1px solid var(--line)}
-.cmp-col.after{background:linear-gradient(160deg,#F0F7EC,var(--accent-wash));border:1px solid rgba(27,110,73,.25)}
+.cmp-col.after{background:var(--accent-wash);border:1px solid var(--line-accent)}
 .cmp-head{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px;color:var(--text-secondary)}
 .cmp-col.after .cmp-head{color:var(--accent-deep)}
 .cmp-item{margin-bottom:20px}
@@ -505,7 +601,7 @@ footer a:hover{color:var(--accent)}
 
 .cs-next{max-width:1240px;margin:calc(var(--space)*12) auto 0;padding:0 calc(var(--space)*2) calc(var(--space)*4)}
 .cs-next-card{display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
-  background:radial-gradient(90% 140% at 15% 0%,#1C4634 0%,var(--bg-deep) 60%,#0A1912 100%);color:var(--text-on-deep)}
+  background:var(--bg-deep);color:var(--text-on-deep)}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
 .cs-next-card .arrow{font-size:clamp(1.6rem,3vw,2.4rem);transition:transform var(--motion-base) var(--ease-standard)}
@@ -587,7 +683,7 @@ function makeJS() {
 
   /* ================= cursor =================
      A small solid dot that follows with a touch of lag. On a case-study card it flips
-     three times, then rolls out into a pill reading "click if curious"; clicking rolls
+     three times, then rolls out into a pill reading "I'm curious"; clicking rolls
      it back up and turns the page. Pointer-only — on touch, coarse pointers or reduced
      motion it never arms and the real cursor is left alone. */
   const dc=document.getElementById('dc');
@@ -709,7 +805,7 @@ function head(title, desc) {
 <body>
 ${svgFilters()}
 <div class="atmosphere" aria-hidden="true"></div>
-<div class="dc" id="dc" aria-hidden="true"><div class="dc-spin"><div class="dc-body"><span>click if curious</span></div></div></div>`;
+<div class="dc" id="dc" aria-hidden="true"><div class="dc-spin"><div class="dc-body"><span>I'm curious</span></div></div></div>`;
 }
 
 /* Filters the CSS references. Chrome only gained SVG filter functions in
@@ -717,22 +813,21 @@ ${svgFilters()}
    rule still gives blur+saturate, so the glass degrades to frosted, never to nothing. */
 function svgFilters() {
   return `<svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
-  <!-- droplet cursor: one octave of very low-frequency noise = a few broad, smooth
-       swells, so the backdrop reads as refracted through water, not scrambled -->
-  <filter id="dropletWarp" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.008" numOctaves="1" seed="5" result="n">
-      <animate attributeName="baseFrequency" dur="16s" repeatCount="indefinite"
-               values="0.006 0.008;0.009 0.006;0.005 0.009;0.006 0.008"/>
-    </feTurbulence>
-    <feGaussianBlur in="n" stdDeviation="1.4" result="ns"/>
-    <feDisplacementMap in="SourceGraphic" in2="ns" scale="11" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-  <!-- nav / buttons / chips: the same idea, much gentler -->
+  <!-- nav: one octave of very low-frequency noise = a few broad, smooth swells, so the
+       backdrop reads as refracted through glass, not scrambled.
+
+       PERFORMANCE, do not re-add the <animate> that used to live in here. Animating
+       baseFrequency means the browser regenerates fractal noise and re-runs the
+       displacement map over the whole backdrop EVERY frame, forever, on every element
+       that references this filter — it pinned the page to 43fps while sitting idle
+       doing nothing. A static warp still bends what is behind the panel, which is the
+       part of the look that matters; "it is never perfectly still" is carried by the
+       .float translate instead, which the compositor does for free.
+
+       The old #dropletWarp filter was deleted with it: the droplet cursor was cut, so
+       nothing referenced it, but its indefinite <animate> was still in the DOM. -->
   <filter id="glassWarp" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.007" numOctaves="1" seed="9" result="n">
-      <animate attributeName="baseFrequency" dur="22s" repeatCount="indefinite"
-               values="0.005 0.007;0.008 0.005;0.005 0.007"/>
-    </feTurbulence>
+    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.007" numOctaves="1" seed="9" result="n"/>
     <feGaussianBlur in="n" stdDeviation="1.8" result="ns"/>
     <feDisplacementMap in="SourceGraphic" in2="ns" scale="5" xChannelSelector="R" yChannelSelector="G"/>
   </filter>
@@ -819,9 +914,14 @@ function renderHome() {
   const heroHTML = `
 <section class="hero" id="hero">
   <div class="hero-flora" aria-hidden="true">
-    <img class="flora-a" src="assets/hero/flower-a.svg" alt="" width="560" height="780" loading="eager" decoding="async">
-    <img class="flora-s" src="assets/hero/stem-a.svg" alt="" width="320" height="700" loading="eager" decoding="async">
-    <img class="flora-b" src="assets/hero/flower-b.svg" alt="" width="520" height="740" loading="eager" decoding="async">
+    <!-- These are not drawings of her reference — they ARE her reference, cut out of
+         "color pallete I like.png" pixel-for-pixel by tools/lift-flowers.js. Every attempt
+         to redraw them got rejected; the brush striations and the blunt drooping petals
+         only look right because they are the actual paint.
+         ?v= for the same reason the handwriting mask carries it: the art is regenerated in
+         place, so without a version a returning visitor keeps being served the old bloom. -->
+    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="786" height="1680" loading="eager" decoding="async" fetchpriority="high">
+    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="792" height="1179" loading="eager" decoding="async" fetchpriority="high">
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
@@ -898,6 +998,28 @@ function renderHome() {
   </div>
 </section>`;
 
+  /* The GIF's own background is --bg-base, so it sits on the page with no visible edge —
+     the notebook page bleeding into the site rather than a framed picture.
+
+     Four sources, first match wins: narrow screens get the stacked cut (side by side, her
+     handwriting lands at ~120px on a phone and stops being readable), and anyone who has
+     asked their OS for less motion gets the matching still instead of the loop. The alt
+     text carries the whole story, because in this section the words ARE the artwork. */
+  const st = site.story;
+  const storyHTML = !st ? '' : `
+<section id="story" class="below-fold">
+  <p class="eyebrow fade">${esc(st.eyebrow)}</p>
+  <h2 class="section-title fade">${typo(st.title)}</h2>
+  <figure class="story fade">
+    <picture>
+      <source media="(prefers-reduced-motion:reduce) and (max-width:${esc(st.tallBelow)})" srcset="${esc(st.posterTall)}">
+      <source media="(prefers-reduced-motion:reduce)" srcset="${esc(st.poster)}">
+      <source media="(max-width:${esc(st.tallBelow)})" srcset="${esc(st.gifTall)}">
+      <img src="${esc(st.gif)}" alt="${esc(st.alt)}" width="${esc(String(st.width))}" height="${esc(String(st.height))}" loading="lazy" decoding="async">
+    </picture>
+  </figure>
+</section>`;
+
   const aboutHTML = `
 <section id="about" class="below-fold">
   <div class="about-band fade">
@@ -918,6 +1040,7 @@ ${heroHTML}
 ${brandsHTML}
 ${workHTML}
 ${panelsHTML}
+${storyHTML}
 ${aboutHTML}
 </main>
 ` + footerHTML();
@@ -937,7 +1060,7 @@ function csMedia(m) {
       <button class="play-btn glass" type="button" aria-label="Play video">▶</button>
     </div>`;
     /* the frame needs intrinsic size: use aspect ratio wrapper */
-    inner = `<div class="cs-media-frame" data-video style="aspect-ratio:16/9;background:#0A1912">
+    inner = `<div class="cs-media-frame" data-video style="aspect-ratio:16/9;background:var(--bg-deep-shade)">
       <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
       <video muted loop playsinline preload="none" data-src="${esc(m.src)}" poster="${esc(m.poster)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
       <button class="play-btn glass" type="button" aria-label="Play video">▶</button>
@@ -959,7 +1082,7 @@ function csHeroMedia(cs) {
   if (!m) return '';
   if (m.frame === 'browser') return `<div class="cs-hero-media" style="box-shadow:none;border-radius:0;overflow:visible">${browserFrame(m, { eager: true })}</div>`;
   if (m.type === 'image') return `<div class="cs-hero-media"><img src="${esc(m.src)}" alt="${esc(m.alt)}" loading="eager" decoding="async" fetchpriority="high"></div>`;
-  if (m.type === 'video') return `<div class="cs-hero-media" data-video style="position:relative;aspect-ratio:16/9;background:#0A1912">
+  if (m.type === 'video') return `<div class="cs-hero-media" data-video style="position:relative;aspect-ratio:16/9;background:var(--bg-deep-shade)">
     <img class="poster" src="${esc(m.poster)}" alt="${esc(m.alt)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
     <video muted loop playsinline preload="none" data-src="${esc(m.src)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
     <button class="play-btn glass" type="button" aria-label="Play video">▶</button></div>`;
@@ -1064,6 +1187,20 @@ fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
 fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
+
+/* The custom domain has to be written INTO dist/, not just set in Settings > Pages.
+   GitHub's settings page writes a CNAME file to the repo root, which works when Pages
+   serves a branch — but this site is deployed as an Actions artifact built from dist/, and
+   the artifact is the whole published site. A CNAME sitting in the repo root is not in it,
+   so the domain silently reverts to <user>.github.io on the next deploy. Writing it here
+   means the domain survives every build. Blank it out to go back to a github.io URL. */
+const DOMAIN = 'm--k.me';
+if (DOMAIN) fs.writeFileSync(path.join(DIST, 'CNAME'), DOMAIN + '\n');
+
+/* Pages runs Jekyll over an artifact unless told not to, and Jekyll drops any file or
+   folder whose name starts with an underscore. Nothing here starts with one today, but a
+   silently missing asset is a miserable thing to debug later. */
+fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 fs.writeFileSync(path.join(DIST, '.buildstamp'), String(Date.now()));
 console.log(`Built ${1 + cases.length} pages → dist/ (${cases.map(c => c.slug).join(', ')})`);
 if (fitWarnings.length) {

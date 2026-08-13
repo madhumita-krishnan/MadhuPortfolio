@@ -1,0 +1,147 @@
+{
+  "slug": "message-testing",
+  "name": "Atlantic Health",
+  "order": 4,
+  "title": "Why doctors weren't referring",
+  "tagline": "Message testing for a $65M proton therapy center — finding the words that doubled physician referral intent.",
+  "heroTone": "deep",
+  "heroMedia": {
+    "type": "video",
+    "src": "assets/case-studies/message-testing/motion.mp4",
+    "poster": "assets/case-studies/atlantic-motion-poster.jpg",
+    "alt": "Atlantic Health proton therapy motion graphic"
+  },
+  "meta": [
+    {
+      "label": "Role",
+      "value": "Research & messaging strategy"
+    },
+    {
+      "label": "Timeline",
+      "value": "3 months"
+    },
+    {
+      "label": "Methods",
+      "value": "Qualitative interviews · quant survey · message testing"
+    },
+    {
+      "label": "Outcome",
+      "value": "Referral intent doubled · messaging adopted"
+    }
+  ],
+  "tags": [
+    "Healthcare",
+    "Brand strategy",
+    "Research"
+  ],
+  "intro": [
+    "Atlantic Health invested $65 million in a state-of-the-art upright proton therapy center — technology that treats cancer with submillimeter precision while patients sit upright. But the physicians who would refer patients weren't referring.",
+    "I led qualitative and quantitative research to understand why, then developed and tested the messaging strategy that fixed it. The final framework was adopted across physician-facing email campaigns, landing pages, and future advertising."
+  ],
+  "stats": [
+    {
+      "value": "2×",
+      "label": "increase in referral intent — from 16% to 32%"
+    },
+    {
+      "value": "62 → 68%",
+      "label": "overall referral likelihood after message exposure"
+    },
+    {
+      "value": "72%",
+      "label": "interested or very interested in learning more — from a baseline of near-zero awareness"
+    },
+    {
+      "value": "Adopted",
+      "label": "messaging deployed across email, landing pages, and advertising"
+    }
+  ],
+  "sections": [
+    {
+      "label": "Executive summary",
+      "heading": "Physicians didn't understand why upright treatment mattered clinically",
+      "body": [
+        "The center's early messaging led with innovation and patient comfort. Physicians heard it — and filed upright positioning away as a comfort feature rather than a clinical advantage. Comfort doesn't drive referrals; clinical outcomes do.",
+        "The strategic shift: stop selling leadership and comfort, and directly connect upright positioning to measurable clinical outcomes — precision, reduced motion, protected healthy tissue."
+      ]
+    },
+    {
+      "label": "Phase 01",
+      "heading": "Qualitative interviews: locating the gap",
+      "body": [
+        "Goal: understand how physicians interpreted the proton therapy system, to sharpen the quantitative survey before testing nationally.",
+        "I needed to understand how physicians currently evaluated proton therapy providers, what made messaging feel clinically credible, and whether they understood the clinical value of upright positioning — in order to define referral decision-making patterns, trust drivers and skepticism triggers, reactions to early messaging concepts, and gaps in understanding around upright treatment."
+      ],
+      "quote": {
+        "text": "Physicians understood upright positioning as a comfort feature rather than a clinical advantage.",
+        "attr": "The insight that shaped the entire messaging strategy"
+      }
+    },
+    {
+      "label": "Phase 02",
+      "heading": "Quantitative message testing: 15+ messages, four dimensions",
+      "body": [
+        "I developed and tested more than fifteen messages, first refined through the qualitative findings, then measured nationally on clarity, credibility, differentiation, and referral impact.",
+        "Updated messaging outperformed broad leadership language across all measured dimensions. The pattern was consistent: specificity won. Numbers beat adjectives; mechanisms beat mission statements."
+      ],
+      "compare": {
+        "heading": "The messaging strategy that worked",
+        "before": [
+          {
+            "title": "Cancer Treatment, Redefined by Precision",
+            "body": "Experience unmatched accuracy and comfort with advanced upright proton therapy."
+          },
+          {
+            "title": "Leading the Next Generation of Proton Therapy",
+            "body": "Atlantic Health combines clinical accuracy and patient comfort with breakthrough technology."
+          },
+          {
+            "title": "Why they underperformed",
+            "body": "Too broad · lacked specificity · reduced perceived rigor · interchangeable with competitors"
+          }
+        ],
+        "after": [
+          {
+            "title": "Better Outcomes Begin with Greater Precision",
+            "body": "Upright proton therapy uses submillimeter targeting and real-time imaging to deliver unmatched accuracy.",
+            "note": "Specific · measurable · clinically credible"
+          },
+          {
+            "title": "Up to 50% Less Lung Motion",
+            "body": "Upright positioning reduces breathing motion and increases lung volume for lung and chest cancers.",
+            "note": "Directly connects upright positioning to measurable treatment precision"
+          },
+          {
+            "title": "Fewer Side Effects Through Precise Targeting",
+            "body": "Proton therapy stops exactly where the cancer ends so healthy cells stay protected.",
+            "note": "Clear clinical value tied to physician referral priorities"
+          }
+        ]
+      }
+    },
+    {
+      "label": "The work in market",
+      "heading": "From research deck to running campaign",
+      "body": [
+        "The final messaging framework was adopted across physician-facing creative — email campaigns, landing pages, and future advertising. The motion piece below carries the tested language into the brand's visual system."
+      ],
+      "media": {
+        "type": "video",
+        "src": "assets/case-studies/message-testing/motion.mp4",
+        "poster": "assets/case-studies/atlantic-motion-poster.jpg",
+        "wash": "deep",
+        "alt": "Atlantic Health motion graphic using the tested messaging",
+        "caption": "Tested language, shipped: the campaign motion graphic built on the winning messages."
+      }
+    }
+  ],
+  "reflection": {
+    "label": "Reflection",
+    "heading": "The words are part of the product",
+    "body": [
+      "A $65M facility with best-in-class technology was invisible to its audience because of a framing error — comfort versus clinical value. Research found the gap, testing proved the fix, and referral intent doubled without changing anything about the product itself.",
+      "It's the same lesson I keep re-learning across brand and product work: before you redesign the thing, check whether people understand what the thing is."
+    ]
+  },
+  "next": "driftwood"
+}

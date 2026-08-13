@@ -11,3 +11,7 @@ _orig-backup/
 
 node_modules/
 .DS_Store
+
+# Contact sheets from tools/make-hand-font.js --proof/--glyphs. Development output, kept
+# out of assets/ so build.js does not ship them to Pages.
+font-proofs/
