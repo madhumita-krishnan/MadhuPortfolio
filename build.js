@@ -953,6 +953,9 @@ function makeJS() {
        (the <em> in the hero line) survives the rewrite */
     document.querySelectorAll('.reveal-words').forEach(el=>{
       let seq=Number(el.dataset.seq||0);
+      /* the hero paragraph arrives a sentence at a time: each .hs after the first sits out
+         an extra beat, so a thought finishes before the next one starts writing */
+      let hold=0;
       const walk=node=>{
         [...node.childNodes].forEach(child=>{
           if(child.nodeType===3){
@@ -960,10 +963,13 @@ function makeJS() {
             child.textContent.split(/(?<=\\s)/).forEach(tok=>{
               if(!tok)return;
               const w=document.createElement('span');w.className='w';
-              w.style.transitionDelay=(seq++*55)+'ms';w.textContent=tok;frag.appendChild(w);
+              w.style.transitionDelay=(seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
             });
             node.replaceChild(frag,child);
-          }else if(child.nodeType===1){walk(child)}
+          }else if(child.nodeType===1){
+            if(child.classList.contains('hs')&&child.previousElementSibling)hold+=1000;
+            walk(child);
+          }
         });
       };
       walk(el);
