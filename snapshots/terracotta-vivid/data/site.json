@@ -1,0 +1,206 @@
+{
+  "title": "Madhu — Product Designer",
+  "description": "Madhumita Krishnan — product designer with a background in architecture and brand strategy. Curious about how design helps our mind process complex workflows.",
+  "wordmark": "M--K",
+  "email": "kmadhumita@gmail.com",
+  "location": "New York",
+  "fullName": "Madhumita Krishnan",
+  "hero": {
+    "eyebrow": "Portfolio",
+    "headline": "Hi, I'm Madhu",
+    "lines": [
+      "Architecture taught me how to guide people with design.",
+      "Brand strategy taught me to study why they believe in that guidance.",
+      "As a product designer I combine both disciplines to help people navigate digital complexity with confidence."
+    ],
+    "ctaPrimary": {
+      "label": "say hey",
+      "href": "https://calendly.com/meet-madhu"
+    },
+    "ctaSecondary": {
+      "label": "Resume",
+      "href": "assets/resume.pdf"
+    }
+  },
+  "brands": {
+    "eyebrow": "Brands",
+    "title": "Brands that have liked my thinking",
+    "sub": "I worked in brand strategy for 3+ years",
+    "logos": [
+      {
+        "src": "assets/logos/clean/white-house.png",
+        "alt": "The White House"
+      },
+      {
+        "src": "assets/logos/clean/red-bull.png",
+        "alt": "Red Bull"
+      },
+      {
+        "src": "assets/logos/clean/aston-martin.png",
+        "alt": "Aston Martin"
+      },
+      {
+        "src": "assets/logos/clean/looney-tunes.png",
+        "alt": "Looney Tunes"
+      },
+      {
+        "src": "assets/logos/clean/floor-decor.png",
+        "alt": "Floor & Decor"
+      },
+      {
+        "src": "assets/logos/clean/orlando-magic.png",
+        "alt": "Orlando Magic"
+      },
+      {
+        "src": "assets/logos/clean/michelob-ultra.png",
+        "alt": "Michelob Ultra"
+      },
+      {
+        "src": "assets/logos/clean/john-muir.png",
+        "alt": "John Muir Health"
+      },
+      {
+        "src": "assets/logos/clean/city-national.png",
+        "alt": "City National Bank"
+      }
+    ]
+  },
+  "work": {
+    "eyebrow": "",
+    "title": "Selected Projects",
+    "projects": [
+      {
+        "slug": "driftwood",
+        "name": "Driftwood",
+        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
+        "tags": "Shipped · Web · Strategy + code",
+        "media": {
+          "type": "browser",
+          "src": "assets/case-studies/driftwood/home.mp4",
+          "poster": "assets/case-studies/driftwood-home-poster.jpg",
+          "url": "driftwood.sh",
+          "alt": "The new driftwood.sh homepage in motion"
+        }
+      },
+      {
+        "slug": "spotify-mix",
+        "name": "Spotify Mix redesign",
+        "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it.",
+        "tags": "Concept · Mobile · Interaction design",
+        "media": {
+          "type": "phone-video",
+          "src": "assets/projects/spotify-screen.mp4",
+          "poster": "assets/projects/spotify-screen-poster.jpg",
+          "autoplay": true,
+          "alt": "The redesigned Spotify Mix screen, animating through a transition edit"
+        }
+      },
+      {
+        "slug": "stack",
+        "name": "Budgeting app",
+        "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, not reports, to make the product more valuable between paychecks.",
+        "tags": "Research · Mobile · Usability testing",
+        "media": {
+          "type": "phone-image",
+          "src": "assets/case-studies/stack/raw/01-home-top.png",
+          "alt": "Stack home screen — ask before you spend, with quick insights"
+        }
+      },
+      {
+        "slug": "message-testing",
+        "name": "Atlantic Health",
+        "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment.",
+        "tags": "Healthcare · Brand strategy · Research",
+        "media": {
+          "type": "landscape-video",
+          "src": "assets/projects/atlantic.mp4",
+          "poster": "assets/projects/atlantic-poster.jpg",
+          "alt": "Atlantic Health proton therapy campaign"
+        }
+      }
+    ]
+  },
+  "disciplines": {
+    "eyebrow": "Designing across disciplines",
+    "title": "Design in the brand and architecture world",
+    "panels": [
+      {
+        "org": "Michelob Ultra",
+        "shortLabel": "Michelob Ultra",
+        "title": "What does a brand feel like when you're standing inside it?",
+        "desc": "Every event has a user journey. I designed this one.",
+        "img": "assets/disciplines/michelob-poster.jpg",
+        "video": "assets/disciplines/michelob.mp4",
+        "alt": "Michelob Ultra experiential event"
+      },
+      {
+        "org": "University of Michigan",
+        "shortLabel": "Boat House",
+        "title": "Designing for competing user needs in shared space",
+        "desc": "Athletes and scientists. Same building, same river, completely different needs.",
+        "img": "assets/disciplines/boat-house.jpg",
+        "alt": "Boat house aerial render on the river"
+      },
+      {
+        "org": "University of Michigan",
+        "shortLabel": "Wall House",
+        "title": "How do you design privacy without building a wall?",
+        "desc": "A study on perceived privacy.",
+        "img": "assets/disciplines/wall-house.jpg",
+        "alt": "Wall house case study model"
+      },
+      {
+        "org": "University of Michigan",
+        "shortLabel": "Chair Study",
+        "title": "How people use their chair to control their social experience",
+        "desc": "A study in how people use physical space to signal exactly how much interaction they want.",
+        "img": "assets/disciplines/chair-study.jpg",
+        "alt": "Chair interaction study"
+      },
+      {
+        "org": "LeaseMagnets",
+        "shortLabel": "Filming Guide",
+        "title": "The instructions were the problem",
+        "desc": "How I turned repeated user frustration into a process anyone could follow in one read.",
+        "img": "assets/disciplines/filming-guide.jpg",
+        "alt": "Filming day instruction guide"
+      },
+      {
+        "org": "University of Michigan",
+        "shortLabel": "Playscape",
+        "title": "I removed gravity to understand what we design playgrounds around",
+        "desc": "When the environment changes completely, you find out what you were actually designing for.",
+        "img": "assets/disciplines/playscape.jpg",
+        "alt": "Zero gravity playscape concept"
+      },
+      {
+        "org": "University of Michigan",
+        "shortLabel": "Rec Center",
+        "title": "How I organized a rec center the way a UX designer organizes an app",
+        "desc": "Grouping activities by type, minimizing unnecessary movement, and designing for the path of least resistance — in concrete.",
+        "img": "assets/disciplines/rec-center.jpg",
+        "alt": "Detroit recreation center plan"
+      }
+    ]
+  },
+  "about": {
+    "eyebrow": "About",
+    "headshot": "assets/hero/headshot.jpg",
+    "title": "What draws me to product design is the same concept that has drawn me to tutoring",
+    "body": [
+      "I'm interested in the moments where we lose the learner — when someone is excited to understand something, but along the way, starts questioning whether they can.",
+      "There's something comforting about helping people feel understood. I love designing experiences that make it easier for people to stay curious."
+    ],
+    "resumeLabel": "View my resume"
+  },
+  "footer": {
+    "note": "Madhumita Krishnan · New York",
+    "links": [
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com/in/madhumitak/"
+      }
+    ]
+  },
+  "calendly": "https://calendly.com/meet-madhu"
+}

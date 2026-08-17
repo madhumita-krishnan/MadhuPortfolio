@@ -1,0 +1,164 @@
+{
+  "slug": "driftwood",
+  "name": "Driftwood",
+  "order": 1,
+  "title": "Prospects were misunderstanding the product, and it was costing the founder clients",
+  "tagline": "People rarely know when they have misunderstood something — they are busy, so they dismiss it and move on. Repositioning the product around feedback from real pitches won the founder three more clients.",
+  "heroTone": "deep",
+  "heroMedia": {
+    "type": "image",
+    "src": "assets/case-studies/driftwood-home-poster.jpg",
+    "alt": "The shipped driftwood.sh homepage — 'Ship tailored demos to every prospect' beside a real thread where the agent sends a prospect their own demo",
+    "frame": "browser",
+    "url": "driftwood.sh"
+  },
+  "meta": [
+    {
+      "label": "Role",
+      "value": "Strategy, design & code"
+    },
+    {
+      "label": "Timeline",
+      "value": "18 hours total"
+    },
+    {
+      "label": "Type",
+      "value": "Shipped client work"
+    },
+    {
+      "label": "Live",
+      "value": "driftwood.sh",
+      "href": "https://driftwood.sh"
+    }
+  ],
+  "tags": [
+    "Positioning",
+    "Web design",
+    "Shipped in code"
+  ],
+  "intro": [
+    "Driftwood is an AI sales agent for demo-led outbound: it researches each prospect, builds them a working custom demo, and sends it from the founder's own account. A genuinely different product — with a website that made it sound like everything else.",
+    "The founder had run 20+ sales conversations and landed one client. The problem wasn't the product. It was a single misconception the site never corrected."
+  ],
+  "stats": [
+    {
+      "value": "1 → 4",
+      "label": "clients, after the reframe — three closed during message testing, before the new site even shipped"
+    },
+    {
+      "value": "20+ : 1",
+      "label": "conversations to clients under the old positioning"
+    },
+    {
+      "value": "18 hrs",
+      "label": "total, including meetings, to research, design, code, and ship"
+    }
+  ],
+  "sections": [
+    {
+      "label": "The misconception",
+      "heading": "People thought the demo was a one-time thing",
+      "body": [
+        "Prospects who saw the old site assumed Driftwood generated one generic demo of your product and blasted it out. That reading made it just another AI outbound tool — easy to dismiss in a market drowning in AI slop.",
+        "The reality is the opposite: Driftwood builds a new custom demo, tailored to every single client it contacts. That's the whole value. And it was the one thing visitors consistently didn't take away."
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/case-studies/driftwood/site-hero.jpg",
+          "wash": "wash",
+          "alt": "The old driftwood.sh hero: a headline about shipping a custom demo beside a dense screenshot of the product dashboard",
+          "frame": "browser",
+          "url": "driftwood.sh",
+          "caption": "The hero it replaced. Visitors could not tell what the product actually did — and the dashboard sitting next to the headline was too busy, and too unexplained, to carry a hero."
+        },
+        {
+          "type": "image",
+          "src": "assets/case-studies/driftwood/aislop.jpg",
+          "wash": "wash",
+          "alt": "The old site's 'Don't send out AI slop' section — a generic cold email on the left, the message Driftwood sent on the right",
+          "caption": "The old AI-slop comparison. The argument was right and the proof was real, but it read as raw screenshots rather than a polished product, and the value took too long to land."
+        }
+      ]
+    },
+    {
+      "label": "Words before pixels",
+      "heading": "We tested the story on real prospects before touching the design",
+      "body": [
+        "Instead of redesigning on instinct, we took new language and framing into in-person conversations with potential clients and watched where understanding clicked — and where it broke.",
+        "Once the framing corrected the misconception, the founder landed three more clients — before a single pixel of the new site existed. That was the green light: the message was validated with revenue, and the site's only job was to deliver it."
+      ]
+    },
+    {
+      "label": "The pivotal moment",
+      "heading": "Show the moment the product becomes obvious",
+      "body": [
+        "Every explanation of Driftwood eventually hits one pivotal beat: the agent has already researched the prospect and built them their own working demo. Text kept burying that moment, so I built it as motion — you watch the demo get made for a specific company, not described in the abstract.",
+        "It's the first thing you understand on the new homepage, before you've read a paragraph."
+      ],
+      "media": {
+        "type": "video",
+        "src": "assets/case-studies/driftwood/home.mp4",
+        "poster": "assets/case-studies/driftwood-home-poster.jpg",
+        "wash": "deep",
+        "alt": "The new driftwood.sh homepage, scrolling from the hero through the product story",
+        "caption": "The shipped homepage. The hero shows the outcome; the pivotal moment plays out on screen instead of being explained.",
+        "frame": "browser",
+        "url": "driftwood.sh"
+      }
+    },
+    {
+      "label": "Architecture",
+      "heading": "An information architecture that sells",
+      "body": [
+        "The old page order answered the founder's questions, not the prospect's. I rebuilt the IA around the objections people actually raised in the test conversations, in the order they raised them: what is this → is it slop → prove it's custom → show me the product → let me book.",
+        "Each section earns the next scroll. Nothing on the page exists because it 'should be there' — it exists because a real prospect needed it to say yes."
+      ]
+    },
+    {
+      "label": "Proof",
+      "heading": "Case studies you can skim — that still feel special",
+      "body": [
+        "The degree of customization is Driftwood's proof, so I designed a case study section that shows it: real demos the agent built for real companies, presented so a visitor gets the point in seconds but can go as deep as they want.",
+        "Skimmable was the constraint. If a prospect has to read to feel the customization, the section has failed — the visual variety of the demos does the arguing."
+      ],
+      "media": {
+        "type": "video",
+        "src": "assets/case-studies/driftwood/casestudies.mp4",
+        "poster": "assets/case-studies/driftwood-casestudies-poster.jpg",
+        "wash": "wash",
+        "alt": "Scrolling through the case studies section — each card a different custom demo Driftwood built",
+        "caption": "Every card is a different demo the agent built. The variety is the argument.",
+        "frame": "browser",
+        "url": "driftwood.sh"
+      }
+    },
+    {
+      "label": "The dashboard",
+      "heading": "The dashboard section, without the essay",
+      "body": [
+        "The old 'explore the dashboard' section was word-heavy, with screenshots that had no visual focus — visitors couldn't distill the value quickly, so they skipped it.",
+        "I replaced it with an interactive, highlightable dashboard: hover a feature and it lights up with a one-line explanation. Same information, but you explore it instead of reading it. The section went from the most-skipped part of the page to the part that shows the product actually working."
+      ],
+      "media": {
+        "type": "video",
+        "src": "assets/case-studies/driftwood/dashboard.mp4",
+        "poster": "assets/case-studies/driftwood-dashboard-hq-poster.jpg",
+        "wash": "deep",
+        "alt": "The interactive dashboard section — hovering different regions highlights each feature with a short caption",
+        "caption": "Hover to highlight. Each region of the real dashboard explains itself in one line.",
+        "frame": "browser",
+        "url": "driftwood.sh"
+      }
+    }
+  ],
+  "reflection": {
+    "label": "Reflection",
+    "heading": "Positioning is a design deliverable",
+    "body": [
+      "The highest-leverage design work on this project happened before any interface existed: finding the one sentence prospects were getting wrong and fixing it in conversation, with evidence. The website is that sentence, made visual and shipped.",
+      "Given 18 hours end-to-end — meetings included — I coded and shipped it myself. It's live at driftwood.sh."
+    ]
+  },
+  "next": "spotify-mix"
+}

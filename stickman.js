@@ -171,6 +171,23 @@
     while (n < 90 && !solid(x, ySurface - 2 - n)) n++;
     return n + 2;
   }
+  /* the real glyph edge a hand can grip: walk outward from x (within ±rad) for a column
+     whose ink bottom sits near the bar line, and return that lowest ink pixel. The bars
+     are line-BOX bottoms, which are often air — half-leading below the glyphs, and pure
+     nothing in the spaces between words — and a hand must never hold air. */
+  function grip(x, barY, rad) {
+    x = Math.round(x); barY = Math.round(barY);
+    for (var dx = 0; dx <= (rad || 26); dx += 2) {
+      for (var s = -1; s <= 1; s += 2) {
+        var cx = x + s * dx;
+        for (var up = -4; up <= 34; up++) {
+          if (solid(cx, barY - up)) return { x: cx, y: barY - up };
+        }
+        if (!dx) break;
+      }
+    }
+    return null;
+  }
   /* march along the surface the way the walker would — steps, hops over ascender bumps,
      strides over glyph gaps — until it truly ends WITH a drop below. An ascender is a
      bump, not an edge: falling at one just lands you back at the same height, which is
@@ -211,6 +228,7 @@
     landT: 0, slideT: 0,
     hang: null,
     mantle: null,
+    flipQueued: false,     // one landing-prediction per airtime — reset on the ground
     celeb: null,
     celebIdx: 0,
     hangCool: 0,
@@ -314,11 +332,11 @@
     if (!fig.hang) return;
     var b = fig.hang;
     fig.state = 'air';
-    fig.x = b.hx; fig.y = b.bar.y + HANG_L + LEG;
+    fig.x = b.hx;   /* fig.y already tracks the grips — reassigning it here would pop */
     fig.vx = dirX * 220 + b.om * 40;
     fig.vy = -320;
     fig.fallFrom = fig.y;
-    fig.hang = null; fig.hangCool = 0.6;
+    fig.hang = null; fig.hangCool = 0.6; fig.flipQueued = false;
     start();
   }
 
@@ -334,6 +352,7 @@
   }
 
   function tickGround(dt) {
+    fig.flipQueued = false;
     var want = 0;
     var g = fig.waypoint || fig.target;
     if (fig.drag) { want = fig.drag.vx; }
@@ -390,8 +409,11 @@
         } else { fig.target = null; fig.waypoint = null; want = 0; }
       }
     }
-    /* low headroom folds the walk into a crawl (and slows it) */
-    var clr = clearance(fig.x, fig.y);
+    /* low headroom folds the walk into a crawl (and slows it). Sampled over three
+       columns so one overhead ascender doesn't hunch the figure for a stride. */
+    var clr = Math.max(clearance(fig.x, fig.y),
+                       clearance(fig.x - 7, fig.y),
+                       clearance(fig.x + 7, fig.y));
     fig.crawl += (Math.max(0, Math.min(1, (CRAWL_CLR - clr) / (CRAWL_CLR - 22))) - fig.crawl) * Math.min(1, dt * 10);
     want *= 1 - fig.crawl * 0.55;
 
@@ -457,9 +479,25 @@
     if (fig.flip) {
       fig.flip.rot += fig.flip.w * dt;
       if (fig.flip.rot >= Math.PI * 2) fig.flip = null;
-    } else if (fig.vy > 0 && fig.y - fig.fallFrom > FLIP_DROP && ny < floorY - 60) {
-      startFlip(fig.dir);
-      fig.flip.w = 9;
+    } else if (fig.vy >= 0 && !fig.flipQueued) {
+      /* a big fall earns a full tuck flip — but the LANDING decides, not the fall so
+         far. The old rule measured distance already fallen and demanded 60px of floor
+         clearance, so most real drops (off a petal, off the headline, onto the floor)
+         either never fired or fired too late and got cut off mid-spin. Now, the moment
+         the fall begins — or a jump tips over its apex — the landing is read straight
+         down off the mask and the spin rate is solved so one clean rotation completes
+         just before the feet arrive. */
+      fig.flipQueued = true;
+      var landAt = groundTop(nx, ny + 1, H);
+      var ly = landAt == null ? floorY : landAt;
+      var remain = ly - ny;
+      if (ly - fig.fallFrom > FLIP_DROP && remain > 40) {
+        var tl = (Math.sqrt(fig.vy * fig.vy + 2 * G * remain) - fig.vy) / G;
+        if (tl > 0.42) {
+          startFlip(fig.dir);
+          fig.flip.w = Math.min((Math.PI * 2) / (tl * 0.88), 13);
+        }
+      }
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
@@ -468,8 +506,12 @@
       for (var i = 0; i < bars.length; i++) {
         var b = bars[i];
         if (nx >= b.x1 - 4 && nx <= b.x2 + 4 && Math.abs(handY - b.y) < 15) {
+          /* only grab where there is actual ink to hold — a word gap is not a bar */
+          var gp = grip(nx, b.y, 14);
+          if (!gp) continue;
           fig.state = 'hang';
-          fig.hang = { bar: b, hx: nx, th: Math.max(-0.9, Math.min(0.9, fig.vx / 500)), om: fig.vx / 160, reach: 0 };
+          fig.hang = { bar: b, hx: nx, th: Math.max(-0.9, Math.min(0.9, fig.vx / 500)), om: fig.vx / 160, reach: 0,
+                       hands: [{ x: gp.x - 2, y: gp.y + 1.75 }, { x: gp.x + 2, y: gp.y + 1.75 }] };
           fig.vx = 0; fig.vy = 0; fig.flip = null;
           return;
         }
@@ -532,11 +574,22 @@
         var gap = dir > 0 ? nb.x1 - b.x2 : b.x1 - nb.x2;
         if (gap > -30 && gap < 52 && (!next || gap < next.gap)) next = { bar: nb, gap: gap };
       });
-      if (next) { h.bar = next.bar; }
+      if (next) { h.bar = next.bar; b = h.bar; }
       else { release(dir); return; }
     }
+    /* the hands hold LETTERS, not the line box: resolve each to the nearest real ink.
+       Crossing a word gap, the trailing hand keeps the last letter while the leading one
+       reaches for the next — and if neither can find ink, there is nothing to hold. */
+    var spread = 5 + (h.reach ? 3 * Math.sin(h.reach) : 0);
+    var gl = grip(h.hx - spread, b.y, 30), gr = grip(h.hx + spread, b.y, 30);
+    if (!gl && !gr) { release((tv || h.om) > 0 ? 1 : -1); return; }
+    /* one hand found nothing (a word gap): both hands share the one real hold */
+    if (!gl) gl = gr;
+    if (!gr) gr = gl;
+    h.hands = [{ x: gl.x, y: gl.y + 1.75 }, { x: gr.x, y: gr.y + 1.75 }];
     fig.x = h.hx;
-    fig.y = b.y + HANG_L + LEG;
+    /* body hangs from the grips themselves, so it rides up under tall glyphs */
+    fig.y += ((gl.y + gr.y) / 2 + HANG_L + LEG - fig.y) * Math.min(1, dt * 10);
     fig.dir = (tv || h.om) > 0 ? 1 : -1;
   }
 
@@ -629,16 +682,40 @@
     var h = Math.sqrt(Math.max(l1 * l1 - (d / 2) * (d / 2), 0));
     return { ex: ax + dx / 2 - dy / d * h * side, ey: ay + dy / 2 + dx / d * h * side, hx: ax + dx, hy: ay + dy };
   }
+  /* leg IK — a foot TARGET (x forward of the pelvis in stride units, y below it) solved
+     back into the hip/knee angle convention of figure(): knee = (sin(a)·TH, cos(a)·TH),
+     foot = knee + (sin(a-k)·SH, cos(a-k)·SH). The knee always folds forward. */
+  function legIK(x, y) {
+    var d = Math.min(Math.hypot(x, y), TH + SH - 0.4);
+    var t = Math.atan2(x, y);
+    var cg = Math.max(-1, Math.min(1, (TH * TH + d * d - SH * SH) / (2 * TH * d)));
+    var cs = Math.max(-1, Math.min(1, (SH * SH + d * d - TH * TH) / (2 * SH * d)));
+    var g2 = Math.acos(cg), s2 = Math.acos(cs);
+    return { hip: t + g2, knee: g2 + s2 };
+  }
 
-  /* o: lean, hip:[], knee:[], sh:[], el:[], dy, rot, smile, grin, wavingHand, hands:[{x,y}] */
+  /* o: lean, hip:[], knee:[], sh:[], el:[], dy, rot, smile, grin, wavingHand, hands:[{x,y}],
+     snap (plant the lowest foot/knee exactly on the surface), tiptoe (px of toe drop),
+     headFollow (how much of the lean the head takes — default 0.5, it rights itself) */
   function figure(px, py, dir, o) {
+    /* grounded poses NEVER float: whatever the gait is doing, the lowest contact —
+       foot, or knee when the legs are folded — is planted exactly on the surface */
+    if (o.snap) {
+      var low = 0;
+      for (var iS = 0; iS < 2; iS++) {
+        var aS = o.hip[iS], fyS = Math.cos(aS) * TH + Math.cos(aS - o.knee[iS]) * SH;
+        low = Math.max(low, fyS, Math.cos(aS) * TH);
+      }
+      o.dy = (LEG - 0.7) - low;
+    }
     ctx.save();
     ctx.translate(px, py + (o.dy || 0));
     if (o.rot) ctx.rotate(o.rot * dir);
     ctx.strokeStyle = ink; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     var lean = o.lean || 0;
+    var hf = o.headFollow == null ? 0.5 : o.headFollow;
     var nx = Math.sin(lean) * TO * dir, ny = -Math.cos(lean) * TO;
-    var hx = nx + Math.sin(lean * 1.15) * (NK + HR) * dir, hy = ny - Math.cos(lean * 1.15) * (NK + HR);
+    var hx = nx + Math.sin(lean * hf) * (NK + HR) * dir, hy = ny - Math.cos(lean * hf) * (NK + HR);
     // legs, each with a small forward bow so they read as drawn, not plotted
     for (var i = 0; i < 2; i++) {
       var a = o.hip[i], k = o.knee[i];
@@ -646,8 +723,14 @@
       var fx = kx + Math.sin(a - k) * SH * dir, fy = ky + Math.cos(a - k) * SH;
       stroke2(0, 0, kx, ky, 2.4, 0.7 * dir);
       stroke2(kx, ky, fx, fy, 2.2, -0.5 * dir);
-      // a foot: short stroke pressed ~0.7px into whatever it stands on
-      stroke2(fx, fy + 0.7, fx + 4.4 * dir, fy + 0.7, 2.0, 0);
+      // a foot: short stroke pressed ~0.7px into whatever it stands on; on tiptoe the
+      // heel rises and the TOE stays on the ground — contact, never a hover. A swing
+      // foot mid-stride carries a pitch instead (toe trailing on lift, levelling to
+      // strike) and gets NO press — it is the one foot that is honestly in the air.
+      var fp = o.footPitch ? o.footPitch[i] : 0;
+      if (o.tiptoe) stroke2(fx, fy + 0.7, fx + 3.4 * dir, fy + 0.7 + o.tiptoe, 2.0, 0);
+      else if (fp) stroke2(fx, fy, fx + 4.4 * Math.cos(fp) * dir, fy + 4.4 * Math.sin(fp), 2.0, 0);
+      else stroke2(fx, fy + 0.7, fx + 4.4 * dir, fy + 0.7, 2.0, 0);
     }
     // torso
     stroke2(0, 0, nx, ny, 2.6, 0.9 * dir);
@@ -673,17 +756,20 @@
         fingers(hxw, hyw, o.wavingHand === j ? -Math.PI / 2 : -Math.PI / 3 * dir, 3);
       }
     }
-    // head — a sketchy open ellipse, never a perfect circle
+    // head — a sketchy open ellipse, never a perfect circle. It SITS on the neck: the
+    // ellipse is centred at the neck-top point, and a short neck stroke joins it to the
+    // shoulders — the head must never float free of the body.
+    stroke2(nx, ny, hx, hy + HR * 0.9, 2.2, 0);
     sid++;
     var hr = HR + rnd(sid, 8) * 0.6;
     var tilt = lean * 0.4 + rnd(sid, 9) * 0.1;
     var a0 = -Math.PI / 2 + 0.25 + rnd(sid, 10) * 0.3;
     ctx.lineWidth = 2.1;
     ctx.beginPath();
-    ctx.ellipse(hx, hy - HR + 1.2, hr, hr * 0.93, tilt, a0, a0 + Math.PI * 1.97);
+    ctx.ellipse(hx, hy, hr, hr * 0.93, tilt, a0, a0 + Math.PI * 1.97);
     ctx.stroke();
     // the face — always there, bigger smile when it has something to celebrate
-    var cxf = hx + 1.6 * dir, cyf = hy - HR + 0.6;
+    var cxf = hx + 1.6 * dir, cyf = hy - 0.6;
     ctx.fillStyle = ink;
     ctx.beginPath(); ctx.arc(cxf + 1.6 * dir, cyf - 1.6, 0.85, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(cxf - 1.4 * dir, cyf - 1.6, 0.85, 0, 7); ctx.fill();
@@ -695,17 +781,25 @@
     ctx.restore();
   }
 
+  function mix(a, b, t) { return a + (b - a) * t; }
+
   function pose() {
     var p = { lean: 0.03, hip: [0.06, -0.06], knee: [0.06, 0.06], sh: [0.1, -0.1], el: [0.12, 0.12], dy: 0, rot: 0 };
     var sp = Math.min(Math.abs(fig.vx) / RUN, 1);
     var ph = fig.phase;
     switch (fig.state) {
       case 'sign': {
-        /* on tiptoe, both hands flat on the board's underside, holding it up */
-        if (sign) {
-          p.dy = -7;
+        /* on tiptoe, both hands flat on the board's underside, holding it up. The lift
+           is modest and the toes stay ON the ground — a raised heel, not a levitation.
+           ONLY when the board is genuinely within reach: pretending to hold a board the
+           arms can't touch is exactly the floating look she vetoed, so an out-of-reach
+           board gets a flat-footed ta-da beneath it instead. */
+        if (sign && sign.bottom >= fig.y - 67) {
+          p.dy = -4; p.tiptoe = 3.4;
           p.hip = [0.04, -0.04]; p.knee = [0.03, 0.03];
           p.hands = [{ x: sign.cx - 13, y: sign.bottom + 1 }, { x: sign.cx + 13, y: sign.bottom + 1 }];
+        } else {
+          p.sh = [-2.75, -2.55]; p.el = [-0.15, -0.2]; p.fingers = 3;
         }
         p.smile = true;
         break;
@@ -714,9 +808,9 @@
       case 'wave': {
         var wv = fig.wave;
         var env = Math.min(wv / 0.15, 1) * Math.min((1 - wv) / 0.2, 1);
-        if (fig.prev === 'sign' && sign) {
+        if (fig.prev === 'sign' && sign && sign.bottom >= fig.y - 67) {
           /* keep one hand holding the board, wave with the other */
-          p.dy = -7;
+          p.dy = -4; p.tiptoe = 3.4;
           p.hands = [null, { x: sign.cx + 13, y: sign.bottom + 1 }];
           p.sh = [-2.9, 0]; p.el = [(-0.5 + Math.sin(wv * 22) * 0.8) * env, 0];
         } else {
@@ -728,15 +822,44 @@
         break;
       }
       case 'move': {
-        var A = 0.45 + 0.5 * sp;
-        p.hip = [A * Math.sin(ph), A * Math.sin(ph + Math.PI)];
-        p.knee = [Math.max(0, -Math.cos(ph)) * A * 0.9 + 0.08, Math.max(0, -Math.cos(ph + Math.PI)) * A * 0.9 + 0.08];
-        p.sh = [A * 0.7 * Math.sin(ph + Math.PI), A * 0.7 * Math.sin(ph)];
+        /* the gait is FEET-first now. The old sinusoidal hips swept both feet
+           symmetrically under the body, so the planted foot slid backward along the ink
+           — a skate, not a step. Here each foot is a placed TARGET and legIK solves the
+           angles: phase advances 0.05 rad per px travelled (tickGround), the gait
+           consumes it ×2.4, so over a stance half-cycle the planted foot travels
+           backward under the pelvis at exactly -vx — stationary on the page — while the
+           swing foot arcs over it with a real pick-up: toe trailing as it lifts,
+           levelling out to reach past for the next strike. The pelvis dips into double
+           support on its own, because snap plants whichever contact is lowest. */
+        var L = 13.1;                        // half-stride: π / (2 · 0.05 · 2.4)
+        var lift = 3.5 + 4.5 * sp;
+        var fpitch = [0, 0], nrm = [0, 0];
+        for (var li = 0; li < 2; li++) {
+          var cyc = (ph * 2.4 + li * Math.PI) % (Math.PI * 2);
+          var xf, yf;
+          if (cyc < Math.PI) {               // stance — pinned flat on the ground
+            xf = L * (1 - 2 * (cyc / Math.PI));
+            yf = 24 - 2.5 * (1 - Math.cos((xf / L) * (Math.PI / 2)));
+          } else {                           // swing — up and over
+            var u = (cyc - Math.PI) / Math.PI;
+            xf = -L + 2 * L * u;
+            yf = 24 - 2.5 * (1 - Math.cos((xf / L) * (Math.PI / 2))) - lift * Math.sin(u * Math.PI);
+            fpitch[li] = Math.sin(u * Math.PI) * (0.7 - 0.95 * u);
+          }
+          var lk = legIK(xf, yf);
+          p.hip[li] = lk.hip; p.knee[li] = lk.knee;
+          nrm[li] = xf / L;
+        }
+        p.footPitch = fpitch;
+        /* arms counter-swing the same-side foot, scaled up with speed */
+        var armSw = 0.28 + 0.34 * sp;
+        p.sh = [-armSw * nrm[0], -armSw * nrm[1]];
         p.el = [0.35 + 0.3 * sp, 0.35 + 0.3 * sp];
-        p.lean = 0.06 + 0.3 * sp;
-        p.dy = -Math.abs(Math.sin(ph)) * 2.5 * sp;
-        if (fig.slideT > 0) { p.lean = -0.34; p.hip = [0.9, 0.45]; p.knee = [1.3, 0.9]; p.sh = [-0.7, 0.5]; p.el = [0.3, 0.3]; p.dy = 6; }
-        if (fig.landT > 0) { p.lean = 0.28; p.hip = [0.75, -0.5]; p.knee = [1.5, 1.2]; p.sh = [0.5, -0.6]; p.el = [0.5, 0.5]; p.dy = 9; }
+        /* a runner leans, but doesn't slouch: the lean is modest and the head (default
+           headFollow) rights itself rather than tipping past the spine */
+        p.lean = 0.05 + 0.22 * sp;
+        if (fig.slideT > 0) { p.lean = -0.34; p.headFollow = 1.0; p.hip = [0.9, 0.45]; p.knee = [1.3, 0.9]; p.sh = [-0.7, 0.5]; p.el = [0.3, 0.3]; p.footPitch = null; }
+        if (fig.landT > 0) { p.lean = 0.28; p.hip = [0.75, -0.5]; p.knee = [1.5, 1.2]; p.sh = [0.5, -0.6]; p.el = [0.5, 0.5]; p.dy = 9; p.footPitch = null; }
         break;
       }
       case 'air': {
@@ -749,6 +872,7 @@
           p.sh = [1.1 * tuck + 0.2, 0.9 * tuck - 0.3];
           p.el = [1.5 * tuck, 1.4 * tuck];
           p.lean = 0.45 * tuck;
+          p.headFollow = 1.2;   /* the head tucks INTO the ball */
           p.grin = true;
         } else if (fig.vy < 0) {
           p.hip = [0.55, -0.75]; p.knee = [0.4, 1.3]; p.sh = [-2.6, -2.4]; p.el = [-0.2, -0.3]; p.lean = 0.12;
@@ -760,9 +884,9 @@
       case 'hang': {
         var h = fig.hang, th = h.th;
         p.rot = 0; p.lean = th * 0.5;
-        var r0 = Math.sin(h.reach), spread = h.reach ? 5 + 3 * r0 : 5;
-        /* hands drawn a hair past the bar line so the grip reads as contact */
-        p.hands = [{ x: h.hx - spread, y: h.bar.y + 0.75 }, { x: h.hx + spread, y: h.bar.y + 0.75 }];
+        /* the hands were resolved to real ink in tickHang — glyph bottoms, never the
+           empty line box; drawn a hair past the edge so the grip reads as contact */
+        p.hands = h.hands || [{ x: h.hx - 5, y: h.bar.y + 0.75 }, { x: h.hx + 5, y: h.bar.y + 0.75 }];
         p.hip = [0.25 + th * 0.6, -0.2 + th * 0.6];
         p.knee = [0.35, 0.3];
         break;
@@ -815,6 +939,7 @@
           case 'bow': {
             var bw = Math.sin(Math.min(t / 0.4, 1) * Math.PI / 2) * (t > 0.75 ? 1 - (t - 0.75) / 0.25 : 1);
             p.lean = 1.0 * bw;
+            p.headFollow = 1.15;   /* a bow bows the head too */
             p.hip = [0.12, -0.12]; p.knee = [0.1, 0.12];
             p.sh = [1.5 * bw - 0.1, -1.2 * bw + 0.1];
             p.el = [0.7 * bw, 0.2];
@@ -825,19 +950,36 @@
         break;
       }
     }
-    /* low headroom folds any grounded pose toward a crawl: pelvis drops, torso pitches
-       to horizontal, hands come down onto the ink ahead */
+    /* low headroom, in two distinct stages — because the halfway blend of the old
+       single fold was exactly the hunched slouch she dislikes:
+         · crouch: the KNEES take the height, the back stays proud (a duck-walk)
+         · fold:   only genuinely low ceilings pitch the torso into a real crawl,
+                   hands down on the ink, head in line with the spine */
     var c = fig.crawl;
-    if (c > 0.12 && (fig.state === 'move' || fig.state === 'idle')) {
+    if (c > 0.08 && (fig.state === 'move' || fig.state === 'idle')) {
       var ph2 = ph * 1.4;
-      p.dy = (p.dy || 0) + (LEG - 8) * c;
-      p.lean = p.lean * (1 - c) + 1.45 * c;
-      p.hip = [p.hip[0] * (1 - c) + (1.3 + 0.25 * Math.sin(ph2)) * c, p.hip[1] * (1 - c) + (1.3 - 0.25 * Math.sin(ph2)) * c];
-      p.knee = [p.knee[0] * (1 - c) + 1.5 * c, p.knee[1] * (1 - c) + 1.5 * c];
-      if (c > 0.4) p.hands = [
-        { x: fig.x + fig.dir * (13 + 3 * Math.sin(ph2)), y: fig.y + 0.7 },
-        { x: fig.x + fig.dir * (19 - 3 * Math.sin(ph2)), y: fig.y + 0.7 }];
+      var k = Math.min(c / 0.5, 1), f = Math.max(0, (c - 0.5) / 0.5);
+      p.hip = [mix(p.hip[0], 1.0 + 0.22 * Math.sin(ph2), k), mix(p.hip[1], 1.0 - 0.22 * Math.sin(ph2), k)];
+      p.knee = [mix(p.knee[0], 1.7, k), mix(p.knee[1], 1.7, k)];
+      p.lean = mix(p.lean, 0.22, k);
+      p.sh = [mix(p.sh[0], 0.5, k), mix(p.sh[1], -0.4, k)];
+      p.el = [mix(p.el[0], 0.9, k), mix(p.el[1], 0.9, k)];
+      if (f > 0) {
+        p.lean = mix(p.lean, 1.45, f);
+        p.headFollow = mix(0.5, 1.05, f);
+        p.hip = [mix(p.hip[0], 1.05 + 0.25 * Math.sin(ph2), f), mix(p.hip[1], 1.05 - 0.25 * Math.sin(ph2), f)];
+        p.knee = [mix(p.knee[0], 2.3, f), mix(p.knee[1], 2.3, f)];
+        if (f > 0.3) p.hands = [
+          { x: fig.x + fig.dir * (13 + 3 * Math.sin(ph2)), y: fig.y + 0.7 },
+          { x: fig.x + fig.dir * (19 - 3 * Math.sin(ph2)), y: fig.y + 0.7 }];
+      }
     }
+    /* every grounded pose is planted — feet (or crawl knees) exactly on the surface.
+       Airborne states and the deliberately leaping celebrations are the only exceptions;
+       the sign tiptoe plants its own toes. */
+    p.snap = fig.state === 'move' || fig.state === 'idle' ||
+             ((fig.state === 'wave' || fig.state === 'sign') && !p.tiptoe) ||
+             (fig.state === 'celeb' && fig.celeb && fig.celeb.name === 'bow');
     return p;
   }
 
