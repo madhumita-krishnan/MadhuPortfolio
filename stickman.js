@@ -26,15 +26,18 @@
    slow 6Hz boil while moving, finger fans on expressive hands. All in --ink-blue.
 
    The rAF loop follows the pot's rule: started on demand, cancelled the moment the figure
-   settles — an idle figure is a single static draw costing zero frames. Touch, coarse
-   pointers and reduced motion never boot it: the CTA stays an ordinary button. */
+   settles — an idle figure is a single static draw costing zero frames. Touch boots it
+   too (her 2026-08-17 ask — it was desktop-only before): tap-to-walk, tap-to-celebrate,
+   the sign hold, everything but DRAG, which on a phone is the scroll gesture and is left
+   alone. Only reduced motion never boots it: there the CTA stays an ordinary button. */
 (function () {
   'use strict';
   var hero = document.querySelector('.hero');
   if (!hero) return;
   var fine = matchMedia('(hover: hover) and (pointer: fine)');
   var prefersRM = matchMedia('(prefers-reduced-motion: reduce)');
-  if (!fine.matches || prefersRM.matches) return;
+  if (prefersRM.matches) return;
+  var touchMode = !fine.matches;
   var rmActive = function () { return prefersRM.matches || document.body.classList.contains('rm-mode'); };
 
   var cv = document.createElement('canvas');
@@ -220,6 +223,7 @@
     vx: 0, vy: 0, dir: 1,
     state: 'sign',         // sign | idle | move | air | hang | mantle | celeb | wave
     phase: 0,
+    gait: 0,               // the walk cycle's own clock — slows as the stride lengthens
     target: null,          // {x, y, tries}
     waypoint: null,        // {x, y, drop}
     drag: null,
@@ -240,6 +244,23 @@
   var visible = true;
 
   function spawn() {
+    /* boot standing ON the headline, not down at the CTA (her 2026-08-17 note —
+       tucked beside the say-hey button he went unnoticed; perched on the biggest
+       type he's the first thing the eye snags on). Scan columns across the first
+       headline line for a glyph top with real headroom; the CTA sign-hold remains
+       the fallback if the headline isn't there to stand on. */
+    var h1 = hero.querySelector('h1');
+    if (h1) {
+      var r = localRect(h1, hero.getBoundingClientRect());
+      for (var fx = 0.22; fx < 0.75; fx += 0.06) {
+        var x = Math.round(r.x1 + r.w * fx);
+        var t = groundTop(x, Math.max(0, r.y1 - 30), (r.y2 - r.y1) + 40);
+        if (t != null && t < r.y2 - 8 && clearance(x, t) > MIN_CLR) {
+          fig.x = x; fig.y = t; fig.dir = 1; fig.state = 'idle';
+          return;
+        }
+      }
+    }
     if (!sign) { fig.x = W * 0.3; fig.y = floorY; return; }
     fig.x = sign.cx;
     fig.y = floorY;
@@ -275,7 +296,8 @@
   }
   hero.addEventListener('pointermove', function (e) {
     var p = heroPoint(e); mouse.x = p.x; mouse.y = p.y;
-    if (down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
+    /* drag never arms on touch — a moving finger on the hero is the page scrolling */
+    if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
     if (down && down.moved && !rmActive()) {
       var dx = p.x - down.x, dy = p.y - down.y;
       fig.drag = { vx: Math.max(-DRAGMAX, Math.min(DRAGMAX, dx * 2.6)), up: dy < -70 ? -dy : 0 };
@@ -289,6 +311,9 @@
     if (e.target.closest('a,button')) return;
     down = Object.assign(heroPoint(e), { t: performance.now(), moved: false });
   }, { passive: true });
+  /* a touch the browser reclaims for scrolling ends in pointercancel, not pointerup —
+     without this a scroll leaves a stale `down` behind */
+  addEventListener('pointercancel', function () { hero.classList.remove('stick-dragging'); down = null; fig.drag = null; });
   addEventListener('pointerup', function (e) {
     hero.classList.remove('stick-dragging');
     if (!down) { fig.drag = null; return; }
@@ -349,6 +374,17 @@
     fig.state = 'air';
     if (Math.abs(dx) > FLIP_DX) startFlip(Math.sign(dx));
     puff(fig.x, fig.y, 2);
+  }
+
+  /* the walk cycle's clock. fig.phase (0.05 rad/px, untouched — the crawl reads it) is
+     distance; the GAIT consumes distance slower as the stride lengthens: pose() widens
+     the half-stride to L·m while this advance divides by the same m, so the stance
+     foot's backward drift stays exactly -vx — world-pinned — at every speed. Without m
+     a full run cycled ~7 strides/sec at the fixed walking stride: a scurry, not a run. */
+  function gaitM(sp) { return 1 + 0.32 * sp; }
+  function advGait(dt) {
+    var sp = Math.min(Math.abs(fig.vx) / RUN, 1);
+    fig.gait += Math.abs(fig.vx) * dt * 0.12 / gaitM(sp);
   }
 
   function tickGround(dt) {
@@ -431,6 +467,7 @@
       if (s - fig.y > 8) fig.slideT = 0.3;
       fig.x = nx; fig.y = s;
       fig.phase += Math.abs(fig.vx) * dt * 0.05;
+      advGait(dt);
       return;
     }
     /* the gaps BETWEEN glyphs are a few px of air — a stride simply spans them, the way a
@@ -440,6 +477,7 @@
       if (s2 != null && s2 >= fig.y - STEP_UP - 0.5 && s2 <= fig.y + STEP_DOWN + 0.5) {
         fig.x = nx;
         fig.phase += Math.abs(fig.vx) * dt * 0.05;
+        advGait(dt);
         return;
       }
     }
@@ -831,33 +869,71 @@
            swing foot arcs over it with a real pick-up: toe trailing as it lifts,
            levelling out to reach past for the next strike. The pelvis dips into double
            support on its own, because snap plants whichever contact is lowest. */
-        var L = 13.1;                        // half-stride: π / (2 · 0.05 · 2.4)
-        var lift = 3.5 + 4.5 * sp;
+        /* the walk stands TALL. Stance height is the whole posture: at 24 under a 26px
+           leg the knees carried ~45° of flex through every stride — a groucho creep.
+           25.5 leaves ~22° at mid-stance (a natural walking knee), and the deeper dip
+           at the stride ends keeps the ±L reach inside the leg so the pin still holds.
+           At speed the STRIDE lengthens (gaitM) rather than the cadence exploding, and
+           the dip deepens with it — DIP is linear in sp on purpose: L grows linearly,
+           so a linear dip holds √(L² + (STAND−DIP)²) ≈ 25.3 ≤ 25.6 across every speed
+           (an sp² dip lets the reach clip the clamp near sp 0.7 and the foot skates). */
+        var L = 13.09 * gaitM(sp);           // half-stride: π/(2·0.12) at a walk
+        var STAND = 25.5, DIP = 3.6 + 3.4 * sp;
+        var lift = 4 + 12 * sp;              // the run picks its knees UP
+        /* the trailing leg mirrors the arm's deep backswing (her rule): the foot
+           can't be PLANTED farther back — the IK reach clamp would make it skate —
+           so the extension lives in early swing, where a real runner's does: after
+           toe-off the airborne foot drifts a further `trail` px back in pelvis
+           space while the heel snaps up toward the seat (`kick` shifts the lift
+           peak early). Thigh trails ~59° behind vertical with the shin folded —
+           read against the 90° tricep, the leg finally scissors like the arms.
+           Both fade with sp², so the walk keeps its low, quiet recovery. */
+        var trail = 9 * sp * sp;
+        var kick = 1 - 0.35 * sp;
         var fpitch = [0, 0], nrm = [0, 0];
         for (var li = 0; li < 2; li++) {
-          var cyc = (ph * 2.4 + li * Math.PI) % (Math.PI * 2);
+          var cyc = (fig.gait + li * Math.PI) % (Math.PI * 2);
           var xf, yf;
           if (cyc < Math.PI) {               // stance — pinned flat on the ground
             xf = L * (1 - 2 * (cyc / Math.PI));
-            yf = 24 - 2.5 * (1 - Math.cos((xf / L) * (Math.PI / 2)));
-          } else {                           // swing — up and over
+            yf = STAND - DIP * (1 - Math.cos((xf / L) * (Math.PI / 2)));
+            nrm[li] = xf / L;
+          } else {                           // swing — back-trail, heel-kick, then over
             var u = (cyc - Math.PI) / Math.PI;
-            xf = -L + 2 * L * u;
-            yf = 24 - 2.5 * (1 - Math.cos((xf / L) * (Math.PI / 2))) - lift * Math.sin(u * Math.PI);
+            var xb = -L + 2 * L * u;
+            yf = STAND - DIP * (1 - Math.cos((xb / L) * (Math.PI / 2))) - lift * Math.sin(Math.PI * Math.pow(u, kick));
+            xf = xb - trail * Math.sin(Math.PI * Math.min(u / 0.45, 1));
             fpitch[li] = Math.sin(u * Math.PI) * (0.7 - 0.95 * u);
+            nrm[li] = xb / L;                // arms key off the bounded sweep, not the trail
           }
           var lk = legIK(xf, yf);
           p.hip[li] = lk.hip; p.knee[li] = lk.knee;
-          nrm[li] = xf / L;
         }
         p.footPitch = fpitch;
-        /* arms counter-swing the same-side foot, scaled up with speed */
-        var armSw = 0.28 + 0.34 * sp;
-        p.sh = [-armSw * nrm[0], -armSw * nrm[1]];
-        p.el = [0.35 + 0.3 * sp, 0.35 + 0.3 * sp];
-        /* a runner leans, but doesn't slouch: the lean is modest and the head (default
-           headFollow) rights itself rather than tipping past the spine */
-        p.lean = 0.05 + 0.22 * sp;
+        /* arms counter-swing the same-side foot — near-straight at a walk (an elbow
+           carried at 0.35 rad read as a skulk). The run pumps like a real runner:
+           the elbow FLEXES to ~88° as the arm drives forward (hand rises to chest
+           height) and OPENS on the backswing so the hand trails low behind the hip —
+           a constant full bend swung far back cocked the elbow behind the torso,
+           which read as a creep, not a run (her 2026-08-17 note). The swing is
+           BACKWARD-BIASED like real sprint form (her rule, same day): at full run
+           the TRICEP comes parallel to the ground — the back extreme ramps to 90°
+           behind vertical — while the forward drive stays moderate (~26°) and gets
+           its height from the elbow pump, hand to chest. A walk (sp→0) is symmetric
+           ±0.3 and numerically unchanged. The opening elbow is what keeps the deep
+           backswing honest — a near-straight trailing arm reads as a runner, never
+           the cocked-claw creep. */
+        var armFwd = 0.3 + 0.15 * sp;
+        var armBack = 0.3 + (Math.PI / 2 - 0.3) * sp;
+        var s0 = -nrm[0], s1 = -nrm[1];
+        p.sh = [s0 * (s0 > 0 ? armFwd : armBack), s1 * (s1 > 0 ? armFwd : armBack)];
+        var pump = 1.15 * sp * sp;
+        p.el = [0.15 + pump * (0.75 - 0.45 * nrm[0]), 0.15 + pump * (0.75 - 0.45 * nrm[1])];
+        /* a runner leans, but from the GROUND, not the waist: the lean is modest and
+           the head follows more of it at speed — head-bolt-upright over a tipped torso
+           was the posture kink she flagged; a walker stays vertical and self-righting */
+        p.lean = 0.02 + 0.16 * sp;
+        p.headFollow = 0.5 + 0.25 * sp;
         if (fig.slideT > 0) { p.lean = -0.34; p.headFollow = 1.0; p.hip = [0.9, 0.45]; p.knee = [1.3, 0.9]; p.sh = [-0.7, 0.5]; p.el = [0.3, 0.3]; p.footPitch = null; }
         if (fig.landT > 0) { p.lean = 0.28; p.hip = [0.75, -0.5]; p.knee = [1.5, 1.2]; p.sh = [0.5, -0.6]; p.el = [0.5, 0.5]; p.dy = 9; p.footPitch = null; }
         break;
@@ -961,12 +1037,15 @@
       var k = Math.min(c / 0.5, 1), f = Math.max(0, (c - 0.5) / 0.5);
       p.hip = [mix(p.hip[0], 1.0 + 0.22 * Math.sin(ph2), k), mix(p.hip[1], 1.0 - 0.22 * Math.sin(ph2), k)];
       p.knee = [mix(p.knee[0], 1.7, k), mix(p.knee[1], 1.7, k)];
-      p.lean = mix(p.lean, 0.22, k);
-      p.sh = [mix(p.sh[0], 0.5, k), mix(p.sh[1], -0.4, k)];
-      p.el = [mix(p.el[0], 0.9, k), mix(p.el[1], 0.9, k)];
+      p.lean = mix(p.lean, 0.16, k);
+      /* the arms keep their walking swing through the crouch — the old fixed bent-arm
+         carry (sh 0.5, el 0.9) was the sneak; only the true crawl reaches for the ink */
       if (f > 0) {
+        var af = Math.min(f / 0.3, 1);
         p.lean = mix(p.lean, 1.45, f);
         p.headFollow = mix(0.5, 1.05, f);
+        p.sh = [mix(p.sh[0], 0.5, af), mix(p.sh[1], -0.4, af)];
+        p.el = [mix(p.el[0], 0.9, af), mix(p.el[1], 0.9, af)];
         p.hip = [mix(p.hip[0], 1.05 + 0.25 * Math.sin(ph2), f), mix(p.hip[1], 1.05 - 0.25 * Math.sin(ph2), f)];
         p.knee = [mix(p.knee[0], 2.3, f), mix(p.knee[1], 2.3, f)];
         if (f > 0.3) p.hands = [
