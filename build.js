@@ -979,7 +979,11 @@ function makeJS() {
         [...node.childNodes].forEach(child=>{
           if(child.nodeType===3){
             const frag=document.createDocumentFragment();
-            child.textContent.split(/(?<=\\s)/).forEach(tok=>{
+            /* token = run-of-ink + its trailing space (same cut as a lookbehind split
+               after \\s — but written without lookbehind, which iOS Safari only parses
+               from 16.4: one lookbehind literal is a SyntaxError that kills this WHOLE
+               file at parse time on older phones — no reveal, no video, no pot */
+            (child.textContent.match(/[^\\s]*\\s|[^\\s]+$/g)||[]).forEach(tok=>{
               if(!tok)return;
               const w=document.createElement('span');w.className='w';
               w.style.transitionDelay=(seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
@@ -1091,8 +1095,9 @@ function makeJS() {
       start();
     };
     pot.addEventListener('mouseenter',nudge);
-    /* touch has no hover, and focus keeps it reachable from the keyboard */
-    pot.addEventListener('touchstart',()=>nudge(),{passive:true});
+    /* touch has no hover, and focus keeps it reachable from the keyboard; the first
+       touch point stands in for the mouse so a tap still tips it away from the finger */
+    pot.addEventListener('touchstart',e=>nudge(e.touches&&e.touches[0]),{passive:true});
     pot.addEventListener('focus',()=>nudge());
     pot.tabIndex=0;
   }
