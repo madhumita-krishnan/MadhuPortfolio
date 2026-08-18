@@ -1,0 +1,29 @@
+# Daily site health check — 6:00 am Eastern (10:00 UTC), plus on every push.
+#
+# Runs tools/site-check.js: content JSON parses, the site builds, generated JS
+# has no syntax errors, no page references a missing file, and the LIVE domain
+# (www.m--k.me) serves every page with a 200. If anything fails the run turns
+# red and GitHub emails the repo owner immediately.
+#
+# Note: the cron is UTC, so during EST (winter) it fires at 5:00 am Eastern.
+name: Site health check
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/site-check.js
