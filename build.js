@@ -489,19 +489,48 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   /* the indent that keeps the copy clear of the blooms on a desktop is pure lost margin on a
      phone, where the blooms are slivers at the edges and the copy needs the full width */
   .hero>:not(.hero-flora){margin-left:0;max-width:none}}
-/* the stick figure's canvas — spans the hero exactly, which is also its cage: it is drawn
-   here and nowhere else, and pointer-events:none means every real control under it keeps
-   working; stick.js listens on the hero itself. The say-hey button stays a real anchor —
-   the figure only holds a drawn post under it, so the control sheet is untouched.
+/* the stick figure's canvas — the hero's HEIGHT but the VIEWPORT's width, the same trick
+   as .hero-flora above. A section is capped at 1240px, so a canvas pinned to the hero box
+   ended his world (100vw − 1240)/2 short of the screen on a wide display: told to run
+   right, he stopped at an invisible wall in the middle of the page. His cage is now the
+   same box the blooms clip at — the actual screen edge. (body sets overflow-x:hidden, so
+   100vw is safe here too.) pointer-events:none means every real control under it keeps
+   working; stick.js listens on the document and gates input to this band. The say-hey
+   button stays a real anchor — the figure only holds a drawn post under it, so the
+   control sheet is untouched.
    Written as .hero>.stick-cv, not bare .stick-cv: the ".hero>:not(.hero-flora)" copy-column
    rule is specificity 0,2,0 and would otherwise win, putting the canvas back IN FLOW —
    which grows the hero, which resizes the canvas, which grows the hero, forever. Same
    specificity + later in the sheet, plus explicit resets of the column's margin and cap.
-   width/height 100% is not decor: a canvas is a replaced element, so inset:0 alone leaves
+   width/height are not decor: a canvas is a replaced element, so positioning alone leaves
    it at its intrinsic bitmap size (device pixels — double size on Retina) instead of
-   stretching it to the hero. */
-.hero>.stick-cv{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;margin-left:0;max-width:none}
+   stretching it to its box. */
+.hero>.stick-cv{position:absolute;top:0;left:50%;width:100vw;height:100%;transform:translateX(-50%);z-index:3;pointer-events:none;margin-left:0;max-width:none;
+  opacity:0;transition:opacity 600ms var(--ease-standard)}
+.hero.stick-on>.stick-cv{opacity:1}
 .hero.stick-dragging{user-select:none;-webkit-user-select:none}
+/* ---- the cinematic load. The hero used to arrive in two registers at once: the
+   handwriting wrote itself in word by word while the blooms, the headline and the two
+   buttons just APPEARED at first paint — which is the harshness she named (2026-08-19,
+   "fade in cinematically"). Now it assembles in layers off the same .revealed trigger
+   the word reveal already uses, each layer fading up a few px as it lands:
+
+     paint (1.6s fade from 150ms) → headline (rises, 450ms→1.4s) → the handwriting
+     (word stagger now starts at a 900ms base, so the pen starts writing while the
+     headline is still settling) → buttons (1.35s→2.15s) → the figure last (stick.js
+     boots at 2.4s and fades his canvas in — he reads his world from the LIVE rects,
+     so booting while the headline is mid-rise would bake his terrain 16px low; he
+     also rebuilds on hero transitionend, which catches the words settling).
+
+   Opacity and transform only, both composited — nothing here re-runs layout or
+   touches the glass filters (the feTurbulence lesson). The flora fades as a
+   CONTAINER so the per-image opacity rules (1 desktop, .5 phone) stay untouched. */
+.hero-flora{opacity:0;transition:opacity 1600ms var(--ease-standard) 150ms}
+.hero.revealed .hero-flora{opacity:1}
+.hero h1{opacity:0;transform:translateY(16px);transition:opacity 950ms var(--ease-enter) 450ms,transform 950ms var(--ease-enter) 450ms}
+.hero.revealed h1{opacity:1;transform:none}
+.hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
+.hero.revealed .hero-cta-row{opacity:1;transform:none}
 .w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
 .revealed .w{opacity:1;transform:none}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -947,11 +976,19 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 /* settle fail-safe: nothing ever stays invisible, even if transitions never run */
 .settled .w{opacity:1;transform:none}
 .settled .fade{opacity:1;transform:none}
+/* flora and canvas keep their translateX(-50%) centering — force OPACITY only there;
+   transform:none on either shoves it half a viewport right (found the hard way) */
+.settled .hero h1,.settled .hero-cta-row{opacity:1;transform:none}
+.settled .hero-flora{opacity:1}
 
 /* reduced motion */
 .rm-mode .w,.rm-mode .fade{opacity:1;transform:none;transition:none}
+.rm-mode .hero h1,.rm-mode .hero-cta-row{opacity:1;transform:none;transition:none}
+.rm-mode .hero-flora,.rm-mode .stick-cv{opacity:1;transition:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;transition:none !important}
+  .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
+  .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
   .play-btn{display:flex}
   html{scroll-behavior:auto}
 }
@@ -986,7 +1023,8 @@ function makeJS() {
             (child.textContent.match(/[^\\s]*\\s|[^\\s]+$/g)||[]).forEach(tok=>{
               if(!tok)return;
               const w=document.createElement('span');w.className='w';
-              w.style.transitionDelay=(seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
+              /* 900ms base: the pen starts writing while the headline (450ms→1.4s) settles */
+              w.style.transitionDelay=(900+seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
             });
             node.replaceChild(frag,child);
           }else if(child.nodeType===1){
@@ -1240,7 +1278,7 @@ function head(title, desc) {
      waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
      is invisible to a no-JS visitor. It is real text now, so a reader with no JS still gets
      the copy — but it would look like the hero simply has none. -->
-<noscript><style>.w{opacity:1;transform:none}.fade{opacity:1;transform:none}.dc{display:none}</style></noscript>
+<noscript><style>.w{opacity:1;transform:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
 <!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
      14kb, so it is worth the early connection rather than waiting on the stylesheet -->
 <link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
@@ -1290,7 +1328,7 @@ function navBar(kind) {
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark" href="index.html">${esc(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
-  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey</a>
+  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav></div>`;
 }
 

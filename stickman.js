@@ -1,6 +1,8 @@
 /* stickman.js — the hero's little inhabitant.
 
-   A procedural stick figure that lives ONLY in the hero section. It starts holding the
+   A procedural stick figure that lives ONLY in the hero band — the hero's height, but
+   the full viewport's width, so on a wide desktop he can run all the way to the actual
+   screen edge instead of stopping at the 1240px section cap. It starts holding the
    "say hey" board up over its head (the real CTA anchor is untouched — Calendly link, focus
    ring and button styling all survive; there is no drawn post, per her 2026-08-14 note).
    From there it is a tiny platformer whose TERRAIN IS THE INK:
@@ -98,7 +100,12 @@
   }
 
   function rebuild() {
-    var hr = hero.getBoundingClientRect();
+    /* the stage is the CANVAS box, not the hero box — the canvas runs the full viewport
+       width (see .hero>.stick-cv in build.js) while the hero section is capped at 1240px;
+       measuring the hero here is exactly what used to end his world mid-page on wide
+       screens. All terrain rects stay relative to this same origin, so the mask and the
+       figure agree about where everything is. */
+    var hr = cv.getBoundingClientRect();
     if (hr.width < 40) return;
     DPR = Math.min(devicePixelRatio || 1, 2);
     W = hr.width; H = hr.height;
@@ -251,7 +258,7 @@
        the fallback if the headline isn't there to stand on. */
     var h1 = hero.querySelector('h1');
     if (h1) {
-      var r = localRect(h1, hero.getBoundingClientRect());
+      var r = localRect(h1, cv.getBoundingClientRect());
       for (var fx = 0.22; fx < 0.75; fx += 0.06) {
         var x = Math.round(r.x1 + r.w * fx);
         var t = groundTop(x, Math.max(0, r.y1 - 30), (r.y2 - r.y1) + 40);
@@ -290,12 +297,17 @@
 
   /* ------------------------------------------------------------------ input */
   var down = null;
-  function heroPoint(e) {
-    var hr = hero.getBoundingClientRect();
-    return { x: e.clientX - hr.left, y: e.clientY - hr.top };
+  /* stage coordinates come from the canvas rect, and the listeners sit on the document:
+     the hero ELEMENT is capped at 1240px, so a click in the strip between it and the
+     screen edge never reached a hero listener — the one stretch he can run that he could
+     not be SENT. pointerdown gates to the canvas band (and skips controls and the nav),
+     so the rest of the page stays an ordinary page. */
+  function stagePoint(e) {
+    var r = cv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
-  hero.addEventListener('pointermove', function (e) {
-    var p = heroPoint(e); mouse.x = p.x; mouse.y = p.y;
+  document.addEventListener('pointermove', function (e) {
+    var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y;
     /* drag never arms on touch — a moving finger on the hero is the page scrolling */
     if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
     if (down && down.moved && !rmActive()) {
@@ -306,10 +318,12 @@
       start();
     }
   }, { passive: true });
-  hero.addEventListener('pointerdown', function (e) {
+  document.addEventListener('pointerdown', function (e) {
     if (e.button !== 0 || rmActive()) return;
-    if (e.target.closest('a,button')) return;
-    down = Object.assign(heroPoint(e), { t: performance.now(), moved: false });
+    if (e.target.closest && e.target.closest('a,button,nav')) return;
+    var p = stagePoint(e);
+    if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
+    down = Object.assign(p, { t: performance.now(), moved: false });
   }, { passive: true });
   /* a touch the browser reclaims for scrolling ends in pointercancel, not pointerup —
      without this a scroll leaves a stale `down` behind */
@@ -330,8 +344,7 @@
       return;
     }
     fig.drag = null;
-    var hr = hero.getBoundingClientRect();
-    var p = { x: e.clientX - hr.left, y: e.clientY - hr.top };
+    var p = stagePoint(e);
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
     var pelY = fig.y - LEG * (1 - fig.crawl * 0.6);
     if (Math.hypot(p.x - fig.x, p.y - (pelY - TO / 2)) < 46) {
@@ -1104,17 +1117,37 @@
     if (visible && needsLoop()) start();
   }, { threshold: 0.05 }).observe(hero);
 
+  /* the hero's cinematic load (build.js) moves things while it plays — the headline
+     rises 16px, the buttons 14px — and the mask is built from LIVE rects, so any mask
+     baked mid-flight has his terrain in the wrong place. Every settling piece fires
+     transitionend on the hero; queueRebuild's debounce collapses the word-by-word
+     storm into one rebuild after the last thing stops moving. This also fixes a bug
+     older than the fade: the mask used to be built at boot while the handwriting was
+     still ~.45em low in its own reveal. .ch transitions are the wave — skipped, or
+     every hover of the headline would re-read the world. */
+  hero.addEventListener('transitionend', function (e) {
+    if (!e.target || !e.target.classList || e.target.classList.contains('ch')) return;
+    if (e.propertyName !== 'transform' && e.propertyName !== 'opacity') return;
+    queueRebuild();
+  });
+
   var booted = false;
   function boot() {
     if (booted) return; booted = true;
     rebuild();
     spawn();
     draw();
+    /* fades the canvas in (see .hero.stick-on in build.js) — he is the last layer of
+       the load sequence, arriving after the type he stands on has stopped moving */
+    hero.classList.add('stick-on');
     var btn = hero.querySelector('.hero-cta-row .btn.solid');
     if (btn) btn.addEventListener('mouseenter', waveHello);
   }
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setTimeout(boot, 350); });
-  else addEventListener('load', function () { setTimeout(boot, 600); });
+  /* 2400ms, up from 350: the load sequence owns the first ~2.3s (buttons settle at
+     ~2.27s including the .revealed trigger delay), and he spawns standing on the
+     headline, which must be AT REST when his world is read */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setTimeout(boot, 2400); });
+  else addEventListener('load', function () { setTimeout(boot, 2600); });
 
   /* QA hook — the world plus a synchronous stepper for headless checks (the browser pane
      pauses rAF while hidden, so tests drive time by hand); not a public API */
