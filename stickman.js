@@ -110,6 +110,7 @@
     DPR = Math.min(devicePixelRatio || 1, 2);
     W = hr.width; H = hr.height;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    dirty = null;   /* resizing the bitmap wiped the canvas — nothing left to erase */
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ink = (getComputedStyle(document.documentElement).getPropertyValue('--ink-blue') || '#3C6B76').trim();
     floorY = H - 14;
@@ -307,6 +308,9 @@
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
   document.addEventListener('pointermove', function (e) {
+    /* the listener is document-wide (the run-to-the-edge fix), so bail while the hero
+       is scrolled away — no rect reads on every mousemove over the rest of the page */
+    if (!visible && !down) return;
     var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y;
     /* drag never arms on touch — a moving finger on the hero is the page scrolling */
     if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
@@ -1075,12 +1079,32 @@
     return p;
   }
 
+  /* the drawn region of the LAST frame, so this frame knows what to erase */
+  var dirty = null;
   function draw(now) {
     /* the boil ticks at ~6Hz while animating; a resting figure keeps its last seed and
        is perfectly still */
     if (needsLoop()) seed = ((now || performance.now()) / 160) | 0;
     sid = 0;
-    ctx.clearRect(0, 0, W, H);
+    /* clear only where ink was or will be. The canvas is viewport-sized now (the
+       run-to-the-edge fix), and a full clearRect + recomposite of the whole layer per
+       frame is what made him feel laggy on a wide screen — ~6.5M px erased to move a
+       60px figure. His wildest pose (flip apex, sign-cheer arms, hang reach) fits in
+       ±150 of the pelvis; puffs stretch the box; the union with last frame's box
+       erases the old drawing even on a fast drag. */
+    var R = 150;
+    var b = { x1: fig.x - R, y1: fig.y - LEG - R, x2: fig.x + R, y2: fig.y + 40 };
+    for (var pi = 0; pi < puffs.length; pi++) {
+      var pf = puffs[pi];
+      if (pf.x - 10 < b.x1) b.x1 = pf.x - 10; if (pf.x + 10 > b.x2) b.x2 = pf.x + 10;
+      if (pf.y - 10 < b.y1) b.y1 = pf.y - 10; if (pf.y + 10 > b.y2) b.y2 = pf.y + 10;
+    }
+    var u = dirty ? {
+      x1: Math.min(dirty.x1, b.x1), y1: Math.min(dirty.y1, b.y1),
+      x2: Math.max(dirty.x2, b.x2), y2: Math.max(dirty.y2, b.y2)
+    } : b;
+    ctx.clearRect(u.x1, u.y1, u.x2 - u.x1, u.y2 - u.y1);
+    dirty = b;
     puffs.forEach(function (p) {
       ctx.strokeStyle = ink; ctx.globalAlpha = Math.max(p.t / 0.34, 0) * 0.5; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(p.x - 3, p.y); ctx.lineTo(p.x + 3, p.y); ctx.stroke();
