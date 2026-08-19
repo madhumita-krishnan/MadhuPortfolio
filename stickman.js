@@ -256,7 +256,18 @@
        tucked beside the say-hey button he went unnoticed; perched on the biggest
        type he's the first thing the eye snags on). Scan columns across the first
        headline line for a glyph top with real headroom; the CTA sign-hold remains
-       the fallback if the headline isn't there to stand on. */
+       the fallback if the headline isn't there to stand on.
+
+       On phones he boots on the hero FLOOR instead (2026-08-19 "when you load the stick
+       figure on the phone can you load it at the bottom of the hero"). Not the sign-hold:
+       on a phone the say-hey button lives in the same bottom-left corner as the fixed
+       day/night pill, and the two stacked read as a collision — so he stands at 60% of
+       the width, right of both, facing the buttons. touchMode rather than a width test,
+       because it is the same judgement every other input decision in this file uses. */
+    if (touchMode) {
+      fig.x = Math.round(W * 0.6); fig.y = floorY; fig.dir = -1; fig.state = 'idle';
+      return;
+    }
     var h1 = hero.querySelector('h1');
     if (h1) {
       var r = localRect(h1, cv.getBoundingClientRect());

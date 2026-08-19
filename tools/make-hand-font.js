@@ -230,6 +230,21 @@ function resample(p, k) {
   return { a, w, h };
 }
 
+/** Vertical-only bilinear resample. On a vertical stroke this moves the ENDS and leaves the
+    width alone — and on a vertical stroke the width IS the pen — so a squashed stroke keeps
+    her weight without any correction. Exists for the composed '!' and nothing else. */
+function resampleV(p, k) {
+  const h = Math.max(1, Math.round(p.h * k));
+  const a = new Float32Array(p.w * h);
+  for (let y = 0; y < h; y++) {
+    const sy = Math.min(p.h - 1.001, (y + 0.5) / k - 0.5), y0 = Math.max(0, Math.floor(sy)), t = sy - y0;
+    for (let x = 0; x < p.w; x++) {
+      a[y * p.w + x] = p.a[y0 * p.w + x] * (1 - t) + p.a[Math.min(p.h - 1, y0 + 1) * p.w + x] * t;
+    }
+  }
+  return { a, w: p.w, h };
+}
+
 /** Exact squared euclidean distance transform, one dimension at a time (Felzenszwalb's
     lower-envelope method). Called twice per plane — once for the ink, once for the paper. */
 function edt1d(f, n) {
@@ -1008,6 +1023,40 @@ function main() {
       + hang.map(q => `${q.ch} ${((q.set.x0 - q.ink.x0) * k0 / UPEM).toFixed(2)}/`
         + `${((q.ink.x1 - q.set.x1) * k0 / UPEM).toFixed(2)}em`).join('  '));
   }
+  /* ---- '!'. She has never written one — the paragraph sheet has only . , ' — but the
+     say-hey buttons hover in her hand and 2026-08-19 the hover carries the bang ("use
+     capitals and exclamation for say hey as well in the handwriting hover"). So the mark is
+     composed from two marks that ARE hers, both taken AFTER the loop above has finished
+     them: the stroke is her l squashed to 0.74 of its height — vertical-only, see resampleV,
+     so the pen never moves — and the dot is her full stop, on the same line the l stood on.
+     The 0.26 of the l's height the squash frees up is the stroke-to-dot gap, which is about
+     the proportion a bang actually has. */
+  const stemQ = all.find(q => q.ch === 'l'), dotQ = all.find(q => q.ch === '.');
+  if (stemQ && dotQ) {
+    const sp = resampleV(stemQ.p, 0.74);
+    const si = inkBox(sp), di = inkBox(dotQ.p);
+    const H = stemQ.ink.y1 - stemQ.ink.y0 + 1;           // the finished l's full height
+    const PAD = 6;
+    const w = Math.max(si.w, di.w) + PAD * 2, h = H + PAD * 2;
+    const a = new Float32Array(w * h);
+    const blit = (p, box, dx, dy) => {
+      for (let y = box.y0; y <= box.y1; y++) for (let x = box.x0; x <= box.x1; x++) {
+        const tx = x - box.x0 + dx, ty = y - box.y0 + dy;
+        if (tx >= 0 && ty >= 0 && tx < w && ty < h) a[ty * w + tx] = Math.max(a[ty * w + tx], p.a[y * p.w + x]);
+      }
+    };
+    blit(sp, si, Math.round(w / 2 - si.w / 2), PAD);
+    blit(dotQ.p, di, Math.round(w / 2 - di.w / 2), PAD + H - di.h);
+    const bang = { ch: '!', p: { a, w, h }, zone: 'punct', gaps: [], baseline: PAD + H - 1 };
+    bang.ink = inkBox(bang.p);
+    bang.set = bang.ink;                                  // punctuation sets by its whole box
+    bang.entry = { name: 'exclam', code: 33, advance: Math.round(bang.set.w * k0 + sb * 2),
+      contours: contoursOf(bang, k0, sb), ch: '!' };
+    entries.push(bang.entry);
+    all.push(bang);
+    console.log("  '!' composed from her l (squashed x0.74) over her full stop");
+  }
+
   if (AUDIT) audit(all, k0);
   /* the curly apostrophe is the one a browser gets from smart quotes, and it is the same mark */
   const apos = entries.find(e => e.ch === "'");
@@ -1076,7 +1125,7 @@ function audit(all, k0) {
   const rows = [];
   for (const q of all) {
     const isl = islands(q.p);
-    const want = IJ.includes(q.ch) ? 2 : 1;
+    const want = IJ.includes(q.ch) || q.ch === '!' ? 2 : 1;   // the composed bang is a stroke and a dot
     /* The throat: the smallest distance from an ink pixel to paper, doubled, taken over the
        ridge of every stroke. The distance transform is already here for the re-weighting. */
     const inside = new Uint8Array(q.p.w * q.p.h);

@@ -75,9 +75,18 @@ function compose(size, { gamma = 1, potW = 0.62, ruleA = 0.26 } = {}) {
     for (let c = 0; c < 3; c++) img[d + c] = Math.round(img[d + c] * (1 - ruleA) + LINE[c] * ruleA);
   }
 
-  const pw = Math.round(size * potW), ph = Math.round(pw * pot.height / pot.width);
+  /* The pot and the tile must have the same PARITY, or the spare pixels cannot split
+     evenly: at 16px the rounded pot came out 13px wide, sat 2px off one edge and 1px off
+     the other, and a whole pixel of lean at tab size is exactly "the pot doesn't feel
+     centered" (2026-08-19). Grown to match rather than shrunk — the small sizes already
+     want the mark bigger. The drawing itself is balanced: its width-weighted silhouette
+     midline sits within 2px of its box centre at 900px, so box-centering is honest once
+     the margins can actually be equal. */
+  let pw = Math.round(size * potW);
+  if ((size - pw) % 2) pw += 1;
+  const ph = Math.round(pw * pot.height / pot.width);
   const scaled = resize(pot.data, pot.width, pot.height, pw, ph);
-  const px0 = Math.round((size - pw) / 2), py0 = ruleY - ph;   // foot exactly on the line
+  const px0 = (size - pw) / 2, py0 = ruleY - ph;   // foot exactly on the line
   for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) {
     const a = Math.pow(scaled[(y * pw + x) * 4 + 3] / 255, gamma);
     if (!a) continue;

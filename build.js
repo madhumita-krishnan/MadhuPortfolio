@@ -223,7 +223,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
     0 10px 30px var(--shadow-soft);
 }
 /* the prism rim. Sits on the edge only, so the middle of the panel stays clean. */
-.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+.glass::after,.theme-toggle .tt-rim{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
   background:conic-gradient(from 38deg,
     rgba(255,255,255,0) 0deg, rgba(255,120,128,.34) 22deg, rgba(255,214,96,.30) 42deg,
     rgba(126,240,186,.26) 62deg, rgba(112,178,255,.34) 82deg, rgba(192,152,255,.24) 102deg,
@@ -267,9 +267,10 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
    "do the handwriting thing for all my buttons"). Overlay is absolute so the pill never
    changes width; the sans label goes transparent under it. The hand ink colour rides a
    per-variant custom property because the label's own color is the thing being hidden.
-   Madhu Hand has no "!" glyph, so the say-hey buttons carry data-hand="say hey" — the
-   sans keeps the bang, the handwriting goes without. Same -.52em baseline constant as
-   the nav: it folds both fonts' metrics and scales with the type size. */
+   Button labels are uppercase, so the hand overlay is too — data-hand carries the label
+   already capitalised, bang included ('!' has been in Madhu Hand since 2026-08-19,
+   composed from her l and her full stop). Same -.52em baseline constant as the nav: it
+   folds both fonts' metrics and scales with the type size. */
 .btn[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
   position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
   font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;text-transform:none;font-weight:400;
@@ -378,8 +379,10 @@ nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-
    already, but .glass without the warp is a frosted pill, and a frosted pill on flat cream
    has nothing to frost. What was missing was the one thing that reads as glass rather than as
    translucency: the edges of what is behind it moving as it passes.
-   Five warped elements, all static filters. Do not promote this to .glass. */
-nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
+   Six warped elements, all static filters. Do not promote this to .glass. The sixth is
+   the day/night toggle (2026-08-19: "make it the same style as the nav bar at the top") —
+   a second fixed pill, so it reads as the nav's counterweight in the opposite corner. */
+nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
 .wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
 .nav-links a,.theme-toggle{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
@@ -396,12 +399,22 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
   /* (2026-08-19 her ask) the toggle leaves the nav bar for the bottom-left corner — fixed,
      so day/night is reachable from anywhere without riding the bar, and the phone bar gets
      its width back. Bottom-LEFT because the right is spoken for: the pot stands above the
-     footer on the right and say-hey caps the bar. Still a control, so it obeys the sheet:
-     a flat raised fill and a hairline — no glass, no shadow. */
-  background:var(--bg-raised);border:1px solid var(--line);padding:12px 18px}
+     footer on the right and say-hey caps the bar. It wears the nav's glass, not the sheet's
+     flat fill (2026-08-19: "make it the same style as the nav bar at the top") — the ONE
+     control allowed to, because like the nav it is a fixed pill floating over whatever
+     scrolls beneath it, and a flat fill pinned over moving content read as a sticker. The
+     material comes from .glass on the markup plus the warp list above; the prism rim, which
+     .glass normally draws with ::after, lives on a real child (.tt-rim) here because ::after
+     is spoken for below — it is the handwriting face. */
+  padding:12px 18px}
 .theme-toggle::before{content:"Night Mode"}
 [data-theme="night"] .theme-toggle::before{content:"Day Mode"}
-.theme-toggle::after{content:"Night Mode";position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);
+.theme-toggle::after{content:"Night Mode";
+  /* this ::after also matches .glass::after (the prism rim), so the rim's paint has to be
+     taken back off the handwriting BEFORE the positioning below — inset:auto first, or it
+     would reset the left/right/top it is meant to protect. The rim is drawn by .tt-rim. */
+  background:none;-webkit-mask:none;mask:none;padding:0;mix-blend-mode:normal;inset:auto;z-index:1;
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);
   text-align:center;font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;color:var(--ink-blue);
   opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
 [data-theme="night"] .theme-toggle::after{content:"Day Mode"}
@@ -1610,9 +1623,9 @@ function navBar(kind) {
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
-  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="say hey">say hey!</a>
+  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="SAY HEY!">say hey!</a>
 </nav></div>
-<button class="theme-toggle" type="button" aria-label="Switch to night mode"></button>`;
+<button class="theme-toggle glass" type="button" aria-label="Switch to night mode"><span class="tt-rim" aria-hidden="true"></span></button>`;
 }
 
 /* "M--K" split for the nav interaction: the letters are movable spans, the dashes their
@@ -1713,8 +1726,8 @@ function renderHome() {
   <h1><span class="lively">${esc(h.headline)}</span></h1>
   <p class="hero-line reveal-words" data-seq="3">${heroLinesHTML}</p>
   <p class="hero-cta-row">
-    <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ ',.A-Za-z\u2019]/g,'').trim())}">${esc(h.ctaPrimary.label)}</a>
-    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ ',.A-Za-z\u2019]/g,'').trim())}">${esc(h.ctaSecondary.label)}</a>
+    <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
+    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaSecondary.label)}</a>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
@@ -1836,7 +1849,7 @@ function renderHome() {
       <p class="eyebrow">${esc(site.about.eyebrow)}</p>
       <h2 class="about-title">${typo(site.about.title)}</h2>
       ${[].concat(site.about.body).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n      ')}
-      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel)}">${esc(site.about.resumeLabel)}</a>
+      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
 </section>`;
