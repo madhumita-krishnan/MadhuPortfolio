@@ -260,6 +260,27 @@
     var h1 = hero.querySelector('h1');
     if (h1) {
       var r = localRect(h1, cv.getBoundingClientRect());
+      /* her 2026-08-19 note: he loads standing ON THE d of "Madhu". Find the d among the
+         .ch spans (app.js split the headline per glyph) and aim for its bowl; the old
+         left-to-right scan below stays as the fallback so a future headline without a
+         d still gives him somewhere to stand. */
+      var dEl = null, chs = h1.querySelectorAll('.ch');
+      for (var ci = chs.length - 1; ci >= 0; ci--) {
+        if (chs[ci].textContent === 'd') { dEl = chs[ci]; break; }
+      }
+      if (dEl) {
+        var dr = localRect(dEl, cv.getBoundingClientRect());
+        /* three columns across the glyph: centre first, then either side of the bowl */
+        var dxs = [(dr.x1 + dr.x2) / 2, dr.x1 + dr.w * 0.35, dr.x1 + dr.w * 0.65];
+        for (var di = 0; di < dxs.length; di++) {
+          var dx = Math.round(dxs[di]);
+          var dt = groundTop(dx, Math.max(0, dr.y1 - 30), (r.y2 - dr.y1) + 40);
+          if (dt != null && dt < r.y2 - 8 && clearance(dx, dt) > MIN_CLR) {
+            fig.x = dx; fig.y = dt; fig.dir = 1; fig.state = 'idle';
+            return;
+          }
+        }
+      }
       for (var fx = 0.22; fx < 0.75; fx += 0.06) {
         var x = Math.round(r.x1 + r.w * fx);
         var t = groundTop(x, Math.max(0, r.y1 - 30), (r.y2 - r.y1) + 40);
@@ -1134,6 +1155,9 @@
     }, 160);
   }
   addEventListener('resize', queueRebuild, { passive: true });
+  /* night mode repaints the tokens under him — rebuild re-reads --ink-blue so the
+     figure doesn't keep standing there in day ink on a night page */
+  addEventListener('mk-theme', queueRebuild, { passive: true });
   new ResizeObserver(queueRebuild).observe(hero);
   hero.querySelectorAll('.hero-flora img').forEach(function (im) {
     if (!im.complete) im.addEventListener('load', queueRebuild, { once: true });

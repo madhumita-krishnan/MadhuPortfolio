@@ -96,7 +96,31 @@ ${Object.entries(c).map(([k, v]) => `  --${k}:${v};`).join('\n')}
   --motion-fast:${m.fast};--motion-base:${m.base};--motion-slow:${m.slow};
   --ease-standard:${m['ease-standard']};--ease-enter:${m['ease-enter']};
   --space:${theme.space};
+  --glass-grad-a:rgba(255,255,255,.50);--glass-bg:${g['light-bg']};--glass-grad-b:rgba(255,255,255,.26);
+  --glass-border:${g['light-border']};
+  --glass-cres-top:rgba(255,255,255,.98);--glass-cres-bottom:rgba(255,255,255,.62);
+  --glass-cres-side:rgba(255,255,255,.42);--glass-glow:rgba(255,255,255,.16);--glass-prism-o:.9;
+  color-scheme:light;
 }
+/* ---- night mode: the same site moved onto its deep-green surface. Every value here
+   lives in data/theme.json under "night" — resampled LIGHTER rust/teal so all text
+   pairings hold WCAG AA on the dark grounds (checked in-session 2026-08-19). The
+   attribute is stamped on <html> before first paint by the boot script in <head>
+   (stored choice first, otherwise the viewer's own sunrise/sunset). */
+[data-theme="night"]{
+${Object.entries(theme.night.colors).map(([k, v]) => `  --${k}:${v};`).join('\n')}
+  --glass-grad-a:${theme.night.glass['grad-a']};--glass-bg:${theme.night.glass.bg};--glass-grad-b:${theme.night.glass['grad-b']};
+  --glass-border:${theme.night.glass.border};
+  --glass-cres-top:${theme.night.glass['cres-top']};--glass-cres-bottom:${theme.night.glass['cres-bottom']};
+  --glass-cres-side:${theme.night.glass['cres-side']};--glass-glow:${theme.night.glass.glow};--glass-prism-o:${theme.night.glass['prism-o']};
+  color-scheme:dark;
+}
+/* the theme switch animates by momentarily letting every surface transition its paint —
+   stamped on <html> for ~900ms by the toggle, skipped entirely under reduced motion */
+.theme-anim,.theme-anim *,.theme-anim *::before,.theme-anim *::after{
+  transition:background-color 600ms var(--ease-standard),color 600ms var(--ease-standard),
+    border-color 600ms var(--ease-standard),box-shadow 600ms var(--ease-standard),
+    opacity 600ms var(--ease-standard) !important}
 /* Her hand, as a typeface — cut from the sheets in story-src by tools/make-hand-font.js.
    Self-hosted and tiny (14kb), so it is fetched from the same origin as the page and there is
    no third party in the critical path for the one line of copy the hero exists to deliver.
@@ -183,16 +207,16 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
    No sweeping shimmer on hover — it read as a swipe effect, not as a material. */
 .glass{
   position:relative;
-  background:linear-gradient(150deg, rgba(255,255,255,.50) 0%, ${g['light-bg']} 52%, rgba(255,255,255,.26) 100%);
+  background:linear-gradient(150deg, var(--glass-grad-a) 0%, var(--glass-bg) 52%, var(--glass-grad-b) 100%);
   -webkit-backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
   backdrop-filter:blur(${g.blur}) saturate(${g.saturate});
-  border:1px solid ${g['light-border']};
+  border:1px solid var(--glass-border);
   box-shadow:
-    inset 0 1.5px 1.5px -1px rgba(255,255,255,.98),
-    inset 0 -2px 2px -1px rgba(255,255,255,.62),
-    inset 1.5px 0 2px -1px rgba(255,255,255,.42),
-    inset -1.5px 0 2px -1px rgba(255,255,255,.42),
-    inset 0 0 18px rgba(255,255,255,.16),
+    inset 0 1.5px 1.5px -1px var(--glass-cres-top),
+    inset 0 -2px 2px -1px var(--glass-cres-bottom),
+    inset 1.5px 0 2px -1px var(--glass-cres-side),
+    inset -1.5px 0 2px -1px var(--glass-cres-side),
+    inset 0 0 18px var(--glass-glow),
     0 10px 30px var(--shadow-soft);
 }
 /* the prism rim. Sits on the edge only, so the middle of the panel stays clean. */
@@ -203,7 +227,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
     rgba(255,255,255,0) 128deg);
   -webkit-mask:linear-gradient(#000,#000) content-box exclude,linear-gradient(#000,#000);
   mask:linear-gradient(#000,#000) content-box exclude,linear-gradient(#000,#000);
-  padding:1.5px;mix-blend-mode:screen;opacity:.9}
+  padding:1.5px;mix-blend-mode:screen;opacity:var(--glass-prism-o)}
 .glass>*{position:relative;z-index:1}
 /* .glass-dark and .float were both dropped with the button rework and are not referenced by
    any markup or script. .glass-dark existed only for the case-study tags, which are now
@@ -236,11 +260,30 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
              border-color var(--motion-fast) var(--ease-standard),
              color var(--motion-fast) var(--ease-standard)}
 
+/* ---- buttons swap into her hand on hover, same move as the nav links (2026-08-19:
+   "do the handwriting thing for all my buttons"). Overlay is absolute so the pill never
+   changes width; the sans label goes transparent under it. The hand ink colour rides a
+   per-variant custom property because the label's own color is the thing being hidden.
+   Madhu Hand has no "!" glyph, so the say-hey buttons carry data-hand="say hey" — the
+   sans keeps the bang, the handwriting goes without. Same -.52em baseline constant as
+   the nav: it folds both fonts' metrics and scales with the type size. */
+.btn[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
+  font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;text-transform:none;font-weight:400;
+  color:var(--hand-ink,var(--ink-blue));
+  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
+@media (hover:hover){
+  .btn[data-hand]:hover,.btn[data-hand]:focus-visible{color:transparent}
+  .btn[data-hand]:hover::after,.btn[data-hand]:focus-visible::after{opacity:1}
+}
+.btn.solid{--hand-ink:var(--text-on-accent)}
+.btn.outline{--hand-ink:var(--accent-deep)}
+
 /* PRIMARY. The hover and pressed steps are the accent walked down in value, not the accent
    plus a shadow — on a flat control the only honest way to show depression is that the
    colour gets heavier. --accent-deep is already the bottom of that walk, so pressed lands
    there and hover sits between the two. */
-.btn.solid{background:var(--accent);color:var(--text-on-deep)}
+.btn.solid{background:var(--accent);color:var(--text-on-accent)}
 .btn.solid:hover{background:var(--accent-press)}
 .btn.solid:active{background:var(--accent-deep)}
 
@@ -248,8 +291,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
    plain accent measures 4.47:1, which is a hair under the 4.5 small text wants, and the
    hover state is supposed to be the darker one anyway. */
 .btn.outline{border-color:var(--accent);color:var(--accent)}
-.btn.outline:hover{background:var(--accent-press);border-color:var(--accent-press);color:var(--text-on-deep)}
-.btn.outline:active{background:var(--accent-deep);border-color:var(--accent-deep);color:var(--text-on-deep)}
+.btn.outline:hover{background:var(--accent-press);border-color:var(--accent-press);color:var(--text-on-accent)}
+.btn.outline:active{background:var(--accent-deep);border-color:var(--accent-deep);color:var(--text-on-accent)}
 
 /* TERTIARY — the baby teal. The LINE is --teal-baby and the LABEL is --ink-blue, which is
    what the sheet shows and is also the only version that passes contrast: baby teal is a
@@ -258,7 +301,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
    The hover fill is --ink-blue and not --teal-baby for the same reason: a cream label on
    baby teal is only 3.6:1, whereas on the full ink-blue it is 5.4:1. */
 .btn.teal{border-color:var(--teal-baby);color:var(--ink-blue)}
-.btn.teal:hover{background:var(--ink-blue);border-color:var(--ink-blue);color:var(--text-on-deep)}
+.btn.teal:hover{background:var(--ink-blue);border-color:var(--ink-blue);color:var(--text-on-accent)}
 .btn.teal:active{background:var(--bg-deep);border-color:var(--bg-deep);color:var(--text-on-deep)}
 
 /* SIZES */
@@ -330,12 +373,33 @@ nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-
 nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
 .wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
-.nav-links a{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
+.nav-links a,.theme-toggle{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
   padding:10px 13px;border-radius:var(--r-pill);transition:color var(--motion-fast) var(--ease-standard),background var(--motion-fast) var(--ease-standard)}
 /* hover keeps the color shift only — the wash pill left with the handwriting swap
    (2026-08-19: "remove the hover highlight thing. just do the text") */
-.nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep)}
-@media (max-width:700px){.nav-links a.optional{display:none}}
+.nav-links a:hover,.nav-links a:focus-visible,.theme-toggle:hover,.theme-toggle:focus-visible{color:var(--accent-deep)}
+/* ---- the day/night label (2026-08-19 her ask). The label names the mode you'll GET:
+   in day it reads "night mode", click it and the site crosses over and the label flips.
+   Both faces are CSS content keyed off [data-theme] so the right words are painted
+   before any JS runs; the sans face is the ::before, and the ::after is the same
+   handwriting swap every other control gets. */
+.theme-toggle{background:none;border:0;cursor:pointer;position:relative;white-space:nowrap}
+.theme-toggle::before{content:"night mode"}
+[data-theme="night"] .theme-toggle::before{content:"day mode"}
+.theme-toggle::after{content:"night mode";position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);
+  text-align:center;font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;color:var(--ink-blue);
+  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
+[data-theme="night"] .theme-toggle::after{content:"day mode"}
+@media (hover:hover){
+  .theme-toggle:hover,.theme-toggle:focus-visible{color:transparent}
+  .theme-toggle:hover::after,.theme-toggle:focus-visible::after{opacity:1}
+}
+@media (max-width:700px){.nav-links a.optional{display:none}
+  /* the full "night mode" label overflowed the 375px bar and shoved say-hey off the
+     right edge — on a phone the label is just the destination: "night" / "day" */
+  .theme-toggle{padding:10px 8px}
+  .theme-toggle::before,.theme-toggle::after{content:"night"}
+  [data-theme="night"] .theme-toggle::before,[data-theme="night"] .theme-toggle::after{content:"day"}}
 
 /* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
    the dashes revealing themselves between them; hovering squishes them back together and
@@ -476,10 +540,12 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    stickman's terrain is untouched (his rebuild listener allowlists load-sequence
    elements precisely so this hover never re-reads the world). Hover devices only:
    a phone tap should never dim two-thirds of the hero. */
-.hero-line span.hs{transition:opacity 240ms var(--ease-standard)}
+.hero-line span.hs{transition:color 240ms var(--ease-standard)}
 @media (hover:hover){
-  .hero-line:hover span.hs{opacity:.32}
-  .hero-line:hover span.hs:hover{opacity:1}
+  /* 2026-08-19: colour, not opacity — the sentences step back into a light teal and
+     the one under the cursor deepens slightly past resting ink */
+  .hero-line:hover span.hs{color:var(--teal-baby)}
+  .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
@@ -593,12 +659,13 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .hero.revealed h1{opacity:1;transform:none}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
-/* each word materialises out of a blur — the opacity lands first, then the ink
-   sharpens over a longer tail, so a word drifts into focus like settling dust
-   instead of popping on (2026-08-19: "more gradual, like sprinkling pixie dust") */
-.w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);filter:blur(9px);
-  transition:opacity 900ms var(--ease-enter),transform 900ms var(--ease-enter),filter 1400ms var(--ease-standard)}
-.revealed .w{opacity:1;transform:none;filter:blur(0)}
+/* words land clean — the blur-resolve tried on the whole hero came straight back out
+   (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
+   because she asked to keep it for the word portfolio. */
+.w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
+.eyebrow .w{filter:blur(9px);transition:opacity 900ms var(--ease-enter),transform 900ms var(--ease-enter),filter 1400ms var(--ease-standard)}
+.revealed .w{opacity:1;transform:none}
+.revealed .eyebrow .w{filter:blur(0)}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px)}
@@ -805,7 +872,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   transition:flex-grow var(--motion-slow) var(--ease-enter);background:var(--bg-raised)}
 .panel.active{flex-grow:8}
 .panel img,.panel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.94)}
-.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,35,32,0) 38%,rgba(18,35,32,.85) 100%)}
+.panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,35,32,0) 38%,rgba(18,35,32,.85) 100%);
+  transition:opacity var(--motion-base) var(--ease-standard)}
 .panel video{opacity:0;transition:opacity var(--motion-base) var(--ease-standard);z-index:1}
 /* .v-live is stamped by JS the moment play() resolves: the clip shows whenever it is
    actually running — active or collapsed — and the poster img holds the frame anywhere
@@ -824,7 +892,18 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 @media (max-width:760px){.panels{flex-direction:column;height:auto}
   .panel{height:84px;flex:none;transition:height var(--motion-slow) var(--ease-enter)}
   .panel.active{height:360px;flex:none}
+  /* the open panel's scrim starts much higher on a phone (2026-08-19: "the gradient
+     doesn't go high enough so the text is a little hard to read") — 360px of panel
+     holds three lines of content, and the desktop 38% start left them on raw photo */
+  .panel.active::after{background:linear-gradient(180deg,rgba(18,35,32,0) 6%,rgba(18,35,32,.62) 45%,rgba(18,35,32,.92) 100%)}
   .panel-collapsed-label{writing-mode:horizontal-tb;transform:translateX(-50%);bottom:auto;top:50%;margin-top:-.5em}}
+/* press-and-hold on touch peeks at the photo: text and scrim lift while held
+   (2026-08-19 her ask). Hover devices don't need it — nothing covers the image
+   until the panel is active, and a mouse can simply move away. */
+@media (hover:none){
+  .panel,.panel img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  .panel.peek::after,.panel.peek .panel-content,.panel.peek .panel-collapsed-label{opacity:0}
+}
 
 /* ------------------------------------------------ story */
 .story{margin:0}
@@ -833,6 +912,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* the stacked cut is a different shape, and <source> carries no dimensions — without this
    the phone reserves the wide aspect and the page jumps when the GIF lands */
 @media (max-width:760px){.story img{aspect-ratio:660/1060;max-width:none}}
+/* night: the GIF's background is the DAY cream, baked into its pixels so it can sit
+   seamlessly on the day page. Rather than repaint her artwork, night frames it as the
+   object it is — a notebook page, lit on a dark desk. */
+[data-theme="night"] .story img{border-radius:var(--r-media);box-shadow:0 16px 44px var(--shadow-mid)}
 
 /* ------------------------------------------------ about + footer */
 .about-band{display:grid;grid-template-columns:180px 1fr;gap:calc(var(--space)*7);align-items:center}
@@ -1055,14 +1138,14 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .wm-m,.rm-mode .wm-k,.rm-mode .wm-d{animation:none;transition:none}
 .rm-mode .wordmark:hover .wm-m,.rm-mode .wordmark:hover .wm-k{transform:none}
 .rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
-.rm-mode .nav-links a::after{transition:none}
-.rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{opacity:1;transition:none}
+.rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
+.rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
   .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
   .wm-m,.wm-k,.wm-d{animation:none !important;transition:none !important;transform:none !important;opacity:1 !important}
-  .hero-line span.hs{opacity:1 !important;transition:none !important}
+  .hero-line span.hs{transition:none !important}
   .play-btn{display:flex}
   html{scroll-behavior:auto}
 }
@@ -1075,6 +1158,37 @@ function makeJS() {
   const prefersRM=matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer=matchMedia('(hover: hover) and (pointer: fine)');
   const rmActive=()=>prefersRM.matches||document.body.classList.contains('rm-mode');
+
+  /* ---- day/night (2026-08-19). The boot script in <head> already stamped the right
+     theme before paint; this is the live half: the labelled toggle, the smooth
+     cross-fade (skipped under reduced motion), and — while no explicit choice is
+     stored — a timer that flips the site the moment the viewer's own sun rises or
+     sets mid-visit. mk-theme tells the stickman to re-read his ink. */
+  const root=document.documentElement;
+  const tgl=document.querySelector('.theme-toggle');
+  let themeAnimT=0;
+  function setTheme(mode,anim){
+    if(anim&&!rmActive()){root.classList.add('theme-anim');clearTimeout(themeAnimT);
+      themeAnimT=setTimeout(()=>root.classList.remove('theme-anim'),900);}
+    if(mode==='night')root.setAttribute('data-theme','night');else root.removeAttribute('data-theme');
+    if(tgl)tgl.setAttribute('aria-label',mode==='night'?'Switch to day mode':'Switch to night mode');
+    dispatchEvent(new Event('mk-theme'));
+  }
+  if(tgl){
+    tgl.setAttribute('aria-label',root.getAttribute('data-theme')==='night'?'Switch to day mode':'Switch to night mode');
+    tgl.addEventListener('click',()=>{
+      const next=root.getAttribute('data-theme')==='night'?'day':'night';
+      try{localStorage.setItem('mk-theme',next)}catch(e){}
+      setTheme(next,true);
+    });
+  }
+  (function(){
+    let stored=null;try{stored=localStorage.getItem('mk-theme')}catch(e){}
+    const sun=window.__mkSun;
+    if(stored==='day'||stored==='night'||!sun||!sun.next)return;
+    const wait=sun.next-Date.now();
+    if(wait>0)setTimeout(()=>{setTheme(root.getAttribute('data-theme')==='night'?'day':'night',true)},Math.min(wait,864e5));
+  })();
 
   /* hero word-by-word reveal */
   const hero=document.querySelector('.hero');
@@ -1327,6 +1441,23 @@ function makeJS() {
         if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();const n=panels[(panels.indexOf(p)-1+panels.length)%panels.length];n.focus();activate(n)}
       });
     });
+    /* press-and-hold peek (touch, 2026-08-19 her ask): holding a panel ~350ms lifts the
+       text and the scrim so the photo reads clean; releasing puts them back. The release
+       of a hold must NOT count as the activating tap — the capture-phase click handler
+       swallows exactly that one click. A finger that wanders >10px is scrolling, not
+       holding, and cancels the peek so the page never fights the scroll gesture. */
+    panels.forEach(p=>{
+      let t=0,sx=0,sy=0,held=false;
+      const clr=()=>{if(t){clearTimeout(t);t=0}};
+      p.addEventListener('touchstart',e=>{held=false;const c=e.touches[0];sx=c.clientX;sy=c.clientY;
+        clr();t=setTimeout(()=>{held=true;p.classList.add('peek')},350)},{passive:true});
+      p.addEventListener('touchmove',e=>{const c=e.touches[0];
+        if(Math.hypot(c.clientX-sx,c.clientY-sy)>10){clr();if(held){held=false;p.classList.remove('peek')}}},{passive:true});
+      const end=()=>{clr();p.classList.remove('peek')};
+      p.addEventListener('touchend',end,{passive:true});
+      p.addEventListener('touchcancel',end,{passive:true});
+      p.addEventListener('click',e=>{if(held){held=false;e.stopImmediatePropagation();e.preventDefault()}},true);
+    });
     /* a panel clip is a GIF, not a reward for the active state (2026-08-19: "always
        autoplay the Michelob video, desktop and mobile"): it runs whenever its panel is
        on screen at all — expanded, collapsed, hovered or not — and pauses off-screen */
@@ -1356,6 +1487,44 @@ function head(title, desc) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${theme.fonts['google-css']}" rel="stylesheet">
+<!-- theme boots BEFORE the stylesheet so night never flashes cream: a stored choice
+     wins; otherwise the viewer's own sunrise/sunset decides (NOAA short-form solar
+     position, coordinates approximated from the IANA timezone — no permission prompt,
+     no network call). window.__mkSun carries the times so app.js can flip the theme
+     live when the sun actually rises or sets mid-visit. -->
+<script>(function(){try{
+var Z={'America/New_York':[40.7,-74],'America/Detroit':[42.3,-83],'America/Chicago':[41.9,-87.7],'America/Denver':[39.7,-105],'America/Los_Angeles':[34.1,-118.2],'America/Phoenix':[33.4,-112.1],'America/Toronto':[43.7,-79.4],'America/Vancouver':[49.3,-123.1],'America/Mexico_City':[19.4,-99.1],'America/Sao_Paulo':[-23.5,-46.6],'America/Argentina/Buenos_Aires':[-34.6,-58.4],'America/Bogota':[4.7,-74.1],'America/Lima':[-12,-77],'America/Santiago':[-33.4,-70.7],'America/Anchorage':[61.2,-149.9],'Pacific/Honolulu':[21.3,-157.9],'Europe/London':[51.5,-.1],'Europe/Dublin':[53.3,-6.3],'Europe/Paris':[48.9,2.3],'Europe/Berlin':[52.5,13.4],'Europe/Madrid':[40.4,-3.7],'Europe/Rome':[41.9,12.5],'Europe/Amsterdam':[52.4,4.9],'Europe/Stockholm':[59.3,18.1],'Europe/Oslo':[59.9,10.8],'Europe/Copenhagen':[55.7,12.6],'Europe/Zurich':[47.4,8.5],'Europe/Vienna':[48.2,16.4],'Europe/Warsaw':[52.2,21],'Europe/Athens':[38,23.7],'Europe/Istanbul':[41,29],'Europe/Moscow':[55.8,37.6],'Europe/Lisbon':[38.7,-9.1],'Africa/Cairo':[30,31.2],'Africa/Lagos':[6.5,3.4],'Africa/Nairobi':[-1.3,36.8],'Africa/Johannesburg':[-26.2,28],'Asia/Dubai':[25.2,55.3],'Asia/Karachi':[24.9,67],'Asia/Kolkata':[19,72.8],'Asia/Dhaka':[23.8,90.4],'Asia/Bangkok':[13.8,100.5],'Asia/Singapore':[1.3,103.8],'Asia/Hong_Kong':[22.3,114.2],'Asia/Shanghai':[31.2,121.5],'Asia/Taipei':[25,121.5],'Asia/Seoul':[37.6,127],'Asia/Tokyo':[35.7,139.7],'Asia/Jakarta':[-6.2,106.8],'Asia/Manila':[14.6,121],'Asia/Jerusalem':[31.8,35.2],'Asia/Riyadh':[24.7,46.7],'Australia/Sydney':[-33.9,151.2],'Australia/Melbourne':[-37.8,145],'Australia/Brisbane':[-27.5,153],'Australia/Perth':[-32,115.9],'Pacific/Auckland':[-36.8,174.8]};
+var zone='';try{zone=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){}
+var co=Z[zone];
+if(!co){var off=-(new Date().getTimezoneOffset())/60;
+  var south=/Australia|Auckland|Johannesburg|Sao_Paulo|Argentina|Santiago|Lima|La_Paz|Asuncion|Montevideo|Harare|Maputo|Antarctica/.test(zone);
+  co=[south?-30:35,off*15];}
+function sunUTC(d,lat,lon){
+  var r=Math.PI/180,doy=Math.floor((d-Date.UTC(d.getUTCFullYear(),0,0))/864e5),
+      g=2*Math.PI/365*(doy-1+.5),
+      eq=229.18*(75e-6+.001868*Math.cos(g)-.032077*Math.sin(g)-.014615*Math.cos(2*g)-.040849*Math.sin(2*g)),
+      dec=.006918-.399912*Math.cos(g)+.070257*Math.sin(g)-.006758*Math.cos(2*g)+9.07e-4*Math.sin(2*g)-.002697*Math.cos(3*g)+.00148*Math.sin(3*g),
+      ch=(Math.cos(90.833*r)-Math.sin(lat*r)*Math.sin(dec))/(Math.cos(lat*r)*Math.cos(dec));
+  if(ch>1||ch<-1)return null; /* polar day/night: fall through to the 7-19 fallback */
+  var ha=Math.acos(ch)/r,noon=720-4*lon-eq,
+      day0=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());
+  return{rise:day0+(noon-4*ha)*6e4,set:day0+(noon+4*ha)*6e4};}
+var now=new Date(),t=null;try{t=localStorage.getItem('mk-theme')}catch(e){}
+if(t!=='day'&&t!=='night'){
+  /* the last solar event before now decides — computed across yesterday/today/tomorrow
+     (UTC dates), because east of Greenwich "today's" set can precede "today's" rise and
+     a naive before/after check calls a Sydney morning night */
+  var evs=[];[-1,0,1].forEach(function(k){
+    var su=sunUTC(new Date(now.getTime()+k*864e5),co[0],co[1]);
+    if(su){evs.push(['rise',su.rise],['set',su.set])}});
+  evs.sort(function(a,b){return a[1]-b[1]});
+  var last=null,nxt=null;
+  for(var i=0;i<evs.length;i++){if(evs[i][1]<=now.getTime())last=evs[i];else{nxt=evs[i];break}}
+  if(last){t=last[0]==='rise'?'day':'night';window.__mkSun={next:nxt?nxt[1]:null};}
+  else{var h=now.getHours();t=(h<7||h>=19)?'night':'day';}
+}
+if(t==='night')document.documentElement.setAttribute('data-theme','night');
+}catch(e){}})();</script>
 <link rel="stylesheet" href="styles.css?v=${BUILD_V}">
 <!-- .w is the word wrapper reveal-words puts around every word, and it starts at opacity 0
      waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
@@ -1410,8 +1579,8 @@ function navBar(kind) {
     : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
-  <div class="nav-links">${links}</div>
-  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
+  <div class="nav-links">${links}<button class="theme-toggle" type="button" aria-label="Switch to night mode"></button></div>
+  <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="say hey">say hey!</a>
 </nav></div>`;
 }
 
@@ -1513,8 +1682,8 @@ function renderHome() {
   <h1><span class="lively">${esc(h.headline)}</span></h1>
   <p class="hero-line reveal-words" data-seq="3">${heroLinesHTML}</p>
   <p class="hero-cta-row">
-    <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener">${esc(h.ctaPrimary.label)}</a>
-    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener">${esc(h.ctaSecondary.label)}</a>
+    <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ ',.A-Za-z\u2019]/g,'').trim())}">${esc(h.ctaPrimary.label)}</a>
+    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ ',.A-Za-z\u2019]/g,'').trim())}">${esc(h.ctaSecondary.label)}</a>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
@@ -1636,7 +1805,7 @@ function renderHome() {
       <p class="eyebrow">${esc(site.about.eyebrow)}</p>
       <h2 class="about-title">${typo(site.about.title)}</h2>
       ${[].concat(site.about.body).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n      ')}
-      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener">${esc(site.about.resumeLabel)}</a>
+      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel)}">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
 </section>`;

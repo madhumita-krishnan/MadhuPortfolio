@@ -30,7 +30,9 @@
     "shadow-soft": "rgba(30,54,52,.12)",
     "shadow-mid": "rgba(30,54,52,.28)",
     "shadow-strong": "rgba(30,54,52,.42)",
-    "shadow-clay": "rgba(124,45,14,.38)"
+    "shadow-clay": "rgba(124,45,14,.38)",
+    "text-on-accent": "#F6F0E2",
+    "ink-blue-hover": "#215A6E"
   },
   "glass": {
     "light-bg": "rgba(255,252,244,.42)",
@@ -61,5 +63,53 @@
     "ease-standard": "cubic-bezier(.33,0,.2,1)",
     "ease-enter": "cubic-bezier(.2,.7,.2,1)"
   },
-  "space": "8px"
+  "space": "8px",
+  "night": {
+    "_readme": "Night-mode token overrides, emitted by build.js as [data-theme=\"night\"]{...}. Same keys as 'colors' (subset) plus a 'glass' sub-block. The palette is the terracotta system moved onto its own deep-green surface: backgrounds come from the bg-deep family, the rust/teal families are resampled LIGHTER so every text pairing keeps WCAG AA on the dark grounds (verified in-session 2026-08-19: all body text >=4.5:1, display/UI >=3:1). text-on-accent flips DARK because night's accent fills are lighter than day's; day keeps cream labels.",
+    "colors": {
+      "bg-base": "#182421",
+      "bg-raised": "#20302C",
+      "bg-deep": "#101B19",
+      "bg-deep-raised": "#1C2C29",
+      "bg-deep-shade": "#0A1211",
+      "text-primary": "#EAE4D3",
+      "text-secondary": "#A9B3A7",
+      "text-caption": "#C2CBBE",
+      "ink-blue": "#85C4D6",
+      "ink-blue-hover": "#A5D6E4",
+      "brand-blue": "#74AEBF",
+      "teal-baby": "#74AEBF",
+      "accent-baby": "#D98A5F",
+      "text-on-deep": "#F2EEE0",
+      "text-on-deep-secondary": "#B3C6C0",
+      "accent": "#E08A52",
+      "accent-deep": "#EFA97C",
+      "accent-press": "#C9703B",
+      "accent-bright": "#E8935F",
+      "accent-wash": "#223029",
+      "accent-mute": "#6E5138",
+      "sage": "#94A99E",
+      "sage-deep": "#A9BEAC",
+      "sun": "#D9A251",
+      "text-on-accent": "#1D130B",
+      "line": "rgba(234,228,211,.18)",
+      "line-on-deep": "rgba(246,240,226,.18)",
+      "line-accent": "rgba(224,138,82,.32)",
+      "shadow-soft": "rgba(0,0,0,.35)",
+      "shadow-mid": "rgba(0,0,0,.5)",
+      "shadow-strong": "rgba(0,0,0,.65)",
+      "shadow-clay": "rgba(0,0,0,.55)"
+    },
+    "glass": {
+      "grad-a": "rgba(255,255,255,.10)",
+      "bg": "rgba(24,36,33,.46)",
+      "grad-b": "rgba(255,255,255,.05)",
+      "border": "rgba(255,255,255,.18)",
+      "cres-top": "rgba(255,255,255,.35)",
+      "cres-bottom": "rgba(255,255,255,.20)",
+      "cres-side": "rgba(255,255,255,.14)",
+      "glow": "rgba(255,255,255,.06)",
+      "prism-o": ".45"
+    }
+  }
 }
