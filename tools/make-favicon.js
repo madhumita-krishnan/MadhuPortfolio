@@ -1,10 +1,15 @@
-/* The site's icon — the pot, standing on its line.
+/* The site's icon — the pot, centered on the cream.
 
    The browser tab showed the blank default globe because no page declared an icon
    (2026-08-19 her ask). The mark is the same object that stands above the footer:
    her ink drawing of the pot, lifted by tools/lift-pot.js, tinted the wordmark
-   ink-blue and set on a hairline rule on the site's own cream. Nothing new is drawn
-   here — it is the footer shelf, cropped to a square.
+   ink-blue on the site's own cream. It used to stand on the footer's hairline rule;
+   same day she asked for the line to go and the pot to sit centered — at icon sizes
+   the shelf read as clutter, and a mark wants the middle of its tile.
+
+   A copy of the 512 lands in ~/Desktop/MadhuPortfolio/ as "Site icon.png" — that one
+   is HERS (for LinkedIn, decks, anywhere), not generated in place, so re-copy it
+   after every rebuild the way the font folder is re-copied.
 
    Outputs (assets/favicon/):
      favicon-16.png, favicon-32.png   what the tab actually shows
@@ -27,7 +32,6 @@ const theme = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/theme.json'), 'ut
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const CREAM = hex(theme.colors['bg-base']);     // the page
 const INK   = hex(theme.colors['ink-blue']);    // the pot, same var the CSS paints it with
-const LINE  = [38, 51, 47];                     // the footer rule's ink (--line before its alpha)
 
 const pot = decode(fs.readFileSync(path.join(ROOT, 'assets/about/pot.png')));
 
@@ -65,15 +69,9 @@ function resize(src, sw, sh, dw, dh) {
    while leaving solid strokes solid. 512/400/180 have pixels to spare and stay honest;
    the gamma deepens as the pixels run out. The pot also grows a little as the tile
    shrinks — at 16px a 62%-wide mark is furniture, not an icon. */
-function compose(size, { gamma = 1, potW = 0.62, ruleA = 0.26 } = {}) {
+function compose(size, { gamma = 1, potW = 0.62 } = {}) {
   const img = Buffer.alloc(size * size * 4);
   for (let i = 0; i < size * size; i++) { img[i * 4] = CREAM[0]; img[i * 4 + 1] = CREAM[1]; img[i * 4 + 2] = CREAM[2]; img[i * 4 + 3] = 255; }
-
-  const ruleY = Math.round(size * 0.76), ruleH = Math.max(1, Math.round(size * 0.012));
-  for (let y = ruleY; y < ruleY + ruleH; y++) for (let x = 0; x < size; x++) {
-    const d = (y * size + x) * 4;
-    for (let c = 0; c < 3; c++) img[d + c] = Math.round(img[d + c] * (1 - ruleA) + LINE[c] * ruleA);
-  }
 
   /* The pot and the tile must have the same PARITY, or the spare pixels cannot split
      evenly: at 16px the rounded pot came out 13px wide, sat 2px off one edge and 1px off
@@ -86,7 +84,11 @@ function compose(size, { gamma = 1, potW = 0.62, ruleA = 0.26 } = {}) {
   if ((size - pw) % 2) pw += 1;
   const ph = Math.round(pw * pot.height / pot.width);
   const scaled = resize(pot.data, pot.width, pot.height, pw, ph);
-  const px0 = (size - pw) / 2, py0 = ruleY - ph;   // foot exactly on the line
+  /* centered in both axes now that the rule is gone. The vertical spare can be odd
+     (ph follows the drawing's aspect and must not be stretched to fix parity); the
+     odd pixel goes BELOW — a mark reads as centered when its optical centre sits a
+     hair above the geometric one, never below. */
+  const px0 = (size - pw) / 2, py0 = Math.floor((size - ph) / 2);
   for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) {
     const a = Math.pow(scaled[(y * pw + x) * 4 + 3] / 255, gamma);
     if (!a) continue;
@@ -105,5 +107,5 @@ const save = (name, size, opts) => {
 save('favicon-512.png', 512);
 save('linkedin-400.png', 400);
 save('apple-touch-icon.png', 180, { gamma: .85 });
-save('favicon-32.png', 32, { gamma: .45, potW: .74, ruleA: .4 });
-save('favicon-16.png', 16, { gamma: .34, potW: .8, ruleA: .5 });
+save('favicon-32.png', 32, { gamma: .45, potW: .74 });
+save('favicon-16.png', 16, { gamma: .34, potW: .8 });
