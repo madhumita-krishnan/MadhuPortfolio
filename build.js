@@ -167,6 +167,9 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
   display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;
   box-shadow:0 2px 8px rgba(38,51,47,.22);
   transition:width .34s var(--ease-enter),height .34s var(--ease-enter),background .2s linear}
+/* night: the dot trades terracotta for the ink blue (2026-08-19 her ask). Night's
+   ink-blue is a light value, so the dark bg-base label on the pill still reads. */
+[data-theme="night"] .dc-body{background:var(--ink-blue)}
 .dc-body span{opacity:0;transition:opacity .16s linear;padding:0 16px;
   font-family:var(--font-utility);font-weight:500;font-size:.62rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--bg-base)}
@@ -273,11 +276,17 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
   color:var(--hand-ink,var(--ink-blue));
   opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
 @media (hover:hover){
-  .btn[data-hand]:hover,.btn[data-hand]:focus-visible{color:transparent}
+  /* .btn.btn out-guns the variant hover rules below: .btn.outline:hover sets a cream
+     label at EQUAL specificity later in the sheet, which kept the sans visible under
+     the handwriting on the resume buttons (2026-08-19 "the old text doesn't disappear") */
+  .btn.btn[data-hand]:hover,.btn.btn[data-hand]:focus-visible{color:transparent}
   .btn[data-hand]:hover::after,.btn[data-hand]:focus-visible::after{opacity:1}
 }
 .btn.solid{--hand-ink:var(--text-on-accent)}
 .btn.outline{--hand-ink:var(--accent-deep)}
+/* an outline button FILLS with accent-press on hover, and the resting hand ink is
+   accent-deep — dark orange on dark rust, invisible. The ink flips to cream with the fill. */
+.btn.outline:hover,.btn.outline:focus-visible{--hand-ink:var(--text-on-accent)}
 
 /* PRIMARY. The hover and pressed steps are the accent walked down in value, not the accent
    plus a shadow — on a flat control the only honest way to show depression is that the
@@ -383,23 +392,27 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
    Both faces are CSS content keyed off [data-theme] so the right words are painted
    before any JS runs; the sans face is the ::before, and the ::after is the same
    handwriting swap every other control gets. */
-.theme-toggle{background:none;border:0;cursor:pointer;position:relative;white-space:nowrap}
-.theme-toggle::before{content:"night mode"}
-[data-theme="night"] .theme-toggle::before{content:"day mode"}
-.theme-toggle::after{content:"night mode";position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);
+.theme-toggle{position:fixed;left:18px;bottom:18px;z-index:80;cursor:pointer;white-space:nowrap;
+  /* (2026-08-19 her ask) the toggle leaves the nav bar for the bottom-left corner — fixed,
+     so day/night is reachable from anywhere without riding the bar, and the phone bar gets
+     its width back. Bottom-LEFT because the right is spoken for: the pot stands above the
+     footer on the right and say-hey caps the bar. Still a control, so it obeys the sheet:
+     a flat raised fill and a hairline — no glass, no shadow. */
+  background:var(--bg-raised);border:1px solid var(--line);padding:12px 18px}
+.theme-toggle::before{content:"Night Mode"}
+[data-theme="night"] .theme-toggle::before{content:"Day Mode"}
+.theme-toggle::after{content:"Night Mode";position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);
   text-align:center;font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;color:var(--ink-blue);
   opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
-[data-theme="night"] .theme-toggle::after{content:"day mode"}
+[data-theme="night"] .theme-toggle::after{content:"Day Mode"}
 @media (hover:hover){
   .theme-toggle:hover,.theme-toggle:focus-visible{color:transparent}
   .theme-toggle:hover::after,.theme-toggle:focus-visible::after{opacity:1}
 }
 @media (max-width:700px){.nav-links a.optional{display:none}
-  /* the full "night mode" label overflowed the 375px bar and shoved say-hey off the
-     right edge — on a phone the label is just the destination: "night" / "day" */
-  .theme-toggle{padding:10px 8px}
-  .theme-toggle::before,.theme-toggle::after{content:"night"}
-  [data-theme="night"] .theme-toggle::before,[data-theme="night"] .theme-toggle::after{content:"day"}}
+  /* corner pill on phones too — it never fit the 375px bar; down here it clears the
+     home-indicator strip instead */
+  .theme-toggle{left:14px;bottom:max(14px,env(safe-area-inset-bottom, 14px))}}
 
 /* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
    the dashes revealing themselves between them; hovering squishes them back together and
@@ -669,7 +682,12 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px)}
-@media (max-width:760px){.hero{padding-top:calc(var(--space)*20);min-height:0}.hero-line{max-width:none}}
+@media (max-width:760px){.hero{padding-top:calc(var(--space)*20);min-height:0}
+  /* phone measure wraps her sentences onto more lines, so descender collisions that
+     desktop never sees show up here — the g of "strategy" landing in "study"
+     (2026-08-19 "the g in the hero text gets cut off"). More leading, not less type. */
+  .hero-line{max-width:none;line-height:1.95}
+  .hero-line span.hs + span.hs{margin-top:.7em}}
 
 /* ------------------------------------------------ brands strip */
 .brands{padding-top:0;padding-bottom:calc(var(--space)*6)}
@@ -961,6 +979,9 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .footer-shelf>*{pointer-events:auto}
 
 .pot{width:var(--pot-base);aspect-ratio:var(--pot-w)/var(--pot-h);
+  /* no tap-highlight: iOS paints its dark rectangle over the pot's whole box on touch
+     (2026-08-19 "i dont like that it has this dark background") — the rock is the feedback */
+  -webkit-tap-highlight-color:transparent;
   background:var(--ink-blue);
   -webkit-mask:var(--pot) center bottom/contain no-repeat;
   mask:var(--pot) center bottom/contain no-repeat;
@@ -983,7 +1004,10 @@ footer a:hover{color:var(--accent)}
 .foot-links{display:flex;align-items:center;gap:calc(var(--space)*3);flex-wrap:wrap;justify-content:center}
 .foot-mark{font-family:var(--font-display);font-size:1.3rem}
 .foot-note{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.08em;color:var(--text-secondary)}
-@media (max-width:640px){footer{flex-direction:column;gap:10px;text-align:center}
+@media (max-width:640px){footer{flex-direction:column;gap:10px;text-align:center;
+  /* the fixed Night/Day pill lives in the bottom-left corner — without this the last
+     footer line scrolls in underneath it */
+  padding-bottom:calc(var(--space)*11)}
   section{padding-left:calc(var(--space)*3);padding-right:calc(var(--space)*3);padding-top:calc(var(--space)*10);padding-bottom:calc(var(--space)*10)}}
 
 /* ------------------------------------------------ painted panels
@@ -1484,6 +1508,12 @@ function head(title, desc) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<!-- the pot, standing on its line — same object that lives above the footer. Generated
+     from her ink drawing by tools/make-favicon.js; the 400px square in assets/favicon/
+     is for LinkedIn, not referenced here. -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="${theme.fonts['google-css']}" rel="stylesheet">
@@ -1579,9 +1609,10 @@ function navBar(kind) {
     : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
-  <div class="nav-links">${links}<button class="theme-toggle" type="button" aria-label="Switch to night mode"></button></div>
+  <div class="nav-links">${links}</div>
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="say hey">say hey!</a>
-</nav></div>`;
+</nav></div>
+<button class="theme-toggle" type="button" aria-label="Switch to night mode"></button>`;
 }
 
 /* "M--K" split for the nav interaction: the letters are movable spans, the dashes their
