@@ -692,6 +692,17 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .eyebrow .w{filter:blur(9px);transition:opacity 900ms var(--ease-enter),transform 900ms var(--ease-enter),filter 1400ms var(--ease-standard)}
 .revealed .w{opacity:1;transform:none}
 .revealed .eyebrow .w{filter:blur(0)}
+/* the blooms arrive WITH the word Portfolio (2026-08-19 "can portfolio blur in with the
+   flowers in the background") — the same blur-resolve the eyebrow kept, on the eyebrow's
+   own 900ms cue with the same pair of clocks, so word and paint read as one layer
+   resolving. Only the HIDDEN state is written, so each bloom lands on the stylesheet's
+   own resting opacity — 1 on desktop, .5 on a phone. Gated to no-preference rather than
+   patched in the reduced-motion block: under RM the blooms must simply BE there, at
+   whatever opacity their width tier says, from the first frame. */
+@media (prefers-reduced-motion:no-preference){
+  .hero-flora img{transition:opacity 900ms var(--ease-enter) 900ms,filter 1400ms var(--ease-standard) 900ms}
+  .hero:not(.revealed) .hero-flora img{opacity:0;filter:blur(14px)}
+}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px)}

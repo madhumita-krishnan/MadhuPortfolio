@@ -74,6 +74,7 @@
   var S = 0.5, W2 = 0, H2 = 0, md = null;
   var mk = document.createElement('canvas');
   var bars = [];
+  var chRide = [];               // headline glyphs' RESTING boxes — see rideDy()
   var sign = null;               // {cx, bottom} — the say-hey board he holds up
   var ink = '#3C6B76';
 
@@ -132,6 +133,18 @@
     /* every piece of type: headline glyph by glyph (app.js has split it into .ch), the
        eyebrow and the handwritten lines word by word (.w spans from reveal-words) */
     hero.querySelectorAll('h1 .ch').forEach(function (el) { maskText(g, el, hr); });
+    /* the same glyphs' resting boxes, kept so the figure can RIDE the hover wave. The
+       .lively .ch transforms are cosmetic and deliberately never rebuild the mask (see
+       the transitionend allowlist below), so the WORLD stays still while the drawing of
+       it moves — the delta between a glyph's live box and this resting one is applied
+       to the figure at draw time instead (2026-08-19 "if i hover over hi im madhu and
+       it moves, the stickman should move too"). */
+    chRide = [];
+    hero.querySelectorAll('h1 .ch').forEach(function (el) {
+      if (!el.textContent.trim()) return;
+      var cr = localRect(el, hr);
+      chRide.push({ el: el, x1: cr.x1, x2: cr.x2, y1: cr.y1, y2: cr.y2 });
+    });
     var words = hero.querySelectorAll('.eyebrow .w, .hero-line .w');
     if (!words.length) words = hero.querySelectorAll('.eyebrow, .hero-line .hs');
     words.forEach(function (el) { maskText(g, el, hr); });
@@ -281,6 +294,21 @@
       }
       if (dEl) {
         var dr = localRect(dEl, cv.getBoundingClientRect());
+        var gh = dr.y2 - dr.y1;
+        /* the STEM, not the bowl (2026-08-19 "have the stick figure start on the top of
+           the stem of the d"): in Cormorant the d's ascender is its right-hand stroke, so
+           walk columns in from the right edge and take the first whose ink top sits in
+           the upper third of the glyph box — that is the stem; the bowl's top is a whole
+           x-height lower. The bowl columns below stay as the fallback for a headline
+           whose d (or typeface) is shaped differently. */
+        for (var fs = 0.94; fs >= 0.45; fs -= 0.03) {
+          var sx = Math.round(dr.x1 + dr.w * fs);
+          var st = groundTop(sx, Math.max(0, dr.y1 - 30), gh + 40);
+          if (st != null && st < dr.y1 + gh * 0.33 && clearance(sx, st) > MIN_CLR) {
+            fig.x = sx; fig.y = st; fig.dir = 1; fig.state = 'idle';
+            return;
+          }
+        }
         /* three columns across the glyph: centre first, then either side of the bowl */
         var dxs = [(dr.x1 + dr.x2) / 2, dr.x1 + dr.w * 0.35, dr.x1 + dr.w * 0.65];
         for (var di = 0; di < dxs.length; di++) {
@@ -700,10 +728,12 @@
 
   /* ------------------------------------------------------------------ the rAF driver */
   var raf = 0, last = 0;
+  var rideT = 0;   // seconds of rAF kept alive so a CSS-only glyph wave still animates him
   function needsLoop() {
-    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0;
+    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0;
   }
   function advance(dt) {
+    rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
     fig.slideT = Math.max(0, fig.slideT - dt);
     if (fig.state === 'move' || fig.state === 'idle') tickGround(dt);
@@ -1153,7 +1183,28 @@
       ctx.globalAlpha = 1;
     });
     /* feet planted a hair below the surface line — contact, not hover */
-    figure(fig.x, fig.y - LEG + 0.7, fig.dir, pose());
+    figure(fig.x, fig.y - LEG + 0.7 + rideDy(), fig.dir, pose());
+  }
+
+  /* How far the glyph under his feet has moved off its resting box RIGHT NOW. The
+     headline's hover wave (.lively.waving .ch) lifts each letter 7px on a stagger; the
+     mask is deliberately not rebuilt for it, so without this he stood mid-air while the
+     d dipped out from under him. Render-time offset only — fig.y and the physics keep
+     talking to the resting world, and the CSS transition itself supplies the easing in
+     both directions. Grounded states only: airborne/hanging/dragged figures answer to
+     other math, and the sign-hold stands at the CTA, not on type. */
+  function rideDy() {
+    if (!chRide.length) return 0;
+    if (fig.state !== 'idle' && fig.state !== 'move' && fig.state !== 'celeb' && fig.state !== 'wave') return 0;
+    for (var i = 0; i < chRide.length; i++) {
+      var c = chRide[i];
+      if (fig.x < c.x1 - 2 || fig.x > c.x2 + 2) continue;
+      /* his feet (fig.y = the glyph's ink top) must sit inside this glyph's own line
+         box — otherwise he is standing on the floor or a lower line, not on this letter */
+      if (fig.y < c.y1 - 10 || fig.y > c.y2 + 6) continue;
+      return (c.el.getBoundingClientRect().top - cv.getBoundingClientRect().top) - c.y1;
+    }
+    return 0;
   }
 
   /* ------------------------------------------------------------------ boot */
@@ -1204,6 +1255,18 @@
           t.classList.contains('hero-cta-row') || t.classList.contains('hero-flora'))) return;
     if (e.propertyName !== 'transform' && e.propertyName !== 'opacity') return;
     queueRebuild();
+  });
+
+  /* the hover wave is pure CSS — no input reaches the canvas, so nothing above would
+     wake the rAF loop while the letters (and the figure riding them, see rideDy) move.
+     Hovering on or off the headline buys the loop a beat: longest stagger (26ms x the
+     glyph count) + the transition itself is well under a second each way. */
+  var h1Lively = hero.querySelector('h1');
+  if (h1Lively) ['mouseenter', 'mouseleave'].forEach(function (ev) {
+    h1Lively.addEventListener(ev, function () {
+      if (touchMode || !booted) return;
+      rideT = 2.2; start();
+    });
   });
 
   var booted = false;
