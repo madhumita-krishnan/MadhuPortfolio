@@ -335,6 +335,45 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
 .nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep);background:var(--accent-wash)}
 @media (max-width:700px){.nav-links a.optional{display:none}}
 
+/* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
+   the dashes revealing themselves between them; hovering squishes them back together and
+   the dashes disappear. Transforms and opacity only, and the two letters move INWARD into
+   the dash's space, so the a's box never changes size — the nav does not re-layout and
+   the glass filter is not disturbed. --wm-dx is half the rendered width of "--" in the
+   wordmark's own font (measured at 1.35rem Cormorant + .02em tracking); the letters
+   meeting exactly is that measurement, so re-measure if the font or tracking changes. */
+.wm-m,.wm-k,.wm-d{display:inline-block}
+.wordmark{--wm-dx:.34em}
+.wm-m,.wm-k{transition:transform .38s var(--ease-enter)}
+.wm-d{transform-origin:50% 50%;transition:transform .38s var(--ease-enter),opacity .28s var(--ease-standard)}
+.wordmark:hover .wm-m{transform:translateX(var(--wm-dx))}
+.wordmark:hover .wm-k{transform:translateX(calc(-1*var(--wm-dx)))}
+.wordmark:hover .wm-d{opacity:0;transform:scaleX(.1)}
+@keyframes wm-in-m{from{transform:translateX(var(--wm-dx))}to{transform:none}}
+@keyframes wm-in-k{from{transform:translateX(calc(-1*var(--wm-dx)))}to{transform:none}}
+@keyframes wm-in-d{from{opacity:0;transform:scaleX(.1)}to{opacity:1;transform:none}}
+.wm-m{animation:wm-in-m .8s var(--ease-enter) .5s backwards}
+.wm-k{animation:wm-in-k .8s var(--ease-enter) .5s backwards}
+.wm-d{animation:wm-in-d .8s var(--ease-enter) .5s backwards}
+
+/* ---- nav labels turn into her hand on hover (same day). The handwritten copy is a
+   ::after overlay, absolutely positioned so the pill never changes width — the sans
+   label fades to transparent under it rather than leaving the layout. It exists at
+   opacity 0 from first paint, which is also what keeps madhu-hand.woff (14KB) warm on
+   every page — no flash of fallback on the first hover. The double content declaration
+   is the alt-text syntax: modern browsers take the second form and keep the duplicate
+   word out of the accessibility tree; older ones keep the first and stay functional.
+   Gated to (hover:hover) so a phone tap never strands a link in its hover face. */
+.nav-links a{position:relative}
+.nav-links a[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);text-align:center;
+  font-family:var(--font-hand);font-size:1.5em;letter-spacing:0;color:var(--accent-deep);
+  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
+@media (hover:hover){
+  .nav-links a[data-hand]:hover,.nav-links a[data-hand]:focus-visible{color:transparent}
+  .nav-links a[data-hand]:hover::after,.nav-links a[data-hand]:focus-visible::after{opacity:1}
+}
+
 /* ------------------------------------------------ shared sections */
 main{position:relative;z-index:1}
 section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;margin:0 auto;position:relative}
@@ -985,10 +1024,15 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .w,.rm-mode .fade{opacity:1;transform:none;transition:none}
 .rm-mode .hero h1,.rm-mode .hero-cta-row{opacity:1;transform:none;transition:none}
 .rm-mode .hero-flora,.rm-mode .stick-cv{opacity:1;transition:none}
+.rm-mode .wm-m,.rm-mode .wm-k,.rm-mode .wm-d{animation:none;transition:none}
+.rm-mode .wordmark:hover .wm-m,.rm-mode .wordmark:hover .wm-k{transform:none}
+.rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
+.rm-mode .nav-links a::after{transition:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
   .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
+  .wm-m,.wm-k,.wm-d{animation:none !important;transition:none !important;transform:none !important;opacity:1 !important}
   .play-btn{display:flex}
   html{scroll-behavior:auto}
 }
@@ -1323,13 +1367,21 @@ function svgFilters() {
 function navBar(kind) {
   const home = kind === 'home';
   const links = home
-    ? `<a href="#work">Work</a><a class="optional" href="#disciplines">Disciplines</a><a class="optional" href="#about">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a>`
-    : `<a href="index.html#work">← All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a>`;
+    ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
+    : `<a href="index.html#work" data-hand="All work">← All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
-  <a class="wordmark" href="index.html">${esc(site.wordmark)}</a>
+  <a class="wordmark" href="index.html">${wordmarkHTML(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav></div>`;
+}
+
+/* "M--K" split for the nav interaction: the letters are movable spans, the dashes their
+   own. Any wordmark not shaped letter-dashes-letter passes through untouched. */
+function wordmarkHTML(wm) {
+  const m = wm.match(/^(.)(-+)(.)$/);
+  if (!m) return esc(wm);
+  return `<span class="wm-m">${esc(m[1])}</span><span class="wm-d">${esc(m[2])}</span><span class="wm-k">${esc(m[3])}</span>`;
 }
 
 function footerHTML(extra = '') {
