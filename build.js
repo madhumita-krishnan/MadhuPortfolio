@@ -370,7 +370,11 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
    Gated to (hover:hover) so a phone tap never strands a link in its hover face. */
 .nav-links a{position:relative}
 .nav-links a[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
-  position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);text-align:center;
+  /* -.52em drops the hand's BASELINE onto the sans label's baseline (2026-08-19: it sat
+     visibly high). Madhu Hand carries a deep descender box (asc 9 / desc 8), so centring
+     the line box floats the ink upward; the constant folds the two fonts' ascents and
+     half-leadings together and scales with the pill's type size. */
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
   font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;color:var(--ink-blue);
   opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
 @media (hover:hover){
@@ -589,8 +593,12 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .hero.revealed h1{opacity:1;transform:none}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
-.w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
-.revealed .w{opacity:1;transform:none}
+/* each word materialises out of a blur — the opacity lands first, then the ink
+   sharpens over a longer tail, so a word drifts into focus like settling dust
+   instead of popping on (2026-08-19: "more gradual, like sprinkling pixie dust") */
+.w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);filter:blur(9px);
+  transition:opacity 900ms var(--ease-enter),transform 900ms var(--ease-enter),filter 1400ms var(--ease-standard)}
+.revealed .w{opacity:1;transform:none;filter:blur(0)}
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px)}
@@ -799,7 +807,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .panel img,.panel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.94)}
 .panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,35,32,0) 38%,rgba(18,35,32,.85) 100%)}
 .panel video{opacity:0;transition:opacity var(--motion-base) var(--ease-standard);z-index:1}
-.panel.active.has-video video{opacity:1}
+/* .v-live is stamped by JS the moment play() resolves: the clip shows whenever it is
+   actually running — active or collapsed — and the poster img holds the frame anywhere
+   playback can't start (Low Power Mode, reduced motion, data saver) */
+.panel.has-video.v-live video{opacity:1}
 .panel-collapsed-label{position:absolute;bottom:calc(var(--space)*3);left:50%;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;
   font-family:var(--font-utility);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-deep);white-space:nowrap;z-index:2;opacity:.9;
   transition:opacity var(--motion-base) var(--ease-standard);text-shadow:0 1px 6px var(--shadow-strong)}
@@ -1013,8 +1024,6 @@ footer a:hover{color:var(--accent)}
   background:var(--bg-deep);color:var(--text-on-deep)}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
-.cs-next-card .arrow{font-size:clamp(1.6rem,3vw,2.4rem);transition:transform var(--motion-base) var(--ease-standard)}
-.cs-next-card:hover .arrow{transform:translate(6px,-6px)}
 
 /* A play button is .play-btn + .btn.icon.solid — the shape, size and colour all come from
    the button system, and this rule only says where it sits and when it appears. It carries
@@ -1032,7 +1041,7 @@ footer a:hover{color:var(--accent)}
 a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
 /* settle fail-safe: nothing ever stays invisible, even if transitions never run */
-.settled .w{opacity:1;transform:none}
+.settled .w{opacity:1;transform:none;filter:none}
 .settled .fade{opacity:1;transform:none}
 /* flora and canvas keep their translateX(-50%) centering — force OPACITY only there;
    transform:none on either shoves it half a viewport right (found the hard way) */
@@ -1040,7 +1049,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .settled .hero-flora{opacity:1}
 
 /* reduced motion */
-.rm-mode .w,.rm-mode .fade{opacity:1;transform:none;transition:none}
+.rm-mode .w,.rm-mode .fade{opacity:1;transform:none;filter:none;transition:none}
 .rm-mode .hero h1,.rm-mode .hero-cta-row{opacity:1;transform:none;transition:none}
 .rm-mode .hero-flora,.rm-mode .stick-cv{opacity:1;transition:none}
 .rm-mode .wm-m,.rm-mode .wm-k,.rm-mode .wm-d{animation:none;transition:none}
@@ -1049,7 +1058,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .nav-links a::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{opacity:1;transition:none}
 @media (prefers-reduced-motion:reduce){
-  .w,.fade{opacity:1 !important;transform:none !important;transition:none !important}
+  .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
   .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
   .wm-m,.wm-k,.wm-d{animation:none !important;transition:none !important;transform:none !important;opacity:1 !important}
@@ -1308,8 +1317,7 @@ function makeJS() {
   /* disciplines panels */
   const panels=[...document.querySelectorAll('#panels .panel')];
   if(panels.length){
-    function activate(target){panels.forEach(p=>{const on=p===target;p.classList.toggle('active',on);p.setAttribute('aria-selected',String(on));
-      const v=p.querySelector('video');if(v){if(on&&!rmActive()){if(!v.src&&v.dataset.src)v.src=v.dataset.src;v.play().catch(()=>{})}else v.pause()}})}
+    function activate(target){panels.forEach(p=>{const on=p===target;p.classList.toggle('active',on);p.setAttribute('aria-selected',String(on))})}
     panels.forEach(p=>{
       p.addEventListener('click',()=>activate(p));
       p.addEventListener('mouseenter',()=>{if(finePointer.matches)activate(p)});
@@ -1319,9 +1327,19 @@ function makeJS() {
         if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();const n=panels[(panels.indexOf(p)-1+panels.length)%panels.length];n.focus();activate(n)}
       });
     });
-    const sec=document.getElementById('disciplines');
-    if(sec)new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)panels.forEach(p=>{const v=p.querySelector('video');if(v)v.pause()})
-      else{const a=document.querySelector('#panels .panel.active video');if(a&&!rmActive())a.play().catch(()=>{})}})},{threshold:0}).observe(sec);
+    /* a panel clip is a GIF, not a reward for the active state (2026-08-19: "always
+       autoplay the Michelob video, desktop and mobile"): it runs whenever its panel is
+       on screen at all — expanded, collapsed, hovered or not — and pauses off-screen */
+    panels.forEach(p=>{const v=p.querySelector('video');if(!v)return;
+      let inView=false;
+      const run=()=>{if(!v.src&&v.dataset.src)v.src=v.dataset.src;v.play().then(()=>p.classList.add('v-live')).catch(()=>{})};
+      /* a fast scroll can land a stale pause AFTER the entering play resolves — the
+         pause listener puts it back: any pause that arrives while the panel is still
+         on screen is wrong by definition and gets replayed */
+      v.addEventListener('pause',()=>{if(inView&&!rmActive())run()});
+      new IntersectionObserver(es=>{es.forEach(e=>{inView=e.isIntersecting;
+        if(inView&&!rmActive())run();else v.pause()})},{threshold:.1}).observe(p);
+    });
   }
 })();`;
 }
@@ -1343,7 +1361,7 @@ function head(title, desc) {
      waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
      is invisible to a no-JS visitor. It is real text now, so a reader with no JS still gets
      the copy — but it would look like the hero simply has none. -->
-<noscript><style>.w{opacity:1;transform:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
+<noscript><style>.w{opacity:1;transform:none;filter:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
 <!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
      14kb, so it is worth the early connection rather than waiting on the stylesheet -->
 <link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
@@ -1389,7 +1407,7 @@ function navBar(kind) {
   const home = kind === 'home';
   const links = home
     ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
-    : `<a href="index.html#work" data-hand="All work">← All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
+    : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
@@ -1618,7 +1636,7 @@ function renderHome() {
       <p class="eyebrow">${esc(site.about.eyebrow)}</p>
       <h2 class="about-title">${typo(site.about.title)}</h2>
       ${[].concat(site.about.body).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n      ')}
-      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener">${esc(site.about.resumeLabel)} <span aria-hidden="true">↗</span></a>
+      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
 </section>`;
@@ -1716,7 +1734,7 @@ function renderCase(cs) {
   /* the light hero band sits on cream, the default band is the deep green — so the chips
      take the on-deep inks there, the same switch the rest of that band already makes */
   const tagTone = tone ? '' : ' on-deep';
-  const metaHTML = `<dl class="cs-meta fade">${cs.meta.map(m => `<div><dt>${esc(m.label)}</dt><dd>${m.href ? `<a href="${esc(m.href)}" target="_blank" rel="noopener">${esc(m.value)} ↗</a>` : esc(m.value)}</dd></div>`).join('')}</dl>`;
+  const metaHTML = `<dl class="cs-meta fade">${cs.meta.map(m => `<div><dt>${esc(m.label)}</dt><dd>${m.href ? `<a href="${esc(m.href)}" target="_blank" rel="noopener">${esc(m.value)}</a>` : esc(m.value)}</dd></div>`).join('')}</dl>`;
 
   const statsHTML = cs.stats ? `<div class="cs-stats fade"><div class="cs-stats-band">
     ${cs.stats.map(s => `<div class="stat-card glass"><div class="stat-value">${esc(s.value)}</div><div class="stat-label">${typo(s.label)}</div></div>`).join('')}
@@ -1746,8 +1764,7 @@ function renderCase(cs) {
 
   const next = cases.find(c => c.slug === cs.next);
   const nextHTML = next ? `<div class="cs-next fade"><a class="cs-next-card" href="${esc(next.slug)}.html">
-    <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div>
-    <span class="arrow" aria-hidden="true">↗</span></a></div>` : '';
+    <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a></div>` : '';
 
   const refl = cs.reflection ? `
 <div class="cs-row fade">
