@@ -332,7 +332,9 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
 .nav-links{display:flex;gap:2px;align-items:center}
 .nav-links a{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
   padding:10px 13px;border-radius:var(--r-pill);transition:color var(--motion-fast) var(--ease-standard),background var(--motion-fast) var(--ease-standard)}
-.nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep);background:var(--accent-wash)}
+/* hover keeps the color shift only — the wash pill left with the handwriting swap
+   (2026-08-19: "remove the hover highlight thing. just do the text") */
+.nav-links a:hover,.nav-links a:focus-visible{color:var(--accent-deep)}
 @media (max-width:700px){.nav-links a.optional{display:none}}
 
 /* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
@@ -352,9 +354,11 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
 @keyframes wm-in-m{from{transform:translateX(var(--wm-dx))}to{transform:none}}
 @keyframes wm-in-k{from{transform:translateX(calc(-1*var(--wm-dx)))}to{transform:none}}
 @keyframes wm-in-d{from{opacity:0;transform:scaleX(.1)}to{opacity:1;transform:none}}
-.wm-m{animation:wm-in-m .8s var(--ease-enter) .5s backwards}
-.wm-k{animation:wm-in-k .8s var(--ease-enter) .5s backwards}
-.wm-d{animation:wm-in-d .8s var(--ease-enter) .5s backwards}
+/* .wm-load is stamped on the index's wordmark only: the greeting plays where the site
+   is entered; clicking into a case study keeps M--K still, as if the bar persisted */
+.wm-load .wm-m{animation:wm-in-m .8s var(--ease-enter) .5s backwards}
+.wm-load .wm-k{animation:wm-in-k .8s var(--ease-enter) .5s backwards}
+.wm-load .wm-d{animation:wm-in-d .8s var(--ease-enter) .5s backwards}
 
 /* ---- nav labels turn into her hand on hover (same day). The handwritten copy is a
    ::after overlay, absolutely positioned so the pill never changes width — the sans
@@ -367,7 +371,7 @@ nav.bar.glass,.w-chip.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) satu
 .nav-links a{position:relative}
 .nav-links a[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
   position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);text-align:center;
-  font-family:var(--font-hand);font-size:1.5em;letter-spacing:0;color:var(--accent-deep);
+  font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;color:var(--ink-blue);
   opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
 @media (hover:hover){
   .nav-links a[data-hand]:hover,.nav-links a[data-hand]:focus-visible{color:transparent}
@@ -463,6 +467,16 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    between the paragraph and anything else. */
 .hero-line span.hs{display:block}
 .hero-line span.hs + span.hs{margin-top:.5em}
+/* sentence focus (2026-08-19, her ask): hovering one handwritten sentence quiets the
+   others, so the eye can hold a single thought. Opacity only — nothing moves, the
+   stickman's terrain is untouched (his rebuild listener allowlists load-sequence
+   elements precisely so this hover never re-reads the world). Hover devices only:
+   a phone tap should never dim two-thirds of the hero. */
+.hero-line span.hs{transition:opacity 240ms var(--ease-standard)}
+@media (hover:hover){
+  .hero-line:hover span.hs{opacity:.32}
+  .hero-line:hover span.hs:hover{opacity:1}
+}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
 .hero-cta-row{margin-top:calc(var(--space)*7);display:flex;gap:14px;flex-wrap:wrap}
@@ -506,8 +520,13 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    independent. A narrower flower at the same keep-out simply hangs less far off the edge,
    so slightly more of the whole bloom is visible. */
 :root{--flora-keep:16.5vw;--flora-a-w:clamp(280px,27vw,393px);--flora-b-w:clamp(280px,28vw,396px)}
-.flora-a{top:-11%;width:var(--flora-a-w);left:calc(var(--flora-keep) - var(--flora-a-w))}
-.flora-b{bottom:-12%;width:var(--flora-b-w);right:calc(var(--flora-keep) - var(--flora-b-w))}
+/* min(0px,…) is the ultra-wide guard (2026-08-19, her "stem is cut off" report): past
+   ~2380px of viewport the keep-out grows beyond the artwork's width, keep − width goes
+   POSITIVE, and the bloom detaches from the screen edge — showing the PNG's own cut
+   boundary (and, before it was erased from the asset, the stem ending mid-air). A bloom
+   may reach LESS far than its keep-out; it must never float free of its edge. */
+.flora-a{top:-11%;width:var(--flora-a-w);left:min(0px,calc(var(--flora-keep) - var(--flora-a-w)))}
+.flora-b{bottom:-12%;width:var(--flora-b-w);right:min(0px,calc(var(--flora-keep) - var(--flora-b-w)))}
 /* They ran at 82% because the copy was on top of them and two inks of near-identical
    luminance cannot share a pixel. Nothing overlaps now, so the paint is at full strength —
    which is also most of what she meant by "sharper": a bloom faded into the cream loses its
@@ -1028,11 +1047,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .wordmark:hover .wm-m,.rm-mode .wordmark:hover .wm-k{transform:none}
 .rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
 .rm-mode .nav-links a::after{transition:none}
+.rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{opacity:1;transition:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
   .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
   .wm-m,.wm-k,.wm-d{animation:none !important;transition:none !important;transform:none !important;opacity:1 !important}
+  .hero-line span.hs{opacity:1 !important;transition:none !important}
   .play-btn{display:flex}
   html{scroll-behavior:auto}
 }
@@ -1370,7 +1391,7 @@ function navBar(kind) {
     ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
     : `<a href="index.html#work" data-hand="All work">← All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
-  <a class="wordmark" href="index.html">${wordmarkHTML(site.wordmark)}</a>
+  <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav></div>`;

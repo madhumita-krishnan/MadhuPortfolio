@@ -943,7 +943,17 @@
         var armFwd = 0.3 + 0.15 * sp;
         var armBack = 0.3 + (Math.PI / 2 - 0.3) * sp;
         var s0 = -nrm[0], s1 = -nrm[1];
-        p.sh = [s0 * (s0 > 0 ? armFwd : armBack), s1 * (s1 > 0 ? armFwd : armBack)];
+        /* the backswing DWELLS (her 2026-08-19 note: "I don't see the front hand swing
+           backwards"). It always reached 90° — but the arm tracked the gait linearly, a
+           triangle wave that spends ~25ms/stride near the extreme at full speed, which
+           no eye can catch. |s|^0.6 sweeps back fast and HOLDS deep, so the trailing
+           arm is a readable phase of the stride, not a spike between two pumps. The
+           exponent eases to 1 as sp→0: a walk keeps its quiet symmetric swing. */
+        var bp = 1 - 0.4 * sp;
+        p.sh = [
+          s0 > 0 ? s0 * armFwd : -Math.pow(-s0, bp) * armBack,
+          s1 > 0 ? s1 * armFwd : -Math.pow(-s1, bp) * armBack
+        ];
         var pump = 1.15 * sp * sp;
         p.el = [0.15 + pump * (0.75 - 0.45 * nrm[0]), 0.15 + pump * (0.75 - 0.45 * nrm[1])];
         /* a runner leans, but from the GROUND, not the waist: the lean is modest and
@@ -1150,7 +1160,13 @@
      still ~.45em low in its own reveal. .ch transitions are the wave — skipped, or
      every hover of the headline would re-read the world. */
   hero.addEventListener('transitionend', function (e) {
-    if (!e.target || !e.target.classList || e.target.classList.contains('ch')) return;
+    var t = e.target;
+    if (!t || !t.classList) return;
+    /* allowlist, not blocklist: only the load sequence MOVES terrain. Cosmetic hovers
+       (.ch wave, .hs sentence focus) transition the same properties and must not
+       trigger a mask re-read on every mouse pass. */
+    if (!(t.classList.contains('w') || t.tagName === 'H1' ||
+          t.classList.contains('hero-cta-row') || t.classList.contains('hero-flora'))) return;
     if (e.propertyName !== 'transform' && e.propertyName !== 'opacity') return;
     queueRebuild();
   });
