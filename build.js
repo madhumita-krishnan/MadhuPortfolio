@@ -458,7 +458,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 
    Roughly half of each bloom hangs off its edge, which is what keeps them reading as art
    running off the page rather than as two pictures placed in two corners. */
-/* The WIDTHS are capped at what the artwork can actually pay for. bloom-left.png is 786px
+/* The WIDTHS are capped at what the artwork can actually pay for. bloom-left.png is 785px
    wide, so on a 2x screen it can fill 393 CSS px before the browser starts inventing
    detail — and inventing detail is precisely the softness she is objecting to. 27vw lands
    on 389px at 1440. There is no more resolution to be had: the source sheet is 486px wide
@@ -1377,8 +1377,8 @@ function renderHome() {
          only look right because they are the actual paint.
          ?v= for the same reason the handwriting mask carries it: the art is regenerated in
          place, so without a version a returning visitor keeps being served the old bloom. -->
-    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="786" height="1680" loading="eager" decoding="async" fetchpriority="high">
-    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="792" height="1179" loading="eager" decoding="async" fetchpriority="high">
+    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="785" height="1680" loading="eager" decoding="async" fetchpriority="high">
+    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="791" height="1175" loading="eager" decoding="async" fetchpriority="high">
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>

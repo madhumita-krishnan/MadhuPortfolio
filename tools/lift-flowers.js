@@ -34,18 +34,30 @@ const fs = require('fs');
 const path = require('path');
 const { decode, encode } = require('./png.js');
 
-const SRC = path.join(__dirname, '..', '..', 'color pallete I like.png');
+/* The lift now reads a 4x super-resolved copy of the reference, not the reference
+   itself. hero-src/color-palette-4x.png is the SAME artwork — Real-ESRGAN x4plus run
+   over `color pallete I like.png` (486x886 → 1944x3544), which recovers a crisp brush
+   edge and the paint speckle instead of inventing them at display time. The shapes are
+   untouched: this is her literal paint, only resolved. All hand-tuned coordinates below
+   (ERASE, CUTS) stay in ORIGINAL source pixels and are scaled by SRCS at use, so they
+   never need retuning. Regenerate the sheet with Real-ESRGAN x4plus if the reference
+   ever changes (see the 2026-08-18 commit for the exact script). */
+const SRC = path.join(__dirname, '..', 'hero-src', 'color-palette-4x.png');
+const SRCS = 4; // source pixels per original-reference pixel
 const OUT = path.join(__dirname, '..', 'assets', 'hero');
 
-const PAPER = [245, 234, 211]; // sampled from the reference, not guessed
+const PAPER = [249, 236, 213]; // sampled from the SR sheet (drifted ~4 units from the raw scan's 245,234,211)
 const KEY_LO = 26;   // colour distance where the paper starts becoming ink
 const KEY_HI = 92;   // ...and where it is fully ink
 const MIN_AREA = 900; // drops the rule and the "EST'D 2024" line
-const SCALE = 3;
+/* Published size is unchanged (3x the ORIGINAL reference, ~786px wide) — but the path
+   there is now a 0.75x DOWNSCALE of real 4x detail instead of a 3x blow-up, so every
+   output pixel is earned. */
+const SCALE = 3 / SRCS;
 /* How far the coverage ramp is squeezed at the silhouette. 1 leaves the resampled edge
    alone; higher is a harder outline. 2.6 lands the edge at roughly the width it had in the
    source, i.e. still a brush edge and not a die cut. */
-const EDGE_GAIN = 2.6;
+const EDGE_GAIN = 1.35; // was 2.6 when the ramp had been stretched 3x; the downsampled ramp is already brush-width
 
 /* The set wordmark keys in exactly like the paint does, and "ORANGE & MELLOW" is at display
    size so its letters clear MIN_AREA on their own. Blanked by hand instead. */
@@ -101,7 +113,7 @@ function dropSpecks(img) {
         if (!seen[q] && data[q * 4 + 3] >= 90) { seen[q] = 1; stack[sp++] = q; }
       }
     }
-    if (n < MIN_AREA) {
+    if (n < MIN_AREA * SRCS * SRCS) {
       for (let i = 0; i < n; i++) data[blob[i] * 4 + 3] = 0;
       dropped++;
     }
@@ -136,8 +148,10 @@ const lanczos = x => (Math.abs(x) < 1e-8 ? 1 : Math.abs(x) >= LOBES ? 0 : sinc(x
 /** Precompute the taps for one axis: for each dest index, which source pixels and weights. */
 function taps(srcLen, dstLen) {
   const k = dstLen / srcLen;
-  // upscaling only, so the filter footprint stays LOBES source pixels wide
-  const support = LOBES;
+  /* downscaling (k<1) must widen the kernel to 1/k source pixels per lobe — a fixed
+     footprint would alias the paint speckle into moire; upscaling keeps it at LOBES */
+  const scale = Math.min(1, k);
+  const support = LOBES / scale;
   const rows = [];
   for (let d = 0; d < dstLen; d++) {
     const center = (d + 0.5) / k - 0.5;
@@ -145,7 +159,7 @@ function taps(srcLen, dstLen) {
     const idx = [], wt = [];
     let sum = 0;
     for (let s = lo; s <= hi; s++) {
-      const w = lanczos(s - center);
+      const w = lanczos((s - center) * scale);
       if (w === 0) continue;
       idx.push(clamp(s, 0, srcLen - 1)); wt.push(w); sum += w;
     }
@@ -217,8 +231,10 @@ function upscale(img, k) {
    rings — it overshoots past 1 inside the edge and below 0 outside it, which shows up as a
    pale outline hugging the flower. A smoothstep remap around the midpoint narrows the
    coverage ramp without ever leaving [0,1], so the silhouette hardens cleanly. */
-const SHARP_AMOUNT = 0.9;
-const SHARP_RADIUS = SCALE * 0.55;
+/* Down from 0.9/1.65: the detail is real now, so the unsharp mask is a finish, not a
+   rescue — 0.9 on top of true 4x texture crunched the speckle into grit. */
+const SHARP_AMOUNT = 0.5;
+const SHARP_RADIUS = 0.8;
 
 /** Separable Gaussian on a premultiplied float RGBA buffer; alpha is copied, not blurred. */
 function blurRGB(buf, w, h, radius) {
@@ -347,7 +363,7 @@ const src = decode(fs.readFileSync(SRC));
 console.log(`source ${path.basename(SRC)}  ${src.width}x${src.height}`);
 const keyed = keyPaper(src);
 for (const e of ERASE) {
-  for (let y = e.y0; y < e.y1; y++) for (let x = e.x0; x < e.x1; x++) keyed.data[(y * keyed.width + x) * 4 + 3] = 0;
+  for (let y = e.y0 * SRCS; y < e.y1 * SRCS; y++) for (let x = e.x0 * SRCS; x < e.x1 * SRCS; x++) keyed.data[(y * keyed.width + x) * 4 + 3] = 0;
 }
 console.log(`keyed the paper out; blanked ${ERASE.length} wordmark rect, dropped ${dropSpecks(keyed)} specks`);
 
@@ -357,7 +373,7 @@ if (process.argv.includes('--debug')) {
 }
 
 for (const c of CUTS) {
-  const cut = crop(keyed, c.x0, c.y0, c.x1, c.y1);
+  const cut = crop(keyed, c.x0 * SRCS, c.y0 * SRCS, c.x1 * SRCS, c.y1 * SRCS);
   const { kept, dropped, areas } = dropOrphans(cut);
   const piece = trim(cut);
   const big = slim(resolve(upscale(piece, SCALE)));
