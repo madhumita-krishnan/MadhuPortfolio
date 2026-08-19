@@ -96,8 +96,13 @@
     var asc = m.fontBoundingBoxAscent || parseFloat(cs.fontSize) * 0.8;
     var desc = m.fontBoundingBoxDescent || parseFloat(cs.fontSize) * 0.2;
     var r = localRect(el, hr);
-    var baseline = r.y1 + (r.h - (asc + desc)) / 2 + asc;
-    g.fillText(t, r.x1, baseline);
+    /* the hero words carry padding purely so iOS rasterises their overhanging tails
+       (the ink-overflow cull — see .hero-line .w in build.js); the TYPE still sits in
+       the content box, so the mask sheds the padding or every word would set low-left */
+    var pl = parseFloat(cs.paddingLeft) || 0, pt = parseFloat(cs.paddingTop) || 0,
+        pb = parseFloat(cs.paddingBottom) || 0;
+    var baseline = r.y1 + pt + (r.h - pt - pb - (asc + desc)) / 2 + asc;
+    g.fillText(t, r.x1 + pl, baseline);
   }
 
   function rebuild() {

@@ -689,6 +689,17 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
    because she asked to keep it for the word portfolio. */
 .w{display:inline-block;white-space:pre;opacity:0;transform:translateY(.45em);transition:opacity var(--motion-slow) var(--ease-enter),transform var(--motion-slow) var(--ease-enter)}
+/* iOS WebKit culls glyph ink it believes cannot exist: it takes a text run's ink bounds
+   from the font's hhea descent (656 units), and her g's loop reaches 1098 — so on a phone
+   the bottom of one g (whichever crosses a tile boundary; "guidance." on the iPhone 17
+   wrap, 2026-08-19 "one of the g's on mobile is still getting cut off") was simply never
+   painted. Chrome computes real outline bounds and never shows it. The fix is to make the
+   overflow not be overflow: pad each word-box past the deepest tail (1.098em down, ±.35em
+   sideways for the left-swinging loops and right flicks) and take the exact same amount
+   back with negative margins. An inline-block's line contribution is its MARGIN box, and
+   its baseline is its text baseline, so layout, wrapping and rhythm do not move by a
+   pixel — only the box WebKit rasterises grows to hold all of her ink. */
+.hero-line .w{padding:0 .35em .3em .35em;margin:0 -.35em -.3em -.35em}
 .eyebrow .w{filter:blur(9px);transition:opacity 900ms var(--ease-enter),transform 900ms var(--ease-enter),filter 1400ms var(--ease-standard)}
 .revealed .w{opacity:1;transform:none}
 .revealed .eyebrow .w{filter:blur(0)}
