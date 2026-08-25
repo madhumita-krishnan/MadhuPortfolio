@@ -46,15 +46,19 @@
    strokes, never filled. */
 import * as THREE from './vendor/three.module.min.js';
 
-let ran = false;
+/* one fish at a time, not one per visit (2026-08-25: hitting the pot re-launches the
+   leap) — the flag holds while a flight is live and clears in teardown, so run() is
+   re-entrant between flights and inert during one */
+let live = false;
 
 export function run(opts = {}) {
-  if (ran) return; ran = true;
+  if (live) return;
   const phone = !!opts.phone;
 
   const pot = document.querySelector('.pot');
   const band = document.querySelector('#about .about-band');
   if (!pot || !window.WebGLRenderingContext) return;
+  live = true;                                     // only once a flight will actually start
 
   /* everything is laid out in DOCUMENT coordinates first, then flipped into the
      overlay's y-up world at the end — one conversion, in one place */
@@ -360,6 +364,7 @@ export function run(opts = {}) {
     geo.dispose(); mat.dispose(); tex.dispose(); dropTex.dispose();
     renderer.dispose();
     wrap.remove();
+    live = false;                                  // the pot can launch the next flight
   }
 
   raf = requestAnimationFrame(frame);

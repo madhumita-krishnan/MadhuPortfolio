@@ -413,12 +413,17 @@ nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) 
      .glass normally draws with ::after, lives on a real child (.tt-rim) here because ::after
      is spoken for below — it is the handwriting face. */
   padding:12px 18px}
-/* (2026-08-25 her ask: "more obvious") the rim names the mode the button will GIVE you,
-   like the label does: ORANGE ringing "Night Mode", BLUE ringing "Day Mode". A solid ring
-   instead of the prism — the prism reads as material, not as a control — a hair thicker
-   and at full strength. Both faces key off [data-theme], so rim and label flip together. */
-.theme-toggle .tt-rim{background:rgba(224,112,44,.9);mix-blend-mode:normal;opacity:1;padding:2px}
-[data-theme="night"] .theme-toggle .tt-rim{background:rgba(118,180,255,.92)}
+/* (2026-08-25, second pass: "the line looks weird… I don't like how thick it is… it looks
+   messy"). The rim still names the mode the button will GIVE you — rust ringing "Night
+   Mode", night-blue ringing "Day Mode" — but the 2px full-strength band read as a frame
+   fighting a grey label. Now it is a HAIRLINE at half strength and the LABEL takes the
+   same ink as its ring, so line and word read as one control: matched, quiet, and still
+   the only coloured pill in that corner. Both key off [data-theme] so everything flips
+   together. Day ink is --accent (4.7:1 on cream); night ink is night's --ink-blue. */
+.theme-toggle{color:var(--accent)}
+.theme-toggle .tt-rim{background:rgba(176,69,22,.5);mix-blend-mode:normal;opacity:1;padding:1px}
+[data-theme="night"] .theme-toggle{color:var(--ink-blue)}
+[data-theme="night"] .theme-toggle .tt-rim{background:rgba(133,196,214,.55)}
 .theme-toggle::before{content:"Night Mode"}
 [data-theme="night"] .theme-toggle::before{content:"Day Mode"}
 .theme-toggle::after{content:"Night Mode";
@@ -999,6 +1004,47 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    down to the resume button. */
 .about-body{color:var(--text-secondary);line-height:1.6;max-width:62ch;margin-bottom:1.6em}
 .about-body:last-of-type{margin-bottom:calc(var(--space)*3)}
+/* ---- the longer story (2026-08-25 her ask): the headline stands alone and the writing
+   folds away. The reveal is the 0fr→1fr grid-row trick — the browser animates the row,
+   the inner div clips, nothing is ever measured in JS. The paragraphs also drift in a
+   few px and fade, so opening reads as the text arriving, not a box resizing. */
+.about-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--motion-slow) var(--ease-standard)}
+/* visibility rides the fade with a delay so screen readers and find-in-page skip the
+   folded copy, but the close animation still shows the text on its way out */
+.about-more>div{overflow:hidden;opacity:0;transform:translateY(-6px);visibility:hidden;
+  transition:opacity var(--motion-slow) var(--ease-standard),transform var(--motion-slow) var(--ease-standard),
+    visibility 0s var(--ease-standard) var(--motion-slow)}
+.about-more.open{grid-template-rows:1fr}
+.about-more.open>div{opacity:1;transform:none;visibility:visible;transition-delay:0s}
+.rm-mode .about-more,.rm-mode .about-more>div{transition:none}
+/* .btn-link was drawn for <a>; on a real <button> the UA's own border and padding come
+   with it and read as a boxed control — strip everything but the drawn underline */
+.about-toggle{margin-bottom:calc(var(--space)*4);position:relative;
+  border:0;border-bottom:1.5px solid var(--teal-baby);padding:0 0 7px;background:none}
+.about-toggle:hover{border-color:var(--ink-blue)}
+/* the toggle takes the same hand-swap as every other control (her rule): the sans label
+   goes quiet under her handwriting. The btn-link underline stays put, so on hover the
+   handwritten words sit ON the drawn line — same baseline constant as the nav. */
+.about-toggle[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
+  font-family:var(--font-hand);font-size:1.15em;letter-spacing:0;text-transform:none;font-weight:400;
+  color:var(--ink-blue);opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);
+  pointer-events:none;white-space:nowrap}
+@media (hover:hover){
+  .about-toggle[data-hand]:hover,.about-toggle[data-hand]:focus-visible{color:transparent}
+  .about-toggle[data-hand]:hover::after,.about-toggle[data-hand]:focus-visible::after{opacity:1}
+}
+/* ---- education (2026-08-25 her ask): the Block M and the Google G, official marks at
+   full colour — credentials, so they sit small beside their words above a hairline,
+   the same quiet register as the client wall. The marks are height-locked so the two
+   sit optically equal whatever their native boxes are. */
+.about-creds{display:flex;flex-wrap:wrap;gap:calc(var(--space)*3) calc(var(--space)*7);
+  border-top:1px solid var(--line);padding-top:calc(var(--space)*4);
+  margin:calc(var(--space)*1) 0 calc(var(--space)*4);max-width:62ch}
+.about-cred{display:flex;align-items:center;gap:14px}
+.about-cred img{height:30px;width:auto;flex:none}
+.about-cred .cred-name{font-weight:500;color:var(--text-primary);font-size:.92rem;line-height:1.35}
+.about-cred .cred-detail{color:var(--text-secondary);font-size:.83rem;line-height:1.4}
 @media (max-width:700px){.about-band{grid-template-columns:1fr}.about-band .headshot{width:130px;height:130px}}
 
 /* ---- the pot ---------------------------------------------------------------------------
@@ -1177,6 +1223,27 @@ footer a:hover{color:var(--accent)}
 .cmp-item p{font-size:.9rem;line-height:1.55;color:var(--text-secondary)}
 .cmp-note{margin-top:6px;font-size:.8rem;color:var(--accent-deep);font-family:var(--font-utility)}
 @media (max-width:760px){.cs-compare{grid-template-columns:1fr}}
+
+/* ---- one section at a time (2026-08-25, from the Framer reference she sent) ------------
+   Each .cs-section is sized to own the screen — min-height centres its content on the
+   viewport — and app.js drives a scroll-LINKED crossfade over it: a section materialises
+   as it approaches the middle of the screen and dissolves as it leaves, so the reader
+   always holds exactly one thought. Inside these sections the old one-shot .fade
+   entrances are retired (the section IS the fade — two fades stacked read as flicker).
+   .cs-scroll is stamped by app.js only when the effect actually runs, so reduced motion
+   and no-JS get plain stacked sections with the classic entrances. */
+.cs-section{min-height:86svh;display:flex;flex-direction:column;justify-content:center;
+  padding:calc(var(--space)*4) 0}
+.cs-section .cs-row{padding-top:0}
+.cs-scroll .cs-section{will-change:opacity}
+.cs-scroll .cs-section .fade{opacity:1;transform:none;transition:none}
+/* media keeps its NATURAL size (2026-08-25: the svh caps that squeezed a section onto
+   one screen made the phone screens "way too small" — reverted). A tall section simply
+   scrolls; the crossfade, not shrinking, is what delivers one-section-at-a-time. */
+/* phones: content runs taller than the screen, so pinning each section to a viewport
+   would leave dead cream between them — the crossfade still runs, sizing goes back to
+   natural flow */
+@media (max-width:820px){.cs-section{min-height:0;padding:calc(var(--space)*8) 0 calc(var(--space)*2)}}
 
 .cs-next{max-width:1240px;margin:calc(var(--space)*12) auto 0;padding:0 calc(var(--space)*2) calc(var(--space)*4)}
 .cs-next-card{display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
@@ -1428,6 +1495,23 @@ function makeJS() {
       nudge(typeof d.x==='number'?{clientX:d.x}:null,1.7)});
   }
 
+  /* ---- the longer story (2026-08-25) --------------------------------------------------
+     The about copy folds behind its headline; the button flips the .open class (CSS does
+     the motion) and trades labels — data-more/data-less carry both faces, and data-hand
+     is re-stamped so the handwriting hover always matches the visible words. */
+  const at=document.querySelector('.about-toggle');
+  if(at){
+    const box=document.getElementById('about-more');
+    at.addEventListener('click',()=>{
+      const open=box.classList.toggle('open');
+      at.setAttribute('aria-expanded',String(open));
+      const label=open?at.dataset.less:at.dataset.more;
+      at.textContent=label;
+      /* data-hand only carries glyphs Madhu Hand covers — same filter as the CTAs */
+      at.setAttribute('data-hand',label.replace(/[^ '!,.A-Za-z\\u2019]/g,'').trim().toUpperCase());
+    });
+  }
+
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
@@ -1593,6 +1677,40 @@ function makeJS() {
     });
   }
 
+  /* ---- one section at a time (2026-08-25, case studies) -----------------------------
+     Scroll-LINKED crossfade over the .cs-section wrappers: opacity follows how close a
+     section sits to the viewport centre, driven by position rather than a one-shot class
+     flip — scrub back up and the previous section re-materialises, exactly like the
+     Framer reference. A section spanning the centre is fully on; the ramp is 28% of the
+     viewport either side, smoothstepped, and it fades to ZERO — no floor. Both are her
+     2026-08-25 correction to the first pass (.05 floor, 40% ramp): "the things above and
+     below disappear and aren't peeking", like the reference — so a neighbour is fully
+     gone while the centred section is read, at the price of a briefly quiet screen
+     mid-handover, which the reference also accepts. Entering sections also drift up
+     their last 18px (leaving ones drift 12px the other way), which is what makes the
+     arrival read as a reveal and not a dimmer. Off under reduced motion and in ?shot=
+     QA mode — .cs-scroll is only stamped when the effect runs, so those paths keep the
+     classic .fade entrances. */
+  const csSecs=[...document.querySelectorAll('.cs-section')];
+  if(csSecs.length&&!rmActive()&&!shot){
+    document.body.classList.add('cs-scroll');
+    let csTick=0;
+    const csUpd=()=>{csTick=0;
+      const cV=innerHeight/2,ramp=innerHeight*.28;
+      csSecs.forEach(s=>{
+        const r=s.getBoundingClientRect();
+        let d=0;
+        if(r.top>cV)d=r.top-cV;else if(r.bottom<cV)d=cV-r.bottom;
+        const o=Math.max(0,1-d/ramp),eased=o*o*(3-2*o);
+        s.style.opacity=eased.toFixed(3);
+        s.style.transform=eased>=1?'':'translateY('+((1-eased)*(r.top>cV?18:-12)).toFixed(1)+'px)';
+      })};
+    const csQ=()=>{if(!csTick)csTick=requestAnimationFrame(csUpd)};
+    addEventListener('scroll',csQ,{passive:true});
+    addEventListener('resize',csQ,{passive:true});
+    csUpd();
+  }
+
   /* ---- the koi (2026-08-20) --------------------------------------------------------
      One fish from her plate painting leaps out of the POT, flips, and dives back in
      (fish.js). The whole show happens at the pot, so the pot is the trigger — firing
@@ -1606,11 +1724,18 @@ function makeJS() {
     const phone=matchMedia('(max-width:700px)').matches;
     let mod=null,fired=false;
     const fetchIt=()=>mod||(mod=import('./fish.js?v=${BUILD_V}'));
+    const leap=()=>{if(!rmActive())fetchIt().then(m=>m.run({phone})).catch(()=>{})};
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting)return;
       io.disconnect();if(!rmActive())fetchIt()})},{rootMargin:'900px 0px'}).observe(potEl);
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting||fired)return;
-      fired=true;io.disconnect();
-      if(!rmActive())fetchIt().then(m=>m.run({phone})).catch(()=>{})})},{threshold:.6}).observe(potEl);
+      fired=true;io.disconnect();leap()})},{threshold:.6}).observe(potEl);
+    /* (2026-08-25 her ask) hitting the pot brings the koi back: every click/tap after the
+       once-per-visit auto-leap fires another jump. 'click' and not pointerdown, so a
+       scroll gesture that merely starts on the pot never launches a fish (the same rule
+       the stickman follows: a drag is the scroll gesture). fish.js guards itself against
+       overlapping flights — hammering the pot queues nothing, one fish at a time. */
+    potEl.addEventListener('click',leap);
+    potEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();leap()}});
   }
 })();`;
 }
@@ -1953,14 +2078,33 @@ function renderHome() {
   const shelfHTML = !potDims ? '' : `
   <span class="footer-shelf" aria-hidden="false">${potHTML}</span>`;
 
+  /* (2026-08-25 her ask) the about section leads with ONE line — "I love designing
+     experiences that make it easier for people to stay curious" is the real headline —
+     and the rest of the writing folds away behind "The longer story", a btn-link that
+     swaps labels once it is open. The paragraphs live in about.more; the reveal is the
+     0fr→1fr grid-row transition in .about-more (no measuring, no jank), wired in makeJS. */
+  const edu = site.about.education;
+  const eduHTML = !edu || !edu.items ? '' : `
+      <div class="about-creds">
+        ${edu.items.map(it => `<div class="about-cred">
+          <img src="${esc(it.logo)}?v=${BUILD_V}" alt="${esc(it.name)} logo" width="${esc(String(it.logoW))}" height="${esc(String(it.logoH))}" loading="lazy" decoding="async">
+          <div><p class="cred-name">${esc(it.name)}</p><p class="cred-detail">${esc(it.detail)}</p></div>
+        </div>`).join('\n        ')}
+      </div>`;
   const aboutHTML = `
 <section id="about" class="below-fold">
   <div class="about-band fade">
     <img class="headshot" src="${esc(site.about.headshot)}" alt="Portrait of ${esc(site.fullName)}" width="180" height="180" loading="lazy" decoding="async">
     <div>
       <p class="eyebrow">${esc(site.about.eyebrow)}</p>
-      <h2 class="about-title">${typo(site.about.title)}</h2>
-      ${[].concat(site.about.body).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n      ')}
+      <h2 class="about-title"${twoLine(site.about.title, CORMORANT, 30)}>${typo(site.about.title)}</h2>
+      <div class="about-more" id="about-more">
+        <div>${[].concat(site.about.more).map(p => `<p class="about-body">${typo(p)}</p>`).join('\n        ')}</div>
+      </div>
+      <button class="btn-link teal about-toggle" type="button" aria-expanded="false" aria-controls="about-more"
+        data-more="${esc(site.about.moreLabel)}" data-less="${esc(site.about.lessLabel)}"
+        data-hand="${esc(site.about.moreLabel.replace(/[^ '!,.A-Za-z’]/g, '').trim().toUpperCase())}">${esc(site.about.moreLabel)}</button>
+      ${eduHTML}
       <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
@@ -2076,7 +2220,11 @@ function renderCase(cs) {
     ${s.compare.after.map(i => `<div class="cmp-item"><h4>${esc(i.title)}</h4><p>${typo(i.body)}</p>${i.note ? `<p class="cmp-note">${esc(i.note)}</p>` : ''}</div>`).join('')}
   </div>
 </div>` : '';
+    /* each section is one <section class="cs-section"> — the unit the scroll-linked
+       crossfade owns (2026-08-25, from the Framer reference she sent): heading, body,
+       evidence and captions arrive and leave the screen together, one thought at a time */
     return `
+<section class="cs-section">
 <div class="cs-row fade">
   <p class="cs-label">${esc(s.label)}</p>
   <div>
@@ -2084,7 +2232,8 @@ function renderCase(cs) {
     <div class="cs-body">${s.body.map(p => `<p>${typo(p)}</p>`).join('')}</div>
     ${quote}
   </div>
-</div>${compare}${csMedia(s.media)}`;
+</div>${compare}${csMedia(s.media)}
+</section>`;
   };
 
   const next = cases.find(c => c.slug === cs.next);
@@ -2092,13 +2241,15 @@ function renderCase(cs) {
     <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a></div>` : '';
 
   const refl = cs.reflection ? `
+<section class="cs-section">
 <div class="cs-row fade">
   <p class="cs-label">${esc(cs.reflection.label || 'Reflection')}</p>
   <div>
     <h2 class="cs-heading"${twoLine(cs.reflection.heading, CORMORANT, 34)}>${typo(cs.reflection.heading)}</h2>
     <div class="cs-body">${cs.reflection.body.map(p => `<p>${typo(p)}</p>`).join('')}</div>
   </div>
-</div>` : '';
+</div>
+</section>` : '';
 
   return head(`${cs.name} — ${site.title}`, cs.tagline) + `
 ${navBar('case')}

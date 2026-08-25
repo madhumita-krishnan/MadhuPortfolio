@@ -186,11 +186,32 @@
   "about": {
     "eyebrow": "About",
     "headshot": "assets/hero/headshot.jpg",
-    "title": "What draws me to product design is the same concept that has drawn me to tutoring",
-    "body": [
+    "title": "I love designing experiences that make it easier for people to stay curious",
+    "more": [
+      "What draws me to product design is the same concept that has drawn me to tutoring.",
       "I'm interested in the moments where we lose the learner — when someone is excited to understand something, but along the way, starts questioning whether they can.",
-      "There's something comforting about helping people feel understood. I love designing experiences that make it easier for people to stay curious."
+      "There's something comforting about helping people feel understood."
     ],
+    "moreLabel": "The short story, long",
+    "lessLabel": "The long story, short",
+    "education": {
+      "items": [
+        {
+          "logo": "assets/logos/umich-block-m.svg",
+          "logoW": 294,
+          "logoH": 212,
+          "name": "University of Michigan",
+          "detail": "B.S. Architecture"
+        },
+        {
+          "logo": "assets/logos/google-g.svg",
+          "logoW": 24,
+          "logoH": 24,
+          "name": "Google UX Design Professional Certificate",
+          "detail": "Coursera"
+        }
+      ]
+    },
     "resumeLabel": "View my resume"
   },
   "footer": {
