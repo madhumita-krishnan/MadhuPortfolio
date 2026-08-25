@@ -58,7 +58,8 @@ export function run(opts = {}) {
   const vw = document.documentElement.clientWidth;
 
   const lipY = P.top + P.h * 0.13;                // the FRONT LIP line (see header)
-  const L = Math.max(80, Math.min(165, P.w * 0.95));
+  /* 0.95 pot-widths read as a fish too big to have lived in the pot (2026-08-25) */
+  const L = Math.max(70, Math.min(140, P.w * 0.78));
 
   /* the jump wants ~2.3 pot-heights of air, but never at the price of covering the
      copy ("around the text" still holds, her ask earlier today): the jump is a
@@ -119,7 +120,7 @@ export function run(opts = {}) {
   const geo = new THREE.PlaneGeometry(L, L * AR, 64, 8);
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthTest: false, depthWrite: false,
-    uniforms: { map: { value: tex }, uPhase: { value: 0 }, uAmp: { value: L * 0.06 },
+    uniforms: { map: { value: tex }, uPhase: { value: 0 }, uAmp: { value: L * 0.085 },
                 uAlpha: { value: 1 }, uClip: { value: lipW } },
     vertexShader: `
       uniform float uPhase,uAmp;
@@ -282,11 +283,13 @@ export function run(opts = {}) {
 
     /* tail-beat frequency and sweep follow the TRUE speed (Strouhal stays ~0.3):
        hard strokes through breach and entry, a soft weightless flutter at the apex.
-       Phase ACCUMULATES so the frequency change never snaps the pose. */
+       Phase ACCUMULATES so the frequency change never snaps the pose. Sweep sits
+       ~40% over the first pass (2026-08-25: "exaggerate the wiggle... more natural"
+       — at the old amplitude the S read as a shiver, not a swim). */
     const sN = Math.min(Math.abs(vy) / v0, 1);
     phase += dt * 6.283 * (1.6 + 2.4 * sN);
     mat.uniforms.uPhase.value = phase;
-    mat.uniforms.uAmp.value = L * (0.045 + 0.05 * sN);
+    mat.uniforms.uAmp.value = L * (0.065 + 0.07 * sN);
 
     /* splashdown: falling, and the nose is back at the lip line */
     if (exited && !splashed && vy > 0 && docY > lipY - L * 0.18) {

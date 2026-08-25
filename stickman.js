@@ -63,7 +63,12 @@
   var STEP_DOWN = 30;
   var JUMP_MAX = 240;
   var FLIP_DX = 150, FLIP_DROP = 145;
-  var HANG_L = 26;
+  /* grip line → pelvis in a hang. 26 parked the pelvis so high that the head top rode
+     ~9px ABOVE the hands (2026-08-25: "if he was hanging and there was gravity his
+     hands would be higher than his head"). 41 is a true dead hang: the head hangs
+     clear below the grips — it needs the hang pose's armStretch to stay reachable,
+     because the head alone is ~18px of the arm's 21. */
+  var HANG_L = 41;
   var MIN_CLR = 15;      // a surface with less headroom than this isn't standable at all
   var CRAWL_CLR = 50;    // less headroom than this and the figure folds into a crawl
 
@@ -862,7 +867,11 @@
       if (o.hands && o.hands[j]) {
         var t = o.hands[j];
         var lx = t.x - px, ly = t.y - (py + (o.dy || 0));
-        var r = ik(nx, ny, lx, ly, UA, FA, j ? -dir : dir);
+        /* armStretch: a dead hang pulls the shoulder girdle up out of the torso, so a
+           hanging arm is honestly longer than a swinging one — without it the deeper
+           HANG_L would leave the ik clamp drawing hands short of the grips */
+        var as = o.armStretch || 0;
+        var r = ik(nx, ny, lx, ly, UA + as, FA + as, j ? -dir : dir);
         stroke2(nx, ny, r.ex, r.ey, 2.2, 0.6 * dir);
         stroke2(r.ex, r.ey, r.hx, r.hy, 2.0, -0.4 * dir);
         hxw = r.hx; hyw = r.hy;
@@ -1021,8 +1030,18 @@
           s0 > 0 ? s0 * armFwd : -Math.pow(-s0, bp) * armBack,
           s1 > 0 ? s1 * armFwd : -Math.pow(-s1, bp) * armBack
         ];
+        /* the elbow bend keys off FORWARDNESS, not the raw sweep (2026-08-25: "the
+           front arm never seems like it moves down... there's a moment where both
+           hands should be down"). The old linear ramp held ~58° of flex even with the
+           arm straight down, so the hand rode at the waist through the whole transit
+           and never visibly dropped. Now the arm is only bent while it is actually
+           driving forward — full ~88° at the front extreme, opening to near-straight
+           by mid-swing — so the hand falls past the hip on every backswing. And since
+           the legs are antiphase, both sweeps cross zero together: once per stride
+           both arms hang straight down at the same instant, the beat she asked for. */
         var pump = 1.15 * sp * sp;
-        p.el = [0.15 + pump * (0.75 - 0.45 * nrm[0]), 0.15 + pump * (0.75 - 0.45 * nrm[1])];
+        p.el = [0.15 + pump * (0.1 + 1.1 * Math.max(0, -nrm[0])),
+                0.15 + pump * (0.1 + 1.1 * Math.max(0, -nrm[1]))];
         /* a runner leans, but from the GROUND, not the waist: the lean is modest and
            the head follows more of it at speed — head-bolt-upright over a tipped torso
            was the posture kink she flagged; a walker stays vertical and self-righting */
@@ -1057,6 +1076,7 @@
         /* the hands were resolved to real ink in tickHang — glyph bottoms, never the
            empty line box; drawn a hair past the edge so the grip reads as contact */
         p.hands = h.hands || [{ x: h.hx - 5, y: h.bar.y + 0.75 }, { x: h.hx + 5, y: h.bar.y + 0.75 }];
+        p.armStretch = 1.6;   // shoulders ride up in a dead hang — see HANG_L
         p.hip = [0.25 + th * 0.6, -0.2 + th * 0.6];
         p.knee = [0.35, 0.3];
         break;
