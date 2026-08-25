@@ -569,8 +569,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .hero-line span.hs{transition:color 240ms var(--ease-standard)}
 @media (hover:hover){
   /* 2026-08-19: colour, not opacity — the sentences step back into a light teal and
-     the one under the cursor deepens slightly past resting ink */
-  .hero-line:hover span.hs{color:var(--teal-baby)}
+     the one under the cursor deepens slightly past resting ink. The step-back ink is
+     its OWN token (2026-08-20 "make the light blue a tad lighter"): it used to borrow
+     --teal-baby, but that hex belongs to the button system's 3:1-on-cream invariant,
+     and a hover-dim state is allowed to sit lighter than a control outline is. */
+  .hero-line:hover span.hs{color:var(--hero-hush)}
   .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
@@ -1237,16 +1240,23 @@ function makeJS() {
     tgl.setAttribute('aria-label',root.getAttribute('data-theme')==='night'?'Switch to day mode':'Switch to night mode');
     tgl.addEventListener('click',()=>{
       const next=root.getAttribute('data-theme')==='night'?'day':'night';
-      try{localStorage.setItem('mk-theme',next)}catch(e){}
+      /* the timestamp is what lets the boot script expire this at the next sunrise or
+         sunset — a choice made at noon should not still be pinning the site at 1am */
+      try{localStorage.setItem('mk-theme',next);localStorage.setItem('mk-theme-at',String(Date.now()))}catch(e){}
       setTheme(next,true);
     });
   }
   (function(){
-    let stored=null;try{stored=localStorage.getItem('mk-theme')}catch(e){}
     const sun=window.__mkSun;
-    if(stored==='day'||stored==='night'||!sun||!sun.next)return;
+    if(!sun||!sun.next||!sun.mode)return;
     const wait=sun.next-Date.now();
-    if(wait>0)setTimeout(()=>{setTheme(root.getAttribute('data-theme')==='night'?'day':'night',true)},Math.min(wait,864e5));
+    /* the sun takes the site back mid-visit WHATEVER is stored: a toggle override only
+       lasts until the next solar event, so the timer clears it and applies the sun's
+       own mode (not a blind flip — a viewer already in that mode just stays there) */
+    if(wait>0&&wait<=864e5)setTimeout(()=>{
+      try{localStorage.removeItem('mk-theme');localStorage.removeItem('mk-theme-at')}catch(e){}
+      setTheme(sun.mode,true);
+    },wait);
   })();
 
   /* hero word-by-word reveal */
@@ -1367,13 +1377,13 @@ function makeJS() {
       pot.style.transform='rotate('+(s.x*180/Math.PI).toFixed(3)+'deg)';
       return carry;
     });
-    const nudge=e=>{
+    const nudge=(e,mult)=>{
       if(rmActive())return;
       /* push it away from the side you came in on, so it reacts to you rather than always
          falling the same way */
       const r=pot.getBoundingClientRect();
       const dir=(e&&typeof e.clientX==='number'&&e.clientX>r.left+r.width/2)?-1:1;
-      s.kick(dir*KICK);
+      s.kick(dir*KICK*(mult||1));
       // a second nudge adds energy, as it would in life — but never past the tipping point
       const peak=Math.abs(s.x)+Math.abs(s.v)/s.w0;
       if(peak>MAX)s.v*=MAX/peak;
@@ -1385,6 +1395,11 @@ function makeJS() {
     pot.addEventListener('touchstart',e=>nudge(e.touches&&e.touches[0]),{passive:true});
     pot.addEventListener('focus',()=>nudge());
     pot.tabIndex=0;
+    /* the koi lands here (fish.js announces its splashdown; detail.x is where it hit,
+       so the pot tips away from the impact). A falling fish outranks a passing cursor,
+       hence the harder kick — the spring's MAX cap still holds it under tipping. */
+    addEventListener('mk-pot-kick',e=>{const d=(e&&e.detail)||{};
+      nudge(typeof d.x==='number'?{clientX:d.x}:null,1.7)});
   }
 
   /* absolute fail-safe: everything visible even if transitions never tick */
@@ -1463,28 +1478,48 @@ function makeJS() {
     setTimeout(()=>fades.forEach(el=>el.classList.add('visible')),3000);
   }
 
-  /* lazy video: hover-to-play on desktop, in-view autoplay on touch; src attached on first need */
+  /* lazy video: hover-to-play on desktop, in-view autoplay on touch; src attached on first need.
+     2026-08-20, "videos on mobile aren't autoplaying": two real causes, both fixed here —
+     1. the old play test was intersectionRatio>=.5, which a box TALLER than the phone's
+        viewport can never reach (the ratio is visible/total). "Half visible" is now judged
+        against whichever is shorter, the box or the viewport.
+     2. a fast scroll could land a stale pause AFTER the entering play() resolved and the
+        video stayed dark — the disciplines panels got this guard on 2026-08-19, these boxes
+        never did. Same cure: track inView, and replay any pause that arrives while visible
+        (unless the viewer pressed the pause button — their pause is not stale). */
   document.querySelectorAll('[data-video]').forEach(box=>{
     const vid=box.querySelector('video');if(!vid)return;
     const btn=box.querySelector('.play-btn');
     const hoverZone=box.closest('.wproject')||box;
-    function arm(){if(!vid.src&&vid.dataset.src){vid.src=vid.dataset.src}}
-    function play(){arm();vid.play().then(()=>box.classList.add('playing')).catch(()=>{})}
+    let inView=false,userPaused=false;
+    function arm(){if(!vid.src&&vid.dataset.src){vid.src=vid.dataset.src;vid.load()}}
+    function play(){arm();vid.play().then(()=>box.classList.add('playing')).catch(()=>{
+      /* play() can lose the race with its own metadata on iOS (preload=none + src just
+         attached): if the data wasn't there yet, try once more when it is */
+      vid.addEventListener('loadeddata',()=>{if(inView&&!userPaused&&!rmActive())play()},{once:true});
+    })}
     function pause(){vid.pause();box.classList.remove('playing')}
+    vid.addEventListener('pause',()=>{if(inView&&!userPaused&&!rmActive())play()});
     if(btn){btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
-      if(box.classList.contains('playing')){pause();btn.textContent='▶'}else{play();btn.textContent='❚❚'}})}
+      if(box.classList.contains('playing')){userPaused=true;pause();btn.textContent='▶'}
+      else{userPaused=false;play();btn.textContent='❚❚'}})}
+    const seen=e=>e.isIntersecting&&
+      e.intersectionRect.height>=Math.min(e.boundingClientRect.height||1,innerHeight)*.5;
     /* data-autoplay = behave like a GIF: run whenever it is on screen, on any device */
     if(box.hasAttribute('data-autoplay')){
-      new IntersectionObserver(es=>{es.forEach(e=>{if(rmActive())return;e.isIntersecting?play():pause()})},{threshold:.15}).observe(box);
+      new IntersectionObserver(es=>{es.forEach(e=>{inView=e.isIntersecting;
+        if(rmActive())return;inView?play():pause()})},{threshold:.15}).observe(box);
       return;
     }
     if(finePointer.matches){
-      hoverZone.addEventListener('mouseenter',()=>{if(!rmActive())play()});
-      hoverZone.addEventListener('mouseleave',()=>{if(!rmActive())pause()});
+      hoverZone.addEventListener('mouseenter',()=>{if(!rmActive()){inView=true;play()}});
+      hoverZone.addEventListener('mouseleave',()=>{inView=false;if(!rmActive())pause()});
     }else{
-      new IntersectionObserver(es=>{es.forEach(e=>{if(rmActive())return;e.isIntersecting&&e.intersectionRatio>=.5?play():pause()})},{threshold:[0,.5,1]}).observe(box);
+      new IntersectionObserver(es=>{es.forEach(e=>{if(rmActive())return;
+        if(seen(e)){inView=true;if(!userPaused)play()}else{inView=false;pause()}})},
+        {threshold:[0,.25,.5,.75,1]}).observe(box);
     }
-    new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)pause()})},{threshold:0}).observe(box);
+    new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting){inView=false;pause()}})},{threshold:0}).observe(box);
   });
 
   /* disciplines panels */
@@ -1531,6 +1566,26 @@ function makeJS() {
         if(inView&&!rmActive())run();else v.pause()})},{threshold:.1}).observe(p);
     });
   }
+
+  /* ---- the koi (2026-08-20) --------------------------------------------------------
+     One fish from her plate painting leaps out of the POT, flips, and dives back in
+     (fish.js). The whole show happens at the pot, so the pot is the trigger — firing
+     off the about eyebrow (the old flight's cue) would spend the one jump per visit
+     while the pot was still below the fold. fish.js ships with three.js under it — a
+     deliberately heavy module, which is exactly why it is NOT in this bundle: the code
+     is FETCHED when the reader is within a screen or two of the pot and RUN when the
+     pot is properly on screen (60% visible), once per visit. */
+  const potEl=document.querySelector('.pot');
+  if(potEl){
+    const phone=matchMedia('(max-width:700px)').matches;
+    let mod=null,fired=false;
+    const fetchIt=()=>mod||(mod=import('./fish.js?v=${BUILD_V}'));
+    new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting)return;
+      io.disconnect();if(!rmActive())fetchIt()})},{rootMargin:'900px 0px'}).observe(potEl);
+    new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting||fired)return;
+      fired=true;io.disconnect();
+      if(!rmActive())fetchIt().then(m=>m.run({phone})).catch(()=>{})})},{threshold:.6}).observe(potEl);
+  }
 })();`;
 }
 
@@ -1574,20 +1629,29 @@ function sunUTC(d,lat,lon){
   var ha=Math.acos(ch)/r,noon=720-4*lon-eq,
       day0=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());
   return{rise:day0+(noon-4*ha)*6e4,set:day0+(noon+4*ha)*6e4};}
-var now=new Date(),t=null;try{t=localStorage.getItem('mk-theme')}catch(e){}
-if(t!=='day'&&t!=='night'){
-  /* the last solar event before now decides — computed across yesterday/today/tomorrow
-     (UTC dates), because east of Greenwich "today's" set can precede "today's" rise and
-     a naive before/after check calls a Sydney morning night */
-  var evs=[];[-1,0,1].forEach(function(k){
-    var su=sunUTC(new Date(now.getTime()+k*864e5),co[0],co[1]);
-    if(su){evs.push(['rise',su.rise],['set',su.set])}});
-  evs.sort(function(a,b){return a[1]-b[1]});
-  var last=null,nxt=null;
-  for(var i=0;i<evs.length;i++){if(evs[i][1]<=now.getTime())last=evs[i];else{nxt=evs[i];break}}
-  if(last){t=last[0]==='rise'?'day':'night';window.__mkSun={next:nxt?nxt[1]:null};}
+var now=new Date(),t=null,at=NaN;
+try{t=localStorage.getItem('mk-theme');at=Number(localStorage.getItem('mk-theme-at'))}catch(e){}
+if(t!=='day'&&t!=='night')t=null;
+/* the last solar event before now decides — computed across yesterday/today/tomorrow
+   (UTC dates), because east of Greenwich "today's" set can precede "today's" rise and
+   a naive before/after check calls a Sydney morning night */
+var evs=[];[-1,0,1].forEach(function(k){
+  var su=sunUTC(new Date(now.getTime()+k*864e5),co[0],co[1]);
+  if(su){evs.push(['rise',su.rise],['set',su.set])}});
+evs.sort(function(a,b){return a[1]-b[1]});
+var last=null,nxt=null;
+for(var i=0;i<evs.length;i++){if(evs[i][1]<=now.getTime())last=evs[i];else{nxt=evs[i];break}}
+/* a toggle click is an OVERRIDE of the current stretch of day or night, not a policy
+   (2026-08-20: her site sat in day at 1am because a stored choice used to win forever).
+   It expires the moment the sun next rises or sets after it was made; a stored choice
+   with no timestamp is from before this rule and counts as already expired. */
+if(t&&(!isFinite(at)||(last&&last[1]>at))){
+  t=null;try{localStorage.removeItem('mk-theme');localStorage.removeItem('mk-theme-at')}catch(e){}}
+if(!t){
+  if(last)t=last[0]==='rise'?'day':'night';
   else{var h=now.getHours();t=(h<7||h>=19)?'night':'day';}
 }
+window.__mkSun={next:nxt?nxt[1]:null,mode:nxt?(nxt[0]==='rise'?'day':'night'):null};
 if(t==='night')document.documentElement.setAttribute('data-theme','night');
 }catch(e){}})();</script>
 <link rel="stylesheet" href="styles.css?v=${BUILD_V}">
@@ -2079,6 +2143,22 @@ fs.writeFileSync(path.join(DIST, 'styles.css'), checkComments(makeCSS()));
 fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
 /* the stick figure ships as-is — it is hand-written client JS, not generated */
 fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
+/* the koi ships as-is too (fish.js at the repo root), with three.js under it from
+   vendor/ — COMMITTED files, not node_modules: Vercel and the Pages workflow both run
+   this script in a clean checkout where nothing was ever npm-installed, so a dependency
+   read from node_modules builds here and 404s in production. vendor/ holds BOTH
+   three.module.min.js and three.core.min.js because the module imports its core half by
+   RELATIVE path — they must land in the same directory. (To upgrade three: npm i three,
+   copy the two files from node_modules/three/build/ into vendor/, commit.) Vendored
+   rather than CDN'd so the site stays a folder of files with no third origin; nobody
+   pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
+fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
+for (const f of ['three.module.min.js', 'three.core.min.js']) {
+  const src = path.join(ROOT, 'vendor', f);
+  if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing — fish.js cannot import three`);
+  fs.mkdirSync(path.join(DIST, 'vendor'), { recursive: true });
+  fs.copyFileSync(src, path.join(DIST, 'vendor', f));
+}
 fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
