@@ -115,11 +115,17 @@ ${Object.entries(theme.night.colors).map(([k, v]) => `  --${k}:${v};`).join('\n'
   --glass-cres-side:${theme.night.glass['cres-side']};--glass-glow:${theme.night.glass.glow};--glass-prism-o:${theme.night.glass['prism-o']};
   color-scheme:dark;
 }
-/* the theme switch animates by momentarily letting every surface transition its paint —
-   stamped on <html> for ~900ms by the toggle, skipped entirely under reduced motion */
+/* the theme switch: where the browser has the View Transitions API the crossing is ONE
+   composited cross-fade of two full-page snapshots — no per-element work at all. The
+   .theme-anim class below is the fallback for engines without it: every surface
+   transitions its own paint, minus box-shadow (repainting every shadowed card's spread
+   each frame was most of the lag she named 2026-08-25). Both paths are skipped under
+   reduced motion by the toggle JS. */
+::view-transition-old(root),::view-transition-new(root){
+  animation-duration:520ms;animation-timing-function:var(--ease-standard)}
 .theme-anim,.theme-anim *,.theme-anim *::before,.theme-anim *::after{
   transition:background-color 600ms var(--ease-standard),color 600ms var(--ease-standard),
-    border-color 600ms var(--ease-standard),box-shadow 600ms var(--ease-standard),
+    border-color 600ms var(--ease-standard),
     opacity 600ms var(--ease-standard) !important}
 /* Her hand, as a typeface — cut from the sheets in story-src by tools/make-hand-font.js.
    Self-hosted and tiny (14kb), so it is fetched from the same origin as the page and there is
@@ -672,9 +678,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    "fade in cinematically"). Now it assembles in layers off the same .revealed trigger
    the word reveal already uses, each layer fading up a few px as it lands:
 
-     paint (1.6s fade from 150ms) → headline (rises, 450ms→1.4s) → the handwriting
-     (word stagger now starts at a 900ms base, so the pen starts writing while the
-     headline is still settling) → buttons (1.35s→2.15s) → the figure last (stick.js
+     paint (1.6s fade from 150ms) → headline (rises, 450ms→1.4s) → the eyebrow's
+     handwriting (900ms base, in step with the blooms' own resolve) → buttons
+     (1.35s→2.15s) → the hero paragraph (data-base 1800: the architecture line only
+     starts writing once the blooms have fully arrived — 2026-08-25 her ask) →
+     the figure last (stick.js
      boots at 2.4s and fades his canvas in — he reads his world from the LIVE rects,
      so booting while the headline is mid-rise would bake his terrain 16px low; he
      also rebuilds on hero transitionend, which catches the words settling).
@@ -1230,11 +1238,19 @@ function makeJS() {
   const tgl=document.querySelector('.theme-toggle');
   let themeAnimT=0;
   function setTheme(mode,anim){
-    if(anim&&!rmActive()){root.classList.add('theme-anim');clearTimeout(themeAnimT);
-      themeAnimT=setTimeout(()=>root.classList.remove('theme-anim'),900);}
-    if(mode==='night')root.setAttribute('data-theme','night');else root.removeAttribute('data-theme');
-    if(tgl)tgl.setAttribute('aria-label',mode==='night'?'Switch to day mode':'Switch to night mode');
-    dispatchEvent(new Event('mk-theme'));
+    const apply=()=>{
+      if(mode==='night')root.setAttribute('data-theme','night');else root.removeAttribute('data-theme');
+      if(tgl)tgl.setAttribute('aria-label',mode==='night'?'Switch to day mode':'Switch to night mode');
+      dispatchEvent(new Event('mk-theme'));
+    };
+    if(anim&&!rmActive()){
+      /* one snapshot cross-fade where the API exists; the per-element .theme-anim
+         class only for engines without it */
+      if(document.startViewTransition){document.startViewTransition(apply);return;}
+      root.classList.add('theme-anim');clearTimeout(themeAnimT);
+      themeAnimT=setTimeout(()=>root.classList.remove('theme-anim'),900);
+    }
+    apply();
   }
   if(tgl){
     tgl.setAttribute('aria-label',root.getAttribute('data-theme')==='night'?'Switch to day mode':'Switch to night mode');
@@ -1266,6 +1282,11 @@ function makeJS() {
        (the <em> in the hero line) survives the rewrite */
     document.querySelectorAll('.reveal-words').forEach(el=>{
       let seq=Number(el.dataset.seq||0);
+      /* 900ms base: the pen starts while the headline (450ms->1.4s) settles. The hero
+         paragraph overrides it via data-base so the architecture line only starts
+         writing once the blooms have fully faded in (~1.8s) — the eyebrow keeps 900,
+         which is the cue the blooms themselves resolve on. */
+      const base=Number(el.dataset.base||900);
       /* the hero paragraph arrives a sentence at a time: each .hs after the first sits out
          an extra beat, so a thought finishes before the next one starts writing */
       let hold=0;
@@ -1280,8 +1301,7 @@ function makeJS() {
             (child.textContent.match(/[^\\s]*\\s|[^\\s]+$/g)||[]).forEach(tok=>{
               if(!tok)return;
               const w=document.createElement('span');w.className='w';
-              /* 900ms base: the pen starts writing while the headline (450ms→1.4s) settles */
-              w.style.transitionDelay=(900+seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
+              w.style.transitionDelay=(base+seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
             });
             node.replaceChild(frag,child);
           }else if(child.nodeType===1){
@@ -1810,7 +1830,7 @@ function renderHome() {
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
-  <p class="hero-line reveal-words" data-seq="3">${heroLinesHTML}</p>
+  <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}</p>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
     <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaSecondary.label)}</a>
