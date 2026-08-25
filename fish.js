@@ -24,6 +24,14 @@
    the same clip backwards: the fish starts fully below the line (invisible, alpha 1)
    and rises out of it, so it appears from inside the mouth, never fades in.
 
+   The line is RE-CHECKED EVERY FRAME (2026-08-25: the tail read as landing ON the front
+   lip). The kicks are why: breach and splashdown each start the pot rocking while the
+   fish is still crossing the line, and a pot tilted on its bottom edge lifts one side
+   of its lip above the line that was measured at rest. So the clip follows the pot —
+   it rises exactly as far as the rocking has lifted the pot's highest point, plus a
+   3px guard (the AABB slightly underestimates the lip edge's rise, and a fish that
+   vanishes a hair early reads as nothing while one lying on the lip reads as wrong).
+
    Loaded LAZILY by app.js (dynamic import when the POT approaches — the pot is the
    trigger) and torn down completely when the splash settles: nothing animates while
    nothing is happening. One WebGL canvas, absolutely positioned, page-anchored.
@@ -54,7 +62,15 @@ export function run(opts = {}) {
     return { left: r.left + scrollX, top: r.top + scrollY, w: r.width, h: r.height,
              cx: r.left + scrollX + r.width / 2, cy: r.top + scrollY + r.height / 2,
              right: r.right + scrollX, bottom: r.bottom + scrollY }; };
+  /* the pot may be MID-ROCK at this very moment — the run fires at 60% visibility,
+     which is exactly when a reader reaches over and rocks it — and a tilted pot's
+     rect poisons every distance below (the lip line most of all). So it is measured
+     at rest: clear the rotation for one synchronous layout read, put it back. No
+     paint happens between the two writes, so nothing blinks. */
+  const potTf = pot.style.transform;
+  pot.style.transform = 'none';
   const P = doc(pot);
+  pot.style.transform = potTf;
   const vw = document.documentElement.clientWidth;
 
   const lipY = P.top + P.h * 0.13;                // the FRONT LIP line (see header)
@@ -240,7 +256,7 @@ export function run(opts = {}) {
     });
     const p = new THREE.Points(g, m);
     scene.add(p);
-    bursts.push({ p, g, m, vel, born: now, life: 950 });
+    bursts.push({ p, g, m, vel, born: now, life: 950, clip: clipY });
   }
   /* QA hook: window.__fishDebug=1 before the run exposes the scene for console poking */
   if (window.__fishDebug) window.__fish = { renderer, scene, camera, fish, mat, tex, oh, ow, lipW, burst, W, T, v0 };
@@ -272,6 +288,22 @@ export function run(opts = {}) {
        a constant launch ω had it flopping out of the pot sideways.) */
     const p = Math.min(Math.max((t / T - 0.18) / 0.64, 0), 1);
     fish.rotation.z = Math.PI / 2 - 3 * Math.PI * p * p * (3 - 2 * p);
+
+    /* the lip rule, per frame (see header): the rocking pot lifts its lip, the clip
+       line rises with it. Rest pose is transform:'' so lipRise is 0 whenever the pot
+       stands still. The guard on top covers the rAF ordering race: the spring and
+       this loop are separate rAF callbacks, so this read can be one frame stale —
+       and because kicks are IMPULSES (our own splashdown kick lands the very frame
+       the fish is at the lip), last frame's lip speed says nothing about this one.
+       So the guard is one frame at the fastest the lip can EVER move: the spring's
+       velocity cap (~5.2 rad/s post-kick) at the rim's half-width, times the real
+       frame delta, plus 3px for the AABB top corner sitting a hair under the tilted
+       lip edge's true rise. Costs ~8px of early vanish behind a rim band thicker
+       than that; the alternative was the tail lying ON the lip. */
+    const liveTop = pot.getBoundingClientRect().top + scrollY;
+    const lipRise = Math.max(0, P.top - liveTop);
+    const guard = 3 + (P.w / 2) * 5.2 * Math.max(dt, 1 / 60);
+    mat.uniforms.uClip.value = lipW + lipRise + guard;
 
     /* breach: the nose crossing the lip on the way UP is the exit splash + first kick
        (the nose rides L/2 above the centre while the fish points straight up) */
@@ -312,6 +344,7 @@ export function run(opts = {}) {
       }
       posA.needsUpdate = true; rotAt.needsUpdate = true;
       b.m.uniforms.uFade.value = 1 - age * age;
+      b.m.uniforms.uClip.value = b.clip + lipRise; // droplets obey the moving lip too
     }
 
     renderer.render(scene, camera);

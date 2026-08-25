@@ -413,6 +413,12 @@ nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) 
      .glass normally draws with ::after, lives on a real child (.tt-rim) here because ::after
      is spoken for below — it is the handwriting face. */
   padding:12px 18px}
+/* (2026-08-25 her ask: "more obvious") the rim names the mode the button will GIVE you,
+   like the label does: ORANGE ringing "Night Mode", BLUE ringing "Day Mode". A solid ring
+   instead of the prism — the prism reads as material, not as a control — a hair thicker
+   and at full strength. Both faces key off [data-theme], so rim and label flip together. */
+.theme-toggle .tt-rim{background:rgba(224,112,44,.9);mix-blend-mode:normal;opacity:1;padding:2px}
+[data-theme="night"] .theme-toggle .tt-rim{background:rgba(118,180,255,.92)}
 .theme-toggle::before{content:"Night Mode"}
 [data-theme="night"] .theme-toggle::before{content:"Day Mode"}
 .theme-toggle::after{content:"Night Mode";
