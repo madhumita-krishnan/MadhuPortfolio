@@ -85,6 +85,21 @@ function typo(s) {
 /* ---------------------------------------------------------------- CSS */
 /* "#F5EAD3" → "245,234,211", for tokens that need an rgba() alpha ramp of a theme hex */
 const rgbTriplet = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)}`;
+/* An eased fade for the edge strips: a linear-gradient whose alpha follows smoothstep
+   from `peak` at the screen edge to 0 at `end`% of the strip, in 10 stops. A two-stop
+   gradient interpolates STRAIGHT, and a straight ramp is exactly what read as un-iOS
+   (2026-08-26 second pass: "doesn't feel as gradual") — the eye catches both of its
+   corners. Smoothstep leaves with zero slope and lands with zero slope, so neither end
+   of the fade is findable. `color` is a paint-maker taking the alpha: pass black for
+   masks, the page-ground triplet for the tint. */
+const easedFade = (dir, peak, end, color = a => `rgba(0,0,0,${a})`) => {
+  const stops = [];
+  for (let i = 0; i <= 10; i += 1) {
+    const t = i / 10, a = peak * (1 - t * t * (3 - 2 * t));
+    stops.push(`${color(+a.toFixed(3))} ${+(t * end).toFixed(1)}%`);
+  }
+  return `linear-gradient(to ${dir},${stops.join(',')})`;
+};
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -450,28 +465,38 @@ nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) 
 
 /* ---- phone edge fades (2026-08-26, her iOS Messages screenshot): the nav and the
    day/night pill staying see-through is right — what was wrong was the content under
-   them staying SHARP enough to read. iOS softens each end of the screen with a blur
-   that dies out toward the middle; same recipe here: one fixed strip per edge carrying
-   a static backdrop blur plus a whisper of the page ground, both shaped by the same
-   eased mask so there is no line where the softness ends. The strips sit at z-index 40
-   — under the nav (50) and the toggle (80), so the pills float on softened ground and
-   stay the only crisp things in their corners. --edge-rgb is bg-base as a bare triplet
-   (emitted per theme above), so night fades into its own deep green, never cream.
-   pointer-events:none throughout — the pot under the bottom strip keeps its clicks.
-   Phones only: on desktop the pills sit in open margins and the page never scrolls
-   under them at reading size. Two static blurs, not six warps — nothing here animates,
-   so this does not repeat the feTurbulence-in-backdrop lag of 2026-08. */
-.edge-fade{position:fixed;left:0;right:0;z-index:40;pointer-events:none;display:none}
-.edge-fade.top{top:0;height:112px;
-  background:linear-gradient(to bottom,rgba(var(--edge-rgb),.5),rgba(var(--edge-rgb),0) 80%);
-  -webkit-backdrop-filter:blur(12px) saturate(1.08);backdrop-filter:blur(12px) saturate(1.08);
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%)}
-.edge-fade.bottom{bottom:0;height:112px;
-  background:linear-gradient(to top,rgba(var(--edge-rgb),.5),rgba(var(--edge-rgb),0) 80%);
-  -webkit-backdrop-filter:blur(12px) saturate(1.08);backdrop-filter:blur(12px) saturate(1.08);
-  -webkit-mask-image:linear-gradient(to top,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%);
-  mask-image:linear-gradient(to top,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%)}
+   them staying SHARP enough to read. iOS softens each end of the screen with a
+   PROGRESSIVE blur: not one blur thinning out, but the blur radius itself dying toward
+   the middle of the screen. The first pass here was the thinning kind — a single
+   blur(12px) whose mask faded its opacity — and she caught it ("doesn't feel as
+   gradual"): opacity-fading a fixed blur reads as a veil lifting, not softness
+   receding. Now each strip is THREE stacked backdrop layers (the element and both
+   pseudos): 18px hugging the screen edge, 8px reaching to ~60% of the strip, 3px
+   running its full height, every mask and the tint an easedFade() — smoothstep, so no
+   fade has a findable start or end. Where the layers overlap the radii compound, and
+   the eye reads one continuous ramp from ~20px to nothing. The strips sit at z-index
+   40 — under the nav (50) and the toggle (80), so the pills float on softened ground
+   and stay the only crisp things in their corners. --edge-rgb is bg-base as a bare
+   triplet (emitted per theme above), so night fades into its own deep green, never
+   cream. pointer-events:none throughout — the pot under the bottom strip keeps its
+   clicks. Phones only: on desktop the pills sit in open margins and the page never
+   scrolls under them at reading size. Six static blurs total, none animated, so this
+   does not repeat the feTurbulence-in-backdrop lag of 2026-08. */
+.edge-fade{position:fixed;left:0;right:0;height:128px;z-index:40;pointer-events:none;display:none}
+.edge-fade::before,.edge-fade::after{content:"";position:absolute;inset:0;pointer-events:none}
+.edge-fade.top{top:0}
+.edge-fade.bottom{bottom:0}
+${['top', 'bottom'].map(edge => {
+    const dir = edge === 'top' ? 'bottom' : 'top';
+    const tint = a => `rgba(var(--edge-rgb),${a})`;
+    return `.edge-fade.${edge}{background:${easedFade(dir, .5, 85, tint)};
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  -webkit-mask-image:${easedFade(dir, 1, 100)};mask-image:${easedFade(dir, 1, 100)}}
+.edge-fade.${edge}::before{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  -webkit-mask-image:${easedFade(dir, 1, 60)};mask-image:${easedFade(dir, 1, 60)}}
+.edge-fade.${edge}::after{-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  -webkit-mask-image:${easedFade(dir, 1, 34)};mask-image:${easedFade(dir, 1, 34)}}`;
+  }).join('\n')}
 @media (max-width:700px){.edge-fade{display:block}}
 
 /* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
