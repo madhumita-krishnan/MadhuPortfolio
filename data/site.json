@@ -29,7 +29,8 @@
     "logos": [
       {
         "src": "assets/logos/clean/white-house.png",
-        "alt": "The White House"
+        "alt": "The White House",
+        "href": "https://www.whitehouse.gov/gallery/president-donald-trump-and-first-lady-melania-trump-participate-in-a-halloween-event-on-the-south-lawn-of-the-white-house/"
       },
       {
         "src": "assets/logos/clean/red-bull.png",
@@ -45,11 +46,13 @@
       },
       {
         "src": "assets/logos/clean/floor-decor.png",
-        "alt": "Floor & Decor"
+        "alt": "Floor & Decor",
+        "href": "https://ir.flooranddecor.com/news-events/press-releases/detail/210/floor-decor-announces-grand-opening-of-allentown"
       },
       {
         "src": "assets/logos/clean/orlando-magic.png",
-        "alt": "Orlando Magic"
+        "alt": "Orlando Magic",
+        "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
       },
       {
         "src": "assets/logos/clean/michelob-ultra.png",
@@ -61,7 +64,8 @@
       },
       {
         "src": "assets/logos/clean/city-national.png",
-        "alt": "City National Bank"
+        "alt": "City National Bank",
+        "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
       }
     ]
   },

@@ -2068,7 +2068,15 @@ function renderHome() {
     <p>${typo(site.brands.sub)}</p>
   </div>
   <div class="brands-row fade">
-    ${site.brands.logos.map((l, i) => `<span class="brand-slot" style="--i:${i}"><span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')"></span></span>`).join('\n    ')}
+    ${site.brands.logos.map((l, i) => {
+      /* a logo with an href (the same proof link her resume carries for that brand)
+         becomes the anchor itself — the slot doubles as the link so the whole mark
+         is the target; the rest stay plain spans, not dead links */
+      const mark = `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')"></span>`;
+      return l.href
+        ? `<a class="brand-slot" style="--i:${i}" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.alt)}">${mark}</a>`
+        : `<span class="brand-slot" style="--i:${i}">${mark}</span>`;
+    }).join('\n    ')}
   </div>
 </section>`;
 
