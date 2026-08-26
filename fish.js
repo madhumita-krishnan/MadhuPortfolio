@@ -7,12 +7,14 @@
    THE PHYSICS (her ask: "follow the rules of gravity"): the flight is not a keyframed
    path, it is projectile motion. The centre of mass rides y(t) = y₀ − v₀t + ½Gt² with
    one G shared by fish and droplets; v₀ is derived from the apex height the layout
-   allows, and the AIRTIME IS WHATEVER GRAVITY SAYS — there is no duration constant.
-   The flip is physical too: a body in flight carries whatever spin it left the water
-   with (no torque mid-air ⇒ constant angular velocity), so the somersault is a single
-   constant ω that accumulates 3π over the flight — head-up out, one full roll, head-
-   down in. Swim speed for the tail beat is the true |velocity|, so the fish flutters
-   softly at the weightless apex and beats hard through breach and entry.
+   allows. The one theatrical liberty is a SHORT HELD BEAT at the apex (her ask,
+   2026-08-26: "a short pause before it fell down at the top"): the clock simply holds
+   there for HOLD seconds while the body lies flat, then gravity resumes — rise and
+   fall are honest ballistics either side of it. The somersault is thrown in two
+   smoothstep halves, one on the rise and one on the fall, dead-still through the held
+   beat and vertical through both lip crossings. Swim speed for the tail beat is the
+   true |velocity|, so the fish flutters softly at the top and beats hard through
+   breach and entry.
 
    THE LIP RULE (her spec): the fish must read as going INTO the pot — over the BACK
    lip, never over the front one. The fish canvas draws above the whole page, so real
@@ -123,20 +125,17 @@ export function run(opts = {}) {
   jumpTop = Math.min(jumpTop, lipY - P.h * 1.1);
 
   /* ---- the ballistics ------------------------------------------------------------- */
-  /* Gravity is DERIVED from her pause spec, not tuned (2026-08-26 second pass: "make
-     sure there's a 1 second natural gravity pause at the top... use the laws of
-     gravity mathematically"). The physics: a projectile spends t = 2·√(2Δ/G) within
-     Δ of its apex, and that time does not care how high the jump is — so a pause is
-     purely a choice of G once you say what "paused" means. Here: the fish reads as
-     hanging while it drifts less than a fifth of its own body. Solve for G and the
-     pause is one second BY CONSTRUCTION, on every layout:
-         2·√(2·(L/5)/G) = 1s   →   G = 8·(L/5) = 1.6·L  px/s²
-     (~91 on phones, ~123 on desktop — big fish, firmer world, same held breath.)
-     Everything else falls out of the same constant: v₀, airtime, the droplets. The
-     earlier 900 and 640 were tuned numbers; this one is the spec, solved. */
-  const PAUSE = 1;                                // s — the held breath at the top, her spec
-  const STILL = L / 5;                            // px of drift the eye still reads as "paused"
-  const G = 8 * STILL / (PAUSE * PAUSE);          // px/s² — the one gravity on this page
+  /* Gravity is TUNED again (2026-08-26 fourth pass: "it's moving too slow. it's not
+     believable. I like the fish motion before — just needed a short pause before it
+     fell down at the top"). The solved-from-the-pause G (1.6·L ≈ 90–120 px/s²) bought
+     its one-second hang by softening the WHOLE flight — a two-second climb reads as a
+     balloon, not a fish. What she actually wants is the old snap with a beat at the
+     top, so the pause moved out of the gravity constant and into the clock: the old
+     tuned G is back, and at the apex time simply HOLDS for HOLD seconds (vy = 0, body
+     flat) before gravity resumes. Rise and fall are honest ballistics; only the beat
+     between them is stage direction. */
+  const G = phone ? 640 : 900;                    // px/s² — the tuned values, restored
+  const HOLD = 0.45;                              // s — the short breath at the top
 
   /* THE FLIGHT IS THREE PHASES NOW (2026-08-26 third pass: "doesn't feel like it's
      coming out between the back lip and the front lip"). Frame-by-frame, the old
@@ -150,7 +149,7 @@ export function run(opts = {}) {
          nose-poke (VW0) up to exactly v₀ at the surface, so the body is SEEN sliding
          out between the lips (~0.6s) and the velocity is continuous at launch — no
          seam, the last tail-stroke simply hands the body to gravity.
-       AIR — pure ballistics under the derived G, apex pause and all.
+       AIR — pure ballistics under G, with the held beat at the apex.
        WATER IN — the mirror: drag decelerates the nose-down body from v₀ to a slow
          sink (VWE) across the same depth, so the tail visibly slips back in through
          the mouth instead of teleporting under the clip.
@@ -167,8 +166,9 @@ export function run(opts = {}) {
   const VWE = 25;                                 // px/s — the tail's last slow slip under
   const aW = (v0 * v0 - VW0 * VW0) / (2 * dW);    // constant thrust that meets v₀ at the lip
   const aE = (v0 * v0 - VWE * VWE) / (2 * dW);    // constant drag that kills v₀ on the way in
-  const TW = (v0 - VW0) / aW;                     // water-out duration (~0.6s)
-  const TA = 2 * v0 / G;                          // airtime: gravity's decision, not a constant
+  const TW = (v0 - VW0) / aW;                     // water-out duration (~0.3s at this G)
+  const tUp = v0 / G;                             // rise time = fall time, gravity's decision
+  const TA = 2 * tUp + HOLD;                      // airtime: ballistics plus the held beat
   const TE = (v0 - VWE) / aE;                     // water-in duration
   const T = TW + TA + TE;                         // the whole show, for the freeze hook
 
@@ -332,10 +332,10 @@ export function run(opts = {}) {
     bursts.push({ p, g, m, vel, born: now, life: 950 * Math.sqrt(900 / G), clip: clipY });
   }
   /* QA hook: window.__fishDebug=1 before the run exposes the scene for console poking */
-  if (window.__fishDebug) window.__fish = { renderer, scene, camera, fish, mat, tex, oh, ow, lipW, burst, W, T, v0, G, TW, TA, TE, aW, aE, dW, yStart, yLaunch, apexC, lipY, L, P };
+  if (window.__fishDebug) window.__fish = { renderer, scene, camera, fish, mat, tex, oh, ow, lipW, burst, W, T, v0, G, HOLD, tUp, TW, TA, TE, aW, aE, dW, yStart, yLaunch, apexC, lipY, L, P };
 
   /* ---- flight ------------------------------------------------------------------- */
-  let raf = 0, t0 = 0, now = 0, exited = false, splashed = false, endAt = Infinity;
+  let raf = 0, t0 = 0, now = 0, exited = false, kicked = false, splashed = false, endAt = Infinity;
   let phase = 0, lastTs = 0;
   const kick = dx => dispatchEvent(new CustomEvent('mk-pot-kick',
     { detail: { x: pot.getBoundingClientRect().left + P.w / 2 + dx } }));
@@ -360,10 +360,19 @@ export function run(opts = {}) {
     if (t < TW) {                                 // WATER OUT: constant tail-thrust
       docY = yStart - (VW0 * t + 0.5 * aW * t * t);
       vy = -(VW0 + aW * t);
-    } else if (t < TW + TA) {                     // AIR: projectile motion, nothing else
+    } else if (t < TW + TA) {                     // AIR: ballistics, with the held beat
       const ta = t - TW;
-      docY = yLaunch - v0 * ta + 0.5 * G * ta * ta;
-      vy = -v0 + G * ta;
+      if (ta < tUp) {                             // the rise, pure projectile
+        docY = yLaunch - v0 * ta + 0.5 * G * ta * ta;
+        vy = -v0 + G * ta;
+      } else if (ta < tUp + HOLD) {               // the held beat: the clock stops at the apex
+        docY = apexC;
+        vy = 0;
+      } else {                                    // the fall, gravity resumes from rest
+        const tf = ta - tUp - HOLD;
+        docY = apexC + 0.5 * G * tf * tf;
+        vy = G * tf;
+      }
     } else {                                      // WATER IN: constant drag
       const te = Math.min(t - TW - TA, TE);
       docY = yLaunch + v0 * te - 0.5 * aE * te * te;
@@ -371,22 +380,23 @@ export function run(opts = {}) {
     }
     fish.position.copy(W([P.cx, docY]));
     /* the somersault: 3π total (head-up out → one full roll → head-down in), thrown
-       in TWO halves with a dead-still plateau between them (2026-08-26: "the flip
-       feels spazzy, not graceful"). The old single smoothstep had one fatal property:
-       its spin rate PEAKS at p=0.5 — the fish rotated fastest at the exact moment the
-       gravity pause asked it to hang. Now half the roll happens on the rise (τ .12–.44),
-       the rotation rate reaches zero BEFORE the apex, the fish lies flat and motionless
-       through the whole held second, and the other half unwinds on the fall (τ .56–.88),
-       locking nose-down well before the water. The centre of mass obeys gravity
-       untouched throughout. (Living bodies do this: fins modulate spin the way a
-       diver's tuck does — the pause belongs to the body, not just the path.) */
+       in TWO smoothstep halves with a dead-still plateau between them (2026-08-26:
+       "the flip feels spazzy, not graceful" — a single smoothstep peaks its spin rate
+       at p=0.5, fastest rotation at the exact pause). The halves are pinned to the
+       PHASES now, not to fractions of the airtime: half the roll on the rise (done by
+       85% of the climb), flat and motionless through the whole held beat, the other
+       half on the fall, locking nose-down well before the water. (Living bodies do
+       this: fins modulate spin the way a diver's tuck does — the pause belongs to
+       the body, not just the path.) */
     /* the flip lives entirely in the AIR phase: the body leaves the water vertical
        (w=0 through all of WATER OUT) and is nose-down before the water again (w=1
        through all of WATER IN), so both lip crossings happen with the body straight
        in line with its own motion — no rotation while any of it is in the mouth. */
-    const fA = Math.min(Math.max((t - TW) / TA, 0), 1);
+    const ta = Math.min(Math.max(t - TW, 0), TA);
     const ss = x => { x = Math.min(Math.max(x, 0), 1); return x * x * (3 - 2 * x); };
-    const w = 0.5 * ss((fA - 0.12) / 0.32) + 0.5 * ss((fA - 0.56) / 0.32);
+    const w = ta < tUp + HOLD
+      ? 0.5 * ss((ta / tUp - 0.15) / 0.7)
+      : 0.5 + 0.5 * ss(((ta - tUp - HOLD) / tUp - 0.15) / 0.7);
     fish.rotation.z = Math.PI / 2 - 3 * Math.PI * w;
 
     /* the lip rule, per frame (see header): the rocking pot lifts its lip, the clip
@@ -413,17 +423,35 @@ export function run(opts = {}) {
        on a still pot (the breach kick lands only once the body is well clear), so the
        whole slide-out reads; entry rocks the pot, so entry keeps the full guard — that
        ~8px early vanish was always the acceptable cost there. */
+    /* …and the armed guard is CAPPED at 45% of the mouth slot (2026-08-26 fourth
+       pass, on her phone: "needs to cover the back lip but not the front lip, and
+       right now it's doing neither"). The slot — rim top down to the lip line — is
+       ~11px on a phone pot, and the ~8px worst-case guard pushed the effective clip
+       to the rim top for the whole rocking entry: the falling fish vanished ABOVE
+       the pot and never overlapped the rim at all, so it read as neither in front of
+       the back lip nor inside the mouth. The cap trades a possible 2–3px of transient
+       paint on the lip during the kick frame for the rim overlap that sells the whole
+       illusion — the lesser wrong, per her spec. */
     const rocking = pot.style.transform && pot.style.transform !== 'none';
-    const guard = rocking ? 3 + (P.w / 2) * 5.2 * Math.max(dt, 1 / 60) : 1;
+    const slot = lipY - P.top;
+    const guard = rocking
+      ? Math.min(3 + (P.w / 2) * 5.2 * Math.max(dt, 1 / 60), slot * 0.45)
+      : 1;
     mat.uniforms.uClip.value = lipW + lipRise + guard;
 
-    /* breach: the nose crossing the lip on the way UP is the exit splash + first kick
-       (the nose rides L/2 above the centre while the fish points straight up) */
+    /* breach: the nose crossing the lip on the way UP is the exit splash (the nose
+       rides L/2 above the centre while the fish points straight up)… */
     if (!frozen && !exited && docY < lipY + L * 0.2) {
       exited = true;
       burst(new THREE.Vector3(P.cx, lipW + 2, 0), 16, 240, lipW - 6);
-      kick(10);
     }
+    /* …but the kick WAITS for the tail to clear (2026-08-26 fourth pass): kicking at
+       nose-break set the pot rocking while half the body was still sliding through
+       the mouth, which armed the rocking guard mid-emergence and clipped the rest of
+       the slide-out at the rim top — on a phone pot that erased the whole
+       between-the-lips reveal. The splash belongs to the nose; the push-off is felt
+       as the body leaves. */
+    if (!frozen && !kicked && docY < lipY - L * 0.55) { kicked = true; kick(10); }
 
     /* tail-beat frequency and sweep follow the TRUE speed (Strouhal stays ~0.3):
        hard strokes through breach and entry, a soft weightless flutter at the apex.
