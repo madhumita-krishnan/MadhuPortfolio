@@ -83,11 +83,14 @@ function typo(s) {
 }
 
 /* ---------------------------------------------------------------- CSS */
+/* "#F5EAD3" → "245,234,211", for tokens that need an rgba() alpha ramp of a theme hex */
+const rgbTriplet = h => `${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)}`;
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
 :root{
 ${Object.entries(c).map(([k, v]) => `  --${k}:${v};`).join('\n')}
+  --edge-rgb:${rgbTriplet(c['bg-base'])};
   --font-display:${f.display};
   --font-body:${f.body};
   --font-utility:${f.utility};
@@ -109,6 +112,7 @@ ${Object.entries(c).map(([k, v]) => `  --${k}:${v};`).join('\n')}
    (stored choice first, otherwise the viewer's own sunrise/sunset). */
 [data-theme="night"]{
 ${Object.entries(theme.night.colors).map(([k, v]) => `  --${k}:${v};`).join('\n')}
+  --edge-rgb:${rgbTriplet(theme.night.colors['bg-base'])};
   --glass-grad-a:${theme.night.glass['grad-a']};--glass-bg:${theme.night.glass.bg};--glass-grad-b:${theme.night.glass['grad-b']};
   --glass-border:${theme.night.glass.border};
   --glass-cres-top:${theme.night.glass['cres-top']};--glass-cres-bottom:${theme.night.glass['cres-bottom']};
@@ -443,6 +447,32 @@ nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) 
   /* corner pill on phones too — it never fit the 375px bar; down here it clears the
      home-indicator strip instead */
   .theme-toggle{left:14px;bottom:max(14px,env(safe-area-inset-bottom, 14px))}}
+
+/* ---- phone edge fades (2026-08-26, her iOS Messages screenshot): the nav and the
+   day/night pill staying see-through is right — what was wrong was the content under
+   them staying SHARP enough to read. iOS softens each end of the screen with a blur
+   that dies out toward the middle; same recipe here: one fixed strip per edge carrying
+   a static backdrop blur plus a whisper of the page ground, both shaped by the same
+   eased mask so there is no line where the softness ends. The strips sit at z-index 40
+   — under the nav (50) and the toggle (80), so the pills float on softened ground and
+   stay the only crisp things in their corners. --edge-rgb is bg-base as a bare triplet
+   (emitted per theme above), so night fades into its own deep green, never cream.
+   pointer-events:none throughout — the pot under the bottom strip keeps its clicks.
+   Phones only: on desktop the pills sit in open margins and the page never scrolls
+   under them at reading size. Two static blurs, not six warps — nothing here animates,
+   so this does not repeat the feTurbulence-in-backdrop lag of 2026-08. */
+.edge-fade{position:fixed;left:0;right:0;z-index:40;pointer-events:none;display:none}
+.edge-fade.top{top:0;height:112px;
+  background:linear-gradient(to bottom,rgba(var(--edge-rgb),.5),rgba(var(--edge-rgb),0) 80%);
+  -webkit-backdrop-filter:blur(12px) saturate(1.08);backdrop-filter:blur(12px) saturate(1.08);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%)}
+.edge-fade.bottom{bottom:0;height:112px;
+  background:linear-gradient(to top,rgba(var(--edge-rgb),.5),rgba(var(--edge-rgb),0) 80%);
+  -webkit-backdrop-filter:blur(12px) saturate(1.08);backdrop-filter:blur(12px) saturate(1.08);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 0%,#000 30%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.22) 78%,transparent 100%)}
+@media (max-width:700px){.edge-fade{display:block}}
 
 /* ---- the wordmark's greeting (2026-08-19). M and K load side by side and spread apart,
    the dashes revealing themselves between them; hovering squishes them back together and
@@ -1597,6 +1627,17 @@ function makeJS() {
         video stayed dark — the disciplines panels got this guard on 2026-08-19, these boxes
         never did. Same cure: track inView, and replay any pause that arrives while visible
         (unless the viewer pressed the pause button — their pause is not stale). */
+  /* iOS can refuse a programmatic play() outright — Low Power Mode and Settings >
+     Accessibility "Auto-Play Video Previews" off both make play() reject even for a
+     muted playsinline video, so every observer above fires and nothing moves
+     (2026-08-26: "the gifs aren't automatically playing when i scroll past them", from
+     a phone whose status bar showed the Low Power battery). The one thing that lifts
+     the ban is a user gesture, and scrolling IS one: every touchend re-tries whichever
+     clips are on screen and not deliberately paused, from inside the gesture Safari
+     honours. One closure per clip, registered by both the boxes below and the
+     disciplines panels. */
+  const gestureRetries=[];
+  addEventListener('touchend',()=>{gestureRetries.forEach(f=>f())},{passive:true});
   document.querySelectorAll('[data-video]').forEach(box=>{
     const vid=box.querySelector('video');if(!vid)return;
     const btn=box.querySelector('.play-btn');
@@ -1610,6 +1651,7 @@ function makeJS() {
     })}
     function pause(){vid.pause();box.classList.remove('playing')}
     vid.addEventListener('pause',()=>{if(inView&&!userPaused&&!rmActive())play()});
+    gestureRetries.push(()=>{if(inView&&!userPaused&&vid.paused&&!rmActive())play()});
     if(btn){btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
       if(box.classList.contains('playing')){userPaused=true;pause();btn.textContent='▶'}
       else{userPaused=false;play();btn.textContent='❚❚'}})}
@@ -1672,6 +1714,7 @@ function makeJS() {
          pause listener puts it back: any pause that arrives while the panel is still
          on screen is wrong by definition and gets replayed */
       v.addEventListener('pause',()=>{if(inView&&!rmActive())run()});
+      gestureRetries.push(()=>{if(inView&&v.paused&&!rmActive())run()});
       new IntersectionObserver(es=>{es.forEach(e=>{inView=e.isIntersecting;
         if(inView&&!rmActive())run();else v.pause()})},{threshold:.1}).observe(p);
     });
@@ -1857,7 +1900,8 @@ function navBar(kind) {
   const links = home
     ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
     : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
-  return `<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
+  return `<div class="edge-fade top" aria-hidden="true"></div><div class="edge-fade bottom" aria-hidden="true"></div>
+<div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
   <div class="nav-links">${links}</div>
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="SAY HEY!">say hey!</a>
