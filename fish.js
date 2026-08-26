@@ -12,8 +12,9 @@
    a hard stop): the air runs on a bent clock that sheds HANG extra seconds smoothly
    across a window around the top, so the fish drifts through the apex at under half
    speed but never freezes. Rise and fall are honest ballistics on that clock. The
-   somersault is thrown in two smoothstep halves, one on the rise and one on the fall,
-   its plateau carried across the hang and vertical through both lip crossings. Swim speed for the tail beat is the
+   somersault is thrown in two eased halves, one on the rise and one on the fall, with
+   a slow continuous drift (never a stop) carried between them across the hang, and
+   vertical through both lip crossings. Swim speed for the tail beat is the
    true |velocity|, so the fish flutters softly at the top and beats hard through
    breach and entry.
 
@@ -95,14 +96,18 @@ export function run(opts = {}) {
      because the body spans less of it */
   const L = Math.max(56, Math.min(112, P.w * 0.62));
 
-  /* the jump wants ~3.2 pot-heights of air (2.3 until 2026-08-26, raised with the
-     slimmer fish — "more space to jump higher"), but never at the price of covering
+  /* the jump wants ~2.4 pot-heights of air (2.3 until 2026-08-26, raised to 3.2 with
+     the slimmer fish — "more space to jump higher" — then walked back the same day:
+     "it doesn't need to go as high on the main website". Cramped phone layouts never
+     reached 3.2 anyway — text caps them below it — so the full allowance only ever
+     showed on the open desktop column, where it read too tall; 2.4 keeps a bit of the
+     slim fish's extra air over the old 2.3), but never at the price of covering
      the copy ("around the text" still holds, her ask earlier today): the jump is a
      straight vertical over the mouth — gravity allows nothing fancier without missing
      the pot on the way down — so only glyphs in that column matter, and any line
      reaching into it caps the apex below itself. Ultra-cramped fallback: guarantee
      1.1 pot-heights and accept the sliver of shared air. */
-  let jumpTop = P.top - P.h * 3.2;
+  let jumpTop = P.top - P.h * 2.4;
   if (band) {
     const walker = document.createTreeWalker(band, NodeFilter.SHOW_TEXT);
     const rng = document.createRange();
@@ -135,13 +140,18 @@ export function run(opts = {}) {
      cut of that HELD the clock dead still for 0.45s, and she called it ("the pause is
      too long and choppy"): a sprite frozen to the pixel reads as a dropped frame, not
      a hang, and the hard stop/start at its edges is the chop. So the clock BENDS now
-     instead of stopping: across a window around the apex, air time runs up to ~2.5x
+     instead of stopping: across a window around the apex, air time runs up to ~2.3x
      slower — never zero — adding HANG seconds to the flight. Gravity is already at
      its gentlest there, the stretch deepens it smoothly, and motion never dies.
+     (Fifth pass, same day — "the pause and turn in the air feels choppy": the bend
+     was a C1 smoothstep, so the clock's DECELERATION jumped at the window's edges —
+     a hitch going in and coming out — and the somersault's eased halves both died to
+     zero spin at the plateau, freezing the body's ANGLE dead for the whole hang, the
+     same dropped-frame artifact the position fix had just cured. The bend is C2
+     smootherstep now, and the roll never stops — see the flip below.)
      Rise and fall are honest ballistics; only the bent clock is stage direction. */
   const G = phone ? 640 : 900;                    // px/s² — the tuned values, restored
   const HANG = 0.25;                              // s — extra airtime the apex stretch adds
-  const SPREAD = 0.35;                            // s — the stretch reaches ±this far from apex
 
   /* THE FLIGHT IS THREE PHASES NOW (2026-08-26 third pass: "doesn't feel like it's
      coming out between the back lip and the front lip"). Frame-by-frame, the old
@@ -174,6 +184,11 @@ export function run(opts = {}) {
   const aE = (v0 * v0 - VWE * VWE) / (2 * dW);    // constant drag that kills v₀ on the way in
   const TW = (v0 - VW0) / aW;                     // water-out duration (~0.3s at this G)
   const tUp = v0 / G;                             // rise time = fall time, gravity's decision
+  /* the stretch reaches ±SPREAD (real seconds) from the apex. 0.42 keeps the dip as
+     deep as the old smoothstep's 0.35 did (the C2 bell is peakier, so it needs more
+     width for the same floor); the clamp keeps the window inside the air phase with
+     60ms of untouched ballistics at each end on ultra-cramped leaps */
+  const SPREAD = Math.min(0.42, tUp + HANG / 2 - 0.06);
   const TA = 2 * tUp + HANG;                      // airtime: ballistics plus the apex stretch
   const TE = (v0 - VWE) / aE;                     // water-in duration
   const T = TW + TA + TE;                         // the whole show, for the freeze hook
@@ -362,17 +377,19 @@ export function run(opts = {}) {
 
     /* THE APEX STRETCH: the air runs on a bent clock. taR is the real seconds spent
        airborne; tau is the ballistic time the projectile equations see. Outside a
-       ±SPREAD window around the apex they tick together; inside it, a smoothstep
-       sheds HANG seconds, so tau's rate dips to 1 − HANG·1.5/(2·SPREAD) ≈ 0.46 at
-       the exact top — the fish drifts through the apex at less than half speed,
-       still moving, never frozen (the frozen version read as a dropped frame).
-       vy carries the chain rule (× the clock's rate) so the tail effort and the
-       splash trigger feel the SCREEN velocity, not the ballistic one. */
-    const ss = x => { x = Math.min(Math.max(x, 0), 1); return x * x * (3 - 2 * x); };
+       ±SPREAD window around the apex they tick together; inside it, a SMOOTHERSTEP
+       (C2 — smoothstep's C1 bend snapped its deceleration on at the window edges,
+       part of the fifth-pass "choppy") sheds HANG seconds, so tau's rate dips to
+       1 − HANG·1.875/(2·SPREAD) ≈ 0.44 at the exact top — the fish drifts through
+       the apex at less than half speed, still moving, never frozen (the frozen
+       version read as a dropped frame). vy carries the chain rule (× the clock's
+       rate) so the tail effort and the splash trigger feel the SCREEN velocity,
+       not the ballistic one. */
+    const s5 = x => { x = Math.min(Math.max(x, 0), 1); return x * x * x * (x * (6 * x - 15) + 10); };
     const taR = Math.min(Math.max(t - TW, 0), TA);
     const u = (taR - (tUp + HANG / 2 - SPREAD)) / (2 * SPREAD);
-    const tau = taR - HANG * ss(u);
-    const rate = 1 - (u > 0 && u < 1 ? HANG * 6 * u * (1 - u) / (2 * SPREAD) : 0);
+    const tau = taR - HANG * s5(u);
+    const rate = 1 - (u > 0 && u < 1 ? HANG * 30 * u * u * (1 - u) * (1 - u) / (2 * SPREAD) : 0);
 
     /* three phases, all uniform-acceleration kinematics (see the derivation above):
        thrust out of the water, gravity in the air, drag back into it */
@@ -390,21 +407,38 @@ export function run(opts = {}) {
     }
     fish.position.copy(W([P.cx, docY]));
     /* the somersault: 3π total (head-up out → one full roll → head-down in), thrown
-       in TWO smoothstep halves with a plateau between them (2026-08-26: "the flip
-       feels spazzy, not graceful" — a single smoothstep peaks its spin rate at p=0.5,
-       fastest rotation at the exact pause). It runs on tau, the same bent clock the
-       ballistics ride: half the roll on the rise (done by 85% of the climb), the
-       plateau carried slowly across the apex stretch, the other half on the fall,
-       locking nose-down well before the water. (Living bodies do this: fins modulate
-       spin the way a diver's tuck does — the pause belongs to the body, not just
-       the path.) */
+       in TWO eased halves (2026-08-26: "the flip feels spazzy, not graceful" — a
+       single smoothstep peaks its spin rate at p=0.5, fastest rotation at the exact
+       pause). It runs on tau, the same bent clock the ballistics ride: most of the
+       roll on the rise (thrown by 85% of the climb), most of the rest on the fall,
+       locking nose-down well before the water. Between them the roll DRIFTS — a slow
+       constant ~22° carried across the apex stretch, never a stop (fifth pass, "the
+       pause and turn feels choppy": the old halves were plain smoothsteps meeting a
+       flat plateau, so spin decelerated to EXACTLY zero and the body hung
+       angle-frozen through the whole hang — the position had been cured of freezing,
+       the rotation hadn't). Each half is a Hermite curve whose inner tangent equals
+       the drift slope, so angular velocity is continuous everywhere: the throw eases
+       out INTO the drift and the drift eases into the exit throw. (Living bodies do
+       this: fins modulate spin the way a diver's tuck does — slow through the top,
+       never dead.) */
     /* the flip lives entirely in the AIR phase: the body leaves the water vertical
        (w=0 through all of WATER OUT) and is nose-down before the water again (w=1
        through all of WATER IN), so both lip crossings happen with the body straight
        in line with its own motion — no rotation while any of it is in the mouth. */
-    const w = tau < tUp
-      ? 0.5 * ss((tau / tUp - 0.15) / 0.7)
-      : 0.5 + 0.5 * ss(((tau - tUp) / tUp - 0.15) / 0.7);
+    const q = tau / tUp;                          // 0 launch, 1 apex, 2 entry
+    const DRIFT = 0.04;                           // w spent drifting across the top (3π·0.04 ≈ 22°)
+    const half = 0.5 - DRIFT / 2;                 // w each thrown half covers
+    const mT = (DRIFT / 0.3) * 0.7 / half;        // Hermite inner tangent = the drift slope
+    let w;
+    if (q < 0.85) {                               // rise throw: slope 0 in, drift slope out
+      const x = Math.min(Math.max((q - 0.15) / 0.7, 0), 1);
+      w = half * (x * x * (3 - 2 * x) + mT * x * x * (x - 1));
+    } else if (q < 1.15) {                        // the apex drift: slow, constant, alive
+      w = half + (DRIFT / 0.3) * (q - 0.85);
+    } else {                                      // fall throw: drift slope in, slope 0 out
+      const x = Math.min(Math.max((q - 1.15) / 0.7, 0), 1);
+      w = (0.5 + DRIFT / 2) + half * (x * x * (3 - 2 * x) + mT * x * (x - 1) * (x - 1));
+    }
     fish.rotation.z = Math.PI / 2 - 3 * Math.PI * w;
 
     /* the lip rule, per frame (see header): the rocking pot lifts its lip, the clip
