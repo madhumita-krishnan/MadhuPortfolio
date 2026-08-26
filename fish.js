@@ -78,22 +78,32 @@ export function run(opts = {}) {
   const vw = document.documentElement.clientWidth;
 
   const lipY = P.top + P.h * 0.13;                // the FRONT LIP line (see header)
-  /* 0.95 pot-widths read as a fish too big to have lived in the pot (2026-08-25) */
-  const L = Math.max(70, Math.min(140, P.w * 0.78));
+  /* 0.95 pot-widths read as a fish too big to have lived in the pot (2026-08-25);
+     0.78 still crowded its own leap, so it slimmed to 0.62 (2026-08-26: "make the
+     fish smaller so it has more space to jump higher") — same air now reads taller
+     because the body spans less of it */
+  const L = Math.max(56, Math.min(112, P.w * 0.62));
 
-  /* the jump wants ~2.3 pot-heights of air, but never at the price of covering the
-     copy ("around the text" still holds, her ask earlier today): the jump is a
+  /* the jump wants ~3.2 pot-heights of air (2.3 until 2026-08-26, raised with the
+     slimmer fish — "more space to jump higher"), but never at the price of covering
+     the copy ("around the text" still holds, her ask earlier today): the jump is a
      straight vertical over the mouth — gravity allows nothing fancier without missing
      the pot on the way down — so only glyphs in that column matter, and any line
      reaching into it caps the apex below itself. Ultra-cramped fallback: guarantee
      1.1 pot-heights and accept the sliver of shared air. */
-  let jumpTop = P.top - P.h * 2.3;
+  let jumpTop = P.top - P.h * 3.2;
   if (band) {
     const walker = document.createTreeWalker(band, NodeFilter.SHOW_TEXT);
     const rng = document.createRange();
     const hw = L * 0.62;                          // the flip's reach either side of centre
     for (let node; (node = walker.nextNode());) {
       if (!node.textContent.trim()) continue;
+      /* the longer-story fold hides its copy with visibility:hidden when closed, and
+         hidden text KEEPS its client rects — on phones those unseen paragraphs sat in
+         the jump column and pinned every leap to the cramped 1.1 pot-height floor
+         (found 2026-08-26 chasing "more space to jump higher"). Only visible ink can
+         cap the apex; text the fold reveals caps it again the moment it is real. */
+      if (node.parentElement && getComputedStyle(node.parentElement).visibility === 'hidden') continue;
       rng.selectNodeContents(node);
       for (const r of rng.getClientRects()) {
         if (!r.width) continue;
@@ -105,7 +115,13 @@ export function run(opts = {}) {
   jumpTop = Math.min(jumpTop, lipY - P.h * 1.1);
 
   /* ---- the ballistics ------------------------------------------------------------- */
-  const G = 900;                                  // px/s² — the one gravity on this page
+  /* 900 read as a drop with no top to it: the time spent within any given distance of
+     the apex goes as 1/√G and does not care how high the jump is, so her "naturally
+     pause with gravity before coming down" (2026-08-26) could only come from softer
+     gravity, never from more height. 640 stretches the weightless beat ~19% and the
+     whole flight with it; the droplets share the constant, so the splash slows to
+     match and the world stays one world. Still real ballistics — nothing is eased. */
+  const G = 640;                                  // px/s² — the one gravity on this page
   const yStart = lipY + P.h * 0.45;               // centre starts here, fully under the clip
   const apexC = jumpTop + L * 0.5;                // centre apex: fish top edge kisses jumpTop
   const v0 = Math.sqrt(2 * G * (yStart - apexC)); // leave the water exactly fast enough

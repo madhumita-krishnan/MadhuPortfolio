@@ -1802,6 +1802,11 @@ function makeJS() {
      pot is properly on screen (60% visible), once per visit. */
   const potEl=document.querySelector('.pot');
   if(potEl){
+    /* QA hook in the ?shot= family: ?fishfreeze=0.5 holds the flight at that fraction
+       of the airtime (0.5 = apex) by pre-setting the __fishFreeze knob fish.js already
+       reads per frame — headless screenshots can't reach the console mid-leap */
+    const ff=location.search.match(/fishfreeze=([\\d.]+)/);
+    if(ff)window.__fishFreeze=+ff[1];
     const phone=matchMedia('(max-width:700px)').matches;
     let mod=null,fired=false;
     const fetchIt=()=>mod||(mod=import('./fish.js?v=${BUILD_V}'));
