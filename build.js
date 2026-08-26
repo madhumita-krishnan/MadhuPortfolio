@@ -1668,7 +1668,16 @@ function makeJS() {
     const btn=box.querySelector('.play-btn');
     const hoverZone=box.closest('.wproject')||box;
     let inView=false,userPaused=false;
-    function arm(){if(!vid.src&&vid.dataset.src){vid.src=vid.dataset.src;vid.load()}}
+    function arm(){if(!vid.src&&vid.dataset.src){vid.preload='auto';vid.src=vid.dataset.src;vid.load()}}
+    /* fetch AHEAD of arrival (2026-08-26, "the gifs still aren't playing as I scroll"):
+       preload=none + src-on-half-visible meant the mp4's first byte wasn't requested
+       until the clip was already on screen, so a phone showed the frozen poster for the
+       whole scroll-past — instant on localhost, seconds on cellular. Start the download
+       while the clip is still ~1.5 viewports away; by the time it arrives it can play
+       its first frame immediately. preload flips to auto inside arm() because load()
+       under preload=none fetches nothing at all. */
+    new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){arm();io.disconnect()}})},
+      {rootMargin:'150% 0px 150% 0px'}).observe(box);
     function play(){arm();vid.play().then(()=>box.classList.add('playing')).catch(()=>{
       /* play() can lose the race with its own metadata on iOS (preload=none + src just
          attached): if the data wasn't there yet, try once more when it is */
@@ -1735,6 +1744,10 @@ function makeJS() {
     panels.forEach(p=>{const v=p.querySelector('video');if(!v)return;
       let inView=false;
       const run=()=>{if(!v.src&&v.dataset.src)v.src=v.dataset.src;v.play().then(()=>p.classList.add('v-live')).catch(()=>{})};
+      /* same fetch-ahead as the [data-video] boxes — start the download ~1.5 viewports out */
+      new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){
+        if(!v.src&&v.dataset.src){v.preload='auto';v.src=v.dataset.src;v.load()}io.disconnect()}})},
+        {rootMargin:'150% 0px 150% 0px'}).observe(p);
       /* a fast scroll can land a stale pause AFTER the entering play resolves — the
          pause listener puts it back: any pause that arrives while the panel is still
          on screen is wrong by definition and gets replayed */
