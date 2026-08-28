@@ -198,8 +198,9 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
 .dc-body span{opacity:0;transition:opacity .16s linear;padding:0 16px;
   font-family:var(--font-utility);font-weight:500;font-size:.62rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--bg-base)}
-/* width is hand-fitted to the label — the pill animates width, so it can't be auto */
-.dc.pill .dc-body{width:140px;height:34px}
+/* the pill animates width, so it can't be auto — the cursor code measures the label
+   at hover time and pins the target width in --dc-pill-w (140px is "I'm curious") */
+.dc.pill .dc-body{width:var(--dc-pill-w,140px);height:34px}
 .dc.pill .dc-body span{opacity:1;transition-delay:.1s}
 .dc.go .dc-spin{animation:dcGo .34s var(--ease-standard) forwards}
 @keyframes dcGo{
@@ -1193,38 +1194,31 @@ footer a:hover{color:var(--accent)}
 
 /* ---- the design-system door (2026-08-26 "I just want it to be an icon"): one round
    outlined control in the hero band's top-right corner, sitting on the band's own
-   padding grid. No label at rest — the swatch glyph is the whole button — so the
-   hand-swap the controls all share becomes a tooltip beside it instead of an overlay:
-   there is no sans label to hide, the handwriting just appears. data-hand carries
-   the words already capitalised, like every other control. */
+   padding grid. No label at rest — the brush glyph is the whole button. The words live
+   in the CURSOR (2026-08-28 her ask): hovering rolls the dot out into the same pill
+   the case cards use for "I'm curious", reading "View design system" — data-curious
+   carries the label, the cursor code does the rest. Hairline border, matching the
+   theme-toggle ring, is what "delicate" means on this site. */
 .ds-link{position:absolute;top:clamp(28px,4.5vw,56px);right:clamp(28px,4.5vw,56px);z-index:3;
-  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  border:1.5px solid currentColor;color:var(--text-on-deep);--hand-ink:var(--text-on-deep);
+  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  border:1px solid currentColor;color:var(--text-on-deep);
   transition:background-color var(--motion-fast) var(--ease-standard),
              border-color var(--motion-fast) var(--ease-standard),
              color var(--motion-fast) var(--ease-standard)}
-.cs-hero-band.light .ds-link{color:var(--accent);--hand-ink:var(--accent-deep)}
+.cs-hero-band.light .ds-link{color:var(--accent)}
 .ds-link:hover,.ds-link:focus-visible{background:var(--accent-press);border-color:var(--accent-press);
   color:var(--text-on-accent)}
-.ds-link svg{width:19px;height:19px;display:block}
-.ds-link::after{content:attr(data-hand);content:attr(data-hand) / "";
-  position:absolute;right:calc(100% + 16px);top:50%;transform:translateY(-.52em);
-  font-family:var(--font-hand);font-size:1.3rem;letter-spacing:0;font-weight:400;text-transform:none;
-  color:var(--hand-ink);white-space:nowrap;text-align:right;
-  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none}
-@media (hover:hover){
-  .ds-link:hover::after,.ds-link:focus-visible::after{opacity:1}
-}
+.ds-link svg{width:15px;height:15px;display:block}
 @media (max-width:600px){
-  .ds-link{width:40px;height:40px}
-  .ds-link svg{width:17px;height:17px}
+  .ds-link{width:32px;height:32px}
+  .ds-link svg{width:13px;height:13px}
 }
 /* below 900px the title's first line can run under the circle (Stack's "Budgeting that"
    did) — clear its lane, but only when the band actually carries the button. Desktop
    widths are left alone so the twoLine() fitting keeps measuring the real column. */
 @media (max-width:900px){
   .cs-hero-band:has(.ds-link) .cs-kicker,
-  .cs-hero-band:has(.ds-link) .cs-title{padding-right:56px}
+  .cs-hero-band:has(.ds-link) .cs-title{padding-right:44px}
 }
 
 .cs-kicker{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:14px}
@@ -1650,9 +1644,19 @@ function makeJS() {
 
     let turnTimer=0;
     const TURN_MS=500;                                   // must match the dcTurn keyframe
-    function curious(on){
+    const dcSpan=dc.querySelector('.dc-body span');
+    /* one pill, many labels: an element's data-curious value is the words it rolls out
+       (empty attr = the default "I'm curious" — the case cards; the design-system brush
+       says "View design system"). The label is set and MEASURED before the turn starts —
+       the pill animates width, so the target must be a fixed px, and measuring while the
+       spin foreshortens the disc would read a false width. */
+    function curious(on,label){
       clearTimeout(turnTimer);
       if(on){
+        dcSpan.textContent=label||"I'm curious";
+        /* +32 restores the air the hand-fitted 140px gave "I'm curious" beyond its
+           measured 107px — every label breathes the same, whatever its length */
+        dc.style.setProperty('--dc-pill-w',(Math.ceil(dcSpan.getBoundingClientRect().width)+32)+'px');
         dc.classList.add('turning');
         /* the pill only rolls out once the three turns have finished, so it reads as
            one gesture rather than two things happening at once */
@@ -1662,10 +1666,11 @@ function makeJS() {
       }
     }
     document.querySelectorAll('[data-curious]').forEach(card=>{
-      card.addEventListener('pointerenter',()=>curious(true));
+      card.addEventListener('pointerenter',()=>curious(true,card.dataset.curious));
       card.addEventListener('pointerleave',()=>curious(false));
       card.addEventListener('click',e=>{
         if(e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;   // let people open in a new tab
+        if(card.target==='_blank'){curious(false);return}           // new-tab links keep their default
         e.preventDefault();
         curious(false);
         dc.classList.add('go');
@@ -2396,7 +2401,7 @@ function renderCase(cs) {
     <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
   </svg>`;
   const dsLink = cs.designSystem ? `<a class="ds-link" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"
-      aria-label="View the design system" data-hand="VIEW DESIGN SYSTEM">${dsIcon}</a>` : '';
+      aria-label="View the design system" data-curious="View design system">${dsIcon}</a>` : '';
 
   return head(`${cs.name} — ${site.title}`, cs.tagline) + `
 ${navBar('case')}
