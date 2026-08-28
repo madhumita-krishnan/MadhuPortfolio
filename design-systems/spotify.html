@@ -3,224 +3,467 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spotify Mix — Design System Showcase</title>
+    <title>Spotify Mix — Identity Manual &amp; Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" />
     <style>
       :root {
-        /* ── Surfaces — sampled 1:1 from the Figma PNG exports ── */
+        /* ── Surfaces — sampled 1:1 from the final 2026-08-28 exports ── */
         --base: #121212;
-        --raised: #202020;
-        --sheet: #2b2b2b;
-        --control: #333333;
-        --hairline: #292929;
-        --outline: #373737;
-        --field: #585657;
+        --nav-bar: #111111;
+        --sheet-modal: #1f1f1f;
+        --sheet-full: #2b2b2b;
+        --chip-base: #323232;
+        --chip-modal: #353535;
+        --control: #585757;
+        --inverse-chip: #1e1e1e;
+        --inverse-chip-line: #3a3a3a;
+        --coach: #636363;
+        --add-circle: #424242;
+        --now-playing: #142239;
 
         /* ── Ink ── */
         --white: #ffffff;
-        --text-secondary: #b3b3b3; /* Encore standard, visually matched */
+        --ink-secondary: #aeb2b5;
+        --ink-tertiary: #878a8c;
+        --ink-card-sub: #9ea1a4;
+        --ink-value: #e1e1e1;
+        --ink-placeholder: #c0c0c0;
+        --ink-disabled: #323232;
 
         /* ── Green — the one action color ── */
-        --green: #55d05e;
-        --wave-bright: #5bd266;
-        --wave-deep: #266837;
+        --green: #1cd05e;
+        --green-track-rest: #0a662c;
 
-        /* ── Camelot key badges ── */
-        --key-pink: #f8b8ff;
-        --key-lavender: #dfbaff;
-        --key-sky: #53cffc;
+        /* ── Lines ── */
+        --hairline: #252626;
+        --outline: #414141;
+        --dash: #505253;
 
-        /* ── Warning (hard blend) ── */
-        --ember: #3d190b;
-        --orange: #dc5a00;
-        --orange-bright: #f99734;
+        /* ── Camelot key badges (hue = wheel number) ── */
+        --key-2b: #24cb61;
+        --key-7a: #fdb4d4;
+        --key-7b: #ff90c0;
+        --key-8a: #f4b4fd;
+        --key-9: #dbb4fd;
+        --key-10a: #b2c8ff;
+        --key-10b: #8aa9f7;
+        --key-11b: #20cdfc;
 
-        /* ── Type ── */
-        --font: "Circular Std", "Circular Spotify Text", -apple-system, "Helvetica Neue", Arial, sans-serif;
-        --text-sheet-title: 700 22px/1.2 var(--font);
-        --text-nav: 700 17px/1.3 var(--font);
-        --text-song: 500 16px/1.3 var(--font);
-        --text-body: 400 15px/1.45 var(--font);
-        --text-artist: 400 13px/1.35 var(--font);
-        --text-chip: 500 14px/1.2 var(--font);
-        --text-badge: 700 11px/1 var(--font);
-        --text-button: 700 15px/1.2 var(--font);
+        /* ── Warning (hard blend) + legend ── */
+        --ember: #3d190a;
+        --warn-ink: #e8825a;
+        --danger-legend: #bc1e1e;
+
+        /* ── Type — Montserrat, sizes solved from the exports by width-matching ── */
+        --font: "Montserrat", -apple-system, "Helvetica Neue", Arial, sans-serif;
+        --text-sheet-title: 600 18px/24px var(--font);
+        --text-screen-title: 600 13px/18px var(--font);
+        --text-section: 700 13px/17px var(--font);
+        --text-song: 600 13px/18px var(--font);
+        --text-body: 500 13px/19px var(--font);
+        --text-chip: 500 11px/14px var(--font);
+        --text-chip-strong: 600 11.5px/14px var(--font);
+        --text-meta: 400 10.5px/14px var(--font);
+        --text-badge: 700 9px/10px var(--font);
 
         /* ── Space & radius ── */
         --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
         --r-pill: 999px;
-        --r-card: 12px;
-        --r-chip: 10px;
-        --r-badge: 5px;
-        --r-art: 4px;
+        --r-card: 14px;
+        --r-chip-pair: 12px;
+        --r-preset: 4px;
+        --r-segment: 10px;
+        --r-toast: 16px;
+        --r-sheet: 24px;
+        --r-badge: 4px;
+        --r-art: 6px;
       }
       html, body {
         margin: 0; padding: 0;
         background: var(--base);
         color: var(--white);
-        font: var(--text-body);
+        font: 400 15px/22px var(--font);
         -webkit-font-smoothing: antialiased;
       }
-      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      .layout { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
       nav {
         position: sticky; top: 0; align-self: start;
-        padding: var(--s-8); background: var(--raised);
+        padding: var(--s-8) var(--s-6); background: #181818;
         border-right: 1px solid var(--hairline);
-        height: 100vh; box-sizing: border-box;
+        height: 100vh; box-sizing: border-box; overflow-y: auto;
       }
       nav .nav__brand {
-        font: var(--text-nav);
-        padding-bottom: var(--s-6); border-bottom: 1px solid var(--outline);
-        margin-bottom: 12px;
+        font: 600 16px/21px var(--font);
+        padding-bottom: var(--s-4); border-bottom: 1px solid var(--outline);
+        margin-bottom: 10px;
       }
       nav .nav__brand em { font-style: normal; color: var(--green); }
+      nav .nav__part {
+        font: 700 10px/12px var(--font); letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--ink-tertiary); margin: 18px 0 4px;
+      }
       nav a {
-        display: block; padding: 10px 0; text-decoration: none;
-        color: var(--text-secondary); font: var(--text-artist); font-size: 14px;
+        display: block; padding: 7px 0; text-decoration: none;
+        color: var(--ink-secondary); font: 400 14px/18px var(--font);
       }
       nav a:hover, nav a:focus-visible { color: var(--green); }
       nav a.is-current { color: var(--white); font-weight: 700; }
+      nav .nav__rules {
+        display: inline-block; margin-top: 18px; padding: 8px 16px;
+        border: 1px solid var(--outline); border-radius: var(--r-pill);
+        color: var(--white); font: 500 14px/18px var(--font); text-decoration: none;
+      }
+      nav .nav__rules:hover { border-color: var(--green); color: var(--green); }
       main { padding: var(--s-8); max-width: 1100px; }
       section { padding: var(--s-8) 0; border-bottom: 1px solid var(--hairline); }
-      section h2 { font: 700 30px/1.1 var(--font); margin: 0 0 var(--s-6); }
-      section h3 { font: var(--text-nav); margin: var(--s-8) 0 var(--s-4); }
-      .section-intro { color: var(--text-secondary); max-width: 720px; margin: 0 0 var(--s-6); }
+      section h2 { font: 700 30px/33px var(--font); margin: 0 0 var(--s-6); }
+      section h3 { font: 600 17px/22px var(--font); margin: var(--s-8) 0 var(--s-4); }
+      .part-rule {
+        font: 700 11px/13px var(--font); letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--green); margin: 0 0 6px;
+      }
+      .section-intro { color: var(--ink-secondary); max-width: 740px; margin: 0 0 var(--s-6); font-weight: 400; }
       .section-intro strong { color: var(--white); }
+      .rule-list { color: var(--ink-secondary); max-width: 740px; padding-left: 20px; font-weight: 400; }
+      .rule-list li { margin-bottom: 10px; }
+      .rule-list strong { color: var(--white); }
 
       /* Swatches */
-      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-4); }
-      .swatch { background: var(--raised); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
-      .swatch__color { height: 80px; }
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: var(--s-4); }
+      .swatch { background: #181818; border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; }
+      .swatch__color { height: 72px; }
       .swatch__meta { padding: var(--s-3); }
-      .swatch__label { display: block; font: var(--text-artist); font-weight: 700; color: var(--white); margin-bottom: 4px; }
+      .swatch__label { display: block; font: 700 13px/18px var(--font); color: var(--white); margin-bottom: 4px; }
       .swatch__name, .swatch__hex {
         display: block; font-family: "SF Mono", Menlo, monospace;
-        font-size: 12px; color: var(--text-secondary); word-break: break-all;
+        font-size: 12px; color: var(--ink-secondary); word-break: break-all;
       }
 
       /* Type samples */
       .type-sample { padding: var(--s-4) 0; border-bottom: 1px dashed var(--hairline); }
       .type-sample:last-of-type { border-bottom: none; }
       .type-sample__meta {
-        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
-        color: var(--text-secondary); margin-top: var(--s-2);
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 400;
+        color: var(--ink-secondary); margin-top: var(--s-2);
       }
 
       .demo-row { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: center; padding: var(--s-3) 0; }
+      .demo-row--stack { flex-direction: column; align-items: flex-start; }
       .demo-row__label {
-        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
-        color: var(--text-secondary); min-width: 130px;
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 400;
+        color: var(--ink-secondary); min-width: 130px;
       }
       .space-chip { display: inline-block; background: var(--white); }
+      code { font-family: "SF Mono", Menlo, monospace; font-size: 0.9em; }
 
-      /* ── Components, rebuilt 1:1 from the screens ── */
-      .top-bar {
-        display: flex; align-items: center; justify-content: space-between;
-        width: 420px; max-width: 100%; padding: 12px 0;
+      /* Phone-width stage: components render at true 360dp metrics */
+      .stage {
+        width: 360px; max-width: 100%; box-sizing: border-box;
+        background: var(--base); border: 1px solid var(--hairline); border-radius: 12px;
+        padding: 16px 0; overflow: hidden;
       }
-      .top-bar .cancel { color: var(--text-secondary); font: var(--text-body); }
-      .top-bar .title { font: var(--text-nav); }
-      .top-bar .save { color: var(--green); font: var(--text-body); font-weight: 500; }
+      .stage--sheet { background: var(--sheet-full); }
+      .stage--modal { background: var(--sheet-modal); }
+      .stage > * { margin-left: 12px; margin-right: 12px; }
+      .stage > .full-bleed { margin-left: 0; margin-right: 0; }
 
+      /* Icons */
+      .ic { display: inline-block; vertical-align: middle; flex: none; }
+      .ic--fill { fill: currentColor; }
+      .ic--stroke { fill: none; }
+
+      /* Do / don't */
+      .dd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-4); }
+      .dd {
+        border: 1px solid var(--hairline); border-radius: 12px;
+        background: #181818; overflow: hidden;
+      }
+      .dd__demo { padding: var(--s-6); display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; min-height: 64px; box-sizing: border-box; }
+      .dd__caption { padding: var(--s-3) var(--s-4); border-top: 1px solid var(--hairline); font: 400 13px/19px var(--font); color: var(--ink-secondary); }
+      .dd__verdict { font-weight: 700; }
+      .dd--do .dd__verdict { color: var(--green); }
+      .dd--dont .dd__verdict { color: var(--warn-ink); }
+
+      /* ── Components, measured from the final screens (360dp = 1px per dp) ── */
+
+      /* Top bar: 44 high, 12 side margin, centered 17/600 title */
+      .top-bar {
+        display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+        height: 44px; padding: 0 12px; width: 360px; max-width: 100%; box-sizing: border-box;
+      }
+      .top-bar .lead { justify-self: start; display: inline-flex; align-items: center; color: var(--white); font: 400 11.5px/16px var(--font); }
+      .top-bar .title { font: var(--text-screen-title); }
+      .top-bar .save { justify-self: end; color: var(--green); font: 500 11.5px/16px var(--font); }
+
+      /* Song row: 44 art r6, 12 gap */
       .song-row {
         display: flex; align-items: center; gap: 12px;
-        width: 460px; max-width: 100%;
+        width: 480px; max-width: 100%;
       }
       .song-row__art {
         width: 44px; height: 44px; border-radius: var(--r-art); flex: none;
         background: linear-gradient(135deg, #7a4a2b, #2e1e12);
       }
+      .song-row__art--blue { background: linear-gradient(160deg, #279efe, #0b3d75); }
       .song-row__main { flex: 1; min-width: 0; }
-      .song-row__title { font: var(--text-song); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .song-row__title { display: block; font: var(--text-song); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .song-row__artist {
-        font: var(--text-artist); color: var(--text-secondary);
+        font: 400 10.5px/14px var(--font); color: var(--ink-tertiary);
         display: flex; align-items: center; gap: 5px; margin-top: 3px;
+        white-space: nowrap; overflow: hidden; min-width: 0;
       }
       .song-row__artist .dl {
         width: 13px; height: 13px; border-radius: 50%; background: var(--green);
-        color: var(--base); font-size: 9px; display: inline-flex;
-        align-items: center; justify-content: center; font-weight: 700;
+        color: #000; font-size: 9px; display: inline-flex;
+        align-items: center; justify-content: center; font-weight: 700; flex: none;
       }
       .song-row__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
-      .song-row__grab { color: var(--text-secondary); font-size: 16px; flex: none; }
+      .song-row__bpm { font: var(--text-meta); color: var(--ink-value); }
+      .song-row--playing .song-row__title { color: var(--green); font-weight: 500; }
+      .grab { color: var(--ink-tertiary); display: inline-flex; }
 
-      .bpm-chip {
-        border: 1px solid var(--hairline); border-radius: var(--r-chip);
-        padding: 5px 9px; font: var(--text-artist); color: var(--white);
-        display: inline-block; background: transparent;
+      /* Pair chip: 48 high, r12, 1px #414141 */
+      .pair-chip {
+        border: 1px solid var(--outline); border-radius: var(--r-chip-pair);
+        height: 48px; box-sizing: border-box; padding: 7px 10px;
+        display: inline-flex; flex-direction: column; align-items: flex-end;
+        justify-content: space-between; flex: none;
       }
+      .pair-chip .song-row__bpm { line-height: 14px; }
+
+      /* Key badge: 14 high, r4, 10/700 black */
       .key-badge {
-        display: inline-block; border-radius: var(--r-badge);
-        padding: 3px 7px; font: var(--text-badge); color: var(--base);
+        display: inline-flex; align-items: center; height: 14px; box-sizing: border-box;
+        border-radius: var(--r-badge); padding: 0 5px;
+        font: var(--text-badge); color: #000;
       }
 
+      /* Preset chip: 39 high, r4, 15/500; selected inverts; focus = 1dp white border */
       .preset-chip {
-        background: var(--control); color: var(--white); border: none;
-        font: var(--text-chip); padding: 10px 18px; border-radius: 8px; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+        background: var(--chip-base); color: var(--white); border: 1px solid transparent;
+        font: var(--text-chip); height: 39px; padding: 0 20px; box-sizing: border-box;
+        border-radius: var(--r-preset); cursor: pointer;
       }
-      .preset-chip.is-selected { background: var(--white); color: var(--base); font-weight: 700; }
+      .preset-chip.is-selected { background: var(--white); color: #000; font-weight: 600; }
+      .preset-chip.is-focused { border-color: var(--white); }
 
+      /* Filter pill: 34 high, 15/500; selected = green + black 600 */
       .filter-pill {
         background: var(--control); color: var(--white); border: none;
-        font: var(--text-chip); padding: 9px 16px; border-radius: var(--r-pill); cursor: pointer;
+        font: 400 11px/14px var(--font); height: 34px; padding: 0 18px;
+        border-radius: var(--r-pill); cursor: pointer; white-space: nowrap;
       }
-      .filter-pill.is-selected { background: var(--green); color: var(--base); font-weight: 700; }
+      .filter-pill.is-selected { background: var(--green); color: #000; font: 600 11.5px/14px var(--font); }
 
-      .cta {
-        background: var(--green); color: var(--base); border: none;
-        font: var(--text-button); padding: 14px 26px; border-radius: var(--r-pill); cursor: pointer;
-      }
-      .text-btn { background: none; border: none; color: var(--white); font: var(--text-button); cursor: pointer; }
-
-      .action-card {
-        background: var(--sheet); border-radius: var(--r-card);
-        padding: 14px 16px; width: 420px; max-width: 100%; box-sizing: border-box;
-        display: flex; align-items: center; gap: 12px;
-      }
-      .action-card__icon { font-size: 17px; flex: none; }
-      .action-card__text b { display: block; font: var(--text-song); }
-      .action-card__text span { font: var(--text-artist); color: var(--text-secondary); }
-      .action-card__chev { margin-left: auto; color: var(--text-secondary); }
-
-      .warn-chip {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: var(--ember); border-radius: var(--r-pill);
-        padding: 8px 16px; font: var(--text-chip); color: var(--orange-bright);
-      }
-      .warn-chip b { color: var(--orange-bright); font-weight: 700; }
-      .warn-chip .dot { color: var(--orange); }
-
-      .bars-pill, .auto-pill {
+      /* Tool pill (playlist header): 28 high, #323232; engaged = the liquid-metal rim */
+      .tool-pill {
         display: inline-flex; align-items: center; gap: 7px;
-        border: 1px solid var(--outline); border-radius: var(--r-pill);
-        background: var(--base); color: var(--white);
-        font: var(--text-chip); padding: 8px 16px; cursor: pointer;
+        background: var(--chip-base); color: var(--white);
+        border: none; border-radius: var(--r-pill);
+        font: 600 10.5px/14px var(--font); height: 28px; padding: 0 13px; cursor: pointer;
+        white-space: nowrap;
       }
+      /* Engaged tool — measured from the export, layer for layer:
+         base #323232 · 50% wash darkening both ends (0 / 37% / 64% / 100%)
+         2.7dp rim #5A5A5A → #ACACAD 87% → white 96.6%, brightest at the top and bottom edges
+         0.2dp white hairline just outside */
+      .tool-pill.is-active {
+        border: 2.7px solid transparent; padding: 0 10.3px;
+        background:
+          linear-gradient(90deg, #191919, #323232 37%, #323232 64%, #191919) padding-box,
+          radial-gradient(200px 14px at 50% 50%, #5a5a5a 31.7%, #acacad 87%, #ffffff 96.6%) border-box;
+        box-shadow: 0 0 0 0.2px rgba(255, 255, 255, 0.45);
+      }
+
+      /* CTA: 48 pill r24, flat green, black 17-tall sparkle + black label */
+      .cta {
+        display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+        background: var(--green); color: #000; border: none;
+        font: 600 13px/18px var(--font); height: 48px; padding: 0 24px;
+        border-radius: 24px; cursor: pointer;
+      }
+      .cta--bad { color: var(--white); }
+      .text-btn { background: none; border: none; color: var(--white); font: 600 13px/18px var(--font); cursor: pointer; }
+      .big-pill--disabled {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: var(--ink-secondary); color: var(--ink-disabled); border: none;
+        font: 600 13px/18px var(--font); height: 35px; padding: 0 26px; width: 303px; max-width: 100%;
+        border-radius: 17.5px;
+      }
+
+      /* Transition chip: 36 pill, #1E1E1E on any surface, 1px #3A3A3A */
+      .transition-chip {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: var(--inverse-chip); border: 1px solid var(--inverse-chip-line);
+        border-radius: var(--r-pill); color: var(--white);
+        font: var(--text-chip); height: 36px; padding: 0 16px 0 10px; cursor: pointer;
+      }
+      .transition-chip--plain { padding-left: 16px; }
+      .transition-chip .glyph {
+        width: 16px; height: 16px; border-radius: 3px; background: var(--green);
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #1e1e1e; flex: none;
+      }
+      .transition-chip .chev { color: var(--white); display: inline-flex; }
+
+      /* Hard-blend warning: 35 pill, one coral ink */
+      .warn-chip {
+        display: inline-flex; align-items: center; gap: 12px;
+        background: var(--ember); border-radius: var(--r-pill);
+        height: 35px; padding: 0 18px; font: var(--text-chip); color: var(--warn-ink);
+      }
+      .warn-chip b { font-weight: 600; }
+      .warn-chip .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--warn-ink); }
+
+      /* Intro/Outro preview: 40 high, r12; playing = green + black pause */
+      .segment-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 18px;
+        border: none; border-radius: 12px; cursor: pointer;
+        font: 600 13px/18px var(--font); height: 40px; flex: 1;
+        background: var(--control); color: var(--white);
+      }
+      .segment-btn.is-playing { background: var(--green); color: #000; }
+
+      /* Bars picker: 40 high, r10, #353535 idle on #1F1F1F */
+      .bars-segment {
+        border: none; border-radius: var(--r-segment); cursor: pointer;
+        font: 500 10.5px/14px var(--font); height: 40px; flex: 1;
+        background: var(--chip-modal); color: var(--white);
+      }
+      .bars-segment.is-selected { background: var(--white); color: #000; font-weight: 600; }
+
+      /* Progress: 4 high, rounded, played green / rest deep green */
+      .progress { display: flex; width: 336px; max-width: 100%; height: 4px; border-radius: 2px; overflow: hidden; }
+      .progress .played { background: var(--green); width: 45%; border-radius: 2px; }
+      .progress .rest { background: var(--green-track-rest); flex: 1; }
+
+      /* Action card: r14, icon 24 at pad 24, gap 26 */
+      .action-card {
+        background: var(--sheet-full); border-radius: var(--r-card);
+        min-height: 56px; box-sizing: border-box; padding: 12px 18px 12px 24px;
+        width: 336px; max-width: 100%;
+        display: flex; align-items: center; gap: 26px;
+      }
+      .action-card__icon { color: #d5d7d8; display: inline-flex; flex: none; }
+      .action-card__text { flex: 1; min-width: 0; }
+      .action-card__text b { display: block; font: 600 14px/19px var(--font); }
+      .action-card__text span { display: block; font: 500 11px/15px var(--font); color: var(--ink-card-sub); margin-top: 2px; }
+      .action-card__chev { color: #d5d7d8; display: inline-flex; flex: none; }
+
+      /* Search: 44 pill on #585757, placeholder #C0C0C0 */
       .search-pill {
-        display: flex; align-items: center; gap: 10px;
-        background: var(--field); border-radius: var(--r-pill);
-        padding: 12px 18px; width: 380px; max-width: 100%; box-sizing: border-box;
-        color: #d7d5d6; font: var(--text-body);
+        display: flex; align-items: center; gap: 14px;
+        background: var(--control); border-radius: var(--r-pill);
+        height: 44px; padding: 0 20px; width: 336px; max-width: 100%; box-sizing: border-box;
+        color: var(--ink-placeholder); font: 400 11.5px/16px var(--font);
       }
+      .search-pill .ic { color: var(--ink-placeholder); }
+
+      /* Add button: 40 filled circle #424242 */
       .round-add {
-        width: 32px; height: 32px; border-radius: 50%;
-        border: 1.5px solid var(--text-secondary); background: none;
-        color: var(--white); font-size: 16px; cursor: pointer;
+        width: 40px; height: 40px; border-radius: 50%;
+        border: none; background: var(--add-circle);
+        color: #e6e6e6; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
       }
+
+      /* Coach toast: r16 on #636363 */
+      .coach-toast {
+        background: var(--coach); border-radius: var(--r-toast);
+        padding: 18px 18px 14px; width: 336px; max-width: 100%; box-sizing: border-box;
+        position: relative;
+      }
+      .coach-toast b { display: block; font: 600 13px/18px var(--font); margin-bottom: 5px; }
+      .coach-toast p { margin: 0 0 26px; font: 400 11.5px/16px var(--font); color: var(--ink-secondary); }
+      .coach-toast .link { display: block; text-align: right; color: var(--green); font: 500 10.5px/14px var(--font); text-decoration: none; }
+      .coach-toast .x { position: absolute; top: 14px; right: 14px; color: #dcdddd; }
+
+      /* Bottom sheet: #1F1F1F, r24 top, 56×4 handle, centered stack */
+      .mini-sheet {
+        background: var(--sheet-modal); border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+        padding: 8px var(--s-6) 40px; width: 360px; max-width: 100%; box-sizing: border-box;
+        text-align: center;
+      }
+      .mini-sheet .handle { width: 56px; height: 4px; border-radius: 2px; background: #555; margin: 0 auto 28px; }
+      .mini-sheet h4 { font: var(--text-sheet-title); margin: 0 0 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+      .mini-sheet h4 .ic { color: #e8e8e8; }
+      .mini-sheet p { font: 500 13px/19px var(--font); color: var(--ink-secondary); margin: 0 auto 26px; max-width: 260px; }
+      .mini-sheet .text-btn { margin-top: 26px; }
 
       .waveform { display: flex; align-items: center; gap: 2px; height: 56px; }
-      .waveform i {
-        width: 3px; border-radius: 2px; display: block;
-        background: linear-gradient(180deg, var(--wave-bright), var(--wave-deep));
+      .waveform i { width: 3px; border-radius: 2px; display: block; }
+      .waveform--out i { background: rgba(28, 208, 94, 0.65); }
+      .waveform--in i { background: var(--ink-tertiary); }
+      /* Play disc — the chrome build from the final screens, layer for layer:
+         6dp green ring (54⌀ overall) + its shading stroke · black gap ring ·
+         40.5⌀ angular-chrome disc with a 1.75dp linear rim · white glyph */
+      .play-disc {
+        width: 54px; height: 54px; border-radius: 50%; border: none; cursor: pointer;
+        position: relative; color: #fff;
+        display: inline-flex; align-items: center; justify-content: center;
+        background:
+          radial-gradient(circle closest-side,
+            rgba(0, 0, 0, 0) 21.4px, #000 21.6px,
+            rgba(48, 48, 48, 0.53) 23.1px, rgba(95, 95, 95, 0.07) 23.85px, rgba(102, 102, 102, 0) 24.9px,
+            rgba(51, 51, 51, 0.5) 25.8px, #000 26.4px, rgba(50, 50, 50, 0.75) 27px),
+          radial-gradient(circle closest-side, rgba(0, 0, 0, 0) 20.9px, #1cd05e 21.1px),
+          radial-gradient(circle closest-side, rgba(0, 0, 0, 0) 20.05px, #000 20.25px 21.2px, rgba(0, 0, 0, 0) 21.3px),
+          conic-gradient(from 267deg,
+            #1d1d1d 8.1deg, #424243 25.4deg, #787a7c 38.7deg, #aeb2b5 57.1deg, #7d8082 76.5deg,
+            #595a5c 106.9deg, #1d1d1d 173.5deg 185.6deg, #595a5c 212deg, #969899 222.5deg,
+            #aeb2b5 236.8deg, #5e5f61 281.4deg, #262626 352.8deg);
       }
+      .play-disc::before {
+        content: ""; position: absolute; inset: 6.75px; border-radius: 50%; padding: 1.75px;
+        background: linear-gradient(56deg, #383839 5.4%, #fcfcfc 45.4%, #fff 61%, #313132 96.4%);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        pointer-events: none;
+      }
+      .play-disc .ic { position: relative; }
+      /* Playing state: the flat 42⌀ green disc, black glyph */
+      .play-disc--flat { background: var(--green); width: 42px; height: 42px; color: #000; }
+      .play-disc--flat::before { content: none; }
+
+      .divider-dash {
+        display: flex; align-items: center; gap: 10px; width: 336px; max-width: 100%;
+        color: var(--ink-tertiary); font: 400 10px/14px var(--font);
+      }
+      .divider-dash::before, .divider-dash::after {
+        content: ""; flex: 1; border-top: 1px dashed var(--dash);
+      }
+      .divider-label {
+        display: flex; align-items: center; gap: 10px; width: 336px; max-width: 100%;
+        color: #919496; font: 400 10px/14px var(--font);
+      }
+      .divider-label::before, .divider-label::after {
+        content: ""; flex: 1; border-top: 1px solid var(--hairline);
+      }
+
+      .legend-pair { display: inline-flex; align-items: center; gap: 8px; font: var(--text-chip); }
+      .legend-pair .ok { color: var(--green); font-weight: 700; }
+      .legend-pair .no { color: var(--danger-legend); font-weight: 700; }
+
+      .tick-row { display: inline-flex; align-items: center; gap: 10px; font: var(--text-song); }
+      .tick-row .tick { width: 3px; height: 16px; border-radius: 2px; display: inline-block; }
+      .tick-row .val { color: var(--ink-secondary); font: 400 11px/14px var(--font); }
+
+      .dim-stage { background: var(--sheet-full); border-radius: 12px; padding: var(--s-4); width: 480px; max-width: 100%; box-sizing: border-box; display: grid; gap: 14px; }
+      .dim-stage .is-dimmed { opacity: 0.55; position: relative; }
 
       /* Screens */
       .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-4); }
       .screen-strip figure { margin: 0; }
-      .screen-strip img { width: 100%; height: auto; display: block; border-radius: var(--r-card); border: 1px solid var(--hairline); }
-      .screen-strip figcaption { font: var(--text-artist); font-size: 11px; color: var(--text-secondary); padding-top: 6px; }
+      .screen-strip img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--hairline); }
+      .screen-strip figcaption { font: 400 11px/16px var(--font); color: var(--ink-secondary); padding-top: 6px; }
 
-      .provenance { font: var(--text-artist); color: var(--text-secondary); max-width: 720px; }
-      code { font-family: "SF Mono", Menlo, monospace; font-size: 0.9em; }
+      .provenance { font: 400 13px/19px var(--font); color: var(--ink-secondary); max-width: 740px; }
+      table.spec { border-collapse: collapse; font: 400 13px/18px var(--font); color: var(--ink-secondary); }
+      table.spec th, table.spec td { text-align: left; padding: 6px 18px 6px 0; border-bottom: 1px solid var(--hairline); }
+      table.spec th { color: var(--white); font-weight: 700; }
       @media (max-width: 720px) {
         .layout { grid-template-columns: 1fr; }
         nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--hairline); }
@@ -228,238 +471,795 @@
     </style>
   </head>
   <body>
+    <!-- Icon set: exact vectors lifted from the Figma SVG exports — native coordinates, native stroke weights.
+         Symbols keep the export's own coordinate space via viewBox min-x/min-y, so nothing is redrawn. -->
+    <svg style="display: none" xmlns="http://www.w3.org/2000/svg">
+      <!-- sparkle, from the 16-tile component (Group 376): large four-point star + companion upper right -->
+      <symbol id="i-spark" viewBox="2.5 1.5 10.5625 13">
+        <path d="M5.24219 8.58972C5.63393 8.15726 6.28683 5.5625 6.28683 5.5625C6.28683 5.5625 6.79171 8.10884 7.33147 8.58972C7.77515 8.98499 9.8125 9.59879 9.8125 9.59879C9.8125 9.59879 7.91009 9.84251 7.46205 10.3196C6.96282 10.8511 6.28683 14.5 6.28683 14.5C6.28683 14.5 5.69576 10.853 5.11161 10.3196C4.59927 9.85172 2.5 9.59879 2.5 9.59879C2.5 9.59879 4.85045 9.02218 5.24219 8.58972Z" fill="currentColor" />
+        <path d="M10.0156 3.15121C10.2768 2.91532 10.7121 1.5 10.7121 1.5C10.7121 1.5 11.0486 2.88891 11.4085 3.15121C11.7043 3.36681 13.0625 3.70161 13.0625 3.70161C13.0625 3.70161 11.7942 3.83455 11.4955 4.09476C11.1627 4.3847 10.7121 6.375 10.7121 6.375C10.7121 6.375 10.318 4.38571 9.92857 4.09476C9.58701 3.83958 8.1875 3.70161 8.1875 3.70161C8.1875 3.70161 9.75446 3.3871 10.0156 3.15121Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-chev-r" viewBox="206.5 687 6 11"><path d="M207.562 697L211.267 692.832C211.436 692.643 211.436 692.357 211.267 692.168L207.562 688" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" /></symbol>
+      <symbol id="i-chev-l" viewBox="16 60.5 8 15"><path d="M23 61.5L16.8536 67.6464C16.6583 67.8417 16.6583 68.1583 16.8536 68.3536L23 74.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" /></symbol>
+      <symbol id="i-chev-d" viewBox="198.5 469 12 7"><path d="M199.5 470L204.146 474.646C204.342 474.842 204.658 474.842 204.854 474.646L209.5 470" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" /></symbol>
+      <symbol id="i-plus" viewBox="24.5 444 14 14">
+        <path d="M31.5764 445V457" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M37.5334 451.08L25.4663 451.08" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+      </symbol>
+      <!-- the Mix glyph: two vertical channels, offset handles -->
+      <symbol id="i-mixer" viewBox="99.5 443.5 13.5 15">
+        <path d="M102.5 451.75L102.5 444.75" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M109.5 448.75L109.5 444.75" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M103.125 455.25L103.125 454.625L101.875 454.625L101.875 455.25L102.5 455.25L103.125 455.25ZM101.875 457.25C101.875 457.595 102.155 457.875 102.5 457.875C102.845 457.875 103.125 457.595 103.125 457.25L102.5 457.25L101.875 457.25ZM102.5 455.25L101.875 455.25L101.875 457.25L102.5 457.25L103.125 457.25L103.125 455.25L102.5 455.25Z" fill="currentColor" />
+        <path d="M108.875 457.25C108.875 457.595 109.155 457.875 109.5 457.875C109.845 457.875 110.125 457.595 110.125 457.25L109.5 457.25L108.875 457.25ZM110.125 451.75L110.125 451.125L108.875 451.125L108.875 451.75L109.5 451.75L110.125 451.75ZM109.5 457.25L110.125 457.25L110.125 451.75L109.5 451.75L108.875 451.75L108.875 457.25L109.5 457.25Z" fill="currentColor" />
+        <rect x="107" y="448.25" width="5" height="2" rx="0.2" fill="currentColor" />
+        <rect x="100" y="451.75" width="5" height="2" rx="0.2" fill="currentColor" />
+      </symbol>
+      <symbol id="i-burger" viewBox="301.5 444 14 14">
+        <path d="M315 447.5L302 447.5" fill="none" stroke="currentColor" stroke-width="1.25" />
+        <path d="M315 451L302 451" fill="none" stroke="currentColor" stroke-width="1.25" />
+        <path d="M315 454.5L302 454.5" fill="none" stroke="currentColor" stroke-width="1.25" />
+      </symbol>
+      <symbol id="i-sort" viewBox="250.5 444 15 14">
+        <path d="M265 451L251 451" fill="none" stroke="currentColor" stroke-width="1.25" />
+        <path d="M255.5 448L257.616 445.461C257.816 445.221 258.184 445.221 258.384 445.461L260.5 448" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M260.5 454L258.384 456.539C258.184 456.779 257.816 456.779 257.616 456.539L255.5 454" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-pencil" viewBox="331.5 443.5 15.5 15.5"><path d="M333.425 454.675L332.197 457.54C332.126 457.706 332.294 457.874 332.46 457.803L335.325 456.575C335.441 456.525 335.546 456.455 335.635 456.366L345.537 446.545C345.537 446.545 346.579 445.504 345.537 444.463C344.496 443.421 343.455 444.463 343.455 444.463L333.634 454.365C333.545 454.454 333.475 454.559 333.425 454.675Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" /></symbol>
+      <symbol id="i-search" viewBox="123.5 711.5 20 20">
+        <circle cx="132.5" cy="720.5" r="7.75" fill="none" stroke="currentColor" stroke-width="1.5" />
+        <line x1="138.061" y1="726" x2="142.243" y2="730.182" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-warn" viewBox="71 308.5 10.2 9">
+        <path d="M71.8865 315.243L75.1381 309.715C75.5247 309.058 76.4753 309.058 76.8619 309.715L80.1135 315.243C80.5057 315.91 80.025 316.75 79.2516 316.75H72.7484C71.975 316.75 71.4943 315.91 71.8865 315.243Z" fill="none" stroke="currentColor" />
+        <path d="M75.705 313.858L75.561 311.05H76.449L76.299 313.858H75.705ZM76.005 315.292C75.865 315.292 75.749 315.246 75.657 315.154C75.565 315.062 75.519 314.952 75.519 314.824C75.519 314.696 75.565 314.588 75.657 314.5C75.749 314.408 75.865 314.362 76.005 314.362C76.145 314.362 76.259 314.408 76.347 314.5C76.435 314.588 76.479 314.696 76.479 314.824C76.479 314.952 76.435 315.062 76.347 315.154C76.259 315.246 76.145 315.292 76.005 315.292Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-noteplus" viewBox="38.5 649.5 19 17.5"><path d="M53.6667 657.68V653.84M45.0001 660.24C43.6666 659.6 41 659.282 40.3333 659.6C39.6667 659.918 38.9997 660.409 39 661.52C39.0003 662.631 39.6667 664.08 41.6666 664.08C43.6666 664.08 45.0002 662.8 45.0001 662.16C45 661.52 45.0001 653.84 45.0001 653.84M45.0001 653.84V650H53.6667V653.84M45.0001 653.84H53.6667M53.6667 659.6V666M50.3334 662.8H57" fill="none" stroke="currentColor" /></symbol>
+      <symbol id="i-sliders-h" viewBox="38.5 713.5 16.5 15">
+        <line x1="39" y1="715.886" x2="45.9227" y2="715.886" stroke="currentColor" />
+        <line x1="49.3848" y1="715.886" x2="53.9999" y2="715.886" stroke="currentColor" />
+        <line x1="39" y1="721.654" x2="41.3076" y2="721.654" stroke="currentColor" />
+        <line x1="44.7695" y1="721.654" x2="53.9998" y2="721.654" stroke="currentColor" />
+        <line x1="39" y1="726.27" x2="48.2302" y2="726.27" stroke="currentColor" />
+        <line x1="51.6914" y1="726.27" x2="53.999" y2="726.27" stroke="currentColor" />
+        <circle cx="47.6533" cy="715.808" r="1.80756" fill="none" stroke="currentColor" />
+        <circle cx="43.038" cy="721.577" r="1.80756" fill="none" stroke="currentColor" />
+        <circle cx="49.9638" cy="726.192" r="1.80756" fill="none" stroke="currentColor" />
+      </symbol>
+      <symbol id="i-x" viewBox="326.5 621.3 10.2 11">
+        <path d="M327.214 622.062L335.957 631.888" fill="none" stroke="currentColor" stroke-linecap="round" />
+        <path d="M335.954 622.027L327.047 631.733" fill="none" stroke="currentColor" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-pause" viewBox="317.5 393 15 18">
+        <rect x="318.5" y="394" width="3.5" height="16" rx="0.5" fill="currentColor" />
+        <rect x="327.5" y="394" width="3.5" height="16" rx="0.5" fill="currentColor" />
+      </symbol>
+      <symbol id="i-play" viewBox="319.5 393.5 14.2 16.2"><path d="M333.25 401.067C333.583 401.259 333.583 401.741 333.25 401.933L320.5 409.294C320.167 409.487 319.75 409.246 319.75 408.861L319.75 394.139C319.75 393.754 320.167 393.513 320.5 393.706L333.25 401.067Z" fill="currentColor" /></symbol>
+      <!-- wavebars, from the 13-tile component (Group 378): five rounded bars -->
+      <symbol id="i-wavebars" viewBox="0 0 13 13.18">
+        <rect x="0" y="4.61096" width="1.18182" height="3.95195" rx="0.590909" fill="currentColor" />
+        <rect x="2.95312" y="1.9762" width="1.18182" height="9.87987" rx="0.590909" fill="currentColor" />
+        <rect x="5.91016" y="0" width="1.18182" height="13.1732" rx="0.590909" fill="currentColor" />
+        <rect x="8.86508" y="1.9762" width="1.18182" height="9.87987" rx="0.590909" fill="currentColor" />
+        <rect x="11.81818" y="4.61096" width="1.18182" height="3.95195" rx="0.590909" fill="currentColor" />
+      </symbol>
+      <!-- celebration popper, from the "Let's Mix!" toast: 0.5dp cone + confetti -->
+      <symbol id="i-popper" viewBox="221.5 542 22.5 25">
+        <path d="M229.103 551.554L222.008 564.666C222.008 564.666 221.902 565.486 222.47 566.054C223.038 566.623 223.858 566.517 223.858 566.517L237.896 559.113M237.896 559.113C237.896 559.113 236.97 560.193 232.342 556.491C227.715 552.788 229.103 551.554 229.103 551.554C229.103 551.554 230.028 550.475 234.194 554.022C238.515 557.703 237.896 559.113 237.896 559.113ZM233.577 554.794C234.502 553.406 233.129 552.279 234.194 551.554C235.041 550.979 236.19 552.365 236.816 551.554C237.479 550.695 235.17 549.744 235.89 548.932C236.416 548.339 236.816 549.549 237.587 548.624M231.88 550.629C231.88 550.629 232.52 548.068 231.88 547.347C231.159 546.537 230.089 546.575 229.523 547.5C228.962 548.42 229.257 549.858 230.8 549.241M239.438 556.491C239.592 556.799 240.102 556.522 240.364 556.799C240.835 557.299 239.359 558.195 239.901 558.496C240.164 558.642 241.16 558.086 241.443 558.187C242.287 558.489 240.364 559.576 240.364 560.501" fill="none" stroke="currentColor" stroke-width="0.5" />
+        <circle cx="242.215" cy="545.384" r="0.308508" fill="currentColor" />
+        <circle cx="226.478" cy="562.044" r="0.308508" fill="currentColor" />
+        <circle cx="231.105" cy="561.118" r="0.308508" fill="currentColor" />
+        <circle cx="234.193" cy="546.31" r="0.308508" fill="currentColor" />
+        <circle cx="240.051" cy="552.48" r="0.308508" fill="currentColor" />
+        <path d="M243.181 550.173C243.34 550.131 243.496 549.894 243.496 549.894C243.496 549.894 243.348 550.315 243.279 550.537C243.216 550.735 243.194 550.949 243.194 550.949C243.194 550.949 243.059 550.857 242.964 550.816C242.812 550.752 242.551 550.732 242.551 550.732C242.551 550.732 242.644 550.597 242.684 550.501C242.748 550.35 242.769 550.089 242.769 550.089C242.769 550.089 243.022 550.216 243.181 550.173Z" fill="currentColor" />
+        <path d="M239.887 549.488C239.637 549.369 239.191 549.473 239.191 549.473C239.191 549.473 239.815 549.15 240.133 548.971C240.417 548.812 240.665 548.591 240.665 548.591C240.665 548.591 240.745 548.839 240.828 548.986C240.959 549.218 241.278 549.516 241.278 549.516C241.278 549.516 241.019 549.572 240.869 549.638C240.63 549.743 240.337 550.018 240.337 550.018C240.337 550.018 240.137 549.606 239.887 549.488Z" fill="currentColor" />
+        <path d="M230.894 542.806C230.974 542.952 231.328 543.003 231.328 543.003C231.328 543.003 230.714 543.048 230.391 543.08C230.103 543.109 229.797 543.187 229.797 543.187C229.797 543.187 229.912 543.002 229.957 542.883C230.029 542.694 230.027 542.411 230.027 542.411C230.027 542.411 230.229 542.445 230.369 542.441C230.591 542.437 230.963 542.334 230.963 542.334C230.963 542.334 230.815 542.66 230.894 542.806Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-minus-circ" viewBox="14.9 245.4 12.2 12.2">
+        <circle cx="21" cy="251.5" r="5.625" fill="none" stroke="currentColor" stroke-width="0.75" />
+        <line x1="17.5" y1="251.375" x2="24.5" y2="251.375" stroke="currentColor" stroke-width="0.75" />
+      </symbol>
+      <symbol id="i-grab" viewBox="333.5 245 14 13">
+        <line x1="334" y1="247.5" x2="347" y2="247.5" stroke="currentColor" />
+        <line x1="334" y1="251.5" x2="347" y2="251.5" stroke="currentColor" />
+        <line x1="334" y1="255.5" x2="347" y2="255.5" stroke="currentColor" />
+      </symbol>
+      <symbol id="i-download" viewBox="64 390 20 21">
+        <circle cx="74" cy="401" r="9.125" fill="none" stroke="currentColor" stroke-width="1.75" />
+        <path d="M74.875 396C74.875 395.517 74.4833 395.125 74 395.125C73.5168 395.125 73.125 395.517 73.125 396L74 396L74.875 396ZM74 406L74.875 406L74.875 396L74 396L73.125 396L73.125 406L74 406Z" fill="currentColor" />
+        <path d="M77.5 402L74.3763 405.57C74.1771 405.798 73.8229 405.798 73.6237 405.57L70.5 402" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-share" viewBox="109.5 389.5 16 20.5">
+        <path d="M121.7 397H124C124.276 397 124.5 397.224 124.5 397.5V408.5C124.5 408.776 124.276 409 124 409H111C110.724 409 110.5 408.776 110.5 408.5V397.5C110.5 397.224 110.724 397 111 397H113.3" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        <path d="M116.625 400C116.625 400.483 117.017 400.875 117.5 400.875C117.983 400.875 118.375 400.483 118.375 400H117.5H116.625ZM117.5 391H116.625V400H117.5H118.375V391H117.5Z" fill="currentColor" />
+        <path d="M114 394.6L117.142 391.369C117.338 391.167 117.662 391.167 117.858 391.369L121 394.6" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+      </symbol>
+      <symbol id="i-dots" viewBox="150.5 393.5 16 16">
+        <circle cx="151.5" cy="401.5" r="1.5" fill="currentColor" />
+        <circle cx="158.5" cy="401.5" r="1.5" fill="currentColor" />
+        <circle cx="165.5" cy="401.5" r="1.5" fill="currentColor" />
+      </symbol>
+      <symbol id="i-shuffle" viewBox="262.5 391.5 21 19.5"><path d="M263.5 407.25H262.75V408.75H263.5V408V407.25ZM282 396L282.576 396.48L282.976 396L282.576 395.52L282 396ZM263.5 394.25H262.75V395.75H263.5V395V394.25ZM269.47 399.53L270 400.061L271.061 399L270.53 398.47L270 399L269.47 399.53ZM274.488 402.931L273.919 402.442L272.942 403.581L273.512 404.069L274 403.5L274.488 402.931ZM282 406.5L282.576 406.98L282.976 406.5L282.576 406.02L282 406.5ZM280.076 392.52C279.811 392.202 279.338 392.159 279.02 392.424C278.702 392.689 278.659 393.162 278.924 393.48L279.5 393L280.076 392.52ZM278.924 398.52C278.659 398.838 278.702 399.311 279.02 399.576C279.338 399.841 279.811 399.798 280.076 399.48L279.5 399L278.924 398.52ZM280.076 403.02C279.811 402.702 279.338 402.659 279.02 402.924C278.702 403.189 278.659 403.662 278.924 403.98L279.5 403.5L280.076 403.02ZM278.924 409.02C278.659 409.338 278.702 409.811 279.02 410.076C279.338 410.341 279.811 410.298 280.076 409.98L279.5 409.5L278.924 409.02ZM276.108 396.973L276.661 397.48L276.108 396.973ZM263.5 408V408.75H264.68V408V407.25H263.5V408ZM266.892 407.027L267.445 407.534L276.661 397.48L276.108 396.973L275.555 396.466L266.339 406.52L266.892 407.027ZM278.32 396V396.75H282V396V395.25H278.32V396ZM263.5 395V395.75H264.757V395V394.25H263.5V395ZM266.879 395.879L266.348 396.409L269.47 399.53L270 399L270.53 398.47L267.409 395.348L266.879 395.879ZM274 403.5L273.512 404.069L276.169 406.347L276.657 405.778L277.145 405.208L274.488 402.931L274 403.5ZM278.61 406.5V407.25H282V406.5V405.75H278.61V406.5ZM279.5 393L278.924 393.48L281.424 396.48L282 396L282.576 395.52L280.076 392.52L279.5 393ZM282 396L281.424 395.52L278.924 398.52L279.5 399L280.076 399.48L282.576 396.48L282 396ZM279.5 403.5L278.924 403.98L281.424 406.98L282 406.5L282.576 406.02L280.076 403.02L279.5 403.5ZM282 406.5L281.424 406.02L278.924 409.02L279.5 409.5L280.076 409.98L282.576 406.98L282 406.5ZM276.657 405.778L276.169 406.347C276.849 406.93 277.715 407.25 278.61 407.25V406.5V405.75C278.073 405.75 277.553 405.558 277.145 405.208L276.657 405.778ZM264.757 395V395.75C265.354 395.75 265.926 395.987 266.348 396.409L266.879 395.879L267.409 395.348C266.706 394.645 265.752 394.25 264.757 394.25V395ZM276.108 396.973L276.661 397.48C277.087 397.015 277.689 396.75 278.32 396.75V396V395.25C277.269 395.25 276.266 395.691 275.555 396.466L276.108 396.973ZM264.68 408V408.75C265.731 408.75 266.734 408.309 267.445 407.534L266.892 407.027L266.339 406.52C265.913 406.985 265.311 407.25 264.68 407.25V408Z" fill="currentColor" /></symbol>
+      <!-- downloaded badge: fixed-state colors, not currentColor -->
+      <symbol id="i-dl-badge" viewBox="68 625 10 10">
+        <circle cx="73" cy="630" r="5" fill="#1CD05E" />
+        <path d="M73.4502 627.5C73.4502 627.251 73.2488 627.05 73.0002 627.05C72.7517 627.05 72.5502 627.251 72.5502 627.5L73.0002 627.5L73.4502 627.5ZM73.0002 632.75L73.4502 632.75L73.4502 627.5L73.0002 627.5L72.5502 627.5L72.5502 632.75L73.0002 632.75Z" fill="black" />
+        <path d="M74.7498 630.65L73.3839 632.289C73.184 632.529 72.8155 632.529 72.6156 632.289L71.2498 630.65" fill="none" stroke="black" stroke-width="0.9" stroke-linecap="round" />
+      </symbol>
+    </svg>
     <div class="layout">
       <nav aria-label="Sections">
-        <div class="nav__brand">Spotify Mix <em>●</em><br /><span style="color: var(--text-secondary); font-weight: 400; font-size: 13px">showcase</span></div>
-        <a href="#brand">Brand</a>
-        <a href="#colors">Colors</a>
-        <a href="#type">Type</a>
+        <div class="nav__brand">Spotify Mix <em>●</em><br /><span style="color: var(--ink-secondary); font-weight: 400; font-size: 13px">identity manual · design system</span></div>
+        <div class="nav__part">Part 1 · Identity</div>
+        <a href="#principles">Principles</a>
+        <a href="#mark">Mark &amp; entry point</a>
+        <a href="#color-treatment">Color treatment</a>
+        <a href="#key-legend">The key legend</a>
+        <a href="#imagery">Imagery &amp; voice</a>
+        <a href="#do-dont">Do / don&rsquo;t</a>
+        <div class="nav__part">Part 2 · System</div>
+        <a href="#tokens">Color tokens</a>
+        <a href="#type">Typography</a>
         <a href="#space">Spacing &amp; radius</a>
-        <a href="#components">Components</a>
+        <a href="#icons">Iconography</a>
+        <a href="#elevation">Elevation</a>
+        <a href="#motion">Motion</a>
+        <a href="#states">Interaction states</a>
+        <a href="#patterns">Patterns</a>
+        <a href="#components">Core components</a>
+        <a href="#platforms">Platforms</a>
+        <a href="#a11y">Accessibility</a>
+        <div class="nav__part">Source</div>
         <a href="#screens">Screens</a>
+        <a href="#provenance">Provenance</a>
+        <a class="nav__rules" href="./spotify.md">Read the rules ↗</a>
       </nav>
       <main>
-        <section id="brand">
-          <p style="font: var(--text-badge); letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin: 0">Design system</p>
+        <!-- ═══════════════ PART 1 · IDENTITY MANUAL ═══════════════ -->
+        <section id="principles">
+          <p class="part-rule">Part 1 · Identity manual</p>
           <h2 style="margin-top: 8px">Spotify&nbsp;Mix</h2>
           <p class="section-intro">
-            A redesign that lives <strong>inside Spotify's dark Encore language</strong>: near-black
-            surfaces, white ink, one green for every action — plus a small extension layer this
-            project adds: Camelot key badges, bpm chips, and an ember warning treatment for hard blends.
+            A DJ-mixing feature that lives <strong>inside Spotify&rsquo;s dark Encore language</strong>.
+            The identity job is restraint: extend Encore with exactly three new ideas —
+            Camelot key badges, transitions that live <strong>between</strong> songs, and a warning
+            that carries its own fix — and change nothing else.
           </p>
           <div class="demo-row">
-            <button class="cta">✦&nbsp; Smart Reorder</button>
-            <span class="key-badge" style="background: var(--key-lavender)">7A</span>
-            <span class="key-badge" style="background: var(--key-pink)">8A</span>
-            <span class="key-badge" style="background: var(--key-sky)">11B</span>
-            <span class="warn-chip">⚠ <b>hard blend</b> <span class="dot">·</span> Add bridge song ›</span>
+            <button class="cta"><svg class="ic ic--fill" width="17" height="21"><use href="#i-spark" /></svg>Smart Reorder</button>
+            <span class="key-badge" style="background: var(--key-7a)">7A</span>
+            <span class="key-badge" style="background: var(--key-9)">9A</span>
+            <span class="key-badge" style="background: var(--key-11b)">11B</span>
+            <span class="warn-chip"><svg class="ic" width="11" height="10" fill="currentColor"><use href="#i-warn" /></svg><b>hard blend</b><span class="dot"></span>Add bridge song <svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span>
+          </div>
+          <h3>Principles</h3>
+          <ol class="rule-list">
+            <li><strong>Inside Encore, not beside it.</strong> Every screen must be mistakable for Spotify. New patterns extend existing ones (chips, sheets, pills); they never introduce a new visual language.</li>
+            <li><strong>Color is information.</strong> On the near-black stage, color only ever means something: green = action or positive state, a key badge&rsquo;s hue = musical harmony, ember = a rough transition. Decorative color is banned.</li>
+            <li><strong>Every warning carries its fix.</strong> A problem is never flagged without the remedy in the same element.</li>
+            <li><strong>Preview before commit.</strong> Anything the system decides — reorder, transition, bridge song — can be heard or reviewed before it sticks.</li>
+          </ol>
+        </section>
+
+        <section id="mark">
+          <h2>Mark &amp; entry point</h2>
+          <p class="section-intro">
+            The feature has <strong>no logo</strong>. Its mark is the <strong>Mix glyph</strong> — the two-slider icon
+            on the playlist <code>Mix</code> pill — plus the ✦ sparkle reserved for machine-made suggestions.
+            The sparkle may only appear where the system did the work; never on a manual action.
+            Spotify&rsquo;s own logo rules apply untouched — Mix never places, recolors, or locks up the Spotify logo.
+          </p>
+          <div class="stage" style="background: linear-gradient(180deg, #0a1626, #121212)">
+            <div class="demo-row" style="padding: 4px 0; gap: 8px; flex-wrap: nowrap; overflow: hidden">
+              <button class="tool-pill"><svg class="ic ic--stroke" width="13" height="13"><use href="#i-plus" /></svg>Add</button>
+              <button class="tool-pill is-active"><svg class="ic ic--stroke" width="13" height="14"><use href="#i-mixer" /></svg>Mix</button>
+              <button class="tool-pill"><svg class="ic ic--fill" width="11" height="13"><use href="#i-spark" /></svg>Smart reorder</button>
+              <button class="tool-pill"><svg class="ic ic--stroke" width="13" height="13"><use href="#i-burger" /></svg>Edit</button>
+            </div>
+          </div>
+          <p class="provenance">The engaged tool wears the liquid-metal rim — a 2.7dp stroke running <code>#5A5A5A → #ACACAD → white</code> so the top and bottom edges catch light, over a fill that darkens toward both ends. It is the only shine in the system, and it means &ldquo;the machine is holding this tool&rdquo;: Mix while the sheet is open, Mix + Smart reorder once the reorder has run.</p>
+        </section>
+
+        <section id="color-treatment">
+          <h2>Color treatment</h2>
+          <ul class="rule-list">
+            <li><strong>One green, and it is <code>#1CD05E</code></strong> — the in-app Encore green sampled from the final screens. It is <em>not</em> the marketing green <code>#1ED760</code>; that value never appears in product UI.</li>
+            <li>Green is used for: primary CTAs, Save, selected filter pills, the play disc, playing state, progress, downloaded/shuffle dots, text links. Nothing else.</li>
+            <li><strong>Ink on green is always black</strong> (10.2:1). White on green fails at 2.05:1 and is forbidden.</li>
+            <li><strong>Key badges are data, not decoration.</strong> Their hues are fixed per Camelot number and may never be reused elsewhere.</li>
+            <li><strong>Ember is the only warning treatment.</strong> No red fills, no standalone yellow triangles; the red <code>#BC1E1E</code> ✗ appears only in the legend screen.</li>
+          </ul>
+          <div class="demo-row">
+            <button class="cta">Start listening</button>
+            <span style="color: var(--green); font: 500 11.5px/16px var(--font)">Save</span>
+            <button class="play-disc" aria-label="Play"><svg class="ic ic--fill" width="14" height="16" style="transform: translateX(1.8px)"><use href="#i-play" /></svg></button>
           </div>
         </section>
 
-        <section id="colors">
-          <h2>Colors</h2>
+        <section id="key-legend">
+          <h2>The Camelot key legend</h2>
           <p class="section-intro">
-            Every hex sampled <strong>1:1 from the lossless PNG exports</strong> of the screens.
+            Each song carries its key as a 9pt black-ink badge. <strong>Hue follows the Camelot
+            wheel number</strong>, so keys that harmonize sit in neighboring hues and matching keys
+            match exactly — the color does the DJ theory. A and B of the same number share a
+            family (10A is the lighter sibling of 10B). The in-product legend screen
+            (&ldquo;Making mixing easy&rdquo;) teaches this with live components, not illustrations.
+          </p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-2b)"></div><div class="swatch__meta"><span class="swatch__label">2B — green</span><span class="swatch__name">--key-2b</span><span class="swatch__hex">#24CB61</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-7a)"></div><div class="swatch__meta"><span class="swatch__label">7A — rose</span><span class="swatch__name">--key-7a</span><span class="swatch__hex">#FDB4D4</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-7b)"></div><div class="swatch__meta"><span class="swatch__label">7B — hot pink</span><span class="swatch__name">--key-7b</span><span class="swatch__hex">#FF90C0</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-8a)"></div><div class="swatch__meta"><span class="swatch__label">8A — orchid</span><span class="swatch__name">--key-8a</span><span class="swatch__hex">#F4B4FD</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-9)"></div><div class="swatch__meta"><span class="swatch__label">9A / 9B — lavender</span><span class="swatch__name">--key-9</span><span class="swatch__hex">#DBB4FD</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-10a)"></div><div class="swatch__meta"><span class="swatch__label">10A — light periwinkle</span><span class="swatch__name">--key-10a</span><span class="swatch__hex">#B2C8FF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-10b)"></div><div class="swatch__meta"><span class="swatch__label">10B — periwinkle</span><span class="swatch__name">--key-10b</span><span class="swatch__hex">#8AA9F7</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--key-11b)"></div><div class="swatch__meta"><span class="swatch__label">11B — cyan</span><span class="swatch__name">--key-11b</span><span class="swatch__hex">#20CDFC</span></div></div>
+          </div>
+          <h3>Reading pairs, as the legend teaches them</h3>
+          <div class="demo-row">
+            <span class="legend-pair"><span class="ok">✓</span><span class="key-badge" style="background: var(--key-9)">9A</span><span class="key-badge" style="background: var(--key-9)">9A</span> match</span>
+            <span class="legend-pair"><span class="ok">✓</span><span class="key-badge" style="background: var(--key-10a)">10A</span><span class="key-badge" style="background: var(--key-10b)">10B</span> major ↔ minor</span>
+            <span class="legend-pair"><span class="ok">✓</span><span class="key-badge" style="background: var(--key-10b)">10B</span><span class="key-badge" style="background: var(--key-11b)">11B</span> one step</span>
+            <span class="legend-pair"><span class="no">✗</span><span class="key-badge" style="background: var(--key-2b)">2B</span><span class="key-badge" style="background: var(--key-10a)">10A</span> clash</span>
+          </div>
+          <p class="provenance">Rule for unmeasured keys: keep the neighbor-hue ordering around the wheel, pastel enough for ≥ 7:1 against black ink.</p>
+        </section>
+
+        <section id="imagery">
+          <h2>Imagery &amp; voice</h2>
+          <ul class="rule-list">
+            <li><strong>Album art is the only imagery.</strong> 44×44dp, radius 6, never cropped, never filtered.</li>
+            <li><strong>Ambient color is derived from art, never invented.</strong> The playlist header gradient (<code>#279EFE → #006EC9</code>, collapsing to <code>#00447C</code>) and the now-playing bar tint (<code>#142239</code>) are extractions from the current artwork. Nothing else ever picks up art color.</li>
+            <li><strong>Voice:</strong> short, first-plural, playful only at moments of delight — &ldquo;Let&rsquo;s Mix!&rdquo;, &ldquo;Your Mix is ready!&rdquo;. Warnings are lowercase and factual: &ldquo;hard blend&rdquo;. Illustration is monochrome line-art (the party popper), never color emoji.</li>
+          </ul>
+          <div class="demo-row">
+            <span style="display:inline-block; width:120px; height:44px; border-radius:8px; background:linear-gradient(180deg,#279efe,#006ec9)"></span>
+            <span style="display:inline-block; width:120px; height:44px; border-radius:8px; background:#00447c"></span>
+            <span style="display:inline-block; width:120px; height:44px; border-radius:8px; background:var(--now-playing)"></span>
+            <span class="demo-row__label" style="min-width:0">header → collapsed → now-playing</span>
+          </div>
+        </section>
+
+        <section id="do-dont">
+          <h2>Do / don&rsquo;t</h2>
+          <div class="dd-grid">
+            <div class="dd dd--do">
+              <div class="dd__demo"><button class="cta"><svg class="ic ic--fill" width="17" height="21"><use href="#i-spark" /></svg>Smart Reorder</button></div>
+              <div class="dd__caption"><span class="dd__verdict">Do</span> — black ink on green, 10.2:1.</div>
+            </div>
+            <div class="dd dd--dont">
+              <div class="dd__demo"><button class="cta cta--bad"><svg class="ic ic--fill" width="17" height="21"><use href="#i-spark" /></svg>Smart Reorder</button></div>
+              <div class="dd__caption"><span class="dd__verdict">Don&rsquo;t</span> — white on green fails contrast (2.05:1).</div>
+            </div>
+            <div class="dd dd--do">
+              <div class="dd__demo"><span class="warn-chip"><svg class="ic" width="11" height="10" fill="currentColor"><use href="#i-warn" /></svg><b>hard blend</b><span class="dot"></span>Add bridge song <svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span></div>
+              <div class="dd__caption"><span class="dd__verdict">Do</span> — the warning carries its remedy, one tap away.</div>
+            </div>
+            <div class="dd dd--dont">
+              <div class="dd__demo"><span class="warn-chip"><svg class="ic" width="11" height="10" fill="currentColor"><use href="#i-warn" /></svg><b>hard blend</b></span></div>
+              <div class="dd__caption"><span class="dd__verdict">Don&rsquo;t</span> — a bare warning with no way out.</div>
+            </div>
+            <div class="dd dd--do">
+              <div class="dd__demo">
+                <div class="song-row" style="width: 100%">
+                  <span class="song-row__art song-row__art--blue"></span>
+                  <span class="song-row__main"><span class="song-row__title" style="font-weight: 500">Run Your Mouth</span><span class="song-row__artist">The Marías</span></span>
+                  <span class="song-row__meta"><span class="song-row__bpm">111 bpm</span><span class="key-badge" style="background: var(--key-9)">9A</span></span>
+                </div>
+              </div>
+              <div class="dd__caption"><span class="dd__verdict">Do</span> — in lists, bpm + key stack unboxed, right-aligned.</div>
+            </div>
+            <div class="dd dd--dont">
+              <div class="dd__demo">
+                <span class="key-badge" style="background: var(--key-11b); height: 22px; padding: 0 10px">NEW</span>
+                <span class="key-badge" style="background: var(--key-7b); height: 22px; padding: 0 10px">HOT</span>
+              </div>
+              <div class="dd__caption"><span class="dd__verdict">Don&rsquo;t</span> — key hues never label, tag, or decorate anything else.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════ PART 2 · DESIGN SYSTEM ═══════════════ -->
+        <section id="tokens">
+          <p class="part-rule">Part 2 · Design system</p>
+          <h2 style="margin-top: 8px">Color tokens</h2>
+          <p class="section-intro">
+            Every hex sampled <strong>1:1 from the final lossless PNG exports</strong> (2026-08-28, 360×783 = 1&nbsp;px per dp).
           </p>
 
           <h3>Surfaces</h3>
-          <p class="section-intro">Four elevations of near-black. Depth comes from lightness steps, never shadows.</p>
+          <p class="section-intro">Elevation is a lightness step, never a shadow — see <a href="#elevation" style="color: var(--green)">Elevation</a>.</p>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #121212"></div><div class="swatch__meta"><span class="swatch__label">Base</span><span class="swatch__name">--base</span><span class="swatch__hex">#121212</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #202020"></div><div class="swatch__meta"><span class="swatch__label">Raised</span><span class="swatch__name">--raised</span><span class="swatch__hex">#202020</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #2b2b2b"></div><div class="swatch__meta"><span class="swatch__label">Sheet / card</span><span class="swatch__name">--sheet</span><span class="swatch__hex">#2B2B2B</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #333333"></div><div class="swatch__meta"><span class="swatch__label">Control / chip</span><span class="swatch__name">--control</span><span class="swatch__hex">#333333</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #292929"></div><div class="swatch__meta"><span class="swatch__label">Hairline / chip border</span><span class="swatch__name">--hairline</span><span class="swatch__hex">#292929</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #585657"></div><div class="swatch__meta"><span class="swatch__label">Search field</span><span class="swatch__name">--field</span><span class="swatch__hex">#585657</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--base)"></div><div class="swatch__meta"><span class="swatch__label">Base</span><span class="swatch__name">surface/base</span><span class="swatch__hex">#121212</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--nav-bar)"></div><div class="swatch__meta"><span class="swatch__label">Bottom nav</span><span class="swatch__name">surface/nav</span><span class="swatch__hex">#111111</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--sheet-modal)"></div><div class="swatch__meta"><span class="swatch__label">Modal sheet</span><span class="swatch__name">surface/sheet-modal</span><span class="swatch__hex">#1F1F1F</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--sheet-full)"></div><div class="swatch__meta"><span class="swatch__label">Full sheet / card</span><span class="swatch__name">surface/sheet-full</span><span class="swatch__hex">#2B2B2B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--chip-base)"></div><div class="swatch__meta"><span class="swatch__label">Chip on base</span><span class="swatch__name">surface/chip-base</span><span class="swatch__hex">#323232</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--chip-modal)"></div><div class="swatch__meta"><span class="swatch__label">Chip on modal sheet</span><span class="swatch__name">surface/chip-modal</span><span class="swatch__hex">#353535</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--add-circle)"></div><div class="swatch__meta"><span class="swatch__label">Add-button circle</span><span class="swatch__name">surface/add-circle</span><span class="swatch__hex">#424242</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--control)"></div><div class="swatch__meta"><span class="swatch__label">Control on full sheet</span><span class="swatch__name">surface/control</span><span class="swatch__hex">#585757</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--inverse-chip)"></div><div class="swatch__meta"><span class="swatch__label">Transition chip</span><span class="swatch__name">surface/inverse-chip</span><span class="swatch__hex">#1E1E1E + #3A3A3A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--coach)"></div><div class="swatch__meta"><span class="swatch__label">Coach toast</span><span class="swatch__name">surface/coach</span><span class="swatch__hex">#636363</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--now-playing)"></div><div class="swatch__meta"><span class="swatch__label">Now playing (art-derived)</span><span class="swatch__name">surface/now-playing</span><span class="swatch__hex">#142239</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ember)"></div><div class="swatch__meta"><span class="swatch__label">Ember warning</span><span class="swatch__name">surface/ember</span><span class="swatch__hex">#3D190A</span></div></div>
           </div>
 
           <h3>Ink</h3>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #ffffff"></div><div class="swatch__meta"><span class="swatch__label">White</span><span class="swatch__name">--white</span><span class="swatch__hex">#FFFFFF</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #b3b3b3"></div><div class="swatch__meta"><span class="swatch__label">Text secondary</span><span class="swatch__name">--text-secondary</span><span class="swatch__hex">#B3B3B3 *</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--white)"></div><div class="swatch__meta"><span class="swatch__label">Primary</span><span class="swatch__name">ink/primary</span><span class="swatch__hex">#FFFFFF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ink-secondary)"></div><div class="swatch__meta"><span class="swatch__label">Secondary</span><span class="swatch__name">ink/secondary</span><span class="swatch__hex">#AEB2B5</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ink-card-sub)"></div><div class="swatch__meta"><span class="swatch__label">Card subtitle</span><span class="swatch__name">ink/card-sub</span><span class="swatch__hex">#9EA1A4</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ink-tertiary)"></div><div class="swatch__meta"><span class="swatch__label">Tertiary / meta</span><span class="swatch__name">ink/tertiary</span><span class="swatch__hex">#878A8C</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ink-value)"></div><div class="swatch__meta"><span class="swatch__label">Values (bpm)</span><span class="swatch__name">ink/value</span><span class="swatch__hex">#E1E1E1</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--ink-placeholder)"></div><div class="swatch__meta"><span class="swatch__label">Placeholder</span><span class="swatch__name">ink/placeholder</span><span class="swatch__hex">#C0C0C0</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #000000"></div><div class="swatch__meta"><span class="swatch__label">On fills (green, white, badges)</span><span class="swatch__name">ink/on-fill</span><span class="swatch__hex">#000000</span></div></div>
           </div>
 
-          <h3>Green</h3>
-          <p class="section-intro">One green does everything: Save, Suggested, Smart Reorder, the bright end of the waveform.</p>
+          <h3>Green &amp; semantic</h3>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #55d05e"></div><div class="swatch__meta"><span class="swatch__label">Action green</span><span class="swatch__name">--green</span><span class="swatch__hex">#55D05E</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: linear-gradient(90deg, #5bd266, #266837)"></div><div class="swatch__meta"><span class="swatch__label">Waveform ramp</span><span class="swatch__name">--wave-bright → --wave-deep</span><span class="swatch__hex">#5BD266 → #266837</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--green)"></div><div class="swatch__meta"><span class="swatch__label">Action green — the only one</span><span class="swatch__name">green/action</span><span class="swatch__hex">#1CD05E (not #1ED760)</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: linear-gradient(90deg, var(--green) 45%, var(--green-track-rest) 45%)"></div><div class="swatch__meta"><span class="swatch__label">Progress played → rest</span><span class="swatch__name">green/track-rest</span><span class="swatch__hex">#1CD05E → #0A662C</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: linear-gradient(90deg, rgba(28,208,94,.65) 50%, #878a8c 50%)"></div><div class="swatch__meta"><span class="swatch__label">Waveform out (65%) / in</span><span class="swatch__name">green/waveform · gray/waveform</span><span class="swatch__hex">#1CD05E @65% · #878A8C</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--warn-ink)"></div><div class="swatch__meta"><span class="swatch__label">Warning ink (one color for all strokes)</span><span class="swatch__name">warn/ink</span><span class="swatch__hex">#E8825A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--danger-legend)"></div><div class="swatch__meta"><span class="swatch__label">Legend ✗ only</span><span class="swatch__name">danger/legend</span><span class="swatch__hex">#BC1E1E</span></div></div>
           </div>
 
-          <h3>Camelot key badges</h3>
-          <p class="section-intro">The extension layer: each song carries its key as a pastel badge with dark text, tinted per Camelot position.</p>
+          <h3>Lines</h3>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #f8b8ff"></div><div class="swatch__meta"><span class="swatch__label">Key — pink (8A/9A)</span><span class="swatch__name">--key-pink</span><span class="swatch__hex">#F8B8FF</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #dfbaff"></div><div class="swatch__meta"><span class="swatch__label">Key — lavender (7A)</span><span class="swatch__name">--key-lavender</span><span class="swatch__hex">#DFBAFF</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #53cffc"></div><div class="swatch__meta"><span class="swatch__label">Key — sky (11B)</span><span class="swatch__name">--key-sky</span><span class="swatch__hex">#53CFFC</span></div></div>
-          </div>
-
-          <h3>Warning — hard blend</h3>
-          <p class="section-intro">Rough transitions get an ember treatment: burnt-orange surface, bright orange ink. Loud enough to notice, calm enough to sit inside a list.</p>
-          <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #3d190b"></div><div class="swatch__meta"><span class="swatch__label">Ember surface</span><span class="swatch__name">--ember</span><span class="swatch__hex">#3D190B</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #dc5a00"></div><div class="swatch__meta"><span class="swatch__label">Orange core</span><span class="swatch__name">--orange</span><span class="swatch__hex">#DC5A00</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #f99734"></div><div class="swatch__meta"><span class="swatch__label">Orange bright</span><span class="swatch__name">--orange-bright</span><span class="swatch__hex">#F99734</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--hairline)"></div><div class="swatch__meta"><span class="swatch__label">Hairline (≈ white 8%)</span><span class="swatch__name">line/hairline</span><span class="swatch__hex">#252626</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--outline)"></div><div class="swatch__meta"><span class="swatch__label">Pair-chip border, 1px</span><span class="swatch__name">line/outline</span><span class="swatch__hex">#414141</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: var(--dash)"></div><div class="swatch__meta"><span class="swatch__label">&ldquo;Insert song here&rdquo; dashes</span><span class="swatch__name">line/dash</span><span class="swatch__hex">#505253</span></div></div>
           </div>
         </section>
 
         <section id="type">
-          <h2>Type</h2>
+          <h2>Typography</h2>
           <p class="section-intro">
-            Spotify's <strong>Circular</strong> throughout (this page falls back to your system
-            font if Circular isn't installed). Weight does the hierarchy; color only separates
-            primary from secondary.
+            The screens are set in <strong>Montserrat</strong> — confirmed against the exports letterform by
+            letterform (looptail g, flagged 1, curved t), with every size solved by matching rendered
+            text widths against the PNGs — the scale is compact: titles 13, chips 11, meta 10.5.
+            This page loads Montserrat from Google Fonts, so the samples below are the real thing.
+            It stands in for Spotify&rsquo;s proprietary Circular; a production hand-off maps the same
+            scale onto Circular. SemiBold carries the hierarchy; color separates primary from
+            secondary. No italics anywhere.
           </p>
           <div class="type-sample">
-            <div style="font: var(--text-sheet-title)">Let's Mix! 🎉</div>
-            <div class="type-sample__meta">--text-sheet-title · 700 · 22/26</div>
+            <div style="font: var(--text-sheet-title)">Let&rsquo;s Mix!</div>
+            <div class="type-sample__meta">type/sheet-title · Montserrat 600 · 18/24 — CTA labels are type/song (13/600) in a 46dp pill</div>
           </div>
           <div class="type-sample">
-            <div style="font: var(--text-nav)">Add a bridge song</div>
-            <div class="type-sample__meta">--text-nav · 700 · 17/22</div>
+            <div style="font: var(--text-screen-title)">Edit transition</div>
+            <div class="type-sample__meta">type/screen-title · 600 · 13/18 · centered in the top bar (Cancel/Save 11.5)</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-section)">Best Matches</div>
+            <div class="type-sample__meta">type/section · 700 · 13/17</div>
           </div>
           <div class="type-sample">
             <div style="font: var(--text-song)">To Zion (feat. Carlos Santana)</div>
-            <div class="type-sample__meta">--text-song · 500 · 16/21</div>
+            <div class="type-sample__meta">type/song · 600 · 13/18</div>
           </div>
           <div class="type-sample">
-            <div style="font: var(--text-body); color: var(--text-secondary)">We'll organize your playlist for you – or you can do it manually.</div>
-            <div class="type-sample__meta">--text-body · 400 · 15/22</div>
+            <div style="font: var(--text-body); color: var(--ink-secondary)">We&rsquo;ll organize your playlist for you – or you can do it manually.</div>
+            <div class="type-sample__meta">type/body · 500 · 13/19 · ink/secondary</div>
           </div>
           <div class="type-sample">
-            <div style="font: var(--text-artist); color: var(--text-secondary)">Ms. Lauryn Hill, Carlos Santana</div>
-            <div class="type-sample__meta">--text-artist · 400 · 13/18</div>
+            <div style="font: 400 10.5px/14px var(--font); color: var(--ink-tertiary)">Ms. Lauryn Hill, Carlos Santana &nbsp;·&nbsp; <span style="color: var(--ink-value); font-weight: 500">173 bpm</span></div>
+            <div class="type-sample__meta">type/meta · 400 · 10.5/14 · ink/tertiary — bpm values share it, in ink/value</div>
           </div>
           <div class="type-sample">
-            <div><span class="key-badge" style="background: var(--key-lavender)">7A</span>&nbsp; <span class="bpm-chip">173 bpm</span></div>
-            <div class="type-sample__meta">--text-badge · 700 · 11 &nbsp;·&nbsp; chip 13</div>
+            <div><span class="key-badge" style="background: var(--key-7a)">7A</span>&nbsp; <span style="font: var(--text-chip)">chip label</span>&nbsp; <span style="font: 600 10.5px/14px var(--font)">tool label</span></div>
+            <div class="type-sample__meta">type/badge · 700 · 9, black &nbsp;·&nbsp; type/chip · 500 · 11 &nbsp;·&nbsp; tool pills · 600 · 10.5</div>
           </div>
         </section>
 
         <section id="space">
           <h2>Spacing &amp; radius</h2>
-          <p class="section-intro">4&nbsp;pt grid. Radius is the opposite of Stack: <strong>everything actionable is a pill</strong>; containers are 12, badges 5, art 4.</p>
+          <p class="section-intro">
+            4pt grid, <strong>12dp screen margin</strong> (measured on every screen). All standalone
+            actionables are pills; chips inside a set get flatter corners the more options they hold.
+          </p>
           <div class="demo-row"><span class="demo-row__label">--s-1 (4px)</span><span class="space-chip" style="width: 4px; height: 16px"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--s-2 (8px)</span><span class="space-chip" style="width: 8px; height: 16px"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--s-3 (12px)</span><span class="space-chip" style="width: 12px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-2 (8px)</span><span class="space-chip" style="width: 8px; height: 16px"></span><span class="demo-row__label" style="min-width:0">chip gap in a row</span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-3 (12px)</span><span class="space-chip" style="width: 12px; height: 16px"></span><span class="demo-row__label" style="min-width:0">screen margin · art→text gap</span></div>
           <div class="demo-row"><span class="demo-row__label">--s-4 (16px)</span><span class="space-chip" style="width: 16px; height: 16px"></span></div>
           <div class="demo-row"><span class="demo-row__label">--s-6 (24px)</span><span class="space-chip" style="width: 24px; height: 24px"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--s-8 (32px)</span><span class="space-chip" style="width: 32px; height: 32px"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--r-pill (999)</span><span style="display: inline-block; width: 64px; height: 28px; border-radius: 999px; background: var(--green)"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--r-card (12px)</span><span style="display: inline-block; width: 44px; height: 44px; border-radius: 12px; background: var(--sheet); border: 1px solid var(--outline)"></span></div>
-          <div class="demo-row"><span class="demo-row__label">--r-badge (5px)</span><span class="key-badge" style="background: var(--key-sky)">11B</span></div>
+          <h3>Measured sizes</h3>
+          <table class="spec">
+            <tr><th>Element</th><th>Height</th><th>Radius</th></tr>
+            <tr><td>CTA pill</td><td>46</td><td>pill</td></tr>
+            <tr><td>Full-width pill</td><td>45</td><td>pill</td></tr>
+            <tr><td>Search pill</td><td>44</td><td>pill</td></tr>
+            <tr><td>Preset chip</td><td>40</td><td>8</td></tr>
+            <tr><td>Segmented option / preview</td><td>40</td><td>10 / 12</td></tr>
+            <tr><td>Add-button circle</td><td>40 ⌀</td><td>—</td></tr>
+            <tr><td>Transition chip</td><td>38</td><td>pill</td></tr>
+            <tr><td>Filter pill</td><td>34</td><td>pill</td></tr>
+            <tr><td>Warning pill</td><td>35</td><td>pill</td></tr>
+            <tr><td>Tool pill (playlist header)</td><td>30</td><td>pill</td></tr>
+            <tr><td>bpm + key pair chip</td><td>48</td><td>12 · 1px #414141</td></tr>
+            <tr><td>Album art</td><td>44 × 44</td><td>6</td></tr>
+            <tr><td>Key badge</td><td>14</td><td>4</td></tr>
+            <tr><td>Progress bar</td><td>4</td><td>2</td></tr>
+            <tr><td>Action card</td><td>56–64</td><td>14</td></tr>
+            <tr><td>Coach toast</td><td>content</td><td>16</td></tr>
+            <tr><td>Sheet handle</td><td>56 × 4</td><td>2</td></tr>
+            <tr><td>Bottom sheet top corners</td><td>—</td><td>24</td></tr>
+          </table>
+          <p class="provenance" style="margin-top: 16px">Touch: nothing interactive below 30 visual; pad to ≥ 44 effective.</p>
+        </section>
+
+        <section id="icons">
+          <h2>Iconography</h2>
+          <ul class="rule-list">
+            <li>Stroke weight is tiered, not uniform: <strong>1.75dp</strong> in the action row (download, share), <strong>1.5dp</strong> for nav &amp; search, <strong>1.25dp</strong> inside pills and rows (chevrons, mixer, burger, sort, pencil, plus), <strong>1dp</strong> for micro-glyphs (note+, sliders, ×), and hairlines below that (⊖&nbsp;0.75, popper&nbsp;0.5). Round caps on directional strokes; burger and sort rails are square-cut.</li>
+            <li>The <strong>sparkle</strong> is one large four-point star with a small companion star at its upper right — filled, black on green/white fills, white on dark pills. It ships at 10.5×13 in chips and 17×21 on the CTA, always the same drawing.</li>
+            <li>The play disc is <strong>chrome in a 6dp green ring</strong> (54⌀ overall): an angular-gradient steel face with a 1.75dp lit rim, white glyph. While playing it collapses to the flat 42⌀ <code>green/action</code> disc with the black pause glyph.</li>
+            <li>Green on an icon means <strong>state</strong>, not style: downloaded ↓, smart-shuffle dot, headphones-connected.</li>
+            <li>The ⚠ triangle in the ember pill is outlined, in <code>warn/ink</code> like its text — never filled, never yellow.</li>
+            <li>Advanced-control rows carry a 3×14 channel tick — volume steel <code>#28556C</code>, EQ olive (<code>#FFE500</code> family, dimmed). Channel colors appear nowhere else.</li>
+          </ul>
+          <div class="demo-row" style="gap: 22px; color: var(--white)">
+            <svg class="ic ic--fill" width="22" height="22" role="img" aria-label="sparkle"><use href="#i-spark" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="mixer"><use href="#i-mixer" /></svg>
+            <svg class="ic" width="22" height="22" fill="currentColor" role="img" aria-label="note plus"><use href="#i-noteplus" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="advanced sliders"><use href="#i-sliders-h" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="search"><use href="#i-search" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="sort"><use href="#i-sort" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="pencil"><use href="#i-pencil" /></svg>
+            <svg class="ic ic--fill" width="22" height="22" role="img" aria-label="pause"><use href="#i-pause" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="download"><use href="#i-download" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="share"><use href="#i-share" /></svg>
+            <svg class="ic ic--fill" width="22" height="22" role="img" aria-label="shuffle"><use href="#i-shuffle" /></svg>
+            <svg class="ic ic--fill" width="22" height="22" role="img" aria-label="more"><use href="#i-dots" /></svg>
+            <svg class="ic" width="22" height="22" fill="currentColor" role="img" aria-label="warning" style="color: var(--warn-ink)"><use href="#i-warn" /></svg>
+            <svg class="ic ic--stroke" width="22" height="22" role="img" aria-label="popper"><use href="#i-popper" /></svg>
+          </div>
+          <div class="demo-row">
+            <button class="play-disc" aria-label="Play"><svg class="ic ic--fill" width="14" height="16" style="transform: translateX(1.8px)"><use href="#i-play" /></svg></button>
+            <span class="song-row__artist"><svg class="ic" width="10" height="10" aria-label="downloaded"><use href="#i-dl-badge" /></svg>downloaded</span>
+            <span class="tick-row"><span class="tick" style="background:#28556c"></span>Volume <span class="val">Overlap ⌄</span></span>
+            <span class="tick-row"><span class="tick" style="background:#6b5e10"></span>EQ <span class="val">Center bass swap ⌄</span></span>
+          </div>
+        </section>
+
+        <section id="elevation">
+          <h2>Elevation</h2>
+          <p class="section-intro">
+            <strong>No shadows.</strong> Elevation = surface lightness + geometry. One deliberate inversion:
+            transition chips are darker than their surface (<code>#1E1E1E</code> on <code>#2B2B2B</code>) because they
+            belong to the <em>seam between songs</em>, not to either row. Sheets add a 40% black scrim.
+          </p>
+          <div class="demo-row" style="gap: 0">
+            <span style="width: 96px; height: 64px; background: var(--base); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--ink-tertiary)">#121212</span>
+            <span style="width: 96px; height: 64px; background: var(--sheet-modal); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--ink-tertiary)">#1F1F1F</span>
+            <span style="width: 96px; height: 64px; background: var(--sheet-full); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--ink-tertiary)">#2B2B2B</span>
+            <span style="width: 96px; height: 64px; background: var(--chip-base); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--ink-secondary)">#323232</span>
+            <span style="width: 96px; height: 64px; background: var(--control); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--white)">#585757</span>
+            <span style="width: 96px; height: 64px; background: var(--coach); display:inline-flex; align-items:center; justify-content:center; font:var(--text-badge); color:var(--white)">#636363</span>
+          </div>
+        </section>
+
+        <section id="motion">
+          <h2>Motion</h2>
+          <p class="section-intro">Recommended values — the pattern is observed in the recording, the durations are the spec for build.</p>
+          <table class="spec">
+            <tr><th>Moment</th><th>Spec</th></tr>
+            <tr><td>Bottom sheet</td><td>slide up 300ms decelerate · scrim fades 200ms</td></tr>
+            <tr><td>Chip select / invert</td><td>150ms color swap, no movement</td></tr>
+            <tr><td>Sheet → toast (&ldquo;Your Mix is ready!&rdquo;)</td><td>content crossfades in place, 200ms</td></tr>
+            <tr><td>Preview progress</td><td>linear, real-time with audio</td></tr>
+            <tr><td>Reduce motion</td><td>swap slides for fades, keep durations</td></tr>
+          </table>
+        </section>
+
+        <section id="states">
+          <h2>Interaction states</h2>
+          <h3>Selected — neutral sets invert, action sets go green</h3>
+          <div class="demo-row">
+            <button class="preset-chip is-selected"><svg class="ic ic--fill" width="11" height="13"><use href="#i-spark" /></svg>Auto</button>
+            <button class="preset-chip">Fade</button>
+            <span class="demo-row__label" style="min-width: 0">neutral: white fill, black ink</span>
+          </div>
+          <div class="demo-row">
+            <button class="filter-pill is-selected">Suggested</button>
+            <button class="filter-pill">Recently Played</button>
+            <span class="demo-row__label" style="min-width: 0">action: green fill, black ink</span>
+          </div>
+          <h3>Engaged tool &amp; focus</h3>
+          <div class="demo-row">
+            <button class="tool-pill is-active"><svg class="ic ic--stroke" width="13" height="14"><use href="#i-mixer" /></svg>Mix</button>
+            <button class="preset-chip is-focused">Fade</button>
+            <span class="demo-row__label" style="min-width: 0">liquid-metal rim, 2.7dp (engaged tool) · 1dp white border (focus)</span>
+          </div>
+          <h3>Disabled / spent</h3>
+          <div class="demo-row">
+            <button class="big-pill--disabled"><svg class="ic ic--fill" width="11" height="13"><use href="#i-spark" /></svg>Smart Reorder</button>
+          </div>
+          <p class="provenance">Fill <code>#AEB2B5</code>, ink <code>#323232</code> (6.0:1 — still readable, clearly asleep). Shown while the list is being edited manually.</p>
+          <h3>Playing &amp; sibling dim</h3>
+          <div class="dim-stage">
+            <div class="song-row song-row--playing" style="width: 100%">
+              <span class="song-row__art song-row__art--blue"></span>
+              <span class="song-row__main"><span class="song-row__title">Run Your Mouth</span><span class="song-row__artist">The Marías</span></span>
+              <span class="song-row__meta"><span class="song-row__bpm">111 bpm</span><span class="key-badge" style="background: var(--key-9)">9A</span></span>
+            </div>
+            <div class="song-row is-dimmed" style="width: 100%">
+              <span class="song-row__art"></span>
+              <span class="song-row__main"><span class="song-row__title" style="font-weight: 500">Video</span><span class="song-row__artist">India.Arie</span></span>
+              <span class="song-row__meta"><span class="song-row__bpm">86 bpm</span><span class="key-badge" style="background: var(--key-8a)">8A</span></span>
+            </div>
+          </div>
+          <p class="provenance">Playing: title turns green, an equalizer glyph replaces the index. Expanded focus: sibling rows sit under a 20% black scrim with ink at 55%.</p>
+          <h3>Warning</h3>
+          <div class="demo-row">
+            <span class="warn-chip"><svg class="ic" width="11" height="10" fill="currentColor"><use href="#i-warn" /></svg><b>hard blend</b><span class="dot"></span>Add bridge song <svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span>
+            <span class="demo-row__label" style="min-width: 0">the row itself never changes color</span>
+          </div>
+        </section>
+
+        <section id="patterns">
+          <h2>Patterns</h2>
+          <ul class="rule-list">
+            <li><strong>Progressive disclosure:</strong> pill row → sheet → toast → full editor. Every step is skippable (&ldquo;Edit Manually&rdquo;, &ldquo;Review&rdquo;).</li>
+            <li><strong>The seam owns the transition:</strong> everything about how two songs meet — the chip, the warning, the bridge insertion point — renders <em>between</em> the rows, centered, never inside a row.</li>
+            <li><strong>Bordered pair:</strong> only the two songs being mixed get the bordered bpm+key chip; list rows stack the same meta unboxed.</li>
+            <li><strong>Preview-before-commit:</strong> Intro/Outro segmented preview with the 4dp progress bar; the waveform&rsquo;s play disc previews the blend itself.</li>
+            <li><strong>Teach in context:</strong> the coach toast links to the legend screen, and the legend explains with live components, not illustrations.</li>
+          </ul>
+
+          <h3>The seam, assembled — at true 360dp metrics</h3>
+          <div class="stage">
+            <div class="song-row" style="width: auto">
+              <span class="song-row__art"></span>
+              <span class="song-row__main"><span class="song-row__title">To Zion (feat. Carlos San…</span><span class="song-row__artist">Ms. Lauryn Hill, Carlos Santana</span></span>
+              <span class="pair-chip"><span class="song-row__bpm">173 bpm</span><span class="key-badge" style="background: var(--key-7a)">7A</span></span>
+            </div>
+            <div class="divider-dash" style="margin-top: 14px; margin-bottom: 14px; width: auto">Insert song here</div>
+            <div class="song-row" style="width: auto">
+              <span class="song-row__art" style="background: linear-gradient(135deg, #caa27e, #6e4a33)"></span>
+              <span class="song-row__main"><span class="song-row__title">Shea Butter Baby</span><span class="song-row__artist">Ari Lennox, J. Cole</span></span>
+              <span class="pair-chip"><span class="song-row__bpm">155 bpm</span><span class="key-badge" style="background: var(--key-9)">9A</span></span>
+            </div>
+          </div>
+          <div class="demo-row">
+            <button class="transition-chip"><span class="glyph"><svg class="ic ic--fill" width="11" height="13"><use href="#i-spark" /></svg></span>Auto <span class="chev"><svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span></button>
+            <button class="transition-chip transition-chip--plain"><svg class="ic ic--stroke" width="13" height="14"><use href="#i-wavebars" /></svg>Blend <span class="chev"><svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span></button>
+            <button class="transition-chip transition-chip--plain"><svg class="ic ic--stroke" width="13" height="14"><use href="#i-wavebars" /></svg>Custom <span class="chev"><svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span></button>
+            <span class="warn-chip"><svg class="ic" width="11" height="10" fill="currentColor"><use href="#i-warn" /></svg><b>hard blend</b><span class="dot"></span>Add bridge song <svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span>
+          </div>
         </section>
 
         <section id="components">
-          <h2>Components</h2>
+          <h2>Core components</h2>
+          <p class="section-intro">Rebuilt at <strong>true 360dp metrics</strong> against the exports — the phone-width stages below are 1:1 with the screens.</p>
 
           <h3>Top bar</h3>
-          <div class="demo-row">
-            <div class="top-bar">
-              <span class="cancel">Cancel</span>
+          <div class="stage">
+            <div class="top-bar full-bleed">
+              <span class="lead"><svg class="ic ic--stroke" width="8" height="15"><use href="#i-chev-l" /></svg></span>
+              <span class="title">Edit transition</span>
+              <span class="save">Save</span>
+            </div>
+            <div class="top-bar full-bleed" style="margin-top: 8px">
+              <span class="lead">Cancel</span>
               <span class="title">Add a bridge song</span>
               <span class="save">Save</span>
             </div>
           </div>
 
-          <h3>Song row</h3>
-          <div class="demo-row">
-            <div class="song-row">
-              <span class="song-row__art"></span>
+          <h3>Song rows — list variant, pair variant, edit variant</h3>
+          <div class="stage" style="display: grid; gap: 18px">
+            <div class="song-row" style="width: auto">
+              <span class="song-row__art song-row__art--blue"></span>
               <span class="song-row__main">
-                <span class="song-row__title">To Zion (feat. Carlos Santana)</span>
-                <span class="song-row__artist"><span class="dl">↓</span>Ms. Lauryn Hill, Carlos Santana</span>
+                <span class="song-row__title" style="font-weight: 500">Appletree</span>
+                <span class="song-row__artist">Erykah Badu</span>
               </span>
               <span class="song-row__meta">
-                <span class="bpm-chip">173 bpm</span>
-                <span class="key-badge" style="background: var(--key-lavender)">7A</span>
+                <span class="song-row__bpm">84 bpm</span>
+                <span class="key-badge" style="background: var(--key-8a)">8A</span>
               </span>
-              <span class="song-row__grab">≡</span>
+              <button class="round-add" aria-label="Add"><svg class="ic ic--stroke" width="14" height="14"><use href="#i-plus" /></svg></button>
+            </div>
+            <div class="song-row" style="width: auto">
+              <span class="song-row__art"></span>
+              <span class="song-row__main">
+                <span class="song-row__title">To Zion (feat. Carlos San…</span>
+                <span class="song-row__artist">Ms. Lauryn Hill, Carlos Santana</span>
+              </span>
+              <span class="pair-chip"><span class="song-row__bpm">173 bpm</span><span class="key-badge" style="background: var(--key-7a)">7A</span></span>
+            </div>
+            <div class="song-row" style="width: auto">
+              <span class="grab" style="margin-right: -4px"><svg class="ic ic--stroke" width="12" height="12"><use href="#i-minus-circ" /></svg></span>
+              <span class="song-row__art song-row__art--blue"></span>
+              <span class="song-row__main">
+                <span class="song-row__title" style="font-weight: 500">Run Your Mouth</span>
+                <span class="song-row__artist">Video · The Marías</span>
+              </span>
+              <span class="song-row__meta">
+                <span class="song-row__bpm">111 bpm</span>
+                <span class="key-badge" style="background: var(--key-9)">9A</span>
+              </span>
+              <span class="grab"><svg class="ic ic--stroke" width="13" height="9"><use href="#i-grab" /></svg></span>
             </div>
           </div>
 
           <h3>Preset chips</h3>
-          <div class="demo-row">
-            <button class="preset-chip">✦ Auto</button>
-            <button class="preset-chip">Fade</button>
-            <button class="preset-chip">Rise</button>
-            <button class="preset-chip is-selected">Blend</button>
-            <button class="preset-chip">Warp</button>
+          <div class="stage">
+            <div class="divider-label" style="width: auto; margin-bottom: 14px">Presets</div>
+            <div class="demo-row" style="padding: 0; gap: 8px; flex-wrap: nowrap; overflow: hidden">
+              <button class="preset-chip is-selected"><svg class="ic ic--fill" width="11" height="13"><use href="#i-spark" /></svg>Auto</button>
+              <button class="preset-chip is-focused">Fade</button>
+              <button class="preset-chip">Rise</button>
+              <button class="preset-chip">Blend</button>
+              <button class="preset-chip">Wav</button>
+            </div>
           </div>
 
           <h3>Filter pills</h3>
-          <div class="demo-row">
-            <button class="filter-pill is-selected">Suggested</button>
-            <button class="filter-pill">Recently Played</button>
-            <button class="filter-pill">Liked Songs</button>
+          <div class="stage stage--sheet">
+            <div class="demo-row" style="padding: 0; gap: 9px; flex-wrap: nowrap; overflow: hidden">
+              <button class="filter-pill is-selected">Suggested</button>
+              <button class="filter-pill">Recently Played</button>
+              <button class="filter-pill">Liked Songs</button>
+              <button class="filter-pill">Yo</button>
+            </div>
           </div>
 
           <h3>Buttons</h3>
           <div class="demo-row">
             <span class="demo-row__label">primary</span>
-            <button class="cta">✦&nbsp; Smart Reorder</button>
+            <button class="cta"><svg class="ic ic--fill" width="17" height="21"><use href="#i-spark" /></svg>Smart Reorder</button>
             <button class="text-btn">Edit Manually</button>
           </div>
           <div class="demo-row">
             <span class="demo-row__label">inline</span>
-            <button class="bars-pill">4 bars ⌄</button>
-            <button class="auto-pill">✦ Auto ›</button>
-            <button class="round-add" aria-label="Add">+</button>
+            <button class="tool-pill" style="height: 34px; padding: 0 16px; font-size: 11px; font-weight: 500">4 bars&nbsp;<svg class="ic ic--stroke" width="11" height="6"><use href="#i-chev-d" /></svg></button>
+            <button class="round-add" aria-label="Add"><svg class="ic ic--stroke" width="14" height="14"><use href="#i-plus" /></svg></button>
+          </div>
+
+          <h3>Segmented preview + progress</h3>
+          <div class="stage stage--sheet" style="display: grid; gap: 20px">
+            <div style="display: flex; gap: 25px">
+              <button class="segment-btn is-playing"><svg class="ic ic--fill" width="13" height="16"><use href="#i-pause" /></svg>Intro</button>
+              <button class="segment-btn">Outro</button>
+            </div>
+            <div class="progress" style="width: auto"><span class="played"></span><span class="rest"></span></div>
+          </div>
+
+          <h3>Bars picker (modal sheet segments)</h3>
+          <div class="stage stage--modal">
+            <div style="display: flex; gap: 8px">
+              <button class="bars-segment">2 bars</button>
+              <button class="bars-segment is-selected">4 bars</button>
+              <button class="bars-segment">8 bars</button>
+            </div>
+            <p style="font: 400 10px/14px var(--font); color: var(--ink-tertiary); margin: 18px 0 0">Choose how long your tracks should transition for.</p>
           </div>
 
           <h3>Action cards</h3>
-          <div class="demo-row" style="flex-direction: column; align-items: flex-start">
-            <div class="action-card">
-              <span class="action-card__icon">🎵</span>
+          <div class="stage" style="display: grid; gap: 12px">
+            <div class="action-card" style="width: auto">
+              <span class="action-card__icon"><svg class="ic" width="19" height="17" fill="currentColor"><use href="#i-noteplus" /></svg></span>
               <span class="action-card__text"><b>Add a bridge song</b><span>Insert a song between these two</span></span>
-              <span class="action-card__chev">›</span>
+              <span class="action-card__chev"><svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span>
             </div>
-            <div class="action-card">
-              <span class="action-card__icon">⚙️</span>
+            <div class="action-card" style="width: auto">
+              <span class="action-card__icon"><svg class="ic ic--stroke" width="16" height="15"><use href="#i-sliders-h" /></svg></span>
               <span class="action-card__text"><b>Advanced controls</b></span>
-              <span class="action-card__chev">›</span>
+              <span class="action-card__chev"><svg class="ic ic--stroke" width="7" height="11"><use href="#i-chev-r" /></svg></span>
             </div>
-          </div>
-
-          <h3>Hard-blend warning</h3>
-          <div class="demo-row">
-            <span class="warn-chip">⚠ <b>hard blend</b> <span class="dot">·</span> Add bridge song ›</span>
           </div>
 
           <h3>Search</h3>
-          <div class="demo-row">
-            <div class="search-pill">🔍 What would you like to add?</div>
-          </div>
-
-          <h3>Waveform</h3>
-          <div class="demo-row">
-            <div class="waveform" role="img" aria-label="Waveform sample in the green ramp">
-              <i style="height: 18px"></i><i style="height: 30px"></i><i style="height: 44px"></i><i style="height: 26px"></i><i style="height: 52px"></i><i style="height: 38px"></i><i style="height: 20px"></i><i style="height: 46px"></i><i style="height: 56px"></i><i style="height: 32px"></i><i style="height: 24px"></i><i style="height: 42px"></i><i style="height: 16px"></i><i style="height: 36px"></i><i style="height: 50px"></i><i style="height: 28px"></i><i style="height: 14px"></i><i style="height: 34px"></i><i style="height: 22px"></i><i style="height: 12px"></i>
+          <div class="stage stage--sheet">
+            <div class="search-pill" style="width: auto">
+              <svg class="ic ic--stroke" width="19" height="19"><use href="#i-search" /></svg>
+              What would you like to add?
             </div>
           </div>
+
+          <h3>Coach toast</h3>
+          <div class="stage">
+            <div class="coach-toast" style="width: auto">
+              <span class="x"><svg class="ic ic--stroke" width="10" height="11"><use href="#i-x" /></svg></span>
+              <b>Drag to reorder</b>
+              <p>Match key colors or find similar bpm for a smoother blend.</p>
+              <a class="link" href="#key-legend">How does this actually work?</a>
+            </div>
+          </div>
+
+          <h3>Bottom sheet</h3>
+          <div class="stage" style="padding-bottom: 0">
+            <div class="mini-sheet full-bleed" style="width: auto">
+              <div class="handle"></div>
+              <h4>Let&rsquo;s Mix! <svg class="ic ic--stroke" width="23" height="25"><use href="#i-popper" /></svg></h4>
+              <p>We&rsquo;ll organize your playlist for you - or you can do it manually.</p>
+              <button class="cta"><svg class="ic ic--fill" width="17" height="21"><use href="#i-spark" /></svg>Smart Reorder</button><br />
+              <button class="text-btn">Edit Manually</button>
+            </div>
+          </div>
+
+          <h3>Waveform editor</h3>
+          <div class="demo-row">
+            <div class="waveform waveform--out" role="img" aria-label="Outgoing track waveform, green at 65%">
+              <i style="height: 18px"></i><i style="height: 30px"></i><i style="height: 44px"></i><i style="height: 26px"></i><i style="height: 52px"></i><i style="height: 38px"></i><i style="height: 20px"></i><i style="height: 46px"></i><i style="height: 56px"></i><i style="height: 32px"></i><i style="height: 24px"></i><i style="height: 42px"></i>
+            </div>
+            <button class="play-disc" aria-label="Preview blend"><svg class="ic ic--fill" width="14" height="16" style="transform: translateX(1.8px)"><use href="#i-play" /></svg></button>
+            <div class="waveform waveform--in" role="img" aria-label="Incoming track waveform, gray">
+              <i style="height: 12px"></i><i style="height: 22px"></i><i style="height: 34px"></i><i style="height: 16px"></i><i style="height: 40px"></i><i style="height: 28px"></i><i style="height: 48px"></i><i style="height: 20px"></i><i style="height: 36px"></i><i style="height: 26px"></i><i style="height: 14px"></i><i style="height: 30px"></i>
+            </div>
+          </div>
+          <p class="provenance">Outgoing bars: <code>green/action</code> at 65%. Incoming: <code>gray/waveform</code>. The play disc in the editor wears a green ring. The crossfade curve is a 1px green stroke against a 1px white one; bar-lines mark the <code>n bars</code> window.</p>
+        </section>
+
+        <section id="platforms">
+          <h2>Platforms</h2>
+          <p class="section-intro">
+            One spec, three targets. dp / pt / px map 1:1 off the 360-wide frame. The bottom sheet is
+            Android <code>ModalBottomSheet</code>, an iOS detent sheet, and a web dialog at ≤ 480 wide.
+            The bottom nav and status bar stay native; everything above them follows this document.
+            Montserrat ships on all three (Google Fonts); a production hand-off inside Spotify would
+            swap to Circular at the same scale.
+          </p>
+        </section>
+
+        <section id="a11y">
+          <h2>Accessibility</h2>
+          <table class="spec">
+            <tr><th>Pair</th><th>Ratio</th></tr>
+            <tr><td>white on base</td><td>18.7</td></tr>
+            <tr><td>bpm value on base</td><td>14.3</td></tr>
+            <tr><td>badge ink (worst measured badge)</td><td>9.1</td></tr>
+            <tr><td>black on green</td><td>10.2</td></tr>
+            <tr><td>green on base</td><td>9.1</td></tr>
+            <tr><td>secondary on base</td><td>8.8</td></tr>
+            <tr><td>white on control</td><td>7.2</td></tr>
+            <tr><td>disabled ink on disabled fill</td><td>6.0</td></tr>
+            <tr><td>coral on ember</td><td>5.8</td></tr>
+            <tr><td>tertiary on base / on full sheet</td><td>5.4 / 4.1</td></tr>
+          </table>
+          <p class="provenance" style="margin-top: 16px">
+            Key color never carries meaning alone: the badge always contains the key text, the legend
+            pairs color with ✓/✗ glyphs, and bpm is written out beside every badge. White on green
+            (2.05) and the legend&rsquo;s ✗ red are the two known-fail pairs — the first is banned, the
+            second is always doubled by the glyph shape.
+          </p>
         </section>
 
         <section id="screens">
           <h2>Screens</h2>
-          <p class="section-intro">The exported frames these tokens were sampled from.</p>
+          <p class="section-intro">The final exported frames these tokens were sampled from.</p>
           <div class="screen-strip">
-            <figure><img src="../assets/case-studies/spotify/raw/1-hero-image.png" alt="Making mixing easy onboarding" /><figcaption>1 Hero — making mixing easy</figcaption></figure>
-            <figure><img src="../assets/case-studies/spotify/raw/2-spotify-main-mix-screen.png" alt="Edit transition" /><figcaption>2 Edit transition</figcaption></figure>
-            <figure><img src="../assets/case-studies/spotify/raw/3-smart-reorder-pop-up-screen.png" alt="Smart reorder pop-up" /><figcaption>3 Smart reorder</figcaption></figure>
-            <figure><img src="../assets/case-studies/spotify/raw/5a-hard-blend-highlight-screen.png" alt="Hard blend highlighted" /><figcaption>5a Hard blend flagged</figcaption></figure>
-            <figure><img src="../assets/case-studies/spotify/raw/5b-add-a-bridge-song-screen.png" alt="Add a bridge song" /><figcaption>5b Add a bridge song</figcaption></figure>
-            <figure><img src="../assets/case-studies/spotify/raw/6-playlist-redesign.png" alt="Playlist redesign" /><figcaption>6 Playlist redesign</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/playlist-view.png" alt="Playlist view with Mix pill" /><figcaption>Playlist — the Mix entry point</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/lets-mix-sheet.png" alt="Let's Mix bottom sheet" /><figcaption>Let&rsquo;s Mix sheet</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/mix-ready-toast.png" alt="Your Mix is ready toast" /><figcaption>Mix ready</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/edit-playlist-hard-blends.png" alt="Edit playlist with hard blend warnings" /><figcaption>Edit playlist — hard blends</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/drag-to-reorder-coach.png" alt="Drag to reorder coach mark" /><figcaption>Coach toast</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/edit-transition.png" alt="Edit transition waveform screen" /><figcaption>Edit transition</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/bars-picker.png" alt="Bars picker sheet" /><figcaption>Bars picker</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/add-bridge-song.png" alt="Add a bridge song" /><figcaption>Add a bridge song</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/bridge-preview-playing.png" alt="Bridge song intro preview playing" /><figcaption>Preview — Intro playing</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/key-legend.png" alt="Making mixing easy legend" /><figcaption>The key legend</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/playlist-transitions.png" alt="Playlist with inline transition chips" /><figcaption>Transitions in the list</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/advanced-controls.png" alt="Advanced controls" /><figcaption>Advanced controls</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/final/collapsed-header.png" alt="Collapsed playlist header" /><figcaption>Collapsed header</figcaption></figure>
           </div>
         </section>
 
-        <section style="border-bottom: none">
+        <section id="provenance" style="border-bottom: none">
+          <h2>Provenance</h2>
           <p class="provenance">
-            Provenance: colors sampled pixel-for-pixel from the lossless PNG exports in
-            <code>Project 1 Spotify/screens</code> — exact except <code>--text-secondary</code> (*), which is
-            too thin to sample flat at export resolution and uses Spotify's Encore standard value, visually
-            matched. Note the action green here is <code>#55D05E</code>, not Spotify's marketing
-            <code>#1ED760</code> — that is what the design file actually uses. Type sizes are measured
-            approximations against the 393&nbsp;pt frame. Components are CSS reconstructions of the screens.
+            Colors sampled pixel-for-pixel (pngjs) and geometry measured by color-run scanning from the
+            2026-08-28 lossless exports in <code>Project 1 Spotify/</code> (360×783 = 1px per dp), copied to
+            <code>assets/case-studies/spotify/final/</code>. The typeface was identified as Montserrat by a
+            letterform lineup against the exports; this page loads it from Google Fonts so every component
+            here renders in the real face at true dp metrics. Icons are SVG tracings of the glyphs in the
+            screens. Motion durations are recommendations; the pattern is observed in the recording.
+            The legacy <code>6b. Advanced Controls</code> frame still carries old-style visuals (including
+            <code>#1ED760</code>) and was excluded from sampling except its channel-color curves.
+            The full written rules live in <a href="./spotify.md" style="color: var(--green)">spotify.md</a>.
           </p>
         </section>
       </main>
