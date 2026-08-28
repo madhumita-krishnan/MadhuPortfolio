@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>M--K — Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" />
+    <style>
+      @font-face {
+        font-family: "Madhu Hand"; font-style: normal; font-weight: 400; font-display: swap;
+        src: url(../assets/fonts/madhu-hand.woff) format("woff");
+      }
+      :root {
+        --bg-base: #f5ead3; --bg-raised: #fcf8ef;
+        --text-primary: #26332f; --text-secondary: #6b7268;
+        --ink-blue: #2a6b80; --teal-baby: #47899a;
+        --accent: #b04516; --accent-deep: #7c2d0e; --accent-press: #9a3a10;
+        --accent-wash: #f2dfc5; --text-on-accent: #f6f0e2;
+        --line: rgba(38, 51, 47, 0.16);
+        --font-display: "Cormorant Garamond", Georgia, serif;
+        --font-body: "DM Sans", -apple-system, "Helvetica Neue", sans-serif;
+        --font-hand: "Madhu Hand", ui-rounded, cursive;
+        --r-pill: 999px;
+        --motion-fast: 180ms;
+        --ease-standard: cubic-bezier(0.33, 0, 0.2, 1);
+        --space: 8px;
+      }
+      html, body {
+        margin: 0; padding: 0; background: var(--bg-base); color: var(--text-primary);
+        font-family: var(--font-body); -webkit-font-smoothing: antialiased;
+      }
+      .page {
+        min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto;
+        padding: calc(var(--space) * 4); box-sizing: border-box;
+      }
+      header .wordmark {
+        font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.02em;
+        text-decoration: none; color: var(--text-primary);
+      }
+      main {
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        gap: calc(var(--space) * 4); max-width: 900px; margin: 0 auto; text-align: center;
+        padding: calc(var(--space) * 6) 0;
+      }
+      .eyebrow {
+        font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--accent); font-weight: 500;
+      }
+      h1 {
+        font-family: var(--font-display); font-weight: 300;
+        font-size: clamp(2.8rem, 7vw, 5.2rem); line-height: 1.05; color: var(--ink-blue); margin: 0;
+      }
+      p.sub {
+        font-family: var(--font-hand); color: var(--ink-blue);
+        font-size: clamp(1.18rem, 1.78vw, 1.52rem); line-height: 1.75; letter-spacing: 0.005em;
+        max-width: 640px; margin: 0; text-wrap: pretty;
+      }
+      .cta { display: flex; gap: calc(var(--space) * 3); flex-wrap: wrap; justify-content: center; }
+      .btn {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.14em;
+        text-transform: uppercase; text-decoration: none; white-space: nowrap;
+        padding: 0 26px; border-radius: var(--r-pill); min-height: 48px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1.5px solid transparent; background: none; color: var(--text-primary);
+        cursor: pointer; position: relative;
+        transition: background-color var(--motion-fast) var(--ease-standard),
+          border-color var(--motion-fast) var(--ease-standard),
+          color var(--motion-fast) var(--ease-standard);
+      }
+      .btn[data-hand]::after {
+        content: attr(data-hand); position: absolute; left: 0; right: 0; top: 50%;
+        transform: translateY(-0.52em); text-align: center;
+        font-family: var(--font-hand); font-size: 1.05em; letter-spacing: 0; text-transform: none; font-weight: 400;
+        color: var(--hand-ink, var(--ink-blue));
+        opacity: 0; transition: opacity var(--motion-fast) var(--ease-standard);
+        pointer-events: none; white-space: nowrap;
+      }
+      @media (hover: hover) {
+        .btn.btn[data-hand]:hover, .btn.btn[data-hand]:focus-visible { color: transparent; }
+        .btn[data-hand]:hover::after, .btn[data-hand]:focus-visible::after { opacity: 1; }
+      }
+      .btn.solid { background: var(--accent); color: var(--text-on-accent); --hand-ink: var(--text-on-accent); }
+      .btn.solid:hover { background: var(--accent-press); }
+      .btn.outline { border-color: var(--accent); color: var(--accent); --hand-ink: var(--accent-deep); }
+      .btn.outline:hover { background: var(--accent-press); border-color: var(--accent-press); color: var(--text-on-accent); --hand-ink: var(--text-on-accent); }
+      .btn:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 3px; }
+      .projects {
+        display: flex; gap: calc(var(--space) * 4); flex-wrap: wrap; justify-content: center;
+        padding-top: calc(var(--space) * 3); border-top: 1px solid var(--line);
+      }
+      .projects .k {
+        width: 100%; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--text-secondary); font-weight: 500; margin-bottom: 2px;
+      }
+      .btn-link {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.14em;
+        text-transform: uppercase; text-decoration: none; color: var(--ink-blue); cursor: pointer;
+        display: inline-flex; align-items: center; padding-bottom: 7px;
+        border-bottom: 1.5px solid var(--teal-baby); background: none;
+        transition: color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+      }
+      .btn-link:hover, .btn-link:focus-visible { color: var(--ink-blue); border-color: var(--ink-blue); }
+      .btn-link:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 3px; }
+      footer { font-size: 0.83rem; color: var(--text-secondary); text-align: center; }
+      footer code {
+        font-family: "SF Mono", Menlo, monospace; font-size: 0.9em;
+        background: var(--bg-raised); border: 1px solid var(--line);
+        padding: 1px 6px; border-radius: 6px;
+      }
+      .skip-link {
+        position: absolute; top: 0; left: 0; padding: 12px 18px;
+        background: var(--accent); color: var(--text-on-accent);
+        font-size: 0.8rem; text-decoration: none; transform: translateY(-100%); z-index: 100;
+      }
+      .skip-link:focus { transform: translateY(0); }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="page">
+      <header>
+        <a class="wordmark" href="../index.html">M--K</a>
+      </header>
+      <main id="main-content">
+        <p class="eyebrow">Identity manual · Design system</p>
+        <h1>One system, written down</h1>
+        <p class="sub">Everything this site does on purpose, with the exact values it does it with.</p>
+        <div class="cta">
+          <a class="btn solid" href="./site.html" data-hand="BROWSE THE DESIGN SYSTEM">Browse the design system</a>
+          <a class="btn outline" href="./README.md" data-hand="READ THE RULES">Read the rules</a>
+        </div>
+        <div class="projects">
+          <span class="k">Project design systems</span>
+          <a class="btn-link" href="./stack.html">Stack</a>
+          <a class="btn-link" href="./spotify.html">Spotify Mix</a>
+          <a class="btn-link" href="./driftwood.html">Driftwood</a>
+        </div>
+      </main>
+      <footer>
+        Tokens live in <code>data/theme.json</code> — edit a value, run the build, and every page follows.
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Mix — Design System Showcase</title>
+    <style>
+      :root {
+        /* ── Surfaces — sampled 1:1 from the Figma PNG exports ── */
+        --base: #121212;
+        --raised: #202020;
+        --sheet: #2b2b2b;
+        --control: #333333;
+        --hairline: #292929;
+        --outline: #373737;
+        --field: #585657;
+
+        /* ── Ink ── */
+        --white: #ffffff;
+        --text-secondary: #b3b3b3; /* Encore standard, visually matched */
+
+        /* ── Green — the one action color ── */
+        --green: #55d05e;
+        --wave-bright: #5bd266;
+        --wave-deep: #266837;
+
+        /* ── Camelot key badges ── */
+        --key-pink: #f8b8ff;
+        --key-lavender: #dfbaff;
+        --key-sky: #53cffc;
+
+        /* ── Warning (hard blend) ── */
+        --ember: #3d190b;
+        --orange: #dc5a00;
+        --orange-bright: #f99734;
+
+        /* ── Type ── */
+        --font: "Circular Std", "Circular Spotify Text", -apple-system, "Helvetica Neue", Arial, sans-serif;
+        --text-sheet-title: 700 22px/1.2 var(--font);
+        --text-nav: 700 17px/1.3 var(--font);
+        --text-song: 500 16px/1.3 var(--font);
+        --text-body: 400 15px/1.45 var(--font);
+        --text-artist: 400 13px/1.35 var(--font);
+        --text-chip: 500 14px/1.2 var(--font);
+        --text-badge: 700 11px/1 var(--font);
+        --text-button: 700 15px/1.2 var(--font);
+
+        /* ── Space & radius ── */
+        --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px;
+        --r-pill: 999px;
+        --r-card: 12px;
+        --r-chip: 10px;
+        --r-badge: 5px;
+        --r-art: 4px;
+      }
+      html, body {
+        margin: 0; padding: 0;
+        background: var(--base);
+        color: var(--white);
+        font: var(--text-body);
+        -webkit-font-smoothing: antialiased;
+      }
+      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      nav {
+        position: sticky; top: 0; align-self: start;
+        padding: var(--s-8); background: var(--raised);
+        border-right: 1px solid var(--hairline);
+        height: 100vh; box-sizing: border-box;
+      }
+      nav .nav__brand {
+        font: var(--text-nav);
+        padding-bottom: var(--s-6); border-bottom: 1px solid var(--outline);
+        margin-bottom: 12px;
+      }
+      nav .nav__brand em { font-style: normal; color: var(--green); }
+      nav a {
+        display: block; padding: 10px 0; text-decoration: none;
+        color: var(--text-secondary); font: var(--text-artist); font-size: 14px;
+      }
+      nav a:hover, nav a:focus-visible { color: var(--green); }
+      main { padding: var(--s-8); max-width: 1100px; }
+      section { padding: var(--s-8) 0; border-bottom: 1px solid var(--hairline); }
+      section h2 { font: 700 30px/1.1 var(--font); margin: 0 0 var(--s-6); }
+      section h3 { font: var(--text-nav); margin: var(--s-8) 0 var(--s-4); }
+      .section-intro { color: var(--text-secondary); max-width: 720px; margin: 0 0 var(--s-6); }
+      .section-intro strong { color: var(--white); }
+
+      /* Swatches */
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-4); }
+      .swatch { background: var(--raised); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
+      .swatch__color { height: 80px; }
+      .swatch__meta { padding: var(--s-3); }
+      .swatch__label { display: block; font: var(--text-artist); font-weight: 700; color: var(--white); margin-bottom: 4px; }
+      .swatch__name, .swatch__hex {
+        display: block; font-family: "SF Mono", Menlo, monospace;
+        font-size: 12px; color: var(--text-secondary); word-break: break-all;
+      }
+
+      /* Type samples */
+      .type-sample { padding: var(--s-4) 0; border-bottom: 1px dashed var(--hairline); }
+      .type-sample:last-of-type { border-bottom: none; }
+      .type-sample__meta {
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+        color: var(--text-secondary); margin-top: var(--s-2);
+      }
+
+      .demo-row { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: center; padding: var(--s-3) 0; }
+      .demo-row__label {
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+        color: var(--text-secondary); min-width: 130px;
+      }
+      .space-chip { display: inline-block; background: var(--white); }
+
+      /* ── Components, rebuilt 1:1 from the screens ── */
+      .top-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        width: 420px; max-width: 100%; padding: 12px 0;
+      }
+      .top-bar .cancel { color: var(--text-secondary); font: var(--text-body); }
+      .top-bar .title { font: var(--text-nav); }
+      .top-bar .save { color: var(--green); font: var(--text-body); font-weight: 500; }
+
+      .song-row {
+        display: flex; align-items: center; gap: 12px;
+        width: 460px; max-width: 100%;
+      }
+      .song-row__art {
+        width: 44px; height: 44px; border-radius: var(--r-art); flex: none;
+        background: linear-gradient(135deg, #7a4a2b, #2e1e12);
+      }
+      .song-row__main { flex: 1; min-width: 0; }
+      .song-row__title { font: var(--text-song); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .song-row__artist {
+        font: var(--text-artist); color: var(--text-secondary);
+        display: flex; align-items: center; gap: 5px; margin-top: 3px;
+      }
+      .song-row__artist .dl {
+        width: 13px; height: 13px; border-radius: 50%; background: var(--green);
+        color: var(--base); font-size: 9px; display: inline-flex;
+        align-items: center; justify-content: center; font-weight: 700;
+      }
+      .song-row__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
+      .song-row__grab { color: var(--text-secondary); font-size: 16px; flex: none; }
+
+      .bpm-chip {
+        border: 1px solid var(--hairline); border-radius: var(--r-chip);
+        padding: 5px 9px; font: var(--text-artist); color: var(--white);
+        display: inline-block; background: transparent;
+      }
+      .key-badge {
+        display: inline-block; border-radius: var(--r-badge);
+        padding: 3px 7px; font: var(--text-badge); color: var(--base);
+      }
+
+      .preset-chip {
+        background: var(--control); color: var(--white); border: none;
+        font: var(--text-chip); padding: 10px 18px; border-radius: 8px; cursor: pointer;
+      }
+      .preset-chip.is-selected { background: var(--white); color: var(--base); font-weight: 700; }
+
+      .filter-pill {
+        background: var(--control); color: var(--white); border: none;
+        font: var(--text-chip); padding: 9px 16px; border-radius: var(--r-pill); cursor: pointer;
+      }
+      .filter-pill.is-selected { background: var(--green); color: var(--base); font-weight: 700; }
+
+      .cta {
+        background: var(--green); color: var(--base); border: none;
+        font: var(--text-button); padding: 14px 26px; border-radius: var(--r-pill); cursor: pointer;
+      }
+      .text-btn { background: none; border: none; color: var(--white); font: var(--text-button); cursor: pointer; }
+
+      .action-card {
+        background: var(--sheet); border-radius: var(--r-card);
+        padding: 14px 16px; width: 420px; max-width: 100%; box-sizing: border-box;
+        display: flex; align-items: center; gap: 12px;
+      }
+      .action-card__icon { font-size: 17px; flex: none; }
+      .action-card__text b { display: block; font: var(--text-song); }
+      .action-card__text span { font: var(--text-artist); color: var(--text-secondary); }
+      .action-card__chev { margin-left: auto; color: var(--text-secondary); }
+
+      .warn-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--ember); border-radius: var(--r-pill);
+        padding: 8px 16px; font: var(--text-chip); color: var(--orange-bright);
+      }
+      .warn-chip b { color: var(--orange-bright); font-weight: 700; }
+      .warn-chip .dot { color: var(--orange); }
+
+      .bars-pill, .auto-pill {
+        display: inline-flex; align-items: center; gap: 7px;
+        border: 1px solid var(--outline); border-radius: var(--r-pill);
+        background: var(--base); color: var(--white);
+        font: var(--text-chip); padding: 8px 16px; cursor: pointer;
+      }
+      .search-pill {
+        display: flex; align-items: center; gap: 10px;
+        background: var(--field); border-radius: var(--r-pill);
+        padding: 12px 18px; width: 380px; max-width: 100%; box-sizing: border-box;
+        color: #d7d5d6; font: var(--text-body);
+      }
+      .round-add {
+        width: 32px; height: 32px; border-radius: 50%;
+        border: 1.5px solid var(--text-secondary); background: none;
+        color: var(--white); font-size: 16px; cursor: pointer;
+      }
+
+      .waveform { display: flex; align-items: center; gap: 2px; height: 56px; }
+      .waveform i {
+        width: 3px; border-radius: 2px; display: block;
+        background: linear-gradient(180deg, var(--wave-bright), var(--wave-deep));
+      }
+
+      /* Screens */
+      .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-4); }
+      .screen-strip figure { margin: 0; }
+      .screen-strip img { width: 100%; height: auto; display: block; border-radius: var(--r-card); border: 1px solid var(--hairline); }
+      .screen-strip figcaption { font: var(--text-artist); font-size: 11px; color: var(--text-secondary); padding-top: 6px; }
+
+      .provenance { font: var(--text-artist); color: var(--text-secondary); max-width: 720px; }
+      code { font-family: "SF Mono", Menlo, monospace; font-size: 0.9em; }
+      @media (max-width: 720px) {
+        .layout { grid-template-columns: 1fr; }
+        nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--hairline); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav aria-label="Sections">
+        <div class="nav__brand">Spotify Mix <em>●</em><br /><span style="color: var(--text-secondary); font-weight: 400; font-size: 13px">showcase</span></div>
+        <a href="#brand">Brand</a>
+        <a href="#colors">Colors</a>
+        <a href="#type">Type</a>
+        <a href="#space">Spacing &amp; radius</a>
+        <a href="#components">Components</a>
+        <a href="#screens">Screens</a>
+      </nav>
+      <main>
+        <section id="brand">
+          <p style="font: var(--text-badge); letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin: 0">Design system</p>
+          <h2 style="margin-top: 8px">Spotify&nbsp;Mix</h2>
+          <p class="section-intro">
+            A redesign that lives <strong>inside Spotify's dark Encore language</strong>: near-black
+            surfaces, white ink, one green for every action — plus a small extension layer this
+            project adds: Camelot key badges, bpm chips, and an ember warning treatment for hard blends.
+          </p>
+          <div class="demo-row">
+            <button class="cta">✦&nbsp; Smart Reorder</button>
+            <span class="key-badge" style="background: var(--key-lavender)">7A</span>
+            <span class="key-badge" style="background: var(--key-pink)">8A</span>
+            <span class="key-badge" style="background: var(--key-sky)">11B</span>
+            <span class="warn-chip">⚠ <b>hard blend</b> <span class="dot">·</span> Add bridge song ›</span>
+          </div>
+        </section>
+
+        <section id="colors">
+          <h2>Colors</h2>
+          <p class="section-intro">
+            Every hex sampled <strong>1:1 from the lossless PNG exports</strong> of the screens.
+          </p>
+
+          <h3>Surfaces</h3>
+          <p class="section-intro">Four elevations of near-black. Depth comes from lightness steps, never shadows.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #121212"></div><div class="swatch__meta"><span class="swatch__label">Base</span><span class="swatch__name">--base</span><span class="swatch__hex">#121212</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #202020"></div><div class="swatch__meta"><span class="swatch__label">Raised</span><span class="swatch__name">--raised</span><span class="swatch__hex">#202020</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #2b2b2b"></div><div class="swatch__meta"><span class="swatch__label">Sheet / card</span><span class="swatch__name">--sheet</span><span class="swatch__hex">#2B2B2B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #333333"></div><div class="swatch__meta"><span class="swatch__label">Control / chip</span><span class="swatch__name">--control</span><span class="swatch__hex">#333333</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #292929"></div><div class="swatch__meta"><span class="swatch__label">Hairline / chip border</span><span class="swatch__name">--hairline</span><span class="swatch__hex">#292929</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #585657"></div><div class="swatch__meta"><span class="swatch__label">Search field</span><span class="swatch__name">--field</span><span class="swatch__hex">#585657</span></div></div>
+          </div>
+
+          <h3>Ink</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #ffffff"></div><div class="swatch__meta"><span class="swatch__label">White</span><span class="swatch__name">--white</span><span class="swatch__hex">#FFFFFF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b3b3b3"></div><div class="swatch__meta"><span class="swatch__label">Text secondary</span><span class="swatch__name">--text-secondary</span><span class="swatch__hex">#B3B3B3 *</span></div></div>
+          </div>
+
+          <h3>Green</h3>
+          <p class="section-intro">One green does everything: Save, Suggested, Smart Reorder, the bright end of the waveform.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #55d05e"></div><div class="swatch__meta"><span class="swatch__label">Action green</span><span class="swatch__name">--green</span><span class="swatch__hex">#55D05E</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: linear-gradient(90deg, #5bd266, #266837)"></div><div class="swatch__meta"><span class="swatch__label">Waveform ramp</span><span class="swatch__name">--wave-bright → --wave-deep</span><span class="swatch__hex">#5BD266 → #266837</span></div></div>
+          </div>
+
+          <h3>Camelot key badges</h3>
+          <p class="section-intro">The extension layer: each song carries its key as a pastel badge with dark text, tinted per Camelot position.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #f8b8ff"></div><div class="swatch__meta"><span class="swatch__label">Key — pink (8A/9A)</span><span class="swatch__name">--key-pink</span><span class="swatch__hex">#F8B8FF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #dfbaff"></div><div class="swatch__meta"><span class="swatch__label">Key — lavender (7A)</span><span class="swatch__name">--key-lavender</span><span class="swatch__hex">#DFBAFF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #53cffc"></div><div class="swatch__meta"><span class="swatch__label">Key — sky (11B)</span><span class="swatch__name">--key-sky</span><span class="swatch__hex">#53CFFC</span></div></div>
+          </div>
+
+          <h3>Warning — hard blend</h3>
+          <p class="section-intro">Rough transitions get an ember treatment: burnt-orange surface, bright orange ink. Loud enough to notice, calm enough to sit inside a list.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #3d190b"></div><div class="swatch__meta"><span class="swatch__label">Ember surface</span><span class="swatch__name">--ember</span><span class="swatch__hex">#3D190B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #dc5a00"></div><div class="swatch__meta"><span class="swatch__label">Orange core</span><span class="swatch__name">--orange</span><span class="swatch__hex">#DC5A00</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #f99734"></div><div class="swatch__meta"><span class="swatch__label">Orange bright</span><span class="swatch__name">--orange-bright</span><span class="swatch__hex">#F99734</span></div></div>
+          </div>
+        </section>
+
+        <section id="type">
+          <h2>Type</h2>
+          <p class="section-intro">
+            Spotify's <strong>Circular</strong> throughout (this page falls back to your system
+            font if Circular isn't installed). Weight does the hierarchy; color only separates
+            primary from secondary.
+          </p>
+          <div class="type-sample">
+            <div style="font: var(--text-sheet-title)">Let's Mix! 🎉</div>
+            <div class="type-sample__meta">--text-sheet-title · 700 · 22/26</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-nav)">Add a bridge song</div>
+            <div class="type-sample__meta">--text-nav · 700 · 17/22</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-song)">To Zion (feat. Carlos Santana)</div>
+            <div class="type-sample__meta">--text-song · 500 · 16/21</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-body); color: var(--text-secondary)">We'll organize your playlist for you – or you can do it manually.</div>
+            <div class="type-sample__meta">--text-body · 400 · 15/22</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-artist); color: var(--text-secondary)">Ms. Lauryn Hill, Carlos Santana</div>
+            <div class="type-sample__meta">--text-artist · 400 · 13/18</div>
+          </div>
+          <div class="type-sample">
+            <div><span class="key-badge" style="background: var(--key-lavender)">7A</span>&nbsp; <span class="bpm-chip">173 bpm</span></div>
+            <div class="type-sample__meta">--text-badge · 700 · 11 &nbsp;·&nbsp; chip 13</div>
+          </div>
+        </section>
+
+        <section id="space">
+          <h2>Spacing &amp; radius</h2>
+          <p class="section-intro">4&nbsp;pt grid. Radius is the opposite of Stack: <strong>everything actionable is a pill</strong>; containers are 12, badges 5, art 4.</p>
+          <div class="demo-row"><span class="demo-row__label">--s-1 (4px)</span><span class="space-chip" style="width: 4px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-2 (8px)</span><span class="space-chip" style="width: 8px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-3 (12px)</span><span class="space-chip" style="width: 12px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-4 (16px)</span><span class="space-chip" style="width: 16px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-6 (24px)</span><span class="space-chip" style="width: 24px; height: 24px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-8 (32px)</span><span class="space-chip" style="width: 32px; height: 32px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--r-pill (999)</span><span style="display: inline-block; width: 64px; height: 28px; border-radius: 999px; background: var(--green)"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--r-card (12px)</span><span style="display: inline-block; width: 44px; height: 44px; border-radius: 12px; background: var(--sheet); border: 1px solid var(--outline)"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--r-badge (5px)</span><span class="key-badge" style="background: var(--key-sky)">11B</span></div>
+        </section>
+
+        <section id="components">
+          <h2>Components</h2>
+
+          <h3>Top bar</h3>
+          <div class="demo-row">
+            <div class="top-bar">
+              <span class="cancel">Cancel</span>
+              <span class="title">Add a bridge song</span>
+              <span class="save">Save</span>
+            </div>
+          </div>
+
+          <h3>Song row</h3>
+          <div class="demo-row">
+            <div class="song-row">
+              <span class="song-row__art"></span>
+              <span class="song-row__main">
+                <span class="song-row__title">To Zion (feat. Carlos Santana)</span>
+                <span class="song-row__artist"><span class="dl">↓</span>Ms. Lauryn Hill, Carlos Santana</span>
+              </span>
+              <span class="song-row__meta">
+                <span class="bpm-chip">173 bpm</span>
+                <span class="key-badge" style="background: var(--key-lavender)">7A</span>
+              </span>
+              <span class="song-row__grab">≡</span>
+            </div>
+          </div>
+
+          <h3>Preset chips</h3>
+          <div class="demo-row">
+            <button class="preset-chip">✦ Auto</button>
+            <button class="preset-chip">Fade</button>
+            <button class="preset-chip">Rise</button>
+            <button class="preset-chip is-selected">Blend</button>
+            <button class="preset-chip">Warp</button>
+          </div>
+
+          <h3>Filter pills</h3>
+          <div class="demo-row">
+            <button class="filter-pill is-selected">Suggested</button>
+            <button class="filter-pill">Recently Played</button>
+            <button class="filter-pill">Liked Songs</button>
+          </div>
+
+          <h3>Buttons</h3>
+          <div class="demo-row">
+            <span class="demo-row__label">primary</span>
+            <button class="cta">✦&nbsp; Smart Reorder</button>
+            <button class="text-btn">Edit Manually</button>
+          </div>
+          <div class="demo-row">
+            <span class="demo-row__label">inline</span>
+            <button class="bars-pill">4 bars ⌄</button>
+            <button class="auto-pill">✦ Auto ›</button>
+            <button class="round-add" aria-label="Add">+</button>
+          </div>
+
+          <h3>Action cards</h3>
+          <div class="demo-row" style="flex-direction: column; align-items: flex-start">
+            <div class="action-card">
+              <span class="action-card__icon">🎵</span>
+              <span class="action-card__text"><b>Add a bridge song</b><span>Insert a song between these two</span></span>
+              <span class="action-card__chev">›</span>
+            </div>
+            <div class="action-card">
+              <span class="action-card__icon">⚙️</span>
+              <span class="action-card__text"><b>Advanced controls</b></span>
+              <span class="action-card__chev">›</span>
+            </div>
+          </div>
+
+          <h3>Hard-blend warning</h3>
+          <div class="demo-row">
+            <span class="warn-chip">⚠ <b>hard blend</b> <span class="dot">·</span> Add bridge song ›</span>
+          </div>
+
+          <h3>Search</h3>
+          <div class="demo-row">
+            <div class="search-pill">🔍 What would you like to add?</div>
+          </div>
+
+          <h3>Waveform</h3>
+          <div class="demo-row">
+            <div class="waveform" role="img" aria-label="Waveform sample in the green ramp">
+              <i style="height: 18px"></i><i style="height: 30px"></i><i style="height: 44px"></i><i style="height: 26px"></i><i style="height: 52px"></i><i style="height: 38px"></i><i style="height: 20px"></i><i style="height: 46px"></i><i style="height: 56px"></i><i style="height: 32px"></i><i style="height: 24px"></i><i style="height: 42px"></i><i style="height: 16px"></i><i style="height: 36px"></i><i style="height: 50px"></i><i style="height: 28px"></i><i style="height: 14px"></i><i style="height: 34px"></i><i style="height: 22px"></i><i style="height: 12px"></i>
+            </div>
+          </div>
+        </section>
+
+        <section id="screens">
+          <h2>Screens</h2>
+          <p class="section-intro">The exported frames these tokens were sampled from.</p>
+          <div class="screen-strip">
+            <figure><img src="../assets/case-studies/spotify/raw/1-hero-image.png" alt="Making mixing easy onboarding" /><figcaption>1 Hero — making mixing easy</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/raw/2-spotify-main-mix-screen.png" alt="Edit transition" /><figcaption>2 Edit transition</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/raw/3-smart-reorder-pop-up-screen.png" alt="Smart reorder pop-up" /><figcaption>3 Smart reorder</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/raw/5a-hard-blend-highlight-screen.png" alt="Hard blend highlighted" /><figcaption>5a Hard blend flagged</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/raw/5b-add-a-bridge-song-screen.png" alt="Add a bridge song" /><figcaption>5b Add a bridge song</figcaption></figure>
+            <figure><img src="../assets/case-studies/spotify/raw/6-playlist-redesign.png" alt="Playlist redesign" /><figcaption>6 Playlist redesign</figcaption></figure>
+          </div>
+        </section>
+
+        <section style="border-bottom: none">
+          <p class="provenance">
+            Provenance: colors sampled pixel-for-pixel from the lossless PNG exports in
+            <code>Project 1 Spotify/screens</code> — exact except <code>--text-secondary</code> (*), which is
+            too thin to sample flat at export resolution and uses Spotify's Encore standard value, visually
+            matched. Note the action green here is <code>#55D05E</code>, not Spotify's marketing
+            <code>#1ED760</code> — that is what the design file actually uses. Type sizes are measured
+            approximations against the 393&nbsp;pt frame. Components are CSS reconstructions of the screens.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

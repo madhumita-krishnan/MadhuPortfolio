@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>M--K — Identity Manual &amp; Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" />
+    <style>
+      @font-face {
+        font-family: "Madhu Hand"; font-style: normal; font-weight: 400; font-display: swap;
+        src: url(../assets/fonts/madhu-hand.woff) format("woff");
+      }
+      :root {
+        /* Day tokens — verbatim from data/theme.json */
+        --bg-base: #f5ead3; --bg-raised: #fcf8ef;
+        --bg-deep: #1e3634; --bg-deep-raised: #2a4744; --bg-deep-shade: #122320;
+        --text-primary: #26332f; --text-secondary: #6b7268; --text-caption: #575e54;
+        --ink-blue: #2a6b80; --ink-blue-hover: #215a6e;
+        --brand-blue: #47899a; --teal-baby: #47899a; --hero-hush: #5697a8;
+        --accent: #b04516; --accent-deep: #7c2d0e; --accent-press: #9a3a10;
+        --accent-bright: #ca5a1e; --accent-wash: #f2dfc5; --accent-mute: #ddb49a; --accent-baby: #c9683b;
+        --sage: #94a99e; --sage-deep: #78907f; --sun: #c4892f;
+        --text-on-deep: #f6f0e2; --text-on-deep-secondary: #b3c6c0; --text-on-accent: #f6f0e2;
+        --line: rgba(38, 51, 47, 0.16); --line-accent: rgba(176, 69, 22, 0.28);
+        --shadow-soft: rgba(30, 54, 52, 0.12); --shadow-mid: rgba(30, 54, 52, 0.28);
+        --font-display: "Cormorant Garamond", Georgia, serif;
+        --font-body: "DM Sans", -apple-system, "Helvetica Neue", sans-serif;
+        --font-hand: "Madhu Hand", ui-rounded, cursive;
+        --r-card: 18px; --r-media: 14px; --r-pill: 999px;
+        --motion-fast: 180ms; --motion-base: 320ms; --motion-slow: 640ms;
+        --ease-standard: cubic-bezier(0.33, 0, 0.2, 1);
+        --ease-enter: cubic-bezier(0.2, 0.7, 0.2, 1);
+        --space: 8px;
+      }
+      html, body {
+        margin: 0; padding: 0; background: var(--bg-base); color: var(--text-primary);
+        font-family: var(--font-body); font-size: 15.5px; line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      .layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+      nav.side {
+        position: sticky; top: 0; align-self: start; height: 100vh; box-sizing: border-box;
+        overflow-y: auto; padding: 32px 28px; background: var(--bg-raised);
+        border-right: 1px solid var(--line);
+      }
+      nav.side .brand {
+        font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.02em;
+        padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+      }
+      nav.side .part {
+        font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--accent); margin: 20px 0 6px; font-weight: 500;
+      }
+      nav.side a { display: block; padding: 7px 0; text-decoration: none; color: var(--text-secondary); font-size: 0.88rem; }
+      nav.side a:hover, nav.side a:focus-visible { color: var(--accent-deep); }
+      main { padding: 40px clamp(24px, 4vw, 64px); max-width: 1060px; }
+      section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+      h1 { font-family: var(--font-display); font-weight: 300; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1.05; color: var(--ink-blue); margin: 0 0 12px; }
+      h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1.2; color: var(--ink-blue); margin: 0 0 20px; }
+      h3 { font-family: var(--font-body); font-weight: 500; font-size: 1.05rem; margin: 34px 0 12px; }
+      .eyebrow {
+        font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--accent); font-weight: 500; margin-bottom: 12px;
+      }
+      p.lead { font-size: 1.08rem; line-height: 1.65; color: var(--text-secondary); max-width: 66ch; margin: 0 0 16px; }
+      p.lead strong, td strong { color: var(--text-primary); font-weight: 500; }
+      .note {
+        border-left: 3px solid var(--accent); background: var(--bg-raised);
+        padding: 12px 16px; border-radius: 0 10px 10px 0; max-width: 700px; margin: 14px 0;
+        font-size: 0.92rem; color: var(--text-caption);
+      }
+      .note b { color: var(--text-primary); font-weight: 500; }
+      code {
+        font-family: "SF Mono", Menlo, monospace; font-size: 0.85em;
+        background: var(--bg-raised); border: 1px solid var(--line);
+        padding: 1px 6px; border-radius: 6px;
+      }
+      /* spec tables */
+      .spec { width: 100%; border-collapse: collapse; margin: 12px 0 8px; font-size: 0.88rem; }
+      .spec th {
+        text-align: left; font-weight: 500; font-size: 0.7rem; letter-spacing: 0.1em;
+        text-transform: uppercase; color: var(--text-secondary);
+        padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line);
+      }
+      .spec td { padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+      .spec td:first-child { white-space: nowrap; }
+      .spec .mono, .spec td code { font-family: "SF Mono", Menlo, monospace; font-size: 0.82rem; }
+      .dot { display: inline-block; width: 15px; height: 15px; border-radius: 4px; vertical-align: -3px; margin-right: 8px; border: 1px solid var(--line); }
+      .table-scroll { overflow-x: auto; }
+
+      /* swatch cards */
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 14px; margin: 14px 0; }
+      .swatch { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--r-media); overflow: hidden; }
+      .swatch > i { display: block; height: 68px; }
+      .swatch div { padding: 10px 12px; }
+      .swatch b { display: block; font-weight: 500; font-size: 0.85rem; }
+      .swatch span { display: block; font-family: "SF Mono", Menlo, monospace; font-size: 0.74rem; color: var(--text-secondary); margin-top: 2px; }
+
+      /* do / don't */
+      .dd { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 16px 0; }
+      .dd article { border: 1px solid var(--line); border-radius: var(--r-media); overflow: hidden; background: var(--bg-raised); }
+      .dd header { padding: 8px 16px; font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; font-weight: 500; }
+      .dd .do header { background: rgba(120, 144, 127, 0.22); color: #3c5a46; }
+      .dd .dont header { background: rgba(176, 69, 22, 0.14); color: var(--accent-deep); }
+      .dd ul { margin: 0; padding: 12px 16px 14px 32px; font-size: 0.92rem; color: var(--text-caption); }
+      .dd li { margin: 6px 0; }
+
+      /* live component demos — the real values, restated */
+      .demo { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px; border: 1px dashed var(--line-accent); border-radius: var(--r-media); margin: 12px 0; }
+      .demo.deep { background: var(--bg-deep); border-style: solid; border-color: transparent; }
+      .demo-tag { font-family: "SF Mono", Menlo, monospace; font-size: 0.72rem; color: var(--text-secondary); width: 100%; }
+      .demo.deep .demo-tag { color: var(--text-on-deep-secondary); }
+
+      .btn {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.14em;
+        text-transform: uppercase; text-decoration: none; white-space: nowrap;
+        padding: 0 26px; border-radius: var(--r-pill); min-height: 48px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        border: 1.5px solid transparent; background: none; color: var(--text-primary);
+        cursor: pointer; position: relative;
+        transition: background-color var(--motion-fast) var(--ease-standard),
+          border-color var(--motion-fast) var(--ease-standard),
+          color var(--motion-fast) var(--ease-standard);
+      }
+      .btn[data-hand]::after {
+        content: attr(data-hand); position: absolute; left: 0; right: 0; top: 50%;
+        transform: translateY(-0.52em); text-align: center;
+        font-family: var(--font-hand); font-size: 1.05em; letter-spacing: 0; text-transform: none; font-weight: 400;
+        color: var(--hand-ink, var(--ink-blue));
+        opacity: 0; transition: opacity var(--motion-fast) var(--ease-standard); pointer-events: none; white-space: nowrap;
+      }
+      @media (hover: hover) {
+        .btn.btn[data-hand]:hover, .btn.btn[data-hand]:focus-visible { color: transparent; }
+        .btn[data-hand]:hover::after, .btn[data-hand]:focus-visible::after { opacity: 1; }
+      }
+      .btn.solid { background: var(--accent); color: var(--text-on-accent); --hand-ink: var(--text-on-accent); }
+      .btn.solid:hover { background: var(--accent-press); }
+      .btn.solid:active { background: var(--accent-deep); }
+      .btn.outline { border-color: var(--accent); color: var(--accent); --hand-ink: var(--accent-deep); }
+      .btn.outline:hover { background: var(--accent-press); border-color: var(--accent-press); color: var(--text-on-accent); --hand-ink: var(--text-on-accent); }
+      .btn.teal { border-color: var(--teal-baby); color: var(--ink-blue); }
+      .btn.teal:hover { background: var(--ink-blue); border-color: var(--ink-blue); color: var(--text-on-accent); }
+      .btn.sm { min-height: 38px; padding: 0 20px; font-size: 0.68rem; letter-spacing: 0.12em; }
+      .btn.lg { min-height: 62px; padding: 0 40px; font-size: 0.9rem; letter-spacing: 0.16em; }
+      .btn.icon { padding: 0; width: 56px; min-width: 56px; height: 56px; min-height: 56px; border-radius: 50%; font-size: 1rem; letter-spacing: 0; }
+      .btn[disabled] { background: var(--accent-mute); border-color: transparent; color: var(--bg-raised); cursor: not-allowed; pointer-events: none; }
+      .btn:focus-visible, .btn-link:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 3px; }
+      .chip {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.72rem; letter-spacing: 0.13em;
+        text-transform: uppercase; display: inline-flex; align-items: center; gap: 10px;
+        padding: 0 20px; min-height: 40px; border-radius: var(--r-pill);
+        border: 1.5px solid var(--teal-baby); color: var(--ink-blue);
+      }
+      .chip.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--teal-baby); flex: none; }
+      .btn-link {
+        font-family: var(--font-body); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.14em;
+        text-transform: uppercase; text-decoration: none; color: var(--accent); cursor: pointer;
+        display: inline-flex; align-items: center; gap: 12px; padding-bottom: 7px;
+        border-bottom: 1.5px solid var(--accent); background: none;
+        transition: color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), gap var(--motion-fast) var(--ease-standard);
+      }
+      .btn-link:hover { color: var(--accent-deep); border-color: var(--accent-deep); gap: 18px; }
+      .on-deep-chip { border-color: rgba(246, 240, 226, 0.18); color: var(--text-on-deep-secondary); }
+
+      .type-sample { padding: 16px 0; border-bottom: 1px dashed var(--line); }
+      .type-sample:last-of-type { border-bottom: none; }
+      .type-meta { font-family: "SF Mono", Menlo, monospace; font-size: 0.74rem; color: var(--text-secondary); margin-top: 8px; }
+
+      .hand { font-family: var(--font-hand); color: var(--ink-blue); }
+      .provenance { font-size: 0.85rem; color: var(--text-secondary); max-width: 700px; }
+      @media (max-width: 760px) {
+        .layout { grid-template-columns: 1fr; }
+        nav.side { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="side" aria-label="Sections">
+        <div class="brand">M--K</div>
+        <p class="part">Part one — identity</p>
+        <a href="#principles">Principles</a>
+        <a href="#mark">The mark</a>
+        <a href="#hand">The hand</a>
+        <a href="#treatment">Colour treatment</a>
+        <a href="#imagery">Imagery</a>
+        <a href="#dd">Do &amp; don't</a>
+        <p class="part">Part two — system</p>
+        <a href="#color">Colour tokens</a>
+        <a href="#type">Typography</a>
+        <a href="#space">Spacing</a>
+        <a href="#radius">Radius</a>
+        <a href="#elevation">Elevation &amp; glass</a>
+        <a href="#motion">Motion</a>
+        <a href="#icons">Iconography</a>
+        <a href="#states">Interaction states</a>
+        <a href="#patterns">Design patterns</a>
+        <a href="#components">Core components</a>
+        <a href="#platforms">Platforms</a>
+        <a href="#provenance">Provenance</a>
+      </nav>
+      <main>
+        <section id="principles" style="padding-top: 12px">
+          <p class="eyebrow">Identity manual &amp; design system</p>
+          <h1>How M--K is made</h1>
+          <p class="lead">
+            The brand is <strong>terracotta on warm cream</strong>: fired-clay rust, sage stems, deep teal-green,
+            and Madhu's own handwriting — all of it sampled out of one watercolour reference,
+            <code>color pallete I like.png</code>. This document is written to be executable: every rule carries
+            its exact value, so a person or an AI assistant can implement it without judgment calls.
+          </p>
+          <h3>The three governing principles</h3>
+          <table class="spec">
+            <tr><th style="width: 220px">Principle</th><th>What it means in practice</th></tr>
+            <tr><td><strong>The watercolour lives in the artwork, not the controls</strong></td><td>Art is painterly (blooms, paint-wash, the pot); UI is flat. A control is a solid fill or a flat 1.5px outline and nothing else — no glass, no texture, no shadow, no gradient on anything clickable. Exceptions are named and closed: the play icon, the nav bar, and the day/night toggle.</td></tr>
+            <tr><td><strong>Sampled, not styled</strong></td><td>Palette values are taken from the reference image's pixels, not chosen by eye — and from the top-decile-chroma pixels of each region, not the mean, because averaging a watercolour region always greys it out. Any retuning starts from the reference, never from a colour picker.</td></tr>
+            <tr><td><strong>One system, two lights</strong></td><td>Every colour has a day value and a night value; night is the same palette moved onto its deep-green surface with rust/teal resampled lighter so every text pairing keeps WCAG AA. Nothing is designed for one mode only.</td></tr>
+          </table>
+        </section>
+
+        <section id="mark">
+          <h2>The mark</h2>
+          <table class="spec">
+            <tr><th style="width: 190px">Element</th><th>Specification</th></tr>
+            <tr><td>Wordmark</td><td><span style="font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.02em">M--K</span> — the literal string "M--K" set in Cormorant Garamond 400, <code>1.35rem</code>, tracking <code>+0.02em</code>, colour <code>--text-primary</code>. It is type, never a drawn logo. The full name "Madhumita Krishnan · New York" appears only in the footer.</td></tr>
+            <tr><td>Favicon</td><td>The clay pot (her painting), generated by <code>tools/make-favicon.js</code> with per-size alpha gamma so the silhouette stays readable at 16px. Never a letterform favicon.</td></tr>
+            <tr><td>Avatar / external</td><td><code>assets/linkedin-400.png</code> for profile surfaces. Same pot, square crop.</td></tr>
+            <tr><td>Domain</td><td><code>m--k.me</code> — the wordmark is the domain. Written into <code>dist/CNAME</code> by the build; change it in <code>build.js</code>, never in GitHub settings.</td></tr>
+            <tr><td>Client logos</td><td>Every mark on the logo wall is masked to <strong>one ink</strong> — <code>--brand-blue #47899A</code>, deepening to <code>--ink-blue</code> on hover — because nine logos in nine house styles only read as one row if they share a colour. The logos are credentials, not headlines, so the ink is deliberately quiet.</td></tr>
+            <tr><td>The one exception</td><td>The education credentials row (University of Michigan Block M, Google G) keeps <strong>official full-colour marks</strong> — accreditation reads as accreditation only in the issuer's own colours. This is the single full-colour logo exception on the site.</td></tr>
+            <tr><td>On dark grounds</td><td>On the deep-green case-study bands, controls and chips flip to the cream inks (<code>--text-on-deep #F6F0E2</code>, secondary <code>#B3C6C0</code>). Never place the terracotta outline on deep green — the line is too close in value to the ground.</td></tr>
+          </table>
+        </section>
+
+        <section id="hand">
+          <h2>The hand</h2>
+          <p class="lead">
+            <span class="hand" style="font-size: 1.35rem">Her handwriting is a real typeface, and it is the brand's voice.</span>
+          </p>
+          <table class="spec">
+            <tr><th style="width: 190px">Rule</th><th>Specification</th></tr>
+            <tr><td>The face</td><td><code>Madhu Hand</code> — cut from her own written sheets by <code>tools/make-hand-font.js</code>. Self-hosted (<code>assets/fonts/madhu-hand.woff</code>, ~14KB, <code>font-display: swap</code>), fallback <code>ui-rounded, cursive</code>. The <code>.ttf</code> ships beside it for download/Figma use but is never listed as a <code>src</code>.</td></tr>
+            <tr><td>Where it appears</td><td>Exactly two places: (1) the hero sentence — the one paragraph of the site set in it, <code>clamp(1.18rem, 1.78vw, 1.52rem)</code>, line-height <code>1.75</code> (her descenders reach 64% of the em; tighter and a g's tail lands in the next line), max measure 860px / 75 characters; (2) the hover face of every control (see Interaction states).</td></tr>
+            <tr><td>Never</td><td>Body copy, headings, captions, labels at rest. The hand is a voice, not a text face.</td></tr>
+            <tr><td>Metrics constant</td><td>Overlaying the hand on a sans label uses <code>top: 50%; transform: translateY(-.52em)</code> — the −0.52em constant folds both faces' metrics and scales with type size. Use it verbatim for any new hand-swap.</td></tr>
+            <tr><td>No digits</td><td>The face has no numerals. Copy set in the hand must be rewritten to avoid digits — never faux-fill with another font. (The "!" exists, composed from her l and full stop.)</td></tr>
+            <tr><td>Its colour</td><td>Always <code>--ink-blue</code> on light grounds (the wordmark blue of her reference sheet); on fills it takes the fill's label colour.</td></tr>
+          </table>
+        </section>
+
+        <section id="treatment">
+          <h2>Colour treatment</h2>
+          <table class="spec">
+            <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
+            <tr><td>Display type is blue</td><td>All display headings (Cormorant Garamond) set in <code>--ink-blue #2A6B80</code> — the way the wordmark is blue on her reference sheet. Body copy stays the warm near-black <code>--text-primary #26332F</code> so long paragraphs read easily.</td></tr>
+            <tr><td>Terracotta is for action</td><td><code>--accent #B04516</code> marks things to do: primary buttons, eyebrows, links, the active tab, the cursor dot. It is not a decoration colour.</td></tr>
+            <tr><td>Teal is for quiet</td><td><code>--teal-baby #47899A</code> carries tertiary controls, chips, the logo wall. The invariant is <strong>3:1 contrast on cream</strong>, not the hex — if cream changes, resample the teal to hold 3:1.</td></tr>
+            <tr><td>The paper is load-bearing</td><td><code>--bg-base #F5EAD3</code> is the exact paper of the reference image. The hero blooms are cut out of that photograph, so the cream showing through gaps inside a petal <em>is the page</em>. Shift this token and the bloom gaps stop matching.</td></tr>
+            <tr><td>Deep green is the stage</td><td><code>--bg-deep #1E3634</code> grounds case-study heroes, project cards and the night surface. Cream inks on it; never terracotta outlines.</td></tr>
+            <tr><td>One watch-out</td><td>Rust type on a rust petal is the one pairing on this site with no contrast at all — the hero eyebrow must never land on the solid middle of a bloom.</td></tr>
+          </table>
+        </section>
+
+        <section id="imagery">
+          <h2>Imagery</h2>
+          <table class="spec">
+            <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
+            <tr><td>The blooms are literal</td><td>Hero art is cut pixel-for-pixel out of <code>color pallete I like.png</code> by <code>tools/lift-flowers.js</code>. <strong>Never generate, redraw or "recreate" flower art</strong> — every drawn attempt was rejected. To change the art, move the crop rectangles in <code>CUTS</code>.</td></tr>
+            <tr><td>No decorative gradients</td><td>Her instruction: "don't use gradients — think more paint strokes texture." Large surfaces are flat palette tokens with her own brush swatch masked over them (<code>--accent-wash</code> through <code>paint-wash.png</code>, alpha-only). Gradients survive only as <em>materials</em>: the glass rim, the titanium phone rail, browser chrome, and the legibility scrim over photos.</td></tr>
+            <tr><td>Grain</td><td>A fixed fractal-noise layer at <code>opacity: .045</code> sits over everything (z-index 60) — paper, not effect.</td></tr>
+            <tr><td>Device frames</td><td>Phones and browser windows are pure CSS, no bezel images. Phone chrome is sized in <code>cqw</code> (1% of device width); the browser in <code>--u</code> = 1 logical px of a 1280pt window (40 tab strip, 34 tabs, 12 traffic lights, 40 toolbar, 10 window radius). Feed phones <em>un-framed</em> screens; within 5% of 9:19.5 they stretch, beyond that they cover-crop from the top.</td></tr>
+            <tr><td>Delight is drawn, then coded</td><td>The stick figure who lives on the hero type, the koi leaping from the pot, the dog — all originate as her drawings/objects and are lifted (alpha-from-graphite, gamma 0.55 for the dog), never illustrated by software. Same rule as the blooms.</td></tr>
+            <tr><td>Media weight</td><td>Videos are compressed MP4s under ~5MB with poster frames, <code>preload="none"</code>; images ship width/height or aspect-ratio and <code>loading="lazy"</code>. Nothing downloads until needed.</td></tr>
+          </table>
+        </section>
+
+        <section id="dd">
+          <h2>Do &amp; don't</h2>
+          <div class="dd">
+            <article class="do">
+              <header>Do</header>
+              <ul>
+                <li>Set every button label in CAPITALS, and give every control the handwriting hover</li>
+                <li>Keep display type in ink-blue and body in the warm near-black</li>
+                <li>Use the deep-green band for case-study heroes, with cream inks on it</li>
+                <li>Run every user-facing string through <code>typo()</code> so no word sits alone on a last line</li>
+                <li>Check both modes: every change must hold in day and night</li>
+                <li>Keep captions at ≥ 12pt with AA contrast (<code>--text-caption</code> exists for this)</li>
+              </ul>
+            </article>
+            <article class="dont">
+              <header>Don't</header>
+              <ul>
+                <li>Don't generate or redraw the flower art — the blooms are cutouts of her painting</li>
+                <li>Don't add decorative gradients, hover shimmers/sweeps, or drop shadows on controls</li>
+                <li>Don't use arrow glyphs in UI copy or controls — a link grows its gap instead</li>
+                <li>Don't put glass on anything except the nav, the day/night toggle, and the four company chips</li>
+                <li>Don't write headings that run past two lines, end in periods, or hold two sentences</li>
+                <li>Don't blur the whole hero (rejected — the blur belongs to the eyebrow treatment only)</li>
+                <li>Don't set digits in Madhu Hand — the face has none</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <!-- ══════════════════ PART TWO — SYSTEM ══════════════════ -->
+
+        <section id="color">
+          <p class="eyebrow">Part two — the system</p>
+          <h2>Colour tokens</h2>
+          <p class="lead">
+            Single source of truth: <code>data/theme.json</code> → emitted as CSS custom properties on
+            <code>:root</code> (day) and <code>[data-theme="night"]</code> (night). Components reference tokens only —
+            a raw hex in component code is a defect.
+          </p>
+          <h3>Surfaces</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><i style="background: #f5ead3"></i><div><b>bg-base</b><span>#F5EAD3 · night #182421</span></div></div>
+            <div class="swatch"><i style="background: #fcf8ef"></i><div><b>bg-raised</b><span>#FCF8EF · night #20302C</span></div></div>
+            <div class="swatch"><i style="background: #1e3634"></i><div><b>bg-deep</b><span>#1E3634 · night #101B19</span></div></div>
+            <div class="swatch"><i style="background: #2a4744"></i><div><b>bg-deep-raised</b><span>#2A4744 · night #1C2C29</span></div></div>
+            <div class="swatch"><i style="background: #122320"></i><div><b>bg-deep-shade</b><span>#122320 · night #0A1211</span></div></div>
+            <div class="swatch"><i style="background: #f2dfc5"></i><div><b>accent-wash</b><span>#F2DFC5 · night #223029</span></div></div>
+          </div>
+          <h3>Ink</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><i style="background: #26332f"></i><div><b>text-primary</b><span>#26332F · night #EAE4D3</span></div></div>
+            <div class="swatch"><i style="background: #6b7268"></i><div><b>text-secondary</b><span>#6B7268 · night #A9B3A7</span></div></div>
+            <div class="swatch"><i style="background: #575e54"></i><div><b>text-caption</b><span>#575E54 · night #C2CBBE</span></div></div>
+            <div class="swatch"><i style="background: #f6f0e2"></i><div><b>text-on-deep</b><span>#F6F0E2 · night #F2EEE0</span></div></div>
+            <div class="swatch"><i style="background: #b3c6c0"></i><div><b>text-on-deep-secondary</b><span>#B3C6C0 (both modes)</span></div></div>
+          </div>
+          <h3>The blues</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><i style="background: #2a6b80"></i><div><b>ink-blue</b><span>#2A6B80 · night #85C4D6</span></div></div>
+            <div class="swatch"><i style="background: #215a6e"></i><div><b>ink-blue-hover</b><span>#215A6E · night #A5D6E4</span></div></div>
+            <div class="swatch"><i style="background: #47899a"></i><div><b>brand-blue / teal-baby</b><span>#47899A · night #74AEBF</span></div></div>
+            <div class="swatch"><i style="background: #5697a8"></i><div><b>hero-hush</b><span>#5697A8 · night #6BA4B5</span></div></div>
+          </div>
+          <h3>The terracottas</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><i style="background: #b04516"></i><div><b>accent</b><span>#B04516 · night #E08A52</span></div></div>
+            <div class="swatch"><i style="background: #9a3a10"></i><div><b>accent-press</b><span>#9A3A10 · night #C9703B</span></div></div>
+            <div class="swatch"><i style="background: #7c2d0e"></i><div><b>accent-deep</b><span>#7C2D0E · night #EFA97C</span></div></div>
+            <div class="swatch"><i style="background: #ca5a1e"></i><div><b>accent-bright</b><span>#CA5A1E · night #E8935F</span></div></div>
+            <div class="swatch"><i style="background: #c9683b"></i><div><b>accent-baby</b><span>#C9683B · night #D98A5F</span></div></div>
+            <div class="swatch"><i style="background: #ddb49a"></i><div><b>accent-mute (disabled)</b><span>#DDB49A · night #6E5138</span></div></div>
+          </div>
+          <h3>Support</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><i style="background: #94a99e"></i><div><b>sage</b><span>#94A99E (both modes)</span></div></div>
+            <div class="swatch"><i style="background: #78907f"></i><div><b>sage-deep</b><span>#78907F · night #A9BEAC</span></div></div>
+            <div class="swatch"><i style="background: #c4892f"></i><div><b>sun</b><span>#C4892F · night #D9A251</span></div></div>
+            <div class="swatch"><i style="background: rgba(38,51,47,.16); background-image: linear-gradient(45deg, #f5ead3 25%, transparent 25%, transparent 75%, #f5ead3 75%)"></i><div><b>line</b><span>rgba(38,51,47,.16) · night rgba(234,228,211,.18)</span></div></div>
+          </div>
+          <div class="note"><b>Contrast contracts, not suggestions:</b> accent on cream = 4.74:1 (AA text). Baby teal on cream = 3:1 — that ratio is the invariant, not the hex. Night pairs were verified in-session: all body text ≥ 4.5:1, display/UI ≥ 3:1. <code>--text-on-accent</code> is cream by day and flips <em>dark</em> (#1D130B) at night because night's accent fills are lighter.</div>
+          <div class="note"><b>Shadows are tokens too:</b> <code>shadow-soft rgba(30,54,52,.12)</code> · <code>shadow-mid .28</code> · <code>shadow-strong .42</code> · <code>shadow-clay rgba(124,45,14,.38)</code>. At night all four go to black-based values (.35/.5/.65/.55).</div>
+        </section>
+
+        <section id="type">
+          <h2>Typography</h2>
+          <p class="lead">
+            Three faces, three jobs: <strong>Cormorant Garamond</strong> (display — weights 300/400/500 + italic 400),
+            <strong>DM Sans</strong> (body and UI — optical-size axis, 300/400/500), <strong>Madhu Hand</strong> (voice).
+            Google Fonts serves the first two; the hand is self-hosted.
+          </p>
+          <div class="type-sample">
+            <div style="font-family: var(--font-display); font-weight: 300; font-size: clamp(3.2rem, 8vw, 7rem); line-height: 1; letter-spacing: -0.005em; color: var(--ink-blue)">Hi, I'm Madhu</div>
+            <div class="type-meta">hero h1 · Cormorant Garamond 300 · clamp(3.2rem, 8vw, 7rem) · lh 1 · −0.005em · ink-blue</div>
+          </div>
+          <div class="type-sample">
+            <div class="hand" style="font-size: clamp(1.18rem, 1.78vw, 1.52rem); line-height: 1.75; letter-spacing: 0.005em; max-width: 860px">Architecture taught me how to guide people with design.</div>
+            <div class="type-meta">hero line · Madhu Hand · clamp(1.18rem, 1.78vw, 1.52rem) · lh 1.75 · +0.005em · ink-blue · measure ≤ 860px / 75ch</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-family: var(--font-display); font-size: clamp(1.8rem, 3.4vw, 2.7rem); line-height: 1.2; color: var(--ink-blue)">Selected work, told properly</div>
+            <div class="type-meta">section title · CG 400 · clamp(1.8rem, 3.4vw, 2.7rem) · lh 1.2 · max 26ch · ink-blue</div>
+          </div>
+          <div class="type-sample">
+            <div class="eyebrow" style="margin: 0">Quick introduction</div>
+            <div class="type-meta">eyebrow · DM Sans 500 · .78rem · +0.14em · UPPERCASE · accent</div>
+          </div>
+          <div class="type-sample">
+            <div style="color: var(--text-secondary); font-size: 1.02rem; line-height: 1.65; max-width: 62ch">Body copy is DM Sans in the warm secondary ink, a 62-character measure, and a 1.65 line height — built for being read, not skimmed.</div>
+            <div class="type-meta">body · DM Sans 400 · 1.02rem · lh 1.65 · max 62ch · text-secondary (intro scale: clamp(1.05rem, 1.7vw, 1.25rem))</div>
+          </div>
+          <div class="table-scroll"><table class="spec">
+            <tr><th>Role</th><th>Face / weight</th><th>Size</th><th>Tracking / case</th><th>Colour</th></tr>
+            <tr><td>Case-study title</td><td class="mono">CG 400</td><td class="mono">clamp(2rem, 4.6vw, 3.6rem) · lh 1.12 · ≤22ch</td><td class="mono">balance; .long → clamp(1.65, 3.1vw, 2.5rem) ≤32ch</td><td>text-on-deep / text-primary</td></tr>
+            <tr><td>Case-study section heading</td><td class="mono">CG 400</td><td class="mono">clamp(1.5rem, 2.8vw, 2.2rem) · lh 1.2 · ≤34ch</td><td class="mono">—</td><td>ink-blue</td></tr>
+            <tr><td>Stat value</td><td class="mono">CG 400</td><td class="mono">clamp(1.9rem, 3.4vw, 2.8rem) · lh 1.05</td><td class="mono">—</td><td>accent-deep</td></tr>
+            <tr><td>Project-card outcome</td><td class="mono">CG 400</td><td class="mono">clamp(1.45rem, 2.7vw, 2.15rem) · lh 1.28 · ≤24ch</td><td class="mono">—</td><td>inherits band</td></tr>
+            <tr><td>Footer big link</td><td class="mono">CG 400</td><td class="mono">clamp(2rem, 5vw, 3.6rem)</td><td class="mono">—</td><td>text-primary</td></tr>
+            <tr><td>Wordmark</td><td class="mono">CG 400</td><td class="mono">1.35rem</td><td class="mono">+0.02em</td><td>text-primary</td></tr>
+            <tr><td>Button label</td><td class="mono">DM Sans 500</td><td class="mono">.75rem (sm .68 / lg .9)</td><td class="mono">+0.14em (sm .12 / lg .16) · CAPS</td><td>per variant</td></tr>
+            <tr><td>Chip label</td><td class="mono">DM Sans 500</td><td class="mono">.72rem</td><td class="mono">+0.13em · CAPS</td><td>ink-blue</td></tr>
+            <tr><td>Nav link</td><td class="mono">DM Sans 400</td><td class="mono">.74rem</td><td class="mono">+0.05em</td><td>text-secondary → accent-deep</td></tr>
+            <tr><td>Case-study label / meta dt</td><td class="mono">DM Sans 500</td><td class="mono">.72rem / .68rem</td><td class="mono">+0.14em · CAPS</td><td>accent / text-secondary</td></tr>
+            <tr><td>Cursor-pill label</td><td class="mono">DM Sans 500</td><td class="mono">.62rem</td><td class="mono">+0.16em · CAPS</td><td>bg-base on accent</td></tr>
+          </table></div>
+          <h3>Composition rules</h3>
+          <table class="spec">
+            <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
+            <tr><td>Never a widow</td><td>Every rendered string passes through <code>typo()</code>, which ties the last two words in <code>&lt;span class="nw"&gt;</code> (white-space: nowrap); <code>text-wrap: pretty</code> on all text elements handles the rest. Use <code>typo()</code> for prose, <code>esc()</code> only for attributes and single words.</td></tr>
+            <tr><td>Headings</td><td>Maximum two lines at any viewport (build enforces with per-string width checks); a heading that fits one line stays one line. No periods at the end, never two sentences.</td></tr>
+            <tr><td>Hand measure</td><td>Sentences in the hand stay under 75 characters per line; each sentence starts its own line (<code>.hs</code> blocks, 0.5em between) but the block reads as one paragraph.</td></tr>
+          </table>
+        </section>
+
+        <section id="space">
+          <h2>Spacing</h2>
+          <p class="lead">One base unit: <code>--space: 8px</code>. All rhythm is <code>calc(var(--space) * N)</code> — no free pixels in layout.</p>
+          <table class="spec">
+            <tr><th>Step</th><th>Value</th><th>Typical use</th></tr>
+            <tr><td class="mono">×1</td><td class="mono">8px</td><td>micro gaps (card kicker to title)</td></tr>
+            <tr><td class="mono">×2 – ×3</td><td class="mono">16–24px</td><td>within a component: paragraph gaps, label→content</td></tr>
+            <tr><td class="mono">×4 – ×5</td><td class="mono">32–40px</td><td>component clusters: eyebrow→headline, hero copy→hand line</td></tr>
+            <tr><td class="mono">×6 – ×8</td><td class="mono">48–64px</td><td>between blocks inside a section; cs-meta padding (×5/×6)</td></tr>
+            <tr><td>Fixed chrome</td><td class="mono">14px / 18px</td><td>nav offset from top: 14px; day/night toggle corner inset: 18px (14px + safe-area on phones)</td></tr>
+            <tr><td>Content widths</td><td class="mono">820 / 900 / 1240px</td><td>nav bar max 820; meta column 900; sections and hero bands cap at 1240</td></tr>
+            <tr><td>Band padding</td><td class="mono">clamp(28px, 4.5vw, 56px)</td><td>case-study hero band; corner controls (ds-link) sit on the same clamp</td></tr>
+          </table>
+        </section>
+
+        <section id="radius">
+          <h2>Radius</h2>
+          <table class="spec">
+            <tr><th>Token</th><th>Value</th><th>Applies to</th></tr>
+            <tr><td class="mono">--r-card</td><td class="mono">18px</td><td>cards, panels, stat cards</td></tr>
+            <tr><td class="mono">--r-media</td><td class="mono">14px</td><td>images, video wells, media frames</td></tr>
+            <tr><td class="mono">--r-pill</td><td class="mono">999px</td><td>every control: buttons, chips, nav bar, toggle</td></tr>
+            <tr><td>Icon buttons</td><td class="mono">50%</td><td>true circles — 56px (default) / 42px (sm), <code>aspect-ratio: 1</code></td></tr>
+            <tr><td>Hero band</td><td class="mono">24px</td><td>case-study hero container</td></tr>
+            <tr><td>Browser frame</td><td class="mono">10 --u</td><td>CSS Mac window radius, in frame units</td></tr>
+          </table>
+          <div class="note"><b>The shape language:</b> controls are pills, surfaces are 14–24px. There are no sharp corners and no mid-size radii on controls — a control that isn't a pill or a circle is off-system.</div>
+        </section>
+
+        <section id="elevation">
+          <h2>Elevation &amp; glass</h2>
+          <h3>Elevation</h3>
+          <table class="spec">
+            <tr><th>Level</th><th>Recipe</th><th>Use</th></tr>
+            <tr><td>Flat</td><td class="mono">none</td><td>all controls (the control sheet bans shadows on them)</td></tr>
+            <tr><td>Resting card</td><td class="mono">0 10px 30px var(--shadow-soft)</td><td>glass panels, cards</td></tr>
+            <tr><td>Media</td><td class="mono">0 24–30px 44–80px var(--shadow-mid/strong)</td><td>device frames, hero media</td></tr>
+            <tr><td>Clay</td><td class="mono">var(--shadow-clay) rgba(124,45,14,.38)</td><td>warm shadow reserved for terracotta objects (the pot)</td></tr>
+          </table>
+          <h3>The liquid glass material</h3>
+          <p class="lead">Four things make glass read as glass — the full recipe, exactly:</p>
+          <table class="spec">
+            <tr><th style="width: 200px">Layer</th><th>Exact value</th></tr>
+            <tr><td>1 · It bends the scene</td><td><code>backdrop-filter: url(#glassWarp) blur(20px) saturate(1.5)</code> — an SVG low-frequency <code>feDisplacementMap</code>, so edges behind the panel visibly shift. The warp list is closed at six elements: the nav, the four company chips, the day/night toggle. Do not promote it to all glass.</td></tr>
+            <tr><td>2 · Fill</td><td><code>linear-gradient(150deg, rgba(255,255,255,.50) 0%, rgba(255,252,244,.42) 52%, rgba(255,255,255,.26) 100%)</code> + <code>border: 1px solid rgba(255,255,255,.60)</code></td></tr>
+            <tr><td>3 · Light</td><td>inset crescents, not a 1px line: <code>inset 0 1.5px 1.5px -1px rgba(255,255,255,.98)</code> (top), <code>inset 0 -2px 2px -1px …,.62</code> (bottom), <code>inset ±1.5px 0 2px -1px …,.42</code> (sides), glow <code>inset 0 0 18px …,.16</code>, drop <code>0 10px 30px var(--shadow-soft)</code></td></tr>
+            <tr><td>4 · Prism rim</td><td>a conic rainbow masked to a 1.5px edge ring, <code>mix-blend-mode: screen</code>, opacity .9 (night .45): stops at 22° rgba(255,120,128,.34), 42° rgba(255,214,96,.30), 62° rgba(126,240,186,.26), 82° rgba(112,178,255,.34), 102° rgba(192,152,255,.24)</td></tr>
+            <tr><td>Night values</td><td>fill rgba(24,36,33,.46), border rgba(255,255,255,.18), crescents .35/.20/.14, glow .06</td></tr>
+            <tr><td>Banned</td><td>No sweeping hover shimmer, ever — it reads as a swipe effect, not a material.</td></tr>
+          </table>
+          <div class="note"><b>Performance rule with a scar:</b> an animated <code>feTurbulence</code> inside a backdrop-filter once cost 17fps while idle. Glass filters are static; nothing inside a backdrop-filter animates.</div>
+        </section>
+
+        <section id="motion">
+          <h2>Motion</h2>
+          <table class="spec">
+            <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+            <tr><td class="mono">--motion-fast</td><td class="mono">180ms</td><td>hovers: colour, border, hand-swap opacity, link gap</td></tr>
+            <tr><td class="mono">--motion-base</td><td class="mono">320ms</td><td>component state changes</td></tr>
+            <tr><td class="mono">--motion-slow</td><td class="mono">640ms</td><td>reveals, section fades</td></tr>
+            <tr><td class="mono">--ease-standard</td><td class="mono">cubic-bezier(.33, 0, .2, 1)</td><td>default for everything</td></tr>
+            <tr><td class="mono">--ease-enter</td><td class="mono">cubic-bezier(.2, .7, .2, 1)</td><td>things arriving (cursor pill roll-out .34s)</td></tr>
+            <tr><td>Theme crossing</td><td class="mono">520ms view-transition</td><td>one composited cross-fade of two page snapshots; 600ms per-property fallback (minus box-shadow — repainting shadowed spreads each frame caused the lag)</td></tr>
+            <tr><td>Case-study read</td><td class="mono">scroll-linked</td><td>one <code>.cs-section</code> at a time: heading, body, evidence and captions crossfade in and out together — one thought on screen at a time</td></tr>
+          </table>
+          <h3>Motion rules</h3>
+          <table class="spec">
+            <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
+            <tr><td>Reduced motion</td><td><code>prefers-reduced-motion</code> disables the cursor, the theme animation, reveals and the creatures — plus a fail-safe that forces all content visible even if animations never run. On iOS, Reduce Motion also blocks video autoplay: treat "everything broken" reports as this first.</td></tr>
+            <tr><td>Autoplay</td><td>Panel clips always autoplay (muted, looped, in-view). Low Power Mode vetoes <code>play()</code> — retry in-view clips on <code>touchend</code>. Videos pause off-screen.</td></tr>
+            <tr><td>Nothing floats</td><td>Flat controls never drift or bob (contradicts "solid fills only"). The only idle motion is the glass float and the creatures.</td></tr>
+            <tr><td>Delight is physical</td><td>The koi's leap is a true projectile arc out of the pot (every pot click re-launches); the stick figure grips real glyph outlines, feet snap-planted — never floating, no fake holds. New characters follow the same law: real physics, real anchors.</td></tr>
+          </table>
+        </section>
+
+        <section id="icons">
+          <h2>Iconography</h2>
+          <table class="spec">
+            <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
+            <tr><td>System</td><td>There is no icon library. Icons are rare, purposeful, and drawn inline as SVG in <code>currentColor</code>, stroke-only, ~1.7px stroke at a 20px viewBox.</td></tr>
+            <tr><td>The play icon</td><td>▶ inside <code>.btn.icon.solid</code> (56px circle, terracotta fill, cream glyph) — the one icon allowed on media, and one of the named exceptions to "controls are flat fills only".</td></tr>
+            <tr><td>The design-system door</td><td>The swatch glyph (square, circle, two rounded tiles) in a 46px outlined circle, top-right of each case-study hero band; hover reveals "REVIEW DESIGN SYSTEM" in the hand.</td></tr>
+            <tr><td>Status dot</td><td>7px filled circle inside <code>.chip.live</code> — teal by default, accent on <code>.chip.accent.live</code>. Dots are opt-in; taxonomy chips never carry one.</td></tr>
+            <tr><td>No arrows</td><td>No arrow glyphs anywhere in UI. Directionality is expressed by motion (link gap 12→18px) or by the cursor pill.</td></tr>
+          </table>
+        </section>
+
+        <section id="states">
+          <h2>Interaction states</h2>
+          <p class="lead">Every control has all five states, and every control hover-swaps into the hand. Try these — they are live.</p>
+          <div class="demo">
+            <span class="demo-tag">default · hover (hand) · active · disabled · focus (Tab)</span>
+            <button class="btn solid" data-hand="SAY HEY!">Say hey!</button>
+            <button class="btn outline" data-hand="RESUME">Resume</button>
+            <button class="btn teal" data-hand="REVIEW">Review</button>
+            <button class="btn solid" disabled>Disabled</button>
+          </div>
+          <div class="table-scroll"><table class="spec">
+            <tr><th>State</th><th>Solid (primary)</th><th>Outline (secondary)</th><th>Teal (tertiary)</th></tr>
+            <tr><td>Default</td><td class="mono">fill accent · label text-on-accent</td><td class="mono">1.5px accent line · accent label</td><td class="mono">1.5px teal-baby line · ink-blue label</td></tr>
+            <tr><td>Hover</td><td class="mono">fill accent-press + hand label (cream)</td><td class="mono">fills accent-press · cream + hand</td><td class="mono">fills ink-blue · cream + hand</td></tr>
+            <tr><td>Active</td><td class="mono">fill accent-deep</td><td class="mono">fill accent-deep</td><td class="mono">fill bg-deep</td></tr>
+            <tr><td>Disabled</td><td class="mono" colspan="3">fill accent-mute · label bg-raised · cursor not-allowed — colour only, never transparency (blooms must not show through a control)</td></tr>
+            <tr><td>Focus</td><td class="mono" colspan="3">outline 2px ink-blue, offset 3px — one ring for every control on the site, teal so it never disappears against a terracotta fill</td></tr>
+          </table></div>
+          <div class="note"><b>The hand-swap, exactly:</b> <code>data-hand</code> carries the label already capitalised. On hover/focus the sans label goes <code>color: transparent</code> and a <code>::after</code> in Madhu Hand fades in over it — <code>font-size: 1.05em</code>, positioned <code>top: 50%; translateY(-.52em)</code>, opacity 180ms. The overlay is absolute so the pill never changes width. Hover-only media query: touch devices keep the sans label.</div>
+          <div class="note"><b>Contrast decisions baked into the states:</b> the teal button's hover fill is ink-blue, not baby teal (cream on baby teal is 3.6:1; on ink-blue 5.4:1). The outline hover fills with accent-press, not accent, because the cream label needs the darker step. Do not "simplify" these.</div>
+        </section>
+
+        <section id="patterns">
+          <h2>Design patterns</h2>
+          <table class="spec">
+            <tr><th style="width: 210px">Pattern</th><th>Specification</th></tr>
+            <tr><td>The floating chrome</td><td>Two fixed glass pills and only two: the nav (top-center, 14px inset, max 820px, radius 999) and the day/night toggle (bottom-left, 18px inset). Both wear glass + warp because they float over scrolling content — a flat fill pinned over moving content reads as a sticker. Everything else that looks like chrome is in-flow and flat.</td></tr>
+            <tr><td>Night mode</td><td>Sun-timed: the boot script in <code>&lt;head&gt;</code> stamps <code>data-theme</code> on <code>&lt;html&gt;</code> <em>before first paint</em> — stored choice first, otherwise the viewer's own sunrise/sunset. The toggle's label names the mode you'll <em>get</em> ("Night Mode" by day), rim is a hairline at half strength matching its label ink (day: rgba(176,69,22,.5) + accent label; night: rgba(133,196,214,.55) + ink-blue label).</td></tr>
+            <tr><td>The cursor</td><td>Fine pointers only, motion allowed only: a 13px solid dot (accent by day, ink-blue by night, shadow rgba(38,51,47,.22)). Over a case-study card it flips three times (rotateY 0→1080°, .5s) then rolls out into a 140×34px pill reading "I'M CURIOUS" (.62rem caps, bg-base ink). First Tab returns the real cursor.</td></tr>
+            <tr><td>Phone edge fades</td><td>iOS-style progressive blur strips top and bottom on phones: three stacked backdrop layers per strip — blur 18px at the screen edge, 8px to ~60% of the strip, 3px full height — every mask a smoothstep so no fade has a findable start. z-index 40: under the nav (50) and toggle (80), so the pills float on softened ground.</td></tr>
+            <tr><td>Case-study reading</td><td>One section at a time: each <code>.cs-section</code> (label + heading + body + evidence) crossfades as a unit on scroll. Headlines state the business problem, not the product question. Structure: hero band → intro → meta → stats band → sections → reflection → next-project card.</td></tr>
+            <tr><td>Before/after</td><td>Comparisons are labeled columns ("Before" / "After — tested winners"); phone pairs are labeled "Spotify today" / "Redesign". Header and intro must not repeat each other.</td></tr>
+            <tr><td>Content pipeline</td><td>All copy lives in <code>data/*.json</code> ("the database" — there is no backend, ever). The build compiles JSON → static HTML; every string passes <code>typo()</code>. QA: append <code>?shot=1200</code> to any URL for a settled, fully-revealed render at 1200px scroll.</td></tr>
+            <tr><td>Compatibility floor</td><td>No regex lookbehind in shipped JS (one literal once killed all of app.js on iOS &lt; 16.4). Feature-detect, never UA-sniff. The site must boot with JS disabled — reveals fail open.</td></tr>
+            <tr><td>Monitoring</td><td><code>tools/site-check.js</code> runs daily (6am ET GitHub Action + cloud routine): checks the live domain, tokens, and media health.</td></tr>
+          </table>
+        </section>
+
+        <section id="components">
+          <h2>Core components</h2>
+
+          <h3>Buttons — the control sheet</h3>
+          <div class="demo">
+            <span class="demo-tag">.btn.solid · .btn.outline · .btn.teal — min-height 48px · pad 0 26px · radius 999</span>
+            <button class="btn solid" data-hand="SAY HEY!">Say hey!</button>
+            <button class="btn outline" data-hand="RESUME">Resume</button>
+            <button class="btn teal" data-hand="CASE STUDY">Case study</button>
+          </div>
+          <div class="demo">
+            <span class="demo-tag">sizes: .sm 38px / default 48px / .lg 62px · .icon 56px circle (play — the flat-fill exception)</span>
+            <button class="btn solid sm" data-hand="SMALL">Small</button>
+            <button class="btn solid lg" data-hand="LARGE">Large</button>
+            <button class="btn icon solid" aria-label="Play">▶</button>
+          </div>
+
+          <h3>Chips — labels, not controls</h3>
+          <div class="demo">
+            <span class="demo-tag">.chip (taxonomy) · .chip.live (status, 7px dot) — no hover, no pointer: nothing happens when clicked</span>
+            <span class="chip">Research</span>
+            <span class="chip">Mobile</span>
+            <span class="chip live">Open to work</span>
+          </div>
+
+          <h3>Link — the quietest rank</h3>
+          <div class="demo">
+            <span class="demo-tag">.btn-link — 1.5px bottom border clear of the letterforms; hover deepens colour and grows gap 12→18px (no arrow glyph)</span>
+            <a class="btn-link" href="#components">All projects</a>
+          </div>
+
+          <h3>On the deep band</h3>
+          <div class="demo deep">
+            <span class="demo-tag">.on-deep — quiet ranks flip to cream inks; solid stays terracotta</span>
+            <button class="btn solid" data-hand="SAY HEY!">Say hey!</button>
+            <button class="btn outline" style="border-color: var(--text-on-deep-secondary); color: var(--text-on-deep)">Resume</button>
+            <span class="chip on-deep-chip">Concept</span>
+          </div>
+
+          <h3>The rest of the kit</h3>
+          <table class="spec">
+            <tr><th style="width: 210px">Component</th><th>Specification</th></tr>
+            <tr><td>Nav bar</td><td>Glass pill: <code>padding: 6px 6px 6px 20px</code>, gap 6, max-width 820px, radius 999. Wordmark (CG 1.35rem) left; links .74rem/+0.05em, 10×13px padding, hover = colour shift to accent-deep only (no pill highlight); "SAY HEY!" as .btn.solid.sm capping the right end → Calendly. The nav hand sits on the −.52em baseline. Links marked <code>.optional</code> drop at ≤700px.</td></tr>
+            <tr><td>Day/night toggle</td><td>Fixed bottom-left glass pill, <code>padding: 12px 18px</code>. Label + hairline rim share one ink; both faces are CSS <code>content</code> keyed off <code>[data-theme]</code> so the right words paint before JS. Hover = the hand-swap (::after is the handwriting; the rim lives on a real child <code>.tt-rim</code>).</td></tr>
+            <tr><td>Project card (home)</td><td>Deep-green band: org kicker (.7rem caps, accent-bright), outcome headline (CG, ≤24ch), description (.98rem, ≤52ch, on-deep-secondary), tags row (.7rem caps), device frame right. Card hover arms the curious cursor.</td></tr>
+            <tr><td>Stat card</td><td><code>.glass</code> panel (unwarped), radius 18: display-size value in accent-deep over a .88rem secondary label. Lives on the paint-washed stats band.</td></tr>
+            <tr><td>Case-study hero band</td><td>Radius 24, padding clamp(28px, 4.5vw, 56px), deep green (or accent-wash when <code>heroTone: light</code>); kicker → title → tagline → tag chips → hero media; the ds-link icon rides the top-right corner on the same padding clamp.</td></tr>
+            <tr><td>Meta list</td><td><code>dl.cs-meta</code>: dt .68rem/+0.14em caps text-secondary, dd .95rem; external links in accent-deep, <code>target="_blank" rel="noopener"</code>.</td></tr>
+            <tr><td>Quote</td><td>Display-face blockquote with a cite line; quotes come from real research participants and are never invented.</td></tr>
+            <tr><td>Footer</td><td>Big CG link (email), then the mark + note row (.7rem, +0.08em). The pot stands above the footer on the right; the koi leaps from it.</td></tr>
+            <tr><td>Device frames</td><td>See Imagery — pure CSS, fed un-framed screens, aspect-checked on every build.</td></tr>
+          </table>
+        </section>
+
+        <section id="platforms">
+          <h2>Platforms</h2>
+          <p class="lead">
+            The standards above are platform-neutral on purpose — the token layer, type scale, spacing unit,
+            radii, motion curves and state rules translate 1:1. For native implementations:
+          </p>
+          <table class="spec">
+            <tr><th style="width: 210px">Standard</th><th>Web</th><th>iOS / Android</th></tr>
+            <tr><td>Units</td><td class="mono">px (1× logical)</td><td class="mono">pt / dp at the same numbers — 8pt grid, 48pt controls, 18pt cards</td></tr>
+            <tr><td>Touch targets</td><td class="mono">min-height 48px (38px .sm is desktop-only)</td><td class="mono">≥ 48×48dp always; the 38 size does not ship on touch</td></tr>
+            <tr><td>Type</td><td class="mono">clamp() scales</td><td class="mono">use each clamp's bounds as the size range; CG + DM Sans ship as bundled fonts, Madhu Hand from the .ttf</td></tr>
+            <tr><td>Glass</td><td class="mono">backdrop-filter + SVG warp</td><td class="mono">UIBlurEffect / RenderEffect at blur 20 + saturation 1.5; skip the warp where unsupported, keep crescents + rim</td></tr>
+            <tr><td>Night</td><td class="mono">data-theme attr, sun-timed</td><td class="mono">follow system appearance; same token table, text-on-accent flips dark at night</td></tr>
+            <tr><td>Motion</td><td class="mono">180/320/640ms</td><td class="mono">same durations; respect Reduce Motion / Remove animations at the OS level</td></tr>
+          </table>
+        </section>
+
+        <section id="provenance" style="border-bottom: none">
+          <h2>Provenance</h2>
+          <p class="provenance">
+            Sources, in order of authority: <code>data/theme.json</code> (every token, day and night),
+            <code>build.js</code> (component CSS and the emitted stylesheet — makeCSS() holds half the design system),
+            <code>README.md</code> (the written rules and their history — linked from this folder's hub as "the brief"),
+            and the session decision log. The whole look is versioned: <code>node tools/design-system.js list / restore &lt;name&gt;</code>
+            (current: <b>terracotta</b>; previous: <b>rainforest</b>, <b>bloom</b> — restoring swaps tokens <em>and</em> build.js together,
+            because tokens alone would drop a palette onto the wrong structure). Values in this document were copied
+            from those files verbatim on 2026-08-28; if this page and <code>theme.json</code> ever disagree, theme.json is right
+            and this page gets updated in the same commit.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

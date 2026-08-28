@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stack — Design System Showcase</title>
+    <style>
+      :root {
+        /* ── Surfaces & ink — sampled 1:1 from the Figma PNG exports ── */
+        --paper: #f4f3f0;
+        --card: #ffffff;
+        --ink: #000000;
+        --ink-soft: #111111;
+        --border: #e4e4e4;
+        --border-warm: #ebe9e4;
+        --text-secondary: #5d5d5d;
+        --text-muted: #9b9b9b;
+
+        /* ── Accent ── */
+        --red: #d50000;
+        --red-deep: #b10000;
+
+        /* ── Budget category colors ── */
+        --cat-blue: #1f6feb;
+        --cat-gold: #f5c518;
+        --cat-green: #0f7a5a;
+        --cat-purple: #7a3ea3;
+        --cat-ink: #111111;
+
+        /* ── Goal colors ── */
+        --goal-teal: #0d8b8b;
+        --goal-magenta: #c2185b;
+        --goal-violet: #6b3fd4;
+        --goal-amber: #b06a00;
+
+        /* ── Type ── */
+        --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --text-display: 700 44px/1.05 var(--font);
+        --text-stat: 700 40px/1.1 var(--font);
+        --text-title: 700 17px/1.3 var(--font);
+        --text-body: 400 15px/1.45 var(--font);
+        --text-secondary-s: 400 13px/1.4 var(--font);
+        --text-eyebrow: 700 12px/1.2 var(--font);
+        --text-tab: 500 10px/1.2 var(--font);
+
+        /* ── Space (4pt grid) & radius ── */
+        --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+        --s-5: 20px; --s-6: 24px; --s-8: 32px;
+        --radius: 0px; /* Stack is sharp-cornered everywhere */
+      }
+      html, body {
+        margin: 0; padding: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font: var(--text-body);
+        -webkit-font-smoothing: antialiased;
+      }
+      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      nav {
+        position: sticky; top: 0; align-self: start;
+        padding: var(--s-8); background: var(--card);
+        border-right: 1px solid var(--border);
+        height: 100vh; box-sizing: border-box;
+      }
+      nav .nav__brand {
+        font: var(--text-title); letter-spacing: -0.01em;
+        padding-bottom: var(--s-6); border-bottom: 1px solid var(--border);
+        margin-bottom: var(--s-5);
+      }
+      nav .nav__brand em { font-style: normal; color: var(--red); }
+      nav a {
+        display: block; padding: 10px 0; text-decoration: none;
+        color: var(--text-secondary); font: var(--text-secondary-s);
+      }
+      nav a:hover, nav a:focus-visible { color: var(--red); }
+      main { padding: var(--s-8); max-width: 1100px; }
+      section { padding: var(--s-8) 0; border-bottom: 1px solid var(--border); }
+      section h2 { font: var(--text-display); font-size: 32px; margin: 0 0 var(--s-6); letter-spacing: -0.01em; }
+      section h3 { font: var(--text-title); margin: var(--s-8) 0 var(--s-4); }
+      .section-intro { font: var(--text-body); color: var(--text-secondary); max-width: 720px; margin: 0 0 var(--s-6); }
+      .section-intro strong { color: var(--ink); }
+
+      .eyebrow {
+        font: var(--text-eyebrow); letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--red);
+      }
+      .eyebrow--grey { color: var(--text-muted); }
+
+      /* Swatches */
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-4); }
+      .swatch { border: 1px solid var(--border); background: var(--card); }
+      .swatch__color { height: 80px; }
+      .swatch__meta { padding: var(--s-3); }
+      .swatch__label { display: block; font: var(--text-secondary-s); font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+      .swatch__name, .swatch__hex {
+        display: block; font-family: "SF Mono", Menlo, monospace;
+        font-size: 12px; color: var(--text-secondary); word-break: break-all;
+      }
+
+      /* Type samples */
+      .type-sample { padding: var(--s-4) 0; border-bottom: 1px dashed var(--border); }
+      .type-sample:last-of-type { border-bottom: none; }
+      .type-sample__meta {
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+        color: var(--text-muted); margin-top: var(--s-2);
+      }
+
+      .demo-row { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: center; padding: var(--s-3) 0; }
+      .demo-row__label {
+        font-family: "SF Mono", Menlo, monospace; font-size: 12px;
+        color: var(--text-muted); min-width: 130px;
+      }
+      .space-chip { display: inline-block; background: var(--ink); }
+
+      /* ── Components, rebuilt 1:1 from the screens ── */
+      .stack-btn {
+        font: var(--text-body); font-weight: 700; border: none; cursor: pointer;
+        padding: 14px 28px; border-radius: var(--radius);
+      }
+      .stack-btn--primary { background: var(--red); color: #fff; }
+      .stack-btn--primary:active { background: var(--red-deep); }
+      .stack-btn--secondary { background: var(--border-warm); color: var(--red); }
+      .stack-btn--text { background: none; color: var(--red); padding: 8px 0; }
+
+      .date-stamp {
+        display: inline-flex; flex-direction: column; align-items: center;
+        border: 2px solid var(--red); background: var(--paper);
+        padding: 10px 14px; color: var(--red); min-width: 44px;
+      }
+      .date-stamp b { font: var(--text-stat); font-size: 28px; }
+      .date-stamp span { font: var(--text-eyebrow); letter-spacing: 0.08em; margin-top: 2px; }
+
+      .suggestion-chip {
+        display: inline-block; background: var(--card); border: 1px solid var(--border);
+        padding: 12px 16px; font: var(--text-body); color: var(--ink);
+      }
+      .ask-input { display: flex; width: 420px; max-width: 100%; }
+      .ask-input input {
+        flex: 1; border: 1px solid var(--border); border-right: none;
+        background: var(--card); padding: 14px 16px; font: var(--text-body);
+        color: var(--ink); outline: none;
+      }
+      .ask-input input::placeholder { color: var(--text-muted); }
+      .ask-input button {
+        width: 50px; background: var(--red); color: #fff; border: none;
+        font-size: 18px; cursor: pointer;
+      }
+
+      .budget-row { background: var(--card); border: 1px solid var(--border); padding: var(--s-4); width: 380px; max-width: 100%; }
+      .budget-row__top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .budget-row__name { display: flex; align-items: center; gap: 10px; font: var(--text-body); font-weight: 700; }
+      .budget-row__left { font: var(--text-body); font-weight: 700; }
+      .cat-chip { width: 12px; height: 12px; display: inline-block; }
+      .progress { height: 6px; background: var(--border); position: relative; }
+      .progress__fill { position: absolute; inset: 0 auto 0 0; }
+
+      .goal-tile { background: var(--card); border: 1px solid var(--border); width: 180px; padding-bottom: var(--s-3); }
+      .goal-tile__img { height: 96px; background: var(--border); margin: var(--s-3); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+      .goal-tile__name { font: var(--text-body); font-weight: 700; padding: 0 var(--s-3) 8px; }
+      .goal-tile .progress { margin: 0 var(--s-3); }
+
+      .check-row { display: flex; gap: 10px; align-items: center; font: var(--text-body); }
+      .check-row .box {
+        width: 18px; height: 18px; border: 2px solid var(--ink);
+        display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+      }
+
+      .tab-bar {
+        display: flex; background: var(--card); border-top: 2px solid var(--ink);
+        width: 420px; max-width: 100%;
+      }
+      .tab-bar a {
+        flex: 1; text-align: center; padding: 10px 0 12px; text-decoration: none;
+        color: var(--text-secondary); font: var(--text-tab);
+      }
+      .tab-bar a .glyph { display: block; font-size: 17px; margin-bottom: 3px; }
+      .tab-bar a.is-active { color: var(--red); font-weight: 700; }
+
+      .donut {
+        width: 150px; height: 150px; border-radius: 50%;
+        background: conic-gradient(
+          var(--goal-teal) 0 34%, var(--goal-magenta) 34% 58%,
+          var(--goal-violet) 58% 80%, var(--goal-amber) 80% 100%);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .donut::after {
+        content: "$475"; width: 96px; height: 96px; border-radius: 50%;
+        background: var(--paper); display: flex; align-items: center; justify-content: center;
+        font: var(--text-stat); font-size: 24px;
+      }
+
+      .widget { background: var(--card); border: 1px solid var(--border); padding: var(--s-4); width: 380px; max-width: 100%; }
+      .widget__top { display: flex; justify-content: space-between; font: var(--text-body); font-weight: 700; margin-bottom: 10px; }
+      .widget__note { font: var(--text-secondary-s); color: var(--text-secondary); margin-top: 10px; }
+
+      /* Screens */
+      .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-4); }
+      .screen-strip figure { margin: 0; }
+      .screen-strip img { width: 100%; height: auto; display: block; border: 1px solid var(--border); }
+      .screen-strip figcaption { font: var(--text-tab); color: var(--text-muted); padding-top: 6px; }
+
+      .provenance { font: var(--text-secondary-s); color: var(--text-muted); max-width: 720px; }
+      code { font-family: "SF Mono", Menlo, monospace; font-size: 0.9em; }
+      @media (max-width: 720px) {
+        .layout { grid-template-columns: 1fr; }
+        nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav aria-label="Sections">
+        <div class="nav__brand">Stack<em>.</em> <span style="color: var(--text-muted); font-weight: 400">showcase</span></div>
+        <a href="#brand">Brand</a>
+        <a href="#colors">Colors</a>
+        <a href="#type">Type</a>
+        <a href="#space">Spacing &amp; radius</a>
+        <a href="#components">Components</a>
+        <a href="#screens">Screens</a>
+      </nav>
+      <main>
+        <section id="brand">
+          <p class="eyebrow">Design system</p>
+          <h2 style="font: var(--text-display); margin-top: 8px">Stack</h2>
+          <p class="section-intro">
+            Swiss-editorial banking. <strong>One signal red on warm paper</strong>, black ink,
+            hairline borders, sharp corners everywhere. Color is reserved for meaning:
+            red for actions and the current moment, category colors only for data.
+          </p>
+          <div class="demo-row">
+            <span class="eyebrow">Good evening</span>
+            <span class="eyebrow eyebrow--grey">Ask before you spend</span>
+            <div class="date-stamp"><b>22</b><span>Jul</span></div>
+          </div>
+        </section>
+
+        <section id="colors">
+          <h2>Colors</h2>
+          <p class="section-intro">
+            Every hex below is sampled <strong>1:1 from the lossless PNG exports</strong> of the
+            screens — these are the exact values in the design file.
+          </p>
+
+          <h3>Surfaces &amp; ink</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #f4f3f0"></div><div class="swatch__meta"><span class="swatch__label">Paper</span><span class="swatch__name">--paper</span><span class="swatch__hex">#F4F3F0</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #ffffff; border-bottom: 1px solid var(--border)"></div><div class="swatch__meta"><span class="swatch__label">Card</span><span class="swatch__name">--card</span><span class="swatch__hex">#FFFFFF</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #000000"></div><div class="swatch__meta"><span class="swatch__label">Ink</span><span class="swatch__name">--ink</span><span class="swatch__hex">#000000</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #111111"></div><div class="swatch__meta"><span class="swatch__label">Ink soft</span><span class="swatch__name">--ink-soft</span><span class="swatch__hex">#111111</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #5d5d5d"></div><div class="swatch__meta"><span class="swatch__label">Text secondary</span><span class="swatch__name">--text-secondary</span><span class="swatch__hex">#5D5D5D</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #9b9b9b"></div><div class="swatch__meta"><span class="swatch__label">Text muted</span><span class="swatch__name">--text-muted</span><span class="swatch__hex">#9B9B9B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #e4e4e4"></div><div class="swatch__meta"><span class="swatch__label">Border / track</span><span class="swatch__name">--border</span><span class="swatch__hex">#E4E4E4</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #ebe9e4"></div><div class="swatch__meta"><span class="swatch__label">Border warm / secondary button</span><span class="swatch__name">--border-warm</span><span class="swatch__hex">#EBE9E4</span></div></div>
+          </div>
+
+          <h3>Accent</h3>
+          <p class="section-intro">One red. It marks actions, the active tab, the current date, and eyebrows — never decoration.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #d50000"></div><div class="swatch__meta"><span class="swatch__label">Signal red</span><span class="swatch__name">--red</span><span class="swatch__hex">#D50000</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b10000"></div><div class="swatch__meta"><span class="swatch__label">Red deep (pressed)</span><span class="swatch__name">--red-deep</span><span class="swatch__hex">#B10000</span></div></div>
+          </div>
+
+          <h3>Budget categories</h3>
+          <p class="section-intro">Data colors for the budget donut and rows. The fifth segment is ink.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #1f6feb"></div><div class="swatch__meta"><span class="swatch__label">Dining out</span><span class="swatch__name">--cat-blue</span><span class="swatch__hex">#1F6FEB</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #f5c518"></div><div class="swatch__meta"><span class="swatch__label">Shopping</span><span class="swatch__name">--cat-gold</span><span class="swatch__hex">#F5C518</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #0f7a5a"></div><div class="swatch__meta"><span class="swatch__label">Transport</span><span class="swatch__name">--cat-green</span><span class="swatch__hex">#0F7A5A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #7a3ea3"></div><div class="swatch__meta"><span class="swatch__label">Groceries</span><span class="swatch__name">--cat-purple</span><span class="swatch__hex">#7A3EA3</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #111111"></div><div class="swatch__meta"><span class="swatch__label">Everything else</span><span class="swatch__name">--cat-ink</span><span class="swatch__hex">#111111</span></div></div>
+          </div>
+
+          <h3>Goal colors</h3>
+          <p class="section-intro">A second, deeper family so goals never read as budgets.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #0d8b8b"></div><div class="swatch__meta"><span class="swatch__label">Bali Trip</span><span class="swatch__name">--goal-teal</span><span class="swatch__hex">#0D8B8B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #c2185b"></div><div class="swatch__meta"><span class="swatch__label">Wedding</span><span class="swatch__name">--goal-magenta</span><span class="swatch__hex">#C2185B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #6b3fd4"></div><div class="swatch__meta"><span class="swatch__label">Student Loans</span><span class="swatch__name">--goal-violet</span><span class="swatch__hex">#6B3FD4</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b06a00"></div><div class="swatch__meta"><span class="swatch__label">Car Down Payment</span><span class="swatch__name">--goal-amber</span><span class="swatch__hex">#B06A00</span></div></div>
+          </div>
+        </section>
+
+        <section id="type">
+          <h2>Type</h2>
+          <p class="section-intro">
+            One family — <strong>Helvetica Neue</strong> — carried by weight and size, never by color.
+            Sizes measured from the 2× exports (390&nbsp;pt frame).
+          </p>
+          <div class="type-sample">
+            <div style="font: var(--text-display); letter-spacing: -0.02em">Samantha</div>
+            <div class="type-sample__meta">--text-display · 700 · 44/46 · -0.02em</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-stat)">$2,400</div>
+            <div class="type-sample__meta">--text-stat · 700 · 40/44 · tabular</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-title)">Your month overall</div>
+            <div class="type-sample__meta">--text-title · 700 · 17/22</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-body)">You're on track today, keep it up.</div>
+            <div class="type-sample__meta">--text-body · 400 · 15/22</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-secondary-s); color: var(--text-secondary)">One week to go, and you're tracking to finish without going over.</div>
+            <div class="type-sample__meta">--text-secondary · 400 · 13/18</div>
+          </div>
+          <div class="type-sample">
+            <div class="eyebrow">Quick insights</div>
+            <div class="type-sample__meta">--text-eyebrow · 700 · 12 · caps · +0.08em</div>
+          </div>
+          <div class="type-sample">
+            <div style="font: var(--text-tab); color: var(--text-secondary)">Reports</div>
+            <div class="type-sample__meta">--text-tab · 500 · 10/12</div>
+          </div>
+        </section>
+
+        <section id="space">
+          <h2>Spacing &amp; radius</h2>
+          <p class="section-intro">A 4&nbsp;pt grid. And one deliberate rule: <strong>corner radius is 0 everywhere</strong> — cards, buttons, chips, progress bars. The sharpness is the brand.</p>
+          <div class="demo-row"><span class="demo-row__label">--s-1 (4px)</span><span class="space-chip" style="width: 4px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-2 (8px)</span><span class="space-chip" style="width: 8px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-3 (12px)</span><span class="space-chip" style="width: 12px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-4 (16px)</span><span class="space-chip" style="width: 16px; height: 16px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-5 (20px)</span><span class="space-chip" style="width: 20px; height: 20px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-6 (24px)</span><span class="space-chip" style="width: 24px; height: 24px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--s-8 (32px)</span><span class="space-chip" style="width: 32px; height: 32px"></span></div>
+          <div class="demo-row"><span class="demo-row__label">--radius (0px)</span><span class="space-chip" style="width: 32px; height: 32px; background: var(--red)"></span></div>
+        </section>
+
+        <section id="components">
+          <h2>Components</h2>
+
+          <h3>Buttons</h3>
+          <div class="demo-row">
+            <span class="demo-row__label">primary</span>
+            <button class="stack-btn stack-btn--primary">Save</button>
+            <button class="stack-btn stack-btn--primary" style="background: var(--red-deep)">Pressed</button>
+          </div>
+          <div class="demo-row">
+            <span class="demo-row__label">secondary</span>
+            <button class="stack-btn stack-btn--secondary">Split amount</button>
+          </div>
+          <div class="demo-row">
+            <span class="demo-row__label">text</span>
+            <button class="stack-btn stack-btn--text">+&nbsp; New category</button>
+          </div>
+
+          <h3>Ask input &amp; suggestion chips</h3>
+          <div class="demo-row">
+            <span class="suggestion-chip">Can I afford a $60 dinner tonight?</span>
+            <span class="suggestion-chip">How am I doing this month?</span>
+          </div>
+          <div class="demo-row">
+            <div class="ask-input">
+              <input type="text" placeholder="Ask about a purchase…" />
+              <button aria-label="Send">↑</button>
+            </div>
+          </div>
+
+          <h3>Budget rows</h3>
+          <div class="demo-row">
+            <div class="budget-row">
+              <div class="budget-row__top">
+                <span class="budget-row__name"><span class="cat-chip" style="background: var(--cat-blue)"></span>Dining out</span>
+                <span class="budget-row__left">$32</span>
+              </div>
+              <div class="progress"><div class="progress__fill" style="width: 88%; background: var(--cat-blue)"></div></div>
+            </div>
+            <div class="budget-row">
+              <div class="budget-row__top">
+                <span class="budget-row__name"><span class="cat-chip" style="background: var(--cat-gold)"></span>Shopping</span>
+                <span class="budget-row__left">$30</span>
+              </div>
+              <div class="progress"><div class="progress__fill" style="width: 90%; background: var(--cat-gold)"></div></div>
+            </div>
+            <div class="budget-row">
+              <div class="budget-row__top">
+                <span class="budget-row__name"><span class="cat-chip" style="background: var(--cat-purple)"></span>Groceries</span>
+                <span class="budget-row__left">$96</span>
+              </div>
+              <div class="progress"><div class="progress__fill" style="width: 52%; background: var(--cat-purple)"></div></div>
+            </div>
+          </div>
+
+          <h3>Month widget</h3>
+          <div class="demo-row">
+            <div class="widget">
+              <div class="widget__top"><span>Your month overall</span><span>$289 left</span></div>
+              <div class="progress"><div class="progress__fill" style="width: 88%; background: var(--ink)"></div></div>
+              <div class="widget__note">One week to go, and you're tracking to finish without going over.</div>
+            </div>
+          </div>
+
+          <h3>Goal tiles</h3>
+          <div class="demo-row">
+            <div class="goal-tile">
+              <div class="goal-tile__img">▦</div>
+              <div class="goal-tile__name">Bali Trip</div>
+              <div class="progress"><div class="progress__fill" style="width: 72%; background: var(--goal-teal)"></div></div>
+            </div>
+            <div class="goal-tile">
+              <div class="goal-tile__img">▦</div>
+              <div class="goal-tile__name">Wedding</div>
+              <div class="progress"><div class="progress__fill" style="width: 38%; background: var(--goal-magenta)"></div></div>
+            </div>
+          </div>
+
+          <h3>Savings-split donut</h3>
+          <div class="demo-row">
+            <div class="donut" role="img" aria-label="Savings split: 34% teal, 24% magenta, 22% violet, 20% amber"></div>
+            <div>
+              <div class="check-row" style="padding: 4px 0"><span class="cat-chip" style="background: var(--goal-teal)"></span>Bali Trip · 34%</div>
+              <div class="check-row" style="padding: 4px 0"><span class="cat-chip" style="background: var(--goal-magenta)"></span>Wedding · 24%</div>
+              <div class="check-row" style="padding: 4px 0"><span class="cat-chip" style="background: var(--goal-violet)"></span>Student Loans · 22%</div>
+              <div class="check-row" style="padding: 4px 0"><span class="cat-chip" style="background: var(--goal-amber)"></span>Car Down Payment · 20%</div>
+            </div>
+          </div>
+
+          <h3>Checkbox</h3>
+          <div class="demo-row">
+            <label class="check-row"><span class="box">✓</span>Always sort Starbucks into Dining out</label>
+          </div>
+
+          <h3>Tab bar</h3>
+          <div class="demo-row">
+            <div class="tab-bar">
+              <a href="#" class="is-active"><span class="glyph">⌂</span>Home</a>
+              <a href="#"><span class="glyph">◔</span>Budget</a>
+              <a href="#"><span class="glyph">∿</span>Reports</a>
+              <a href="#"><span class="glyph">◎</span>Goals</a>
+              <a href="#"><span class="glyph">☺</span>Profile</a>
+            </div>
+          </div>
+        </section>
+
+        <section id="screens">
+          <h2>Screens</h2>
+          <p class="section-intro">The exported frames these tokens were sampled from.</p>
+          <div class="screen-strip">
+            <figure><img src="../assets/case-studies/stack/raw/01-home-top.png" alt="Home — at top" /><figcaption>01 Home — top</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/02-home-scrolled.png" alt="Home — scrolled" /><figcaption>02 Home — scrolled</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/03-budget-overview.png" alt="Budget overview" /><figcaption>03 Budget overview</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/04-budget-category-detail.png" alt="Category detail" /><figcaption>04 Category detail</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/05-budget-new.png" alt="New budget" /><figcaption>05 New budget</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/06-reports-graph.png" alt="Reports graph" /><figcaption>06 Reports — graph</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/07-reports-insights.png" alt="Reports insights" /><figcaption>07 Reports — insights</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/08-goals-grid.png" alt="Goals grid" /><figcaption>08 Goals — grid</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/09-goal-detail.png" alt="Goal detail" /><figcaption>09 Goal detail</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/10-savings-split.png" alt="Savings split" /><figcaption>10 Savings split</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/12-transaction-sort.png" alt="Transaction sort" /><figcaption>12 Transaction — sort</figcaption></figure>
+            <figure><img src="../assets/case-studies/stack/raw/13-transaction-split.png" alt="Transaction split" /><figcaption>13 Transaction — split</figcaption></figure>
+          </div>
+        </section>
+
+        <section style="border-bottom: none">
+          <p class="provenance">
+            Provenance: every color was sampled pixel-for-pixel from the lossless PNG exports in
+            <code>stack screens/screens-no-bezel</code> (2× of the 390&nbsp;pt frame), so the hex values are
+            exact. Type sizes were measured from glyph heights in the same exports (±1&nbsp;px). The typeface
+            renders as Helvetica Neue. Components on this page are CSS reconstructions of the shipped screens.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

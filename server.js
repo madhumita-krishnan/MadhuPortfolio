@@ -18,6 +18,7 @@ const PORT = Number(process.argv[2]) || 4173;
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.md': 'text/plain; charset=utf-8',
   '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm', '.pdf': 'application/pdf',
   '.woff2': 'font/woff2', '.ico': 'image/x-icon'
 };

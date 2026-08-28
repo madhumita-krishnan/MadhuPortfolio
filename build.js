@@ -1190,6 +1190,43 @@ footer a:hover{color:var(--accent)}
 .cs-hero-band{max-width:1240px;margin:0 auto;border-radius:24px;overflow:hidden;position:relative;
   background:var(--bg-deep);color:var(--text-on-deep);padding:clamp(28px,4.5vw,56px)}
 .cs-hero-band.light{background:var(--accent-wash);color:var(--text-primary)}
+
+/* ---- the design-system door (2026-08-26 "I just want it to be an icon"): one round
+   outlined control in the hero band's top-right corner, sitting on the band's own
+   padding grid. No label at rest — the swatch glyph is the whole button — so the
+   hand-swap the controls all share becomes a tooltip beside it instead of an overlay:
+   there is no sans label to hide, the handwriting just appears. data-hand carries
+   the words already capitalised, like every other control. */
+.ds-link{position:absolute;top:clamp(28px,4.5vw,56px);right:clamp(28px,4.5vw,56px);z-index:3;
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid currentColor;color:var(--text-on-deep);--hand-ink:var(--text-on-deep);
+  transition:background-color var(--motion-fast) var(--ease-standard),
+             border-color var(--motion-fast) var(--ease-standard),
+             color var(--motion-fast) var(--ease-standard)}
+.cs-hero-band.light .ds-link{color:var(--accent);--hand-ink:var(--accent-deep)}
+.ds-link:hover,.ds-link:focus-visible{background:var(--accent-press);border-color:var(--accent-press);
+  color:var(--text-on-accent)}
+.ds-link svg{width:19px;height:19px;display:block}
+.ds-link::after{content:attr(data-hand);content:attr(data-hand) / "";
+  position:absolute;right:calc(100% + 16px);top:50%;transform:translateY(-.52em);
+  font-family:var(--font-hand);font-size:1.3rem;letter-spacing:0;font-weight:400;text-transform:none;
+  color:var(--hand-ink);white-space:nowrap;text-align:right;
+  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none}
+@media (hover:hover){
+  .ds-link:hover::after,.ds-link:focus-visible::after{opacity:1}
+}
+@media (max-width:600px){
+  .ds-link{width:40px;height:40px}
+  .ds-link svg{width:17px;height:17px}
+}
+/* below 900px the title's first line can run under the circle (Stack's "Budgeting that"
+   did) — clear its lane, but only when the band actually carries the button. Desktop
+   widths are left alone so the twoLine() fitting keeps measuring the real column. */
+@media (max-width:900px){
+  .cs-hero-band:has(.ds-link) .cs-kicker,
+  .cs-hero-band:has(.ds-link) .cs-title{padding-right:56px}
+}
+
 .cs-kicker{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:14px}
 .cs-hero-band.light .cs-kicker{color:var(--accent-deep)}
 .cs-title{font-family:var(--font-display);font-weight:400;font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.12;max-width:22ch;text-wrap:balance;margin-bottom:12px}
@@ -1245,7 +1282,12 @@ footer a:hover{color:var(--accent)}
 .cs-quote cite{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);font-style:normal}
 @media (max-width:820px){.cs-row{grid-template-columns:1fr;gap:calc(var(--space)*2)}.cs-label{position:static}}
 
-.cs-media-band{max-width:1240px;margin:calc(var(--space)*7) auto 0;padding:0 calc(var(--space)*2)}
+/* width:100% because the auto side-margins switch off flex-stretch inside .cs-section,
+   and a band that shrink-wraps is sized by its CAPTION — so browser-framed videos
+   (absolutely-positioned contents, no intrinsic width) rendered 755/728/576px wide in
+   one scroll (2026-08-28 "jumping around in size"). Full width pins every band to the
+   same 1240px rail the hero band sits on. */
+.cs-media-band{width:100%;max-width:1240px;margin:calc(var(--space)*7) auto 0;padding:0 calc(var(--space)*2)}
 .cs-media-inner{border-radius:24px;padding:clamp(20px,4vw,56px);display:flex;flex-direction:column;align-items:center;gap:18px}
 .cs-media-inner.wash{background:var(--accent-wash)}
 .cs-media-inner.deep{background:var(--bg-deep)}
@@ -2346,11 +2388,22 @@ function renderCase(cs) {
 </div>
 </section>` : '';
 
+  /* the glyph is a paint brush (2026-08-28, her ask — it replaced a component-shapes
+     swatch): a round artist's brush, handle up, bristles down. Strokes only,
+     currentColor, so the band tone and night mode both recolor it for free. */
+  const dsIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
+    <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
+  </svg>`;
+  const dsLink = cs.designSystem ? `<a class="ds-link" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"
+      aria-label="View the design system" data-hand="VIEW DESIGN SYSTEM">${dsIcon}</a>` : '';
+
   return head(`${cs.name} — ${site.title}`, cs.tagline) + `
 ${navBar('case')}
 <main>
 <header class="cs-hero">
   <div class="cs-hero-band ${tone}">
+    ${dsLink}
     <p class="cs-kicker">${esc(cs.name)}</p>
     <h1 class="cs-title${cs.title.length > 72 ? ' long' : ''}"${twoLine(cs.title, CORMORANT, cs.title.length > 72 ? 32 : 22)}>${typo(cs.title)}</h1>
     <p class="cs-tagline"${twoLine(cs.tagline, DMSANS, 58)}>${typo(cs.tagline)}</p>
@@ -2434,6 +2487,13 @@ for (const f of ['three.module.min.js', 'three.core.min.js']) {
 fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
+/* the design-system showcase pages are standalone HTML (their own tokens, their own
+   fonts) — copied through as-is, reachable from each case study's ds-link icon.
+   The repo README rides along as the folder's "read the rules" link: the hub at
+   design-systems/index.html mirrors the workshop hub (landing → rules → system),
+   and the rules doc IS this README — one file, never two copies to drift. */
+copyDir(path.join(ROOT, 'design-systems'), path.join(DIST, 'design-systems'));
+fs.copyFileSync(path.join(ROOT, 'README.md'), path.join(DIST, 'design-systems', 'README.md'));
 
 /* The custom domain has to be written INTO dist/, not just set in Settings > Pages.
    GitHub's settings page writes a CNAME file to the repo root, which works when Pages

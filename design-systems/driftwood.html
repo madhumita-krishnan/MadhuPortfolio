@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Driftwood — Design System Showcase</title>
+    <style>
+      @font-face {
+        font-family: "Public Sans";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url(./fonts/public-sans-latin-wght-normal.woff2) format("woff2");
+      }
+      @font-face {
+        font-family: "Source Serif 4";
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url(./fonts/source-serif-4-latin-600-normal.woff2) format("woff2");
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(./fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2");
+      }
+      :root {
+        /* ── Tokens, verbatim from the shipped code (landing/src/index.css @theme) ── */
+        --ground: #ffffff;
+        --ink: #16181b;
+        --gray: #6a737d;
+        --gray-light: #9aa2ab;
+        --line: #e9ebee;
+        --tide: #15557e;
+        --tide-deep: #0d3c5b;
+        --tide-wash: #eaf1f7;
+        --wash-a: #f4f8fb;
+        --sand: #eef2f5;
+        --ok: #2a9d5c;
+        --redact: #d4d9de;
+
+        /* ── The sea's scenery palette (from design-language.md, settled with the founder) ── */
+        --duck: #f0c33c;
+        --duck-beak: #e08a2e;
+        --terracotta: #b25e42;
+        --palm: #657d6a;
+        --sand-wet: #b0956a;
+        --sand-dry: #ceba92;
+        --splash: #3f7ea9;
+
+        /* ── Type ── */
+        --font-sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        --font-brand: "Source Serif 4", Georgia, serif;
+        --font-voice: Georgia, "Times New Roman", serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+        /* ── Surfaces ── */
+        --r-win: 12px;
+        --r-pill: 999px;
+        --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
+      }
+      html, body {
+        margin: 0; padding: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: 15px; line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      nav {
+        position: sticky; top: 0; align-self: start;
+        padding: 32px; background: var(--wash-a);
+        border-right: 1px solid var(--line);
+        height: 100vh; box-sizing: border-box;
+      }
+      nav .nav__brand {
+        font-family: var(--font-brand); font-weight: 600; font-size: 1.18rem;
+        letter-spacing: 0.005em;
+        padding-bottom: 24px; border-bottom: 1px solid var(--line);
+        margin-bottom: 12px;
+      }
+      nav .nav__brand small { display: block; font-family: var(--font-sans); font-weight: 400; font-size: 12px; color: var(--gray); margin-top: 4px; }
+      nav a { display: block; padding: 9px 0; text-decoration: none; color: var(--gray); font-size: 14px; }
+      nav a:hover, nav a:focus-visible { color: var(--tide); }
+      main { padding: 32px; max-width: 1100px; }
+      section { padding: 32px 0; border-bottom: 1px solid var(--line); }
+      section h2 { font-weight: 600; font-size: 28px; letter-spacing: -0.014em; margin: 0 0 24px; }
+      section h3 { font-weight: 600; font-size: 17px; margin: 32px 0 14px; }
+      .section-intro { color: var(--gray); max-width: 720px; margin: 0 0 24px; }
+      .section-intro strong { color: var(--ink); }
+      em.voice { font-family: var(--font-voice); font-style: italic; color: var(--tide); letter-spacing: 0; }
+
+      /* Swatches */
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+      .swatch { background: #fff; border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden; }
+      .swatch__color { height: 80px; border-bottom: 1px solid var(--line); }
+      .swatch__meta { padding: 12px; }
+      .swatch__label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+      .swatch__name, .swatch__hex { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--gray); word-break: break-all; }
+
+      .type-sample { padding: 16px 0; border-bottom: 1px dashed var(--line); }
+      .type-sample:last-of-type { border-bottom: none; }
+      .type-sample__meta { font-family: var(--font-mono); font-size: 12px; color: var(--gray-light); margin-top: 8px; }
+
+      .demo-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 0; }
+      .demo-row__label { font-family: var(--font-mono); font-size: 12px; color: var(--gray-light); min-width: 130px; }
+      .space-chip { display: inline-block; background: var(--ink); }
+
+      /* ── Components, straight from the shipped rules ── */
+      .dw-btn {
+        font-family: var(--font-sans); font-weight: 600; font-size: 15px;
+        border-radius: var(--r-pill); padding: 12px 26px; cursor: pointer;
+        border: 1.5px solid transparent;
+      }
+      .dw-btn--primary { background: var(--tide); color: #fff; }
+      .dw-btn--primary:hover { background: var(--tide-deep); }
+      .dw-btn--ghost { background: none; border-color: var(--line); color: var(--ink); }
+      .dw-btn--ghost:hover { border-color: var(--gray-light); }
+
+      .label { font-size: 0.85rem; color: var(--gray); }
+      .redact { display: inline-block; background: var(--redact); border-radius: 2px; height: 0.9em; vertical-align: baseline; }
+
+      .chip-wash {
+        display: inline-block; background: var(--tide-wash); color: var(--tide);
+        border-radius: var(--r-pill); padding: 5px 14px; font-size: 13px; font-weight: 600;
+      }
+      .status-ok { color: var(--ok); font-weight: 600; font-size: 14px; }
+      .status-ok::before { content: "●"; font-size: 9px; vertical-align: 2px; margin-right: 6px; }
+
+      .app-window {
+        background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
+        box-shadow: var(--shadow-win); width: 420px; max-width: 100%; overflow: hidden;
+      }
+      .app-window__bar {
+        display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .app-window__bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+      .app-window__bar span { margin-left: 8px; font-size: 0.85rem; color: var(--gray); }
+      .app-window__body { padding: 18px; }
+      .app-window__body .kpi { font-weight: 750; color: var(--tide); font-size: 26px; font-variant-numeric: tabular-nums; }
+      .app-window__body .kpi-label { font-size: 0.85rem; color: var(--gray); margin-top: 2px; }
+
+      .mat {
+        background: var(--tide-wash); border-radius: calc(var(--r-win) + 0.9rem);
+        padding: 20px; width: 460px; max-width: 100%; box-sizing: border-box;
+      }
+      .mat .app-window { box-shadow: 0 1px 2px rgba(22, 24, 27, 0.04), 0 10px 20px -14px rgba(22, 24, 27, 0.12); width: 100%; }
+
+      .wordmark {
+        display: inline-flex; align-items: center; gap: 0.6rem;
+        font-family: var(--font-brand); font-weight: 600; font-size: 1.5rem; letter-spacing: 0.005em;
+      }
+      .wordmark .helm {
+        width: 34px; height: 34px; border-radius: 8px; background: var(--tide);
+        color: #fff; display: inline-flex; align-items: center; justify-content: center;
+        font-size: 17px;
+      }
+
+      /* The water — a static frame of the ASCII sea (the real one runs at ~15fps on canvas) */
+      .sea {
+        font-family: var(--font-mono); font-size: 13px; line-height: 1.25;
+        background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
+        padding: 16px 18px; overflow-x: auto; margin: 0; white-space: pre;
+      }
+      .sea .w1 { color: rgba(21, 85, 126, 0.25); }
+      .sea .w2 { color: rgba(21, 85, 126, 0.45); }
+      .sea .w3 { color: rgba(21, 85, 126, 0.7); }
+      .sea .w4 { color: rgba(21, 85, 126, 0.95); }
+      .sea .duck { color: var(--duck); font-weight: 700; }
+      .sea .beak { color: var(--duck-beak); }
+      .sea .buoy { color: var(--terracotta); }
+      .sea .palmc { color: var(--palm); }
+      .sea .sandw { color: var(--sand-wet); }
+      .sea .sandd { color: var(--sand-dry); }
+
+      .rule-card {
+        border-left: 3px solid var(--tide); background: var(--wash-a);
+        padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 660px; margin: 10px 0;
+      }
+      .rule-card b { display: block; margin-bottom: 2px; }
+      .rule-card span { color: var(--gray); font-size: 14px; }
+
+      /* Screens */
+      .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+      .screen-strip figure { margin: 0; }
+      .screen-strip img, .screen-strip video { width: 100%; height: auto; display: block; border-radius: var(--r-win); border: 1px solid var(--line); box-shadow: var(--shadow-win); }
+      .screen-strip figcaption { font-size: 12px; color: var(--gray-light); padding-top: 6px; }
+
+      .provenance { font-size: 13px; color: var(--gray-light); max-width: 720px; }
+      code { font-family: var(--font-mono); font-size: 0.9em; }
+      @media (max-width: 720px) {
+        .layout { grid-template-columns: 1fr; }
+        nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav aria-label="Sections">
+        <div class="nav__brand">driftwood<small>design system showcase</small></div>
+        <a href="#brand">Brand</a>
+        <a href="#colors">Colors</a>
+        <a href="#type">Type</a>
+        <a href="#surfaces">Surfaces &amp; components</a>
+        <a href="#water">The water</a>
+        <a href="#rules">Rules</a>
+        <a href="#screens">Shipped</a>
+      </nav>
+      <main>
+        <section id="brand">
+          <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tide); margin: 0">Design system</p>
+          <h2 style="margin-top: 8px">Driftwood</h2>
+          <p class="section-intro">
+            The shipped design language of <strong>driftwood.sh</strong> — landing page and dashboard.
+            Pure white ground, a gray ink scale, hairline borders, and <strong>one tide-blue accent</strong>.
+            The signature isn't a color at all: it's an ASCII character sea, with a rubber duck in it, always.
+          </p>
+          <div class="demo-row">
+            <span class="wordmark"><span class="helm">⎈</span>driftwood</span>
+            <button class="dw-btn dw-btn--primary">Book a demo</button>
+            <span class="chip-wash">demo-led outbound</span>
+            <span class="status-ok">live</span>
+          </div>
+        </section>
+
+        <section id="colors">
+          <h2>Colors</h2>
+          <p class="section-intro">
+            Values are <strong>verbatim from the shipped code</strong> — this is a coded, live site, so
+            the tokens below are copied from its CSS, not sampled.
+          </p>
+
+          <h3>Ground &amp; ink</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #ffffff"></div><div class="swatch__meta"><span class="swatch__label">Ground</span><span class="swatch__name">--ground</span><span class="swatch__hex">#FFFFFF — white. Not off-white, not gradient</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #16181b"></div><div class="swatch__meta"><span class="swatch__label">Ink</span><span class="swatch__name">--ink</span><span class="swatch__hex">#16181B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #6a737d"></div><div class="swatch__meta"><span class="swatch__label">Gray — body / labels</span><span class="swatch__name">--gray</span><span class="swatch__hex">#6A737D</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #9aa2ab"></div><div class="swatch__meta"><span class="swatch__label">Gray light — decorative only</span><span class="swatch__name">--gray-light</span><span class="swatch__hex">#9AA2AB</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #e9ebee"></div><div class="swatch__meta"><span class="swatch__label">Line — all hairlines</span><span class="swatch__name">--line</span><span class="swatch__hex">#E9EBEE</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #d4d9de"></div><div class="swatch__meta"><span class="swatch__label">Redaction bar</span><span class="swatch__name">--redact</span><span class="swatch__hex">#D4D9DE</span></div></div>
+          </div>
+
+          <h3>The one accent</h3>
+          <p class="section-intro">"One accent. If a design wants a second accent color, the design is wrong." — the system's own rule.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #15557e"></div><div class="swatch__meta"><span class="swatch__label">Tide</span><span class="swatch__name">--tide</span><span class="swatch__hex">#15557E</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #0d3c5b"></div><div class="swatch__meta"><span class="swatch__label">Tide deep — hover</span><span class="swatch__name">--tide-deep</span><span class="swatch__hex">#0D3C5B</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #eaf1f7"></div><div class="swatch__meta"><span class="swatch__label">Tide wash — chips, mats</span><span class="swatch__name">--tide-wash</span><span class="swatch__hex">#EAF1F7</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #f4f8fb"></div><div class="swatch__meta"><span class="swatch__label">Wash A — sheet tint</span><span class="swatch__name">--wash-a</span><span class="swatch__hex">#F4F8FB</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #2a9d5c"></div><div class="swatch__meta"><span class="swatch__label">OK — live status only</span><span class="swatch__name">--ok</span><span class="swatch__hex">#2A9D5C</span></div></div>
+          </div>
+
+          <h3>Scenery palette — weathered coast, not postcard</h3>
+          <p class="section-intro">The sea's inhabitants get their own settled palette. One terracotta covers crab, buoys, and coconut. And the ducks are rubber-duck yellow, always — a gray gull was tried and rejected.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #f0c33c"></div><div class="swatch__meta"><span class="swatch__label">Duck (protected)</span><span class="swatch__name">--duck</span><span class="swatch__hex">#F0C33C</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #e08a2e"></div><div class="swatch__meta"><span class="swatch__label">Duck beak</span><span class="swatch__name">--duck-beak</span><span class="swatch__hex">#E08A2E</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b25e42"></div><div class="swatch__meta"><span class="swatch__label">The one terracotta</span><span class="swatch__name">--terracotta</span><span class="swatch__hex">#B25E42</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #657d6a"></div><div class="swatch__meta"><span class="swatch__label">Palm — sea-glass</span><span class="swatch__name">--palm</span><span class="swatch__hex">#657D6A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b0956a"></div><div class="swatch__meta"><span class="swatch__label">Sand, wet</span><span class="swatch__name">--sand-wet</span><span class="swatch__hex">#B0956A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #ceba92"></div><div class="swatch__meta"><span class="swatch__label">Sand, dry</span><span class="swatch__name">--sand-dry</span><span class="swatch__hex">#CEBA92</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #3f7ea9"></div><div class="swatch__meta"><span class="swatch__label">Splash blue</span><span class="swatch__name">--splash</span><span class="swatch__hex">#3F7EA9</span></div></div>
+          </div>
+        </section>
+
+        <section id="type">
+          <h2>Type</h2>
+          <p class="section-intro">
+            <strong>Public Sans</strong> (variable) for everything functional, <strong>Source Serif 4</strong>
+            only for the wordmark, and <strong>Georgia italic in tide</strong> as the voice accent —
+            one phrase per heading, only where a phrase genuinely outranks the line.
+            Mono is banned from chrome (it reads "AI-generated"); IBM Plex Mono survives only inside the review queue.
+          </p>
+          <div class="type-sample">
+            <div style="font-size: clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem); font-weight: 620; letter-spacing: -0.028em; line-height: 1.1">Ship a custom demo in every cold message</div>
+            <div class="type-sample__meta">hero H1 · Public Sans 620 (a real variable-font notch above 600) · −0.028em · one step above the shared scale</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 350; letter-spacing: -0.014em; line-height: 1.15">The numbers you'll <span style="font-weight: 750; color: var(--tide)">10%</span> keep</div>
+            <div class="type-sample__meta">section heading · shared scale, weight 350 — a light ground under a heavy accent figure (750)</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: 1.35rem; font-weight: 600">Don't send <em class="voice">AI slop</em> to your prospects</div>
+            <div class="type-sample__meta">em.voice · Georgia italic in tide · at most one per heading, earn it or drop it</div>
+          </div>
+          <div class="type-sample">
+            <div class="wordmark" style="font-size: 1.18rem"><span class="helm" style="width: 26px; height: 26px; font-size: 13px">⎈</span>driftwood</div>
+            <div class="type-sample__meta">wordmark · Source Serif 4 · 600 · 1.18rem · +0.005em · always beside the HelmMark tile</div>
+          </div>
+          <div class="type-sample">
+            <div>The agent researches each prospect, builds them a working custom demo, and sends it from your own account.</div>
+            <div class="type-sample__meta">body · Public Sans 400 · 15/22</div>
+          </div>
+          <div class="type-sample">
+            <div class="label">Every message is human reviewed before it sends</div>
+            <div class="type-sample__meta">label · 0.85rem · gray (not gray-light — labels carry information, AA floor) · sentence case, no pills, no caps, no mono</div>
+          </div>
+        </section>
+
+        <section id="surfaces">
+          <h2>Surfaces &amp; components</h2>
+
+          <h3>Buttons</h3>
+          <p class="section-intro">Pills, always. Primary = tide fill, hover tide-deep. <strong>There are no black buttons.</strong></p>
+          <div class="demo-row">
+            <button class="dw-btn dw-btn--primary">Book a demo</button>
+            <button class="dw-btn dw-btn--primary" style="background: var(--tide-deep)">Hover</button>
+            <button class="dw-btn dw-btn--ghost">See a sample message</button>
+          </div>
+
+          <h3>Windows</h3>
+          <p class="section-intro">White, 1px line border, 12px radius, and a stacked shadow — 4–5 layers, each doubling the blur and shedding alpha. A single big blur bands against white.</p>
+          <div class="demo-row">
+            <div class="app-window">
+              <div class="app-window__bar"><i></i><i></i><i></i><span>driftwood · dashboard</span></div>
+              <div class="app-window__body">
+                <div style="display: flex; gap: 32px">
+                  <div><div class="kpi">14</div><div class="kpi-label">demos shipped this week</div></div>
+                  <div><div class="kpi">96%</div><div class="kpi-label">reviewed &amp; approved</div></div>
+                  <div style="align-self: center"><span class="status-ok">agent live</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>The mat</h3>
+          <p class="section-intro">A tide-wash plate on the white sheet, radius <code>--r-win + 0.9rem</code> — it seats a window instead of a divider separating sections.</p>
+          <div class="demo-row">
+            <div class="mat">
+              <div class="app-window">
+                <div class="app-window__bar"><i></i><i></i><i></i><span>review queue</span></div>
+                <div class="app-window__body" style="font-family: var(--font-mono); font-size: 13px; color: var(--gray)">
+                  to: <span class="redact" style="width: 110px"></span><br />
+                  subject: a demo I built for <span class="redact" style="width: 74px"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>Redaction &amp; chips</h3>
+          <p class="section-intro">Identity we withhold is a gray bar, 2px radius — used consistently for names, companies, addresses. Tinted chips take the wash, never a new color.</p>
+          <div class="demo-row">
+            <span>Built for <span class="redact" style="width: 90px"></span> at <span class="redact" style="width: 70px"></span></span>
+            <span class="chip-wash">human reviewed</span>
+            <span class="status-ok">live</span>
+          </div>
+        </section>
+
+        <section id="water">
+          <h2>The water</h2>
+          <p class="section-intro">
+            The signature: an <strong>ASCII character sea on 2D canvas</strong> — never rendered 3D.
+            Six characters by wave height, ~15fps terminal cadence, tide-blue by depth. It carries the
+            hero and thin strips at section seams. Movers patrol back and forth — nothing wraps,
+            nothing disappears, it turns around. And every sea strip carries a yellow duck.
+          </p>
+          <pre class="sea" aria-label="A static frame of the ASCII sea: waves, a rubber duck, a buoy, and the proof island with its palm">
+<span class="w1">· - · · - ·</span> <span class="w2">~ - ~ ~</span> <span class="w3">≈ ~ ≈</span> <span class="w2">~ - ~</span> <span class="w1">· - · ·</span> <span class="w2">~ ~ - ~</span> <span class="w1">· · - ·</span>
+<span class="w2">- ~ - ~ -</span> <span class="duck">▸<b>ᵕ</b></span><span class="beak">›</span> <span class="w3">≈ ≈ ~ ≈</span> <span class="w4">≋ ≈ ≋</span> <span class="w3">≈ ~ ≈ ≈</span> <span class="buoy">ø</span> <span class="w2">~ - ~ - ~ -</span>
+<span class="w3">≈ ~ ≈ ≈ ~</span> <span class="w4">≋ ≈ ≋ ≋ ≈</span> <span class="w3">≈ ≈ ~</span>   <span class="palmc">🌴</span><span class="sandd">█ █ █</span><span class="sandw">▒ ▒</span> <span class="w3">≈ ~ ≈</span> <span class="w4">≋ ≈</span>
+<span class="w4">≋ ≈ ≋ ≈ ≋ ≋</span> <span class="w3">≈ ≈ ~ ≈</span> <span class="w4">≋ ≋ ≈</span> <span class="sandw">▒ ▒ ▒</span> <span class="w4">≈ ≋ ≋ ≈ ≋ ≈ ≋</span>
+          </pre>
+          <div class="rule-card"><b>chars by height</b><span><code>' ' · - ~ ≈ ≋</code> — grid 8 × 10.5px cells, tide-blue rgba by depth</span></div>
+          <div class="rule-card"><b>the ducks are protected</b><span>rubber-duck yellow #F0C33C + #E08A2E beak, always — they are the debugging duck, the one deliberate CS in-joke on the page</span></div>
+          <div class="rule-card"><b>scenery is earned, not decorated</b><span>the driftwood log with its duck captain, ships (never on phone-width strips), islands, terracotta buoys, the castaway on the proof island — phone to his ear: "hold on, sending you the demo"</span></div>
+        </section>
+
+        <section id="rules">
+          <h2>Rules the system holds itself to</h2>
+          <div class="rule-card"><b>One accent</b><span>if a design wants a second accent color, the design is wrong. In-artifact brand colors (Brex orange inside a Brex demo) never leak into page chrome.</span></div>
+          <div class="rule-card"><b>Earn it or drop it</b><span>a heading takes a voice italic only when one phrase genuinely outranks the rest of the line — two hero headings had theirs pulled.</span></div>
+          <div class="rule-card"><b>No em dashes in site copy</b><span>sole exception: the slop parody card. Slop uses em dashes — that's the joke.</span></div>
+          <div class="rule-card"><b>Break lines on meaning, not on measure</b><span><code>text-wrap: balance</code> doesn't know which words belong together — bind phrases with <code>&amp;nbsp;</code> so the turn lands where the sense turns.</span></div>
+          <div class="rule-card"><b>Quality floor, unannounced</b><span>responsive · visible keyboard focus · reduced-motion respected · every interactive element has hover/active/focus/disabled · data has loading/empty/error.</span></div>
+        </section>
+
+        <section id="screens">
+          <h2>Shipped</h2>
+          <p class="section-intro">This one isn't a mockup — it's live at <a href="https://driftwood.sh" target="_blank" rel="noopener" style="color: var(--tide)">driftwood.sh</a>.</p>
+          <div class="screen-strip">
+            <figure><img src="../assets/case-studies/driftwood/site-hero.jpg" alt="The shipped driftwood.sh homepage hero" /><figcaption>The shipped homepage — the waterline lands at the fold</figcaption></figure>
+            <figure><video src="../assets/case-studies/driftwood/home.mp4" autoplay muted loop playsinline></video><figcaption>Home, in motion — the sea, the duck, the dashboard window</figcaption></figure>
+            <figure><video src="../assets/case-studies/driftwood/casestudies.mp4" autoplay muted loop playsinline></video><figcaption>The case-study coverflow deck</figcaption></figure>
+            <figure><video src="../assets/case-studies/driftwood/dashboard.mp4" autoplay muted loop playsinline></video><figcaption>The dashboard on the same tokens</figcaption></figure>
+          </div>
+        </section>
+
+        <section style="border-bottom: none">
+          <p class="provenance">
+            Provenance: Driftwood shipped as code, so unlike the Stack and Spotify Mix showcases nothing
+            here is sampled — tokens are copied verbatim from <code>landing/src/index.css</code> and the
+            rules from <code>design/design-language.md</code>, the project's own source of truth. Fonts are
+            the site's self-hosted files. The sea above is a static hand-set frame of the real canvas animation.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
