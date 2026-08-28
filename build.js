@@ -1294,6 +1294,15 @@ footer a:hover{color:var(--accent)}
 .cs-phone-col .phone-media{width:100%;max-width:218px}
 .cs-phone-label{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-caption)}
 .cs-media-inner.deep .cs-phone-label{color:var(--text-on-deep-secondary)}
+/* the empty slot: a phone-shaped dashed outline (same ratio and corner radius as
+   .phone) holding a sentence instead of a screen */
+.cs-phone-none{width:100%;max-width:218px;aspect-ratio:1.1036/2.2705;box-sizing:border-box;
+  border:1.5px dashed var(--line);border-radius:16.85%/8.19%;
+  display:flex;align-items:center;justify-content:center;padding:14%}
+.cs-phone-none p{font-family:var(--font-utility);font-size:.85rem;line-height:1.55;
+  color:var(--text-secondary);text-align:center;text-wrap:balance;margin:0}
+.cs-media-inner.deep .cs-phone-none{border-color:var(--line-on-deep)}
+.cs-media-inner.deep .cs-phone-none p{color:var(--text-on-deep-secondary)}
 /* 1rem = 12pt — the floor for caption legibility. --text-caption exists because
    --text-secondary is only 3.9:1 on the accent-wash band these captions sit on;
    the darker step clears WCAG AA (4.5:1) on both wash and raised fills. */
@@ -2312,9 +2321,13 @@ function csMedia(m) {
     /* frame:"phone" wraps raw screens in the CSS frame. Screens that already have a
        device drawn into the PNG are dropped in as plain images — never double-frame. */
     inner = `<div class="cs-phones">${m.items.map(it => {
-      const ph = m.frame === 'phone'
-        ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="lazy" decoding="async">`, { island: m.island !== false })
-        : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="lazy" decoding="async">`;
+      /* an item with note instead of src is an empty slot: the counterpart product
+         has no screen to show, and the slot says so rather than repeating ours */
+      const ph = it.note
+        ? `<div class="cs-phone-none"><p>${typo(it.note)}</p></div>`
+        : m.frame === 'phone'
+          ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="lazy" decoding="async">`, { island: m.island !== false })
+          : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="lazy" decoding="async">`;
       return it.label ? `<div class="cs-phone-col"><p class="cs-phone-label">${esc(it.label)}</p>${ph}</div>` : ph;
     }).join('')}</div>`;
   }

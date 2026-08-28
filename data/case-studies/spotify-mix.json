@@ -157,15 +157,16 @@
     "wash": "deep",
     "items": [
      {
-      "src": "assets/case-studies/spotify/raw/4-learning-in-context.png",
-      "alt": "Learning in context — tapping an unfamiliar term opens a short inline explanation"
+      "note": "Spotify has nothing to compare here — there is no educational layer today",
+      "label": "Spotify today"
      },
      {
       "src": "assets/case-studies/spotify/raw/1-hero-image.png",
-      "alt": "'Making mixing easy' sheet: match the key color, keep BPM close"
+      "alt": "'Making mixing easy' sheet: match the key color, keep BPM close",
+      "label": "Redesign"
      }
     ],
-    "caption": "Spotify has nothing to compare here — there is no educational layer today. Concepts explain themselves where they appear, and one sheet frames the two rules that matter: match the key color, keep BPM close."
+    "caption": "Concepts explain themselves where they appear, and one sheet frames the two rules that matter: match the key color, keep BPM close."
    }
   },
   {
