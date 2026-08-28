@@ -85,6 +85,7 @@
       nav .nav__brand small { display: block; font-family: var(--font-sans); font-weight: 400; font-size: 12px; color: var(--gray); margin-top: 4px; }
       nav a { display: block; padding: 9px 0; text-decoration: none; color: var(--gray); font-size: 14px; }
       nav a:hover, nav a:focus-visible { color: var(--tide); }
+      nav a.is-current { color: var(--ink); font-weight: 600; }
       main { padding: 32px; max-width: 1100px; }
       section { padding: 32px 0; border-bottom: 1px solid var(--line); }
       section h2 { font-weight: 600; font-size: 28px; letter-spacing: -0.014em; margin: 0 0 24px; }
@@ -399,5 +400,33 @@
         </section>
       </main>
     </div>
+    <script>
+      (() => {
+        const links = Array.from(document.querySelectorAll('nav a[href^="#"]'));
+        const sections = links
+          .map((a) => document.getElementById(a.getAttribute('href').slice(1)))
+          .filter(Boolean);
+        if (!sections.length) return;
+        const setCurrent = () => {
+          const probe = window.innerHeight * 0.33;
+          let current = sections[0];
+          for (const s of sections) {
+            if (s.getBoundingClientRect().top <= probe) current = s;
+          }
+          if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+            current = sections[sections.length - 1];
+          }
+          links.forEach((a) => {
+            const on = a.getAttribute('href') === '#' + current.id;
+            a.classList.toggle('is-current', on);
+            if (on) a.setAttribute('aria-current', 'true');
+            else a.removeAttribute('aria-current');
+          });
+        };
+        addEventListener('scroll', setCurrent, { passive: true });
+        addEventListener('resize', setCurrent, { passive: true });
+        setCurrent();
+      })();
+    </script>
   </body>
 </html>
