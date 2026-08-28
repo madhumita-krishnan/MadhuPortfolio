@@ -83,6 +83,7 @@
           "src": "assets/case-studies/driftwood/home.mp4",
           "poster": "assets/case-studies/driftwood-home-poster.jpg",
           "url": "driftwood.sh",
+          "tab": "driftwood · ship a custom demo",
           "alt": "The new driftwood.sh homepage in motion"
         }
       },

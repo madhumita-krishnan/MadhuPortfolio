@@ -961,38 +961,49 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 [data-video] video{opacity:0;transition:opacity var(--motion-base) var(--ease-standard)}
 [data-video].playing video{opacity:1}
 
-/* ---------- Mac browser window (for shipped websites) ----------
-   The window stands in for a real 1280pt-wide Chrome window, so every piece of chrome
-   is sized in --u = one logical pixel at that width. Hard-coded px made the traffic
-   lights and tab strip roughly 2-3x oversized for the frame they sat in, which is the
-   single thing that gives a fake browser away. Chrome's real metrics: 40pt tab strip,
-   34pt tabs, 12pt lights 8pt apart, 40pt toolbar, 28pt omnibox, 10pt window radius. */
+/* ---------- Chrome, drawn once (home-card window + the MacBook's screen) ----------
+   Everything is sized in --u = one logical pt of the window the chrome pretends to
+   be, so the same two rows serve the 1280pt standalone window and the maximized
+   window on the MacBook's 1512pt display. Metrics and colors are Chrome's own,
+   checked against her screenshot: 40pt tab strip #DEE1E6 with a white 34pt active
+   tab, 12pt traffic lights 8pt apart, 40pt toolbar with the #F1F3F4 omnibox pill,
+   ink #202124, icons #5F6368. Hard-coded px or invented tints are the two things
+   that give a fake browser away. */
+.chrome-tabs{display:flex;align-items:flex-end;height:calc(40*var(--u));background:#DEE1E6;
+  padding-left:calc(14*var(--u));flex:0 0 auto;overflow:hidden}
+.chrome-tabs .lights{display:flex;gap:calc(8*var(--u));align-self:center;margin-right:calc(14*var(--u));flex:0 0 auto}
+.chrome-tabs .lights i{width:calc(12*var(--u));height:calc(12*var(--u));border-radius:50%;display:block}
+.chrome-tabs .lights i:nth-child(1){background:#EC6A5E}
+.chrome-tabs .lights i:nth-child(2){background:#F4BF4F}
+.chrome-tabs .lights i:nth-child(3){background:#61C554}
+.chrome-tabs .tab{display:flex;align-items:center;gap:calc(7*var(--u));background:#fff;
+  border-radius:calc(9*var(--u)) calc(9*var(--u)) 0 0;height:calc(34*var(--u));
+  width:calc(240*var(--u));padding:0 calc(10*var(--u));overflow:hidden;white-space:nowrap;
+  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));letter-spacing:.01em;color:#202124}
+.chrome-tabs .fav{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3*var(--u));background:var(--accent);flex:0 0 auto}
+.chrome-tabs .tab-t{flex:1;overflow:hidden;text-overflow:ellipsis}
+.chrome-tabs .tab-x{color:#5F6368;flex:0 0 auto}
+.chrome-tabs .tab-plus{align-self:center;margin-left:calc(10*var(--u));color:#5F6368;
+  font-family:var(--font-utility);font-size:max(7px,calc(16*var(--u)));line-height:1}
+.chrome-nav{display:flex;align-items:center;gap:calc(10*var(--u));height:calc(40*var(--u));
+  background:#fff;padding:0 calc(14*var(--u));border-bottom:1px solid #DADCE0;flex:0 0 auto}
+.chrome-nav .nav-ic{font-family:var(--font-utility);font-size:max(6px,calc(13*var(--u)));color:#5F6368;flex:0 0 auto}
+.chrome-nav .nav-ic.is-off{opacity:.35}
+.chrome-nav .omni{flex:1;display:flex;align-items:center;gap:calc(7*var(--u));height:calc(28*var(--u));
+  border-radius:999px;background:#F1F3F4;padding:0 calc(12*var(--u));overflow:hidden;white-space:nowrap;
+  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));color:#202124}
+.chrome-nav .lock{width:calc(9*var(--u));height:calc(9*var(--u));border-radius:calc(2*var(--u));
+  border:1px solid #5F6368;opacity:.7;flex:0 0 auto}
+.chrome-nav .prof{width:calc(18*var(--u));height:calc(18*var(--u));border-radius:50%;
+  background:linear-gradient(135deg,#7A9CC6,#4A6B96);flex:0 0 auto}
+
+/* the standalone window: 1280pt wide, 10pt radius. Tab strip + toolbar stay 80u
+   total — the 1.7343 SAME-box contract with the landscape cards depends on it. */
 .browser{container-type:inline-size;width:100%;--u:.0781cqw;
-  border-radius:calc(10*var(--u));overflow:hidden;background:#E6E8E3;
+  border-radius:calc(10*var(--u));overflow:hidden;background:#DEE1E6;
   box-shadow:0 calc(24*var(--u)) calc(54*var(--u)) var(--shadow-mid),
              0 calc(2*var(--u)) calc(6*var(--u)) var(--shadow-soft),
              inset 0 0 0 1px rgba(24,38,32,.10)}
-.browser-chrome{background:linear-gradient(#E9EBE6,#DFE1DC)}
-.browser-row{display:flex;align-items:flex-end;height:calc(40*var(--u));padding-left:calc(20*var(--u))}
-.browser-dots{display:flex;gap:calc(8*var(--u));flex:0 0 auto;align-self:center;
-  margin-bottom:calc(-3*var(--u));padding-right:calc(18*var(--u))}
-.browser-dots i{width:calc(12*var(--u));height:calc(12*var(--u));border-radius:50%;display:block}
-.browser-dots i:nth-child(1){background:#EC6A5E}
-.browser-dots i:nth-child(2){background:#F4BF4F}
-.browser-dots i:nth-child(3){background:#61C554}
-.browser-tab{display:flex;align-items:center;gap:calc(8*var(--u));background:#FBFCF8;
-  border-radius:calc(8*var(--u)) calc(8*var(--u)) 0 0;
-  height:calc(34*var(--u));width:calc(240*var(--u));padding:0 calc(12*var(--u));
-  overflow:hidden;white-space:nowrap;
-  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));letter-spacing:.01em;color:var(--text-secondary)}
-.browser-tab .fav{width:calc(16*var(--u));height:calc(16*var(--u));border-radius:calc(3*var(--u));background:var(--accent);flex:0 0 auto}
-.browser-url{display:flex;align-items:center;height:calc(40*var(--u));padding:0 calc(12*var(--u));
-  background:#FBFCF8;border-bottom:1px solid rgba(24,38,32,.10)}
-.browser-url .pill{flex:1;height:calc(28*var(--u));border-radius:999px;background:#F1F3EE;
-  display:flex;align-items:center;padding:0 calc(12*var(--u));
-  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));color:var(--text-secondary)}
-.browser-url .lock{width:calc(9*var(--u));height:calc(9*var(--u));border-radius:calc(2*var(--u));
-  border:1px solid var(--text-secondary);opacity:.6;margin-right:calc(8*var(--u));flex:0 0 auto}
 /* matches the 2880x1480 screen captures, so nothing gets cropped */
 .browser-body{position:relative;aspect-ratio:1.945;background:#fff;overflow:hidden}
 .browser-body img.poster,.browser-body video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
@@ -1019,12 +1030,27 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .mac-cam{position:absolute;top:1.05cqw;left:50%;transform:translateX(-50%);
   width:.6cqw;height:.6cqw;border-radius:50%;
   background:radial-gradient(circle at 36% 32%,#243048,#0A0C12 70%)}
+/* The screen is a working Mac, not a void: menu bar, then Chrome maximized, then
+   the page filling every remaining pixel — her rule from the reference screenshot,
+   where no black glass shows around the site. The display plays a 1512pt 14",
+   so inside the screen --u = screen-width/1512; the shared .chrome-* rows scale
+   themselves. Menu bar is 24pt like the real one. */
 .mac-screen{position:absolute;top:2.79cqw;left:8.82cqw;right:8.82cqw;bottom:4.69cqw;
-  border-radius:.55cqw;background:#000;overflow:hidden}
-/* the captures run 1.77-2.03, the glass is 1.54 — so contain, never cover: the
-   page letterboxes on the black glass like fullscreen playback and nothing is
-   cropped. Phones crop; a website's edges carry content, so the laptop must not. */
-.mac-screen img.poster,.mac-screen video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  border-radius:.55cqw;background:#000;overflow:hidden;
+  display:flex;flex-direction:column;--u:.05447cqw}
+.mac-menubar{height:calc(24*var(--u));background:#F4F4F6;flex:0 0 auto;
+  display:flex;align-items:center;gap:calc(11*var(--u));padding:0 calc(12*var(--u));
+  font-family:var(--font-utility);font-size:max(4px,calc(10*var(--u)));color:#1D1D1F;
+  white-space:nowrap;overflow:hidden}
+.mac-menubar b{font-weight:700}
+.mac-menubar .mb-apple{width:calc(11*var(--u));height:calc(11*var(--u));fill:#1D1D1F;flex:0 0 auto}
+.mac-menubar .mb-right{margin-left:auto;display:flex;align-items:center;gap:calc(9*var(--u))}
+.mac-menubar .mb-ic{width:calc(11*var(--u));height:calc(11*var(--u));fill:currentColor;flex:0 0 auto}
+.mac-menubar .mb-batt{width:calc(17*var(--u))}
+/* the page under the chrome lands at ~1.72; captures run 1.77-2.03, so cover from
+   the top — a site cropping at the fold is what a real screen does anyway */
+.mac-page{position:relative;flex:1;min-height:0;background:#fff;overflow:hidden}
+.mac-page img.poster,.mac-page video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
 .mac-base{position:absolute;left:0;right:0;bottom:0;height:3.47cqw;
   border-radius:.3cqw .3cqw 5.6cqw 5.6cqw / .3cqw .3cqw 2.6cqw 2.6cqw;
   background:linear-gradient(#B1B3BA 0 40%,#A9ABB2 50%,#83848A 62%,#5E5F63 76%,#56575C 82%,#97989D 90%,#6E6F74 100%)}
@@ -1383,28 +1409,28 @@ footer a:hover{color:var(--accent)}
    natural flow */
 @media (max-width:820px){.cs-section{min-height:0;padding:calc(var(--space)*8) 0 calc(var(--space)*2)}}
 
-/* The next-project tease. The 96px that used to be margin above the card is now
-   reserved headroom INSIDE the (overflow:hidden) box, so the next case's cover
-   can wait tucked under the card's top edge and rise into the room on hover: the
-   card grows 24px upward (negative margin + equal padding, so nothing below it
-   ever moves) and the device comes up just far enough to show about a third of
-   itself. Bottom spacing is margin, not padding, so the clip line sits exactly on
-   the card's bottom edge and the device's hidden length never paints below it. */
-.cs-next{position:relative;overflow:hidden;max-width:1240px;margin:0 auto calc(var(--space)*4);padding:96px calc(var(--space)*2) 0}
-.cs-next-card{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
+/* The next-project tease, her spec: the pop-up shows up IN the box. On hover the
+   card grows 128px upward (negative margin + equal extra bottom padding, so the
+   page below never moves), the text — anchored to the card's top — rides up with
+   the top edge, and the next case's cover device rises inside the card from its
+   bottom edge, clipped by the card's own rounded corners. The 144px of margin
+   above the card is the room the expansion grows into. */
+.cs-next{max-width:1240px;margin:calc(var(--space)*18) auto calc(var(--space)*4);padding:0 calc(var(--space)*2)}
+.cs-next-card{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
   background:var(--bg-deep);color:var(--text-on-deep);
   transition:margin var(--motion-base) var(--ease-standard),padding var(--motion-base) var(--ease-standard)}
+.cs-next-copy{position:relative;z-index:1}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
-.cs-next-peek{position:absolute;z-index:0;top:110px;right:clamp(28px,8vw,110px);pointer-events:none;
+.cs-next-peek{position:absolute;z-index:0;top:100%;right:clamp(28px,6vw,84px);pointer-events:none;
   transition:transform var(--motion-base) var(--ease-standard)}
-/* widths chosen so the 72px that clears the lifted card's top edge is ~a third of
-   the device: phone 124px wide = 255 tall, MacBook 336px wide = 205 tall */
-.cs-next-peek.is-phone{width:124px}
-.cs-next-peek.is-mac{width:336px}
-@media (hover:hover) and (prefers-reduced-motion:no-preference){
-  .cs-next-card:hover,.cs-next-card:focus-visible{margin-top:-24px;padding-top:calc(clamp(24px,4vw,48px) + 24px)}
-  .cs-next-card:hover+.cs-next-peek,.cs-next-card:focus-visible+.cs-next-peek{transform:translateY(-110px)}
+.cs-next-peek.is-phone{width:190px}
+.cs-next-peek.is-mac{width:470px}
+@media (hover:hover) and (min-width:900px) and (prefers-reduced-motion:no-preference){
+  .cs-next-card:hover,.cs-next-card:focus-visible{margin-top:-128px;padding-bottom:calc(clamp(24px,4vw,48px) + 128px)}
+  /* a fixed 190px slice rises whatever the device: with top:100% the visible
+     height IS the translate, so phone and MacBook tease equally */
+  .cs-next-card:hover .cs-next-peek,.cs-next-card:focus-visible .cs-next-peek{transform:translateY(-190px)}
 }
 
 /* A play button is .play-btn + .btn.icon.solid — the shape, size and colour all come from
@@ -2114,41 +2140,69 @@ function phoneFrame(inner, { attrs = '', extra = '', island = true } = {}) {
 }
 
 /* Mac browser window for shipped websites */
-function browserFrame(m, { eager = false } = {}) {
+/* The two Chrome rows, shared by the standalone window and the MacBook's screen.
+   Tab title falls back to the url so old data keeps rendering. */
+function chromeHTML(m) {
+  const url = esc(m.url || '');
+  const title = esc(m.tab || m.url || '');
+  return `<div class="chrome-tabs" aria-hidden="true">
+        <span class="lights"><i></i><i></i><i></i></span>
+        <span class="tab"><span class="fav"></span><span class="tab-t">${title}</span><span class="tab-x">×</span></span>
+        <span class="tab-plus">+</span>
+      </div>
+      <div class="chrome-nav" aria-hidden="true">
+        <span class="nav-ic">←</span><span class="nav-ic is-off">→</span><span class="nav-ic">⟳</span>
+        <span class="omni"><span class="lock"></span>${url}</span>
+        <span class="nav-ic">☆</span><span class="prof"></span><span class="nav-ic">⋮</span>
+      </div>`;
+}
+
+function mediaBody(m, eager) {
   const isVideo = /\.(mp4|webm)$/.test(m.src || '');
-  const body = isVideo
-    ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
+  return {
+    isVideo,
+    body: isVideo
+      ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
        <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>
        <button class="play-btn btn icon solid" type="button" aria-label="Play preview">▶</button>`
-    : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
-  const url = esc(m.url || '');
+      : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`,
+  };
+}
+
+function browserFrame(m, { eager = false } = {}) {
+  const { isVideo, body } = mediaBody(m, eager);
   return `<div class="browser">
-      <div class="browser-chrome">
-        <div class="browser-row">
-          <span class="browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="browser-tab"><span class="fav" aria-hidden="true"></span>${url}</span>
-        </div>
-        <div class="browser-url" aria-hidden="true">
-          <span class="pill"><span class="lock"></span>${url}</span>
-        </div>
-      </div>
+      ${chromeHTML(m)}
       <div class="browser-body"${isVideo ? ' data-video' : ''}>${body}</div>
     </div>`;
 }
 
-/* Same media contract as browserFrame (poster / lazy video / play button), inside
-   the CSS MacBook instead of the window chrome. */
+/* The Mac menu bar: apple, Chrome's menus, and the status corner. Icons are tiny
+   inline SVGs (wifi, battery, search) so they render on every platform — the
+   glyph is macOS-only and would tofu elsewhere. */
+const MAC_MENUBAR = `<div class="mac-menubar" aria-hidden="true">
+      <svg class="mb-apple" viewBox="0 0 24 24"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.03 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+      <b>Chrome</b><span>File</span><span>Edit</span><span>View</span><span>History</span><span>Bookmarks</span><span>Profiles</span><span>Tab</span><span>Window</span><span>Help</span>
+      <span class="mb-right">
+        <svg class="mb-ic" viewBox="0 0 24 24"><path d="M12 18.2a2.1 2.1 0 1 1 0 4.2 2.1 2.1 0 0 1 0-4.2zm-4.9-4.6a7.4 7.4 0 0 1 9.8 0l-1.6 1.9a4.9 4.9 0 0 0-6.6 0zm-3.4-4a12.4 12.4 0 0 1 16.6 0l-1.6 1.9a9.9 9.9 0 0 0-13.4 0z"/></svg>
+        <svg class="mb-ic mb-batt" viewBox="0 0 28 12"><rect x=".5" y=".5" width="23" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2.5" y="2.5" width="16" height="7" rx="1.5"/><path d="M25.5 3.6v4.8a2.4 2.4 0 0 0 0-4.8z"/></svg>
+        <svg class="mb-ic" viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 1 0 4.55 13.46l4.24 4.24 1.42-1.42-4.24-4.24A7.5 7.5 0 0 0 10.5 3zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/></svg>
+        <span>Fri Aug 28&nbsp;&nbsp;12:52 PM</span>
+      </span>
+    </div>`;
+
+/* Same media contract as browserFrame, inside the CSS MacBook: the screen shows a
+   whole working Mac — menu bar, Chrome maximized, the capture filling the rest. */
 function macFrame(m, { eager = false } = {}) {
-  const isVideo = /\.(mp4|webm)$/.test(m.src || '');
-  const body = isVideo
-    ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
-       <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>
-       <button class="play-btn btn icon solid" type="button" aria-label="Play preview">▶</button>`
-    : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
+  const { isVideo, body } = mediaBody(m, eager);
   return `<div class="mac-media">
       <div class="mac">
         <div class="mac-lid" aria-hidden="true"><span class="mac-cam"></span></div>
-        <div class="mac-screen"${isVideo ? ' data-video' : ''}>${body}</div>
+        <div class="mac-screen">
+          ${MAC_MENUBAR}
+          ${chromeHTML(m)}
+          <div class="mac-page"${isVideo ? ' data-video' : ''}>${body}</div>
+        </div>
         <div class="mac-base" aria-hidden="true"></div>
       </div>
     </div>`;
@@ -2480,10 +2534,10 @@ function renderCase(cs) {
       return `<div class="cs-next-peek is-phone" aria-hidden="true">${phoneFrame(`<img src="${esc(src)}" alt="" loading="lazy" decoding="async">`, { island: hm.island !== false })}</div>`;
     }
     const src = /\.(mp4|webm)$/.test(hm.src || '') ? hm.poster : hm.src;
-    return src ? `<div class="cs-next-peek is-mac" aria-hidden="true">${macFrame({ src, alt: '' })}</div>` : '';
+    return src ? `<div class="cs-next-peek is-mac" aria-hidden="true">${macFrame({ src, alt: '', url: hm.url, tab: hm.tab })}</div>` : '';
   })();
-  const nextHTML = next ? `<div class="cs-next fade"><a class="cs-next-card" href="${esc(next.slug)}.html">
-    <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a>${nextPeek}</div>` : '';
+  const nextHTML = next ? `<div class="cs-next fade"><a class="cs-next-card" href="${esc(next.slug)}.html">${nextPeek}
+    <div class="cs-next-copy"><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a></div>` : '';
 
   const refl = cs.reflection ? `
 <section class="cs-section">

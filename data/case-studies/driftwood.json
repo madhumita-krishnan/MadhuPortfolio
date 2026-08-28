@@ -10,7 +10,8 @@
   "src": "assets/case-studies/driftwood-home-poster.jpg",
   "alt": "The shipped driftwood.sh homepage — 'Don't send your leads slop' above a playing product clip and a customer quote",
   "frame": "mac",
-  "url": "driftwood.sh"
+  "url": "driftwood.sh",
+  "tab": "driftwood · ship a custom demo"
  },
  "designSystem": "design-systems/driftwood.html",
  "meta": [
@@ -71,15 +72,18 @@
      "alt": "The old driftwood.sh hero: a headline about shipping a custom demo beside a dense screenshot of the product dashboard",
      "frame": "mac",
      "url": "driftwood.sh",
-     "caption": "The hero it replaced. Visitors could not tell what the product actually did — and the dashboard sitting next to the headline was too busy, and too unexplained, to carry a hero."
+     "caption": "The hero it replaced. Visitors could not tell what the product actually did — and the dashboard sitting next to the headline was too busy, and too unexplained, to carry a hero.",
+     "tab": "driftwood · ship a custom demo"
     },
     {
      "type": "image",
      "frame": "mac",
+     "url": "driftwood.sh",
      "src": "assets/case-studies/driftwood/aislop.jpg",
      "wash": "wash",
      "alt": "The old site's 'Don't send out AI slop' section — a generic cold email on the left, the message Driftwood sent on the right",
-     "caption": "The old AI-slop comparison. The argument was right and the proof was real, but it read as raw screenshots rather than a polished product, and the value took too long to land."
+     "caption": "The old AI-slop comparison. The argument was right and the proof was real, but it read as raw screenshots rather than a polished product, and the value took too long to land.",
+     "tab": "driftwood · ship a custom demo"
     }
    ]
   },
@@ -106,7 +110,8 @@
     "alt": "The new driftwood.sh homepage, scrolling from the hero through the product story",
     "caption": "The shipped homepage. The hero shows the outcome; the pivotal moment plays out on screen instead of being explained.",
     "frame": "mac",
-    "url": "driftwood.sh"
+    "url": "driftwood.sh",
+    "tab": "driftwood · ship a custom demo"
    }
   },
   {
@@ -132,7 +137,8 @@
     "alt": "Scrolling through the case studies section — each card a different custom demo Driftwood built",
     "caption": "Every card is a different demo the agent built. The variety is the argument.",
     "frame": "mac",
-    "url": "driftwood.sh"
+    "url": "driftwood.sh",
+    "tab": "driftwood · ship a custom demo"
    }
   },
   {
@@ -150,7 +156,8 @@
     "alt": "The interactive dashboard section — hovering different regions highlights each feature with a short caption",
     "caption": "Hover to highlight. Each region of the real dashboard explains itself in one line.",
     "frame": "mac",
-    "url": "driftwood.sh"
+    "url": "driftwood.sh",
+    "tab": "driftwood · ship a custom demo"
    }
   }
  ],

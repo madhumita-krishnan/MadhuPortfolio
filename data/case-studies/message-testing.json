@@ -10,7 +10,9 @@
   "src": "assets/case-studies/message-testing/motion.mp4",
   "poster": "assets/case-studies/atlantic-motion-poster.jpg",
   "alt": "Atlantic Health proton therapy motion graphic",
-  "frame": "mac"
+  "frame": "mac",
+  "url": "atlantichealth.org",
+  "tab": "Atlantic Health System"
  },
  "meta": [
   {
@@ -133,7 +135,9 @@
     "wash": "deep",
     "alt": "Atlantic Health motion graphic using the tested messaging",
     "caption": "Tested language, shipped: the campaign motion graphic built on the winning messages.",
-    "frame": "mac"
+    "frame": "mac",
+    "url": "atlantichealth.org",
+    "tab": "Atlantic Health System"
    }
   }
  ],
