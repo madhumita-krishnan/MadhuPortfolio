@@ -997,6 +997,44 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .browser-body{position:relative;aspect-ratio:1.945;background:#fff;overflow:hidden}
 .browser-body img.poster,.browser-body video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
 
+/* ---------- MacBook bezel (horizontal screens on case-study pages) ----------
+   Drawn the way the phone is drawn: measured from her reference photo, not from
+   memory. "mac bezel.png" is 917x576; with the base slab as the unit (896px wide)
+   the pixels say: lid 759x515, inset 68px a side; bezel 11px on sides and bottom,
+   25px on top with the camera 13px down; base slab 31px tall, thumb scoop 130x10px,
+   bottom corners sweeping in 50px. Colors are sampled, not styled: #020202 glass
+   behind a #3A3B3E edge line; base face #B1B3BA falling through #5E5F63 with a
+   #97989D floor bounce; the scoop reads BRIGHTER than the face (#F2F4F9), its ends
+   falling to #9EA0A5. Everything is in cqw so one frame serves every width. */
+.mac-media{container-type:inline-size;width:100%}
+.mac{position:relative;aspect-ratio:896/546;
+  filter:drop-shadow(0 1.1cqw 2cqw rgba(12,14,20,.26)) drop-shadow(0 .3cqw .7cqw rgba(12,14,20,.16))}
+.mac-lid{position:absolute;top:0;left:7.59cqw;right:7.59cqw;height:57.48cqw;
+  background:#020202;border-radius:1.8cqw 1.8cqw 0 0;
+  box-shadow:inset 0 0 0 1px #3A3B3E,inset 0 .16cqw .3cqw rgba(255,255,255,.16)}
+/* key light from the upper left, same rule as the phone — a symmetric device
+   reads synthetic. The screen div paints over this, so it only touches the bezel. */
+.mac-lid::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(152deg,rgba(255,255,255,.07),rgba(255,255,255,0) 24%,rgba(0,0,0,0) 70%,rgba(0,0,0,.10))}
+.mac-cam{position:absolute;top:1.05cqw;left:50%;transform:translateX(-50%);
+  width:.6cqw;height:.6cqw;border-radius:50%;
+  background:radial-gradient(circle at 36% 32%,#243048,#0A0C12 70%)}
+.mac-screen{position:absolute;top:2.79cqw;left:8.82cqw;right:8.82cqw;bottom:4.69cqw;
+  border-radius:.55cqw;background:#000;overflow:hidden}
+/* the captures run 1.77-2.03, the glass is 1.54 — so contain, never cover: the
+   page letterboxes on the black glass like fullscreen playback and nothing is
+   cropped. Phones crop; a website's edges carry content, so the laptop must not. */
+.mac-screen img.poster,.mac-screen video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.mac-base{position:absolute;left:0;right:0;bottom:0;height:3.47cqw;
+  border-radius:.3cqw .3cqw 5.6cqw 5.6cqw / .3cqw .3cqw 2.6cqw 2.6cqw;
+  background:linear-gradient(#B1B3BA 0 40%,#A9ABB2 50%,#83848A 62%,#5E5F63 76%,#56575C 82%,#97989D 90%,#6E6F74 100%)}
+/* the ends fall off darker — the right a touch more, the same key light again */
+.mac-base::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,.14),rgba(0,0,0,0) 7%,rgba(0,0,0,0) 93%,rgba(0,0,0,.20))}
+.mac-base::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:14.5cqw;height:1.15cqw;border-radius:0 0 999px 999px;
+  background:linear-gradient(90deg,#9EA0A5,#EDEFF4 14%,#F2F4F9 86%,#9EA0A5)}
+
 /* ------------------------------------------------ disciplines */
 .panels{display:flex;gap:calc(var(--space)*1.5);height:min(72vh,620px)}
 .panel{position:relative;flex:1 1 0;min-width:0;border-radius:var(--r-media);overflow:hidden;cursor:pointer;border:1px solid var(--line);
@@ -1345,11 +1383,29 @@ footer a:hover{color:var(--accent)}
    natural flow */
 @media (max-width:820px){.cs-section{min-height:0;padding:calc(var(--space)*8) 0 calc(var(--space)*2)}}
 
-.cs-next{max-width:1240px;margin:calc(var(--space)*12) auto 0;padding:0 calc(var(--space)*2) calc(var(--space)*4)}
-.cs-next-card{display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
-  background:var(--bg-deep);color:var(--text-on-deep)}
+/* The next-project tease. The 96px that used to be margin above the card is now
+   reserved headroom INSIDE the (overflow:hidden) box, so the next case's cover
+   can wait tucked under the card's top edge and rise into the room on hover: the
+   card grows 24px upward (negative margin + equal padding, so nothing below it
+   ever moves) and the device comes up just far enough to show about a third of
+   itself. Bottom spacing is margin, not padding, so the clip line sits exactly on
+   the card's bottom edge and the device's hidden length never paints below it. */
+.cs-next{position:relative;overflow:hidden;max-width:1240px;margin:0 auto calc(var(--space)*4);padding:96px calc(var(--space)*2) 0}
+.cs-next-card{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:20px;border-radius:24px;padding:clamp(24px,4vw,48px);text-decoration:none;
+  background:var(--bg-deep);color:var(--text-on-deep);
+  transition:margin var(--motion-base) var(--ease-standard),padding var(--motion-base) var(--ease-standard)}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
+.cs-next-peek{position:absolute;z-index:0;top:110px;right:clamp(28px,8vw,110px);pointer-events:none;
+  transition:transform var(--motion-base) var(--ease-standard)}
+/* widths chosen so the 72px that clears the lifted card's top edge is ~a third of
+   the device: phone 124px wide = 255 tall, MacBook 336px wide = 205 tall */
+.cs-next-peek.is-phone{width:124px}
+.cs-next-peek.is-mac{width:336px}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .cs-next-card:hover,.cs-next-card:focus-visible{margin-top:-24px;padding-top:calc(clamp(24px,4vw,48px) + 24px)}
+  .cs-next-card:hover+.cs-next-peek,.cs-next-card:focus-visible+.cs-next-peek{transform:translateY(-110px)}
+}
 
 /* A play button is .play-btn + .btn.icon.solid — the shape, size and colour all come from
    the button system, and this rule only says where it sits and when it appears. It carries
@@ -2080,6 +2136,24 @@ function browserFrame(m, { eager = false } = {}) {
     </div>`;
 }
 
+/* Same media contract as browserFrame (poster / lazy video / play button), inside
+   the CSS MacBook instead of the window chrome. */
+function macFrame(m, { eager = false } = {}) {
+  const isVideo = /\.(mp4|webm)$/.test(m.src || '');
+  const body = isVideo
+    ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
+       <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>
+       <button class="play-btn btn icon solid" type="button" aria-label="Play preview">▶</button>`
+    : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
+  return `<div class="mac-media">
+      <div class="mac">
+        <div class="mac-lid" aria-hidden="true"><span class="mac-cam"></span></div>
+        <div class="mac-screen"${isVideo ? ' data-video' : ''}>${body}</div>
+        <div class="mac-base" aria-hidden="true"></div>
+      </div>
+    </div>`;
+}
+
 /* ---------------------------------------------------------------- home page */
 function renderHome() {
   const h = site.hero;
@@ -2303,6 +2377,8 @@ function csMedia(m) {
   let inner = '';
   if (m.frame === 'browser') {
     inner = browserFrame(m);
+  } else if (m.frame === 'mac') {
+    inner = macFrame(m);
   } else if (m.type === 'video') {
     inner = `<div class="cs-media-frame" data-video>
       <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
@@ -2338,6 +2414,7 @@ function csHeroMedia(cs) {
   const m = cs.heroMedia;
   if (!m) return '';
   if (m.frame === 'browser') return `<div class="cs-hero-media" style="box-shadow:none;border-radius:0;overflow:visible">${browserFrame(m, { eager: true })}</div>`;
+  if (m.frame === 'mac') return `<div class="cs-hero-media" style="box-shadow:none;border-radius:0;overflow:visible">${macFrame(m, { eager: true })}</div>`;
   if (m.type === 'image') return `<div class="cs-hero-media"><img src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="eager" decoding="async" fetchpriority="high"></div>`;
   if (m.type === 'video') return `<div class="cs-hero-media" data-video style="position:relative;aspect-ratio:16/9;background:var(--bg-deep-shade)">
     <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
@@ -2392,8 +2469,21 @@ function renderCase(cs) {
   };
 
   const next = cases.find(c => c.slug === cs.next);
+  /* the tease: the next case's own cover device, waiting under the card's top edge.
+     Phone cases peek as a phone, shipped-site cases as the MacBook — the same frames
+     the page above already used, at card scale. */
+  const nextPeek = (() => {
+    if (!next || !next.heroMedia) return '';
+    const hm = next.heroMedia;
+    if (hm.type === 'phones' || hm.type === 'phone-video') {
+      const src = hm.type === 'phones' ? hm.items[0].src : hm.poster;
+      return `<div class="cs-next-peek is-phone" aria-hidden="true">${phoneFrame(`<img src="${esc(src)}" alt="" loading="lazy" decoding="async">`, { island: hm.island !== false })}</div>`;
+    }
+    const src = /\.(mp4|webm)$/.test(hm.src || '') ? hm.poster : hm.src;
+    return src ? `<div class="cs-next-peek is-mac" aria-hidden="true">${macFrame({ src, alt: '' })}</div>` : '';
+  })();
   const nextHTML = next ? `<div class="cs-next fade"><a class="cs-next-card" href="${esc(next.slug)}.html">
-    <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a></div>` : '';
+    <div><p class="k">Next project</p><p class="t">${esc(next.title)}</p></div></a>${nextPeek}</div>` : '';
 
   const refl = cs.reflection ? `
 <section class="cs-section">

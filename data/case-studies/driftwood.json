@@ -9,7 +9,7 @@
   "type": "image",
   "src": "assets/case-studies/driftwood-home-poster.jpg",
   "alt": "The shipped driftwood.sh homepage — 'Don't send your leads slop' above a playing product clip and a customer quote",
-  "frame": "browser",
+  "frame": "mac",
   "url": "driftwood.sh"
  },
  "designSystem": "design-systems/driftwood.html",
@@ -69,12 +69,13 @@
      "src": "assets/case-studies/driftwood/site-hero.jpg",
      "wash": "wash",
      "alt": "The old driftwood.sh hero: a headline about shipping a custom demo beside a dense screenshot of the product dashboard",
-     "frame": "browser",
+     "frame": "mac",
      "url": "driftwood.sh",
      "caption": "The hero it replaced. Visitors could not tell what the product actually did — and the dashboard sitting next to the headline was too busy, and too unexplained, to carry a hero."
     },
     {
      "type": "image",
+     "frame": "mac",
      "src": "assets/case-studies/driftwood/aislop.jpg",
      "wash": "wash",
      "alt": "The old site's 'Don't send out AI slop' section — a generic cold email on the left, the message Driftwood sent on the right",
@@ -104,7 +105,7 @@
     "wash": "deep",
     "alt": "The new driftwood.sh homepage, scrolling from the hero through the product story",
     "caption": "The shipped homepage. The hero shows the outcome; the pivotal moment plays out on screen instead of being explained.",
-    "frame": "browser",
+    "frame": "mac",
     "url": "driftwood.sh"
    }
   },
@@ -130,7 +131,7 @@
     "wash": "wash",
     "alt": "Scrolling through the case studies section — each card a different custom demo Driftwood built",
     "caption": "Every card is a different demo the agent built. The variety is the argument.",
-    "frame": "browser",
+    "frame": "mac",
     "url": "driftwood.sh"
    }
   },
@@ -148,7 +149,7 @@
     "wash": "deep",
     "alt": "The interactive dashboard section — hovering different regions highlights each feature with a short caption",
     "caption": "Hover to highlight. Each region of the real dashboard explains itself in one line.",
-    "frame": "browser",
+    "frame": "mac",
     "url": "driftwood.sh"
    }
   }
