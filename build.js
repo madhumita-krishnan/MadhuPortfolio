@@ -22,6 +22,11 @@ const cases = fs.readdirSync(csDir).filter(f => f.endsWith('.json'))
   .sort((a, b) => (a.order || 99) - (b.order || 99));
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/* Play / pause are drawn shapes centred on their 24-unit box, never the ▶ / ❚❚ characters —
+   a font glyph sits wherever its font puts it, so it is never truly centred in the disc
+   (2026-10-12, her rule: no off-centre icons in buttons, ever). lintIcons below enforces it. */
+const PLAY_IC = '<svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 L7 18 L17 12 Z"/></svg>';
+const PAUSE_IC = '<svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 H10 V18 H7 Z M14 6 H17 V18 H14 Z"/></svg>';
 const BUILD_V = Date.now().toString(36); // cache-buster: every rebuild gets fresh CSS/JS
 
 /* The same stamp on every piece of MEDIA, for the same reason it is on the CSS. Half the
@@ -1440,6 +1445,7 @@ footer a:hover{color:var(--accent)}
    pill with a 1.5px line disappears against arbitrary artwork. A filled terracotta disc is
    the same system saying the same thing on an unknown background. */
 .play-btn{position:absolute;bottom:16px;right:16px;z-index:6;display:none}
+.btn-ic{display:block;width:40%;height:40%;fill:currentColor}
 /* min-width/height too, or .btn's own min-height wins and the disc turns into a stadium */
 .phone-media .play-btn.icon{bottom:9cqw;right:50%;transform:translateX(50%);
   width:36px;min-width:36px;height:36px;min-height:36px;font-size:.8rem}
@@ -1825,8 +1831,8 @@ function makeJS() {
     vid.addEventListener('pause',()=>{if(inView&&!userPaused&&!rmActive())play()});
     gestureRetries.push(()=>{if(inView&&!userPaused&&vid.paused&&!rmActive())play()});
     if(btn){btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
-      if(box.classList.contains('playing')){userPaused=true;pause();btn.textContent='▶'}
-      else{userPaused=false;play();btn.textContent='❚❚'}})}
+      if(box.classList.contains('playing')){userPaused=true;pause();btn.innerHTML=${JSON.stringify(PLAY_IC)}}
+      else{userPaused=false;play();btn.innerHTML=${JSON.stringify(PAUSE_IC)}}})}
     const seen=e=>e.isIntersecting&&
       e.intersectionRect.height>=Math.min(e.boundingClientRect.height||1,innerHeight)*.5;
     /* data-autoplay = behave like a GIF: run whenever it is on screen, on any device */
@@ -2164,7 +2170,7 @@ function mediaBody(m, eager) {
     body: isVideo
       ? `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">
        <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" aria-label="${esc(m.alt || '')}"></video>
-       <button class="play-btn btn icon solid" type="button" aria-label="Play preview">▶</button>`
+       <button class="play-btn btn icon solid" type="button" aria-label="Play preview">${PLAY_IC}</button>`
       : `<img class="poster" src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">`,
   };
 }
@@ -2269,17 +2275,20 @@ function renderHome() {
     if (m.type === 'phone-video') {
       return phoneFrame(`<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
           ${videoTag(m)}`, { attrs: ` data-video${m.autoplay ? ' data-autoplay' : ''}`, island: m.island !== false,
-            extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play project preview">▶</button>' });
+            extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play project preview">${PLAY_IC}</button>' });
     }
     if (m.type === 'phone-gif' || m.type === 'phone-image') {
       return phoneFrame(`<img src="${esc(asset(m.src))}" alt="${esc(m.alt)}"${screenFit(m.src)} loading="lazy" decoding="async">`,
         { island: m.island !== false });
     }
     if (m.type === 'browser') return browserFrame(m, { lazy: true });
-    return `<div class="project-media" data-video>
+    /* m.ar pins the box to a recording's native aspect (default 1.7343) so a clip that
+       isn't 16:9 fills the frame instead of getting cover-cropped — Vantage's console
+       walkthrough is 1064x672 and its bottom captions would otherwise be cut off */
+    return `<div class="project-media" data-video${m.ar ? ` style="aspect-ratio:${esc(m.ar)}"` : ''}>
       <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
       ${videoTag(m)}
-      <button class="play-btn btn icon solid" type="button" aria-label="Play project preview">▶</button>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play project preview">${PLAY_IC}</button>
     </div>`;
   };
 
@@ -2437,13 +2446,13 @@ function csMedia(m) {
     inner = `<div class="cs-media-frame" data-video>
       <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
       ${videoTag(m)}
-      <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play video">${PLAY_IC}</button>
     </div>`;
     /* the frame needs intrinsic size: use aspect ratio wrapper */
     inner = `<div class="cs-media-frame" data-video style="aspect-ratio:16/9;background:var(--bg-deep-shade)">
       <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
       <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" poster="${esc(asset(m.poster))}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
-      <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>
+      <button class="play-btn btn icon solid" type="button" aria-label="Play video">${PLAY_IC}</button>
     </div>`;
   } else if (m.type === 'image') {
     inner = `<div class="cs-media-frame"><img src="${esc(asset(m.src))}" alt="${esc(m.alt)}" loading="lazy" decoding="async"></div>`;
@@ -2473,14 +2482,14 @@ function csHeroMedia(cs) {
   if (m.type === 'video') return `<div class="cs-hero-media" data-video style="position:relative;aspect-ratio:16/9;background:var(--bg-deep-shade)">
     <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
     <video muted loop playsinline preload="none" data-src="${esc(asset(m.src))}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" aria-label="${esc(m.alt || '')}"></video>
-    <button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button></div>`;
+    <button class="play-btn btn icon solid" type="button" aria-label="Play video">${PLAY_IC}</button></div>`;
   if (m.type === 'phones') return `<div class="cs-hero-phones">${m.items.map(it => m.frame === 'phone'
     ? phoneFrame(`<img src="${esc(it.src)}" alt="${esc(it.alt)}"${screenFit(it.src)} loading="eager" decoding="async">`, { island: m.island !== false })
     : `<img src="${esc(it.src)}" alt="${esc(it.alt)}" loading="eager" decoding="async">`).join('')}</div>`;
   if (m.type === 'phone-video') return `<div class="cs-hero-phone-video">${phoneFrame(
     `<img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="eager" decoding="async">${videoTag(m)}`,
     { attrs: ' data-video', island: m.island !== false,
-      extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play video">▶</button>' })}</div>`;
+      extra: '<button class="play-btn btn icon solid" type="button" aria-label="Play video">${PLAY_IC}</button>' })}</div>`;
   return '';
 }
 
@@ -2646,8 +2655,26 @@ for (const f of ['three.module.min.js', 'three.core.min.js']) {
   fs.mkdirSync(path.join(DIST, 'vendor'), { recursive: true });
   fs.copyFileSync(src, path.join(DIST, 'vendor', f));
 }
-fs.writeFileSync(path.join(DIST, 'index.html'), renderHome());
-for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), renderCase(cs));
+/* lintIcons: a button (or anything acting as one) may not use a font character as its icon.
+   Those glyphs are positioned by font metrics, not by the button, so they sit off-centre in
+   a circle — the build fails and names the button instead of shipping it. Words in buttons
+   are fine; only these icon characters are refused. */
+const ICON_GLYPHS = /[‹›«»←→↑↓↗↘↖↙⇆⇄⇅✎✏✓✔✕✖×▶◀▸◂►◄❚⏸⏵⏴⌖☆★☰]/;
+function lintIcons(html, page) {
+  const bad = [];
+  const strip = t => t.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, '').replace(/\$\{[^}]*\}/g, '');
+  for (const m of html.matchAll(/<button\b[^>]*>([\s\S]*?)<\/button>/g)) if (ICON_GLYPHS.test(strip(m[1]))) bad.push(m[0].slice(0, 120));
+  for (const m of html.matchAll(/<(\w+)\b[^>]*role="button"[^>]*>([^<]*)/g)) if (ICON_GLYPHS.test(m[2])) bad.push(m[0].slice(0, 120));
+  for (const m of html.matchAll(/(?:textContent|innerText)\s*=\s*(['"`])([^'"`]*)\1/g)) if (ICON_GLYPHS.test(m[2])) bad.push(m[0].slice(0, 120));
+  if (bad.length) throw new Error(`${page}: icon characters inside buttons — draw them as SVG (see ICONS in walkthrough.js):\n  ` + bad.join('\n  '));
+  return html;
+}
+fs.writeFileSync(path.join(DIST, 'index.html'), lintIcons(renderHome(), 'index.html'));
+/* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
+const renderWalkthrough = require('./walkthrough.js');
+for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
+  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT }) : renderCase(cs), `${cs.slug}.html`));
+fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the design-system showcase pages are standalone HTML (their own tokens, their own
    fonts) — copied through as-is, reachable from each case study's ds-link icon.

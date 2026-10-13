@@ -73,9 +73,11 @@ if (fs.existsSync(DIST)) {
   for (const f of htmls) {
     const html = fs.readFileSync(f, 'utf8');
     const rel = path.relative(DIST, f);
-    for (const m of html.matchAll(/(?:src|href|poster)\s*=\s*["']([^"']+)["']/g)) {
+    /* whole attributes only (data-src holds an edit-mode path, not a link), and a ${…}
+       inside a page's own script is a template, not a file */
+    for (const m of html.matchAll(/(?<![\w-])(?:src|href|poster)\s*=\s*["']([^"']+)["']/g)) {
       const url = m[1];
-      if (/^(https?:|mailto:|tel:|data:|#|javascript:)/i.test(url)) continue;
+      if (/^(https?:|mailto:|tel:|data:|#|javascript:)/i.test(url) || url.includes('${')) continue;
       const clean = url.split(/[?#]/)[0];
       if (!clean) continue;
       const target = clean.startsWith('/')

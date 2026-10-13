@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storyboard, proposed</title>
+<style>
+  @font-face { font-family: "Public Sans"; src: url("public-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+  :root {
+    --ink: #16181b; --ink-soft: #6a737d; --line: #e9ebee; --edge: #d3d9df;
+    --tide: #15557e; --tide-deep: #0d3c5b; --tide-wash: #eaf1f7; --num-blue: #2a73a8;
+    --ground: #f4f6f8; --white: #ffffff;
+    /* one type scale */
+    --t-page: 1.75rem; --t-section: 1.25rem; --t-body: 0.92rem; --t-small: 0.8rem;
+    /* one spacing system */
+    --gap: 1.5rem; --pad: 1.75rem; --head-gap: 3rem; --close: 0.4rem;
+    /* soft corners, pill buttons */
+    --r: 1.2rem; --r-s: 0.8rem; --pill: 999px;
+    --lift: 0 1px 1px rgb(22 24 27 / 0.03), 0 2px 4px rgb(22 24 27 / 0.03), 0 6px 12px rgb(22 24 27 / 0.035), 0 14px 28px rgb(22 24 27 / 0.04);
+    --raise: 0 2px 4px rgb(22 24 27 / 0.06), 0 12px 24px rgb(22 24 27 / 0.12), 0 24px 40px rgb(22 24 27 / 0.10);
+    --focus: 0 0 0 3px rgb(21 85 126 / 0.28);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); font: 400 var(--t-body)/1.5 "Public Sans", -apple-system, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; }
+  svg { display: block; }
+
+  .page { max-width: 76rem; margin: 0 auto; padding: 2rem; }
+
+  /* title row: the way back, the name and its recap, then the page's actions */
+  .head { margin-bottom: var(--head-gap); }
+  /* the way back: an icon-only circle on the title line, level with the name */
+  .back { flex: none; display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; border-radius: var(--pill); border: 1px solid var(--edge); background: var(--white); color: var(--ink); cursor: pointer; transition: background 150ms, border-color 150ms; }
+  .back:hover { border-color: #b9c1c9; background: #fafbfc; }
+  .back:focus-visible { outline: none; box-shadow: var(--focus); }
+  .title-row { display: flex; align-items: flex-start; gap: 1rem; }
+  .title-block { flex: 1; min-width: 0; }
+  .title-line { display: flex; align-items: center; gap: 0.75rem; }
+  h1 { margin: 0; font-size: var(--t-page); font-weight: 600; letter-spacing: -0.02em; line-height: 2.5rem; }
+  .recap { margin: var(--close) 0 0; color: var(--ink-soft); }
+  .chip { display: inline-flex; align-items: center; height: 1.6rem; padding: 0 0.7rem; border-radius: var(--pill); background: var(--tide-wash); color: var(--tide); font-size: var(--t-small); font-weight: 600; white-space: nowrap; }
+  .actions { display: flex; align-items: center; gap: 0.75rem; }
+
+  /* pill buttons, every state */
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; height: 2.5rem; padding: 0 1.25rem; border-radius: var(--pill); border: 1px solid var(--edge); background: var(--white); font-weight: 600; white-space: nowrap; cursor: pointer; transition: background 150ms, border-color 150ms, color 150ms, transform 120ms; }
+  .pill:hover { border-color: #b9c1c9; background: #fafbfc; }
+  .pill:active { transform: scale(0.98); }
+  .pill:focus-visible, .field:focus-visible, .tile:focus-visible, .icon-btn:focus-visible, .text-btn:focus-visible, .select:focus-visible { outline: none; box-shadow: var(--focus); }
+  .pill.primary { border-color: var(--tide); background: var(--tide); color: var(--white); }
+  .pill.primary:hover { border-color: var(--tide-deep); background: var(--tide-deep); }
+  .pill:disabled { border-color: var(--line); background: var(--white); color: #a8b0b8; cursor: default; transform: none; }
+  .pill.primary:disabled { border-color: #9fb8c9; background: #9fb8c9; color: var(--white); }
+  .select { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.5rem; padding: 0 0.9rem 0 1rem; border: 1px solid var(--line); border-radius: var(--pill); background: transparent; color: var(--ink-soft); cursor: pointer; position: relative; }
+  .select b { color: var(--ink); font-weight: 600; }
+  .select:hover { border-color: var(--edge); }
+  .menu { position: absolute; top: calc(100% + 0.4rem); right: 0; min-width: 11rem; padding: 0.4rem; border-radius: var(--r-s); background: var(--white); box-shadow: var(--raise); z-index: 5; display: none; }
+  .menu.open { display: block; }
+  .menu button { display: block; width: 100%; padding: 0.55rem 0.75rem; border: 0; border-radius: 0.55rem; background: none; text-align: left; cursor: pointer; }
+  .menu button:hover, .menu button[aria-checked="true"] { background: var(--tide-wash); }
+
+  /* stage: the player, and the shot you picked beside it */
+  .stage { display: grid; grid-template-columns: 42rem minmax(0, 1fr); gap: var(--gap); margin-bottom: var(--gap); }
+  .player { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r); overflow: hidden; background: #0f1113; box-shadow: var(--lift); }
+  .player video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .widget { background: var(--white); border-radius: var(--r); box-shadow: var(--lift); padding: var(--pad); }
+
+  .shot-panel { display: flex; flex-direction: column; min-height: 0; }
+  .shot-head { display: flex; align-items: baseline; gap: 0.6rem; }
+  .shot-head .n { color: var(--ink-soft); font-weight: 600; }
+  .shot-head h2 { margin: 0; font-size: var(--t-section); font-weight: 600; letter-spacing: -0.01em; }
+  .shot-head .time { margin-left: auto; color: var(--ink-soft); font-size: var(--t-small); font-variant-numeric: tabular-nums; }
+  .label-row { display: flex; align-items: center; justify-content: space-between; height: 1.6rem; margin: var(--gap) 0 var(--close); }
+  .label { color: var(--ink-soft); font-size: var(--t-small); }
+  .state { color: var(--tide); font-size: var(--t-small); font-weight: 600; }
+  .field-wrap { position: relative; }
+  .field { min-height: 4.6rem; max-height: 4.6rem; overflow: auto; padding: 0.75rem 3.25rem 0.75rem 1rem; border: 1px solid var(--line); border-radius: var(--r-s); line-height: 1.5; transition: border-color 150ms, box-shadow 150ms; }
+  .field:hover { border-color: var(--edge); }
+  .field:focus { border-color: var(--tide); }
+  .field.listening { border-color: var(--tide); box-shadow: 0 0 0 3px var(--tide-wash); }
+  .icon-btn { position: absolute; top: 0.55rem; right: 0.55rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: var(--pill); background: var(--tide-wash); color: var(--tide); cursor: pointer; transition: background 150ms, color 150ms; }
+  .icon-btn:hover { background: #dbe8f2; }
+  .icon-btn.on { background: var(--tide); color: var(--white); }
+  .icon-btn.on::after { content: ""; position: absolute; inset: -4px; border-radius: inherit; border: 2px solid var(--tide); opacity: 0; animation: ping 1.2s ease-out infinite; }
+  .note { position: absolute; left: 0; right: 0; top: calc(100% + 0.5rem); z-index: 6; padding: 1.25rem; border-radius: var(--r-s); background: var(--white); box-shadow: var(--raise); }
+  .note-head { display: flex; align-items: center; gap: 0.6rem; height: 2rem; margin-bottom: 0.75rem; font-weight: 600; }
+  .note-head .x { margin-left: auto; display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: var(--pill); background: none; color: var(--ink-soft); cursor: pointer; }
+  .note-head .x:hover { background: var(--ground); color: var(--ink); }
+  .live { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--tide); animation: breathe 1.1s ease-in-out infinite; }
+  .note.done .live { display: none; }
+  @keyframes breathe { 50% { transform: scale(1.5); opacity: 0.5; } }
+  .note textarea { display: block; width: 100%; height: 5.25rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 0.6rem; font: inherit; line-height: 1.5; color: var(--ink); resize: none; }
+  .note textarea:hover { border-color: var(--edge); }
+  .note textarea:focus { outline: none; border-color: var(--tide); box-shadow: var(--focus); }
+  .note-foot { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
+  .note-foot .pill { height: 2.25rem; padding: 0 1.1rem; }
+  .fake-cursor { position: fixed; z-index: 50; width: 30px; height: 30px; margin: -9px 0 0 -13px; pointer-events: none; display: none; }
+  @keyframes ping { 0% { opacity: 0.55; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.25); } }
+  .panel-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--gap); }
+  .text-btn { display: inline-flex; align-items: center; gap: 0.45rem; height: 2.25rem; padding: 0 0.75rem; margin-left: -0.75rem; border: 0; border-radius: var(--pill); background: none; color: var(--ink-soft); cursor: pointer; }
+  .text-btn:hover { background: var(--ground); color: var(--ink); }
+  .text-btn.end { margin: 0 -0.75rem 0 0; }
+  .text-btn[hidden] { display: inline-flex; visibility: hidden; }
+
+  /* the shots, in order: drag to reorder */
+  .shots-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+  .shots-head h2 { margin: 0; font-size: var(--t-body); font-weight: 600; }
+  .shots-head span { color: var(--ink-soft); font-size: var(--t-small); }
+  .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; position: relative; }
+  .tile { position: relative; padding: 0.4rem; margin: -0.4rem; border-radius: calc(var(--r-s) + 0.4rem); cursor: grab; touch-action: none; user-select: none; transition: transform 220ms cubic-bezier(.2,.8,.2,1), background 150ms; }
+  .tile:hover { background: var(--ground); }
+  .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-s); overflow: hidden; background: #1b1e21; box-shadow: inset 0 0 0 1px rgb(22 24 27 / 0.06); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .tile.selected .thumb { box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--tide); }
+  .cap { display: flex; align-items: baseline; gap: 0.35rem; margin-top: 0.6rem; font-size: var(--t-small); }
+  .cap .n { color: var(--ink-soft); font-weight: 600; }
+  .cap .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cap .time { margin-left: auto; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .grip, .tile-cut { position: absolute; top: 0.4rem; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--pill); background: rgb(255 255 255 / 0.94); color: var(--ink); opacity: 0; transition: opacity 150ms; box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); }
+  .grip { left: 0.4rem; }
+  .tile-cut { right: 0.4rem; border: 0; cursor: pointer; }
+  .tile:hover .grip, .tile:hover .tile-cut, .tile:focus-within .grip, .tile:focus-within .tile-cut, .tile.dragging .grip { opacity: 1; }
+  .tile-cut:hover { background: var(--white); color: var(--tide); }
+  .edited { position: absolute; left: 0.4rem; bottom: 0.4rem; height: 1.35rem; padding: 0 0.5rem; border-radius: var(--pill); background: var(--tide-wash); color: var(--tide); font-size: 0.72rem; font-weight: 600; line-height: 1.35rem; opacity: 0; transition: opacity 150ms; }
+  .tile.is-edited .edited { opacity: 1; }
+  .tile.dragging { z-index: 3; cursor: grabbing; background: var(--white); box-shadow: var(--raise); transition: background 150ms, box-shadow 150ms; }
+  .tile.cut-slot { cursor: default; }
+  .cut-slot .thumb { display: grid; place-items: center; align-content: center; gap: 0.35rem; background: var(--white); box-shadow: inset 0 0 0 1.5px var(--edge); border-radius: var(--r-s); }
+  .cut-slot .thumb { box-shadow: none; outline: 1.5px dashed var(--edge); outline-offset: -1.5px; }
+  .cut-slot .thumb span { color: var(--ink-soft); font-size: var(--t-small); }
+  .cut-slot .pill { height: 2rem; padding: 0 0.9rem; font-size: var(--t-small); }
+  .add .thumb { display: grid; place-items: center; background: none; box-shadow: none; outline: 1.5px dashed var(--edge); outline-offset: -1.5px; color: var(--ink-soft); }
+  .add { cursor: pointer; }
+  .add:hover .thumb { color: var(--tide); outline-color: var(--tide); }
+  .add .cap { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="head">
+    <div class="title-row">
+    <div class="title-block">
+      <div class="title-line"><button class="back" type="button" aria-label="Back to Dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h1>Demo 2</h1><span class="chip" id="version">Version 1</span></div>
+      <p class="recap">Finds where people drop off in their sign-up, then shows the fix.</p>
+    </div>
+    <div class="actions">
+      <div style="position: relative;">
+        <button class="select" id="preview" type="button" aria-haspopup="menu" aria-expanded="false">Preview for <b id="company">Acme</b>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="menu" id="preview-menu" role="menu"></div>
+      </div>
+      <button class="pill primary" id="main" type="button" style="min-width: 10.5rem;">Publish</button>
+    </div>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div class="player"><video id="video" src="case-autosana.mp4" poster="case-autosana-poster.webp" controls playsinline preload="auto" muted></video></div>
+    <aside class="widget shot-panel" aria-label="Selected shot">
+      <div class="shot-head"><span class="n" id="p-n"></span><h2 id="p-name"></h2><span class="time" id="p-time"></span></div>
+      <div class="label-row"><span class="label" id="l-says">Says</span><span class="state" id="s-says"></span></div>
+      <div class="field-wrap">
+        <div class="field" id="f-says" contenteditable="true" role="textbox" aria-labelledby="l-says" spellcheck="false"></div>
+        <button class="icon-btn" type="button" data-mic="says" aria-label="Say a change to what this shot says">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>
+        </button>
+      </div>
+      <div class="label-row"><span class="label" id="l-screen">On screen</span><span class="state" id="s-screen"></span></div>
+      <div class="field-wrap">
+        <div class="field" id="f-screen" contenteditable="true" role="textbox" aria-labelledby="l-screen" spellcheck="false"></div>
+        <button class="icon-btn" type="button" data-mic="screen" aria-label="Say a change to what's on screen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>
+        </button>
+      </div>
+      <div class="panel-foot">
+        <button class="text-btn" id="cut" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.6 8.6L20 18M8.6 15.4L20 6"/></svg>Cut shot
+        </button>
+        <button class="text-btn end" id="revert" type="button" hidden>Revert</button>
+      </div>
+    </aside>
+  </section>
+
+  <section class="widget" aria-label="Shots">
+    <div class="shots-head"><h2>Shots</h2><span id="count"></span></div>
+    <ol class="strip" id="strip"></ol>
+  </section>
+</main>
+
+<script>
+const ICON = {
+  grip: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+  cut: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.6 8.6L20 18M8.6 15.4L20 6"/></svg>',
+  plus: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+};
+
+let shots = [
+  { id: 1, name: "Intro", says: "Hi, I'm Sam, one of the founders of Acme. We find the step in a sign-up flow where people give up.", screen: "The Example sign-up page opens in a browser." },
+  { id: 2, name: "The drop-off", says: "I ran Example's sign-up fifty times. Most runs stop at the email check.", screen: "A chart of fifty runs. Most of them stop at the email check." },
+  { id: 3, name: "The cause", says: "The email check times out on a slow network, and the form clears itself.", screen: "The form resets after eight seconds, with no message." },
+  { id: 4, name: "The fix", says: "A longer timeout and a saved draft fix it. It's a two-line change.", screen: "The patch in the editor, with the timeout raised to thirty seconds." },
+  { id: 5, name: "After the fix", says: "After the fix, forty-nine of fifty runs finish sign-up.", screen: "The same chart for Example, now almost all green." },
+  { id: 6, name: "Close", says: "Happy to run this on your real flow. Talk soon.", screen: "Back on the Acme home page." },
+];
+const original = Object.fromEntries(shots.map(s => [s.id, { says: s.says, screen: s.screen }]));
+original[2].says = "I ran Example's sign-up flow fifty times to see where it breaks.";
+let selected = 3, reordered = false, cuts = 0, duration = 18, pendingCut = null;
+const startOrder = shots.map(s => s.id);
+// every shot keeps its own length and its place in the source video
+shots.forEach((s, i) => { s.len = 3; s.src = i * 3; });
+
+const $ = id => document.getElementById(id);
+const strip = $("strip"), video = $("video");
+const fmt = t => `0:${String(Math.floor(t)).padStart(2, "0")}`;
+const edited = s => s.says !== original[s.id]?.says || s.screen !== original[s.id]?.screen;
+const startOf = i => shots.slice(0, i).reduce((t, s) => t + s.len, 0);
+
+function changeCount() { return shots.filter(edited).length + cuts + (reordered ? 1 : 0); }
+function renderChrome() {
+  const c = changeCount();
+  // one main action: with no edits it publishes this version; with edits it makes the next one
+  if (!$("main").disabled) $("main").textContent = c ? "Make version 2" : "Publish";
+  $("count").textContent = `${shots.length} shots`;
+}
+
+function tileHTML(s, i) {
+  return `<li class="tile${s.id === selected ? " selected" : ""}${edited(s) ? " is-edited" : ""}" data-id="${s.id}" tabindex="0" aria-label="Shot ${i + 1}, ${s.name}">
+    <div class="thumb"><img src="thumbs/shot-${s.id}.jpg" alt="" onerror="this.style.visibility='hidden'">
+      <span class="grip" aria-hidden="true">${ICON.grip}</span>
+      <button class="tile-cut" type="button" aria-label="Cut ${s.name}">${ICON.cut}</button>
+      <span class="edited">Edited</span></div>
+    <div class="cap"><span class="n">${i + 1}</span><span class="name">${s.name}</span><span class="time">${fmt(startOf(i))}</span></div></li>`;
+}
+function render() {
+  let html = shots.map(tileHTML).join("");
+  if (pendingCut) {
+    const slot = `<li class="tile cut-slot" data-slot><div class="thumb"><span>${pendingCut.shot.name} cut</span><button class="pill" type="button" id="undo-cut">Undo</button></div><div class="cap"><span class="time" style="margin:0">&nbsp;</span></div></li>`;
+    const tiles = html.split("</li>").filter(Boolean).map(t => t + "</li>");
+    tiles.splice(pendingCut.index, 0, slot);
+    html = tiles.join("");
+  }
+  html += `<li class="tile add" id="add" tabindex="0" aria-label="Add a shot"><div class="thumb">${ICON.plus}</div><div class="cap"><span class="name" style="font-weight:400">Add shot</span></div></li>`;
+  strip.innerHTML = html;
+  renderPanel(); renderChrome();
+}
+function renderPanel() {
+  const i = shots.findIndex(s => s.id === selected), s = shots[i];
+  if (!s) return;
+  $("p-n").textContent = i + 1; $("p-name").textContent = s.name; $("p-time").textContent = fmt(startOf(i));
+  if (document.activeElement !== $("f-says")) $("f-says").textContent = s.says;
+  if (document.activeElement !== $("f-screen")) $("f-screen").textContent = s.screen;
+  $("revert").hidden = !edited(s);
+}
+function select(id, seek = true) {
+  selected = id;
+  strip.querySelectorAll(".tile[data-id]").forEach(t => t.classList.toggle("selected", +t.dataset.id === id));
+  renderPanel();
+  const i = shots.findIndex(s => s.id === id);
+  if (seek && i >= 0 && video.readyState > 0) video.currentTime = shots[i].src + 0.05;
+}
+
+// editing in place
+for (const [key, el] of [["says", $("f-says")], ["screen", $("f-screen")]]) {
+  el.addEventListener("input", () => {
+    const s = shots.find(x => x.id === selected); s[key] = el.textContent;
+    strip.querySelector(`.tile[data-id="${s.id}"]`)?.classList.toggle("is-edited", edited(s));
+    $("revert").hidden = !edited(s); renderChrome();
+  });
+}
+$("revert").addEventListener("click", () => {
+  const s = shots.find(x => x.id === selected); Object.assign(s, original[s.id] ?? { says: "", screen: "" });
+  $("f-says").textContent = s.says; $("f-screen").textContent = s.screen; render();
+});
+
+// say a change: a note pops up under the field, the words arrive as they're heard,
+// and it can be edited before it's applied
+const heard = {
+  says: "Make it say it gives up on a slow network, and that it wipes what they tied.",
+  screen: "Show the form clearing, and add a small warning that the draft is gone.",
+};
+const rewrite = {
+  says: "The email check gives up on a slow network, and the form wipes everything you typed.",
+  screen: "The form clears after eight seconds, with a small warning that the draft is gone.",
+};
+let note = null;
+function closeNote() {
+  if (!note) return;
+  clearInterval(note.timer); note.btn.classList.remove("on"); note.btn.setAttribute("aria-pressed", "false");
+  note.field.classList.remove("listening"); note.el.remove(); note = null;
+}
+function openNote(btn) {
+  closeNote();
+  const key = btn.dataset.mic, field = $(key === "says" ? "f-says" : "f-screen");
+  const el = document.createElement("div");
+  el.className = "note"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Your spoken note");
+  el.innerHTML = `<div class="note-head"><span class="live" aria-hidden="true"></span><span class="note-title">Listening…</span>
+      <button class="x" type="button" aria-label="Close">${'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'}</button></div>
+    <textarea aria-label="Your note" spellcheck="false"></textarea>
+    <div class="note-foot"><button class="pill" type="button" data-act="stop">Stop</button></div>`;
+  btn.parentElement.appendChild(el);
+  btn.classList.add("on"); btn.setAttribute("aria-pressed", "true"); field.classList.add("listening");
+  note = { el, btn, field, key };
+  const ta = el.querySelector("textarea"), words = heard[key].split(" "); let n = 0;
+  note.timer = setInterval(() => { ta.value = words.slice(0, ++n).join(" "); if (n >= words.length) finish(); }, 140);
+  el.addEventListener("click", e => {
+    if (e.target.closest(".x") || e.target.closest('[data-act="discard"]')) closeNote();
+    else if (e.target.closest('[data-act="stop"]')) finish();
+    else if (e.target.closest('[data-act="apply"]')) {
+      const s = shots.find(x => x.id === selected); s[note.key] = rewrite[note.key];
+      note.field.textContent = s[note.key]; closeNote(); render();
+    }
+  });
+}
+function finish() {
+  if (!note) return;
+  clearInterval(note.timer); note.btn.classList.remove("on"); note.field.classList.remove("listening");
+  note.el.classList.add("done"); note.el.querySelector(".note-title").textContent = "Your note";
+  note.el.querySelector(".note-foot").innerHTML = '<button class="pill" type="button" data-act="discard">Discard</button><button class="pill primary" type="button" data-act="apply">Apply</button>';
+}
+document.querySelectorAll("[data-mic]").forEach(btn => btn.addEventListener("click", () => note && note.btn === btn ? closeNote() : openNote(btn)));
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeNote(); });
+
+// for screenshots: a drawn pointer, an open hand over a shot and a closed one while dragging
+const HAND = {
+  grab: '<path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M11 5.5v-2a1.5 1.5 0 1 1 3 0v8.5"/><path d="M14 5.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M17 7.5a1.5 1.5 0 0 1 3 0v8.5a6 6 0 0 1-6 6h-2h.2a6 6 0 0 1-5-2.7l-.2-.3c-.3-.5-1.4-2.4-3.3-5.7a1.5 1.5 0 0 1 .5-2a1.9 1.9 0 0 1 2.3.3l1.5 1.5"/>',
+  grabbing: '<path d="M8 11v-3.5a1.5 1.5 0 0 1 3 0v2.5"/><path d="M11 9.5v-3a1.5 1.5 0 0 1 3 0v3.5"/><path d="M14 7.5a1.5 1.5 0 0 1 3 0v2.5"/><path d="M17 11.5a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-2h.2a6 6 0 0 1-5-2.7l-.2-.3c-.3-.5-1.4-2.4-3.3-5.7a1.5 1.5 0 0 1 .5-2a1.9 1.9 0 0 1 2.3.3l1.5 1.5"/>',
+};
+window.showCursor = () => {
+  const c = document.createElement("div"); c.className = "fake-cursor"; document.body.appendChild(c);
+  addEventListener("pointermove", e => {
+    const kind = drag && drag.started ? "grabbing" : e.target.closest?.(".tile[data-id]") ? "grab" : null;
+    c.style.display = kind ? "block" : "none"; c.style.left = e.clientX + "px"; c.style.top = e.clientY + "px";
+    if (kind) c.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#fff" stroke-width="4.2">${HAND[kind]}</g><g stroke="#16181b" stroke-width="1.6">${HAND[kind]}</g></svg>`;
+  });
+};
+
+// cut, with Undo in the same place for five seconds
+function cut(id) {
+  const index = shots.findIndex(s => s.id === id); if (index < 0) return;
+  if (pendingCut) clearTimeout(pendingCut.timer);
+  const [shot] = shots.splice(index, 1); cuts++;
+  pendingCut = { shot, index, timer: setTimeout(() => { pendingCut = null; render(); }, 5000) };
+  if (selected === id) selected = shots[Math.min(index, shots.length - 1)]?.id;
+  render();
+}
+$("cut").addEventListener("click", () => cut(selected));
+strip.addEventListener("click", e => {
+  if (e.target.closest("#undo-cut")) {
+    clearTimeout(pendingCut.timer); shots.splice(pendingCut.index, 0, pendingCut.shot); cuts--; selected = pendingCut.shot.id; pendingCut = null; render(); return;
+  }
+  const cutBtn = e.target.closest(".tile-cut"); if (cutBtn) { cut(+cutBtn.closest(".tile").dataset.id); return; }
+  if (e.target.closest("#add")) {
+    const id = Math.max(...shots.map(s => s.id), ...(pendingCut ? [pendingCut.shot.id] : [])) + 1;
+    shots.push({ id, name: "New shot", says: "", screen: "", len: 3, src: 0 }); original[id] = { says: "", screen: "" }; selected = id; render(); $("f-says").focus(); return;
+  }
+});
+strip.addEventListener("keydown", e => {
+  const tile = e.target.closest(".tile[data-id]"); if (!tile) return;
+  const id = +tile.dataset.id, i = shots.findIndex(s => s.id === id);
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(id); }
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); cut(id); }
+  if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+    e.preventDefault(); const j = i + (e.key === "ArrowLeft" ? -1 : 1); if (j < 0 || j >= shots.length) return;
+    shots.splice(j, 0, shots.splice(i, 1)[0]); reordered = shots.map(s => s.id).join() !== startOrder.join(); render(); strip.querySelector(`.tile[data-id="${id}"]`).focus();
+  }
+});
+
+// drag to reorder: the tile lifts and follows the hand; the others slide out of its way
+let drag = null;
+strip.addEventListener("pointerdown", e => {
+  const tile = e.target.closest(".tile[data-id]"); if (!tile || e.target.closest("button") || pendingCut) return;
+  drag = { tile, id: +tile.dataset.id, x0: e.clientX, y0: e.clientY, started: false };
+  tile.setPointerCapture(e.pointerId);
+});
+strip.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  if (!drag.started) {
+    if (Math.hypot(dx, dy) < 5) return;
+    drag.started = true; drag.tile.classList.add("dragging");
+    drag.tiles = [...strip.querySelectorAll(".tile[data-id]")];
+    drag.rects = drag.tiles.map(t => t.getBoundingClientRect());
+    drag.from = drag.tiles.indexOf(drag.tile); drag.to = drag.from;
+  }
+  drag.tile.style.transform = `translate(${dx}px, -6px) scale(1.04)`;
+  const r = drag.rects[drag.from], cx = r.left + r.width / 2 + dx;
+  // the new place is how many other tiles' centres the dragged tile has passed
+  drag.to = drag.rects.reduce((n, rc, k) => n + (k !== drag.from && cx > rc.left + rc.width / 2 + 0.5 ? 1 : 0), 0);
+  const step = drag.rects[1] ? drag.rects[1].left - drag.rects[0].left : 0;
+  drag.tiles.forEach((t, k) => {
+    if (t === drag.tile) return;
+    let shift = 0;
+    if (drag.from < drag.to && k > drag.from && k <= drag.to) shift = -step;
+    if (drag.from > drag.to && k >= drag.to && k < drag.from) shift = step;
+    t.style.transform = shift ? `translateX(${shift}px)` : "";
+  });
+});
+function endDrag() {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.started) { select(d.id); return; }
+  const moved = shots.splice(d.from, 1)[0]; shots.splice(d.to, 0, moved);
+  reordered = shots.map(s => s.id).join() !== startOrder.join();
+  render(); select(d.id);
+}
+strip.addEventListener("pointerup", endDrag);
+strip.addEventListener("pointercancel", endDrag);
+
+// playing the video walks the shots
+video.addEventListener("loadedmetadata", () => { duration = video.duration || duration; render(); });
+video.addEventListener("timeupdate", () => {
+  if (video.paused || drag) return;
+  const s = shots.find(x => video.currentTime >= x.src && video.currentTime < x.src + x.len);
+  if (s && s.id !== selected) select(s.id, false);
+});
+
+// preview for each company: our own menu
+const companies = ["Acme", "Northwind", "Quarry"];
+const menu = $("preview-menu");
+menu.innerHTML = companies.map(c => `<button role="menuitemradio" aria-checked="${c === "Acme"}" type="button">${c}</button>`).join("");
+$("preview").addEventListener("click", () => { const open = menu.classList.toggle("open"); $("preview").setAttribute("aria-expanded", open); });
+menu.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  menu.querySelectorAll("button").forEach(x => x.setAttribute("aria-checked", x === b));
+  $("company").textContent = b.textContent; menu.classList.remove("open"); $("preview").setAttribute("aria-expanded", "false");
+});
+document.addEventListener("click", e => { if (!e.target.closest("#preview, #preview-menu")) { menu.classList.remove("open"); $("preview").setAttribute("aria-expanded", "false"); } });
+
+// the two page actions say what's happening while they work
+$("main").addEventListener("click", () => {
+  const b = $("main"), making = changeCount() > 0;
+  b.disabled = true; b.textContent = making ? "Making…" : "Publishing…";
+  setTimeout(() => { b.textContent = making ? "Version 2 on its way" : "Published"; }, 1200);
+});
+
+// start on shot 3, with one shot already edited
+shots[1].says = "I ran Example's sign-up fifty times. Most runs stop at the email check.";
+render();
+
+// thumbnails: one frame from each shot of the real demo (saved once, then read from thumbs/)
+window.makeThumbs = async () => {
+  const v = document.createElement("video"); v.src = "case-autosana.mp4"; v.muted = true; v.preload = "auto";
+  await new Promise(r => v.addEventListener("loadeddata", r, { once: true }));
+  const out = [], c = document.createElement("canvas"); c.width = 480; c.height = 270;
+  for (let i = 0; i < 6; i++) {
+    v.currentTime = (v.duration / 6) * i + (v.duration / 6) * 0.45;
+    await new Promise(r => v.addEventListener("seeked", r, { once: true }));
+    c.getContext("2d").drawImage(v, 0, 0, 480, 270); out.push(c.toDataURL("image/jpeg", 0.85));
+  }
+  return out;
+};
+</script>
+</body>
+</html>

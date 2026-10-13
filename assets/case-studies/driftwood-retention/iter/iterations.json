@@ -1,0 +1,584 @@
+{
+ "v1-onboarding": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/01-card-sign-in.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "A card with a Google button",
+   "why": "The first self-serve flow: sign in, pilot terms, your product, your demo, then the pilot home.",
+   "ask": "screen-by-screen onboarding (login, T&C), ending on a bare-minimum pilot dashboard with a fun delightful animation",
+   "screen": "Sign in"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/02-pilot-terms.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "Pilot terms on screen",
+   "why": "Step two asked people to agree to pilot terms; later cut, since every question on screen is a reason to stop.",
+   "screen": "Pilot terms"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/03-what-do-you-sell.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "“What do you sell?”",
+   "why": "Step three collected a website and what you sell up front, before the demo was made.",
+   "screen": "Your product"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/04-log-progress.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "Waiting with the log at sea",
+   "why": "The pilot home showed the duck on its log sailing toward the island as the progress bar, with time left.",
+   "screen": "Progress and waiting"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/05-progress-bar.jpg",
+   "folder": "03-onboarding-progress-bar",
+   "title": "A progress bar on every step",
+   "why": "A five-segment bar beside “Step N of 5”, because people stay in a flow when they can see how much is left.",
+   "ask": "Is there a progress bar to show people where they are in the onboarding process?",
+   "screen": "Progress and waiting"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/06-helm-four-logos.jpg",
+   "folder": "04-threejs-helm-intro-logo-sign-in",
+   "title": "A three.js helm, four logos",
+   "why": "A hero moment before sign-in: the helm’s spokes fold into the hub, and four sign-in logos land on the rim.",
+   "ask": "Don't start with step two, it feels weird.",
+   "screen": "Sign in"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/07-problem-question.jpg",
+   "folder": "05-logo-glides-to-hub-problem-question",
+   "title": "The problem question",
+   "why": "A demo is built around a problem, so the question now asks what problem the product solves.",
+   "ask": "Is there a better way to ask 'What do you sell?'",
+   "screen": "Your product"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-onboarding/08-google-only-hub.jpg",
+   "folder": "07-google-only-sign-in",
+   "title": "Google only, the hub as button",
+   "why": "One choice means no decision; after the spokes fold in, the hub itself becomes the one thing to press.",
+   "ask": "The only sign-in option we want is Google, so reimagine the animation.",
+   "screen": "Sign in"
+  }
+ ],
+ "v1-storyboard": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/01-one-mic.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "One mic for the whole demo",
+   "why": "The first storyboard: watch the demo, review each shot, and a “Talk through changes” mic for spoken feedback.",
+   "ask": "Speaking feedback instead of clicking around.",
+   "screen": "Shot review"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/02-ab-dialog.jpg",
+   "folder": "01-first-pilot-flow-with-questions",
+   "title": "An A/B ask in a dialog",
+   "why": "An A/B button opened a lightbox to describe two versions to test, with Generate at the bottom.",
+   "ask": "an A/B button that opens a lightbox, and Generate at the bottom.",
+   "screen": "A/B test"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/03-watch-then-review.jpg",
+   "folder": "28-storyboard-sections-reorder-dashboard-ab-results",
+   "title": "Watch, then review; shots reorder",
+   "why": "Two numbered sections for the page’s two jobs; Approve, Change and Cut sit in the same place on every card.",
+   "ask": "Critique the storyboard from an experienced product designer perspective. I feel like there's not real visual hierarchy.",
+   "screen": "Shot review"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/04-sheets-approved-glow.jpg",
+   "folder": "33-premium-storyboard-3d-launch-bento-dashboard",
+   "title": "Shots as sheets; approved stands apart",
+   "why": "Each shot became a white sheet on a faint off-white ground, and an approved sheet takes a green glow.",
+   "ask": "The UI on the storyboard edit page looks like clip art. Can you make it look more premium? The shading looks so cheap.",
+   "screen": "Shot review"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/05-cut-are-you-sure.jpg",
+   "folder": "33-premium-storyboard-3d-launch-bento-dashboard",
+   "title": "Are you sure, before a cut",
+   "why": "Generate can’t be taken back, so one question at the point of no return prevents a lost shot.",
+   "ask": "For cut, have are you sure you want to cut these, you can't undo this action.",
+   "screen": "Generate and publish"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/06-publish-title-row.jpg",
+   "folder": "49-menu-swipe-welcome-flight-type-scale",
+   "title": "Publish on the title row",
+   "why": "Publish moved onto the title row after the legend, and Say changes moved beside the video.",
+   "ask": "does the storyboard editor make sense? is there anything redundant there?",
+   "screen": "Generate and publish"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/07-calm-decisions.jpg",
+   "folder": "51-inbox-rethink-calmer-editor-swipe-anywhere",
+   "title": "Calmer decisions on every shot",
+   "why": "Approve, Change and Cut became a raised white thumb; approved shows a tide wash and a tick, within the palette.",
+   "ask": "I really really hate the way the editor look when you press approve change and cut",
+   "screen": "Shot review"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/08-final-no-edits-publish.jpg",
+   "title": "Before any edit, Publish",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/09-final-storyboard.jpg",
+   "title": "One shot open: Says and On screen, a mic each",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/10-final-hover-the-fix.jpg",
+   "title": "Hover a shot to pick it up",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/11-final-the-fix-lifted-into-slot-2.jpg",
+   "title": "Drag The fix into slot 2",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/12-final-dropped-in-slot-2.jpg",
+   "title": "Dropped in slot 2",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/13-final-note-listening.jpg",
+   "title": "A note by voice",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/14-final-note-fixed-before-applying.jpg",
+   "title": "Read the note before it applies",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/15-final-note-applied.jpg",
+   "title": "Applied, and the shot marked Edited",
+   "why": "",
+   "screen": "Final mockup"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/16-final-cut-with-undo.jpg",
+   "title": "A cut leaves Undo in its place",
+   "why": "",
+   "screen": "Final mockup"
+  }
+ ],
+ "connect": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/01-cards-from-settings.jpg",
+   "folder": "08-cut-questions-add-linkedin-x-team",
+   "title": "Account cards borrowed from Settings",
+   "why": "Product questions moved to the kickoff call; connecting LinkedIn and X joined onboarding, reusing the sending-accounts card.",
+   "ask": "The questions will be triaged on a call. All we need is login, face cloning and demo creation."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/02-helm-lines-centred.jpg",
+   "folder": "13-step3-lines-from-helm-centred",
+   "title": "Lines run from the helm",
+   "why": "The step became a centred column, with signal lines from the helm to each account so the connection is visible.",
+   "ask": "Step three still looks wrong. The lines used to logo was better positioned."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/03-sidebar-sections.jpg",
+   "folder": "30-sidebar-no-face-pilot-and-main-dashboard",
+   "title": "A sidebar of sections",
+   "why": "Onboarding gained a TurboTax-style sidebar; a section turns bold only once an account is really connected.",
+   "ask": "I want a side bar during the onboarding flow that bolds the sections that are completed, like TurboTax"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/04-centred-cards.jpg",
+   "folder": "47-docked-buttons-axes-range-track-centred",
+   "title": "Centred cards, docked buttons",
+   "why": "Each card’s logo, name, line and button now stack on the card’s centre, and the repeated heading row came out.",
+   "ask": "all the stuff in section two of onboarding isnt perfectly centered. make sure you check every group of items is centered."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/05-compact-panel.jpg",
+   "folder": "52-compact-connect-gmail-logos-pick-any-demo",
+   "title": "One compact panel",
+   "why": "The helm’s lines land on one white panel of two rows: half the height, and the diagram is the control.",
+   "ask": "connect to linkedin feels too spacious- reimagine this"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/06-back-to-cards.jpg",
+   "folder": "54-connect-as-before-warm-dashboard-ground",
+   "title": "Back to two cards",
+   "why": "The compact panel was reverted to the helm, its dotted lines and two centred cards, the shape she knew and trusted.",
+   "ask": "make the linkedin conect page what it used to be. this is really weird now."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/07-two-buttons.jpg",
+   "folder": "57-panels-back-pill-buttons-pipeline-look-b",
+   "title": "Two buttons under the helm",
+   "why": "A box around a lone button felt bland, and the diagram already shows the logos, so two buttons remain.",
+   "ask": "connect to linkedin and connect to x feels too bland in their box now. maybe just have the connect linkedin, connect x buttions?"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/connect/08-quiet-disconnect.jpg",
+   "folder": "60-quiet-disconnect-one-leads-swipe-triggers",
+   "title": "A quiet Disconnect",
+   "why": "Once connected, only an outlined Disconnect remains; the diagram’s tick says connected, and Undo holds its place for five seconds.",
+   "ask": "when you connect, the way disconnect looks is odd. maybe we dont need all that disconect info. reimagine disconnect."
+  }
+ ],
+ "leads": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/01-csv-or-voice.jpg",
+   "folder": "35-numbered-steps-add-leads-csv-voice",
+   "title": "Drop a CSV, or say names",
+   "why": "A new step after Connect: the demo is for leads, so naming them right after the sending accounts reads in order.",
+   "ask": "…upload a sheet like a cvs to upload their lead list.. they should also be able to upload it with voice"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/02-leads-as-you-speak.jpg",
+   "folder": "35-numbered-steps-add-leads-csv-voice",
+   "title": "Leads appear as you speak",
+   "why": "Each spoken lead lands as a row you can see and remove, so a mishearing costs one ×."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/03-upload-only.jpg",
+   "folder": "36-cumulative-check-in-faces-three-styles-audit",
+   "title": "Upload only in onboarding",
+   "why": "Onboarding stays one simple action; describing who you want is a strategy decision, so voice moved to the dashboard.",
+   "ask": "the voice thing for the lead list shouldn't be in onboarding."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/04-excel-too.jpg",
+   "folder": "39-excel-uploads-no-top-button",
+   "title": "Excel too; the sheet uploads",
+   "why": "People upload whatever they already have, so .xlsx joined CSV, and the sheet itself became the upload.",
+   "ask": "can we upload stuff more than a csv, also we can drop the upload csv button on the top"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/05-drop-zone-fills.jpg",
+   "folder": "47-docked-buttons-axes-range-track-centred",
+   "title": "The drop zone fills the sheet",
+   "why": "A 74px gap left over from a removed header came out, so the drop zone fills the sheet.",
+   "ask": "why is there so much space above drop your lead list here?"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/leads/06-four-steps-undo.jpg",
+   "folder": "64-night-even-blue-no-drips",
+   "title": "Four steps, Undo per upload",
+   "why": "Where it landed: onboarding is four steps, and each upload keeps its own Undo under the sheet."
+  }
+ ],
+ "team": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/01-members-roles.jpg",
+   "folder": "08-cut-questions-add-linkedin-x-team",
+   "title": "Members, roles and auto-join",
+   "why": "Invite your team arrived as the workspace’s own Team panel, with Make my pilot demo at its foot.",
+   "ask": "An invite-your-team-members part (already built)."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/02-crew-wheel.jpg",
+   "folder": "11-no-terms-morph-transitions-crew-wheel",
+   "title": "“All hands on deck” crew wheel",
+   "why": "A helm with a handle per teammate; a new invite flies its handle in, throws sparks and spins the wheel.",
+   "ask": "Invite your team can feel more fun and visually dramatic — generate excitement with Three.js and fun CSS."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/03-3d-helm.jpg",
+   "folder": "14-premium-3d-crew-wheel",
+   "title": "A lit 3D helm",
+   "why": "The crew wheel became a lit 3D helm on a deep-tide stage, spinning a full turn per invite.",
+   "ask": "The all hands on deck idea doesn't feel bold and premium."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/04-flat-discs.jpg",
+   "folder": "15-flat-crew-row-no-wheel",
+   "title": "A flat row of discs",
+   "why": "The 3D wheel felt hyper-real; a calm flat row lets each new person settling in be the one moment of delight.",
+   "ask": "Too hyper realistic on the all hands thing and I think you need to drop the wheel. The concept isn't premium."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/05-invite-your-team.jpg",
+   "folder": "16-no-on-deck-wording",
+   "title": "Invite your team, plainly worded",
+   "why": "The theme lives in the visuals; the words name the real value, working together.",
+   "ask": "I don't like the words on deck on that page."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/06-invite-chips.jpg",
+   "folder": "21-invite-chips-undo-iris",
+   "title": "Invites as chips, free to remove",
+   "why": "Type and press Enter or paste a To: line; each address becomes a chip with an ×, sent only on Create demo.",
+   "ask": "I should always be able to undo an action I just did."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/07-plus-leads-row.jpg",
+   "folder": "26-no-twirls-plus-linkedin-window-no-face-nag",
+   "title": "A + leads the row",
+   "why": "You already know you’re on the team; a + invites action, and the row fills as you add people.",
+   "ask": "Drop MA, make it a plus sign."
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/team/08-start-pilot.jpg",
+   "folder": "64-night-even-blue-no-drips",
+   "title": "Paste a list, then Start pilot",
+   "why": "Where it landed: the last step’s button is Start pilot, which sends the invites and leads and starts the pilot."
+  }
+ ],
+ "face": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/01-two-boxes.jpg",
+   "folder": "02-face-cloning-step",
+   "title": "Two boxes to tick",
+   "why": "A face and voice step joined onboarding: tick good light and clean audio, then the recorder opens in the card.",
+   "ask": "Face cloning needs to be part of this, and if they opt out it needs to be the first step on the dashboard.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/02-camera-check.jpg",
+   "folder": "09-motion-per-step-camera-check",
+   "title": "A live camera check",
+   "why": "People tick boxes without checking, so the camera now measures light and quiet before a take is recorded.",
+   "ask": "Face cloning should have a camera-on moment that automatically checks for the things it asks for.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/03-porthole.jpg",
+   "folder": "10-step3-centred-porthole",
+   "title": "One centred porthole",
+   "why": "The step became one centred porthole; light and quiet fill as gauges on its rim, and the bolts light up when ready.",
+   "ask": "Reimagine step 3. It's not fun enough, feels unbalanced and disjointed.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/04-one-ring-no-box.jpg",
+   "folder": "19-face-redesign-no-box",
+   "title": "One ring: light, then quiet",
+   "why": "One check at a time, like fingerprint setup; the two gauges are halves of one ring, with no box around them.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/05-grey-to-dark.jpg",
+   "folder": "25-finish-page-photo-hub-varied-turns",
+   "title": "Read words turn dark",
+   "why": "Black on blue hid your progress, so words to read are grey, read words go dark, and a caret marks your place.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/06-out-of-onboarding.jpg",
+   "folder": "49-menu-swipe-welcome-flight-type-scale",
+   "title": "Out of onboarding, into the menu",
+   "why": "Clients can’t film while on a call, so face cloning left onboarding; the menu keeps Face & Voice until it’s recorded.",
+   "ask": "I feel like we removed too much from the side bar. it should have, face cloning (until its completed)",
+   "screen": "After onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/07-dashboard-widget.jpg",
+   "folder": "65-face-and-voice-widget-and-email",
+   "title": "The one dark card on Home",
+   "why": "In a test with 8 people, 6 preferred an alert at the top of the dashboard over a pop-up by the tab.",
+   "ask": "design a widget that goes above pipeline face cloning make it stand out.",
+   "screen": "After onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/08-email.jpg",
+   "folder": "65-face-and-voice-widget-and-email",
+   "title": "The same card, by email",
+   "why": "The email after onboarding uses the same card; its video is a still that opens the dashboard, where the welcome plays.",
+   "ask": "the goal is after onboarding we email them with a face cloning button/link for them to be routed. design this email as well.",
+   "screen": "After onboarding"
+  }
+ ],
+ "dashboard": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/01-menu-three-sections.jpg",
+   "folder": "30-sidebar-no-face-pilot-and-main-dashboard",
+   "title": "A left menu, three sections",
+   "why": "Home answers three questions in order: Check-in for how sending goes, Strategy for who gets it, Demo styles for what works.",
+   "ask": "When they publish, we go to the main dashboard: a menu on the left…",
+   "screen": "Menu"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/02-one-section-per-screen.jpg",
+   "folder": "34-full-screen-sections-five-styles-comparison",
+   "title": "One section per screen",
+   "why": "Each section is a screen tall and snaps, so widgets can be big, each with its own shape.",
+   "ask": "I think things should feel big and sizable. like to the point where only one section is visible at a time as you scroll.",
+   "screen": "Home layout"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/03-running-totals-faces.jpg",
+   "folder": "36-cumulative-check-in-faces-three-styles-audit",
+   "title": "Running totals, faces for meetings",
+   "why": "Every Check-in widget became a graph over time as a running total, and meetings show one face per meeting.",
+   "ask": "I want this dashboard to be premium and organized. this doesn't feel clean at all",
+   "screen": "Charts"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/04-every-old-page.jpg",
+   "folder": "45-steady-buttons-tray-wheel-all-pages",
+   "title": "Every old page in the menu",
+   "why": "Everything from the deployed dashboard joined the menu so customers lost no page: twelve items, with tabs inside tabs.",
+   "ask": "I need to make sure that all the stuff that is currently in the currently deployed dashbaord is featured on this website somewhere",
+   "screen": "Menu"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/05-three-menu-items.jpg",
+   "folder": "46-start-pilot-three-places-account-widgets",
+   "title": "Three menu items, account behind you",
+   "why": "Each menu item answers one question, deeper pages open from the widget they deepen, and set-up sits behind your name.",
+   "ask": "less is more with this nav bar … right now this is overwhleming.",
+   "screen": "Menu"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/06-each-week-on-its-own.jpg",
+   "folder": "48-whitespace-period-charts-one-check-in-inner-pages",
+   "title": "Each week on its own",
+   "why": "A rising total hides a bad week, so charts show each week, and only the pointed-at number turns blue.",
+   "ask": "also we dont want cumulutive graphs.",
+   "screen": "Charts"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/07-approvals-in-menu.jpg",
+   "folder": "49-menu-swipe-welcome-flight-type-scale",
+   "title": "Actions first: Approvals in the menu",
+   "why": "Approvals waits on you and was buried, so the menu grew to Home, Approvals, Inbox, Check-in, Strategy, Demos and Face & Voice.",
+   "ask": "I feel like we removed too much from the side bar … approvals is an action thing that needs to be more readily visible.",
+   "screen": "Menu"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/dashboard/08-look-b-pipeline.jpg",
+   "folder": "59-look-b-only-bigger-numbers-labelled-axes",
+   "title": "Look B: Pipeline on blue",
+   "why": "A white menu column frames the work, white widgets stand out on a blue page, and every axis carries labels.",
+   "ask": "include more labels in the graphs, can you make the bigger number even bigger lets go with look b",
+   "screen": "Home layout"
+  }
+ ],
+ "launch": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/01-results-ab-test.jpg",
+   "folder": "28-storyboard-sections-reorder-dashboard-ab-results",
+   "title": "Results and an A/B test",
+   "why": "The pilot dashboard grew Results and an A/B test, since a pilot is judged on whether demos earn replies.",
+   "ask": "I think there are more elements to the dashboard, like adding a new demo, A/B testing, what the results of that look like.",
+   "screen": "Pilot dashboard"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/02-one-big-demo.jpg",
+   "folder": "30-sidebar-no-face-pilot-and-main-dashboard",
+   "title": "One big demo, Edit and Publish",
+   "why": "Before anything is published there is one job, picking the demo, so results and the A/B test came off.",
+   "ask": "The pilot dashboard will only have one thing: an enlarged preview of the demo video with an edit button to the right",
+   "screen": "Pilot dashboard"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/03-message-in-a-bottle.jpg",
+   "folder": "31-publish-launch-bottle-pilot-demo-spotlight",
+   "title": "A message in a bottle",
+   "why": "Sending the first demo is the pilot’s big moment; the demo rolls into a bottle that splashes down, then “Sent”.",
+   "ask": "The demo is rolled up and dropped into a message bottle that comes up from under, and then the message in a bottle plops/splashes down.",
+   "screen": "Launch moment"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/04-centred-cinematic.jpg",
+   "folder": "32-centred-cinematic-demo-latest-versions-well",
+   "title": "A centred, cinematic demo",
+   "why": "The demo is the hero, framed by Publish and Edit, and the picked version sits in a pressed-in well.",
+   "ask": "The big demo is centered. It's cinematic and premium and dramatic, edit on the right of the demo, publish on the left.",
+   "screen": "Pilot dashboard"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/05-launch-3d.jpg",
+   "folder": "33-premium-storyboard-3d-launch-bento-dashboard",
+   "title": "The launch in three.js",
+   "why": "Fireworks became rockets with ember trails, the card real paper, and a glass bottle rises out of a moonlit sea.",
+   "ask": "The rolling up looks wrong. And the plop looks wrong. Can you use Flora and three.js. Also the fireworks could look better.",
+   "screen": "Launch moment"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/06-launch-ascii.jpg",
+   "folder": "43-ascii-launch-short-connect-small-row",
+   "title": "The launch in ASCII",
+   "why": "Redrawn in the sea’s ASCII, so it speaks the same language as every other sea in the product.",
+   "ask": "remake the toast animation with ascii characters.",
+   "screen": "Launch moment"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/07-flight-into-menu.jpg",
+   "folder": "49-menu-swipe-welcome-flight-type-scale",
+   "title": "The demo flies into the menu",
+   "why": "The flight runs as one smooth three.js motion with real tilt and shadow, settling into Demos as the dashboard fades in.",
+   "ask": "the way the demo after the celebration moves to the nav bar is choppy and not smooth",
+   "screen": "Launch moment"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/launch/08-sent-even-night.jpg",
+   "folder": "64-night-even-blue-no-drips",
+   "title": "“Sent!” on an even night",
+   "why": "The night fades up evenly in 900ms with the card, so the moment never snaps to sudden dark.",
+   "ask": "removes the drip effect from the blue",
+   "screen": "Launch moment"
+  }
+ ],
+ "email": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/08-email.jpg",
+   "title": "Set up, on its own",
+   "why": "2 people opened the email and left it.",
+   "screen": "Email"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/screens/face-email-remind.jpg",
+   "title": "Set up, or Remind me tomorrow",
+   "why": "Remind me tomorrow brings it back to the top of their inbox at a better time.",
+   "screen": "Email"
+  }
+ ],
+ "v1-face": [
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/01-two-boxes.jpg",
+   "folder": "02-face-cloning-step",
+   "title": "Two boxes to tick",
+   "why": "A face and voice step joined onboarding: tick good light and clean audio, then the recorder opens in the card.",
+   "ask": "Face cloning needs to be part of this, and if they opt out it needs to be the first step on the dashboard.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/02-camera-check.jpg",
+   "folder": "09-motion-per-step-camera-check",
+   "title": "A live camera check",
+   "why": "People tick boxes without checking, so the camera now measures light and quiet before a take is recorded.",
+   "ask": "Face cloning should have a camera-on moment that automatically checks for the things it asks for.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/03-porthole.jpg",
+   "folder": "10-step3-centred-porthole",
+   "title": "One centred porthole",
+   "why": "The step became one centred porthole; light and quiet fill as gauges on its rim, and the bolts light up when ready.",
+   "ask": "Reimagine step 3. It's not fun enough, feels unbalanced and disjointed.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/04-one-ring-no-box.jpg",
+   "folder": "19-face-redesign-no-box",
+   "title": "One ring: light, then quiet",
+   "why": "One check at a time, like fingerprint setup; the two gauges are halves of one ring, with no box around them.",
+   "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/05-grey-to-dark-face.jpg",
+   "folder": "25-finish-page-photo-hub-varied-turns",
+   "title": "Read words turn dark",
+   "why": "Black on blue hid your progress, so words to read are grey, read words go dark, and a caret marks your place.",
+   "screen": "Face step in onboarding"
+  }
+ ]
+}

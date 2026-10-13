@@ -1,0 +1,761 @@
+{
+ "slug": "driftwood-retention",
+ "template": "walkthrough",
+ "name": "Driftwood",
+ "order": 1.5,
+ "prev": "driftwood",
+ "next": "spotify-mix",
+ "title": "Race to a faster first demo",
+ "subtitle": "Identifying systemic process lag so new clients reach their first demo in a week, for driftwood, an a16z speedrun startup",
+ "tagline": "Driftwood was refunding more than half its revenue. A shorter onboarding on the founder's call, a storyboard editor, and a calmer dashboard got new clients to their first demo in 7 business days.",
+ "liveBase": "https://driftwood-landing-git-main-dashboard-driftwood-d31ce40d.vercel.app",
+ "dir": "assets/case-studies/driftwood-retention",
+ "hero": {
+  "main": {
+   "src": "shots/before-face/8a-home-check-in.jpg",
+   "alt": "The redesigned driftwood Home: Pipeline with sent, opened, replies and meetings booked",
+   "view": "dashboard"
+  },
+  "floats": [
+   {
+    "src": "screens/stripe-payments.jpg",
+    "alt": "Stripe payments card: $7,700 refunded of $14,500 collected",
+    "pos": "left"
+   },
+   {
+    "src": "screens/face-email.jpg",
+    "alt": "The face and voice email",
+    "pos": "right"
+   }
+  ]
+ },
+ "sections": [
+  {
+   "id": "feel",
+   "toc": "The feeling",
+   "tone": "ink",
+   "blocks": [
+    {
+     "type": "meta",
+     "items": [
+      [
+       "Client",
+       "driftwood, a16z speedrun 008"
+      ],
+      [
+       "Role",
+       "Product design engineer: design and shipped front end"
+      ],
+      [
+       "Timeline",
+       "18 days of design, build and onboarding new clients"
+      ],
+      [
+       "Team",
+       "Aayush Gupta and Dheer Guda, co-founders and engineers"
+      ],
+      [
+       "Scope",
+       "Onboarding, pilot storyboard, dashboard IA and widget design"
+      ],
+      [
+       "Process",
+       "Client interviews, journey mapping with the founder, prototyping in production code"
+      ]
+     ]
+    },
+    {
+     "type": "hook",
+     "lines": [
+      "An idea you know is good is exhilarating.",
+      "It's a nightmare when execution can't keep up with how fast you're dreaming."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "situation",
+   "toc": "The situation",
+   "tone": "ink",
+   "eyebrow": "The situation",
+   "heading": "Driftwood was losing more than half its revenue to refunds",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "Clients paid, then waited about a month for their first custom demos. **One churned. Aayush refunded four others before they asked, to keep them from churning as well.**"
+    },
+    {
+     "type": "payments",
+     "source": "*Stripe payments dashboard, 4 customers refunded",
+     "rows": [
+      [
+       "Succeeded",
+       6800,
+       "ok"
+      ],
+      [
+       "Refunded",
+       7700,
+       "bad"
+      ]
+     ],
+     "callout": "**53%** of $14.5k collected went back"
+    }
+   ]
+  },
+  {
+   "id": "who",
+   "toc": "Who they are",
+   "tone": "navy",
+   "eyebrow": "Who they are",
+   "blocks": [
+    {
+     "type": "lede",
+     "text": [
+      "driftwood is an AI cold outbound agent. Every cold message it sends carries **a working demo of the client's product, built for that prospect.**",
+      "The founder, Aayush, was signing clients fast and **onboarding each one by hand with coding agents.** He was scaling quickly. However…"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "problem",
+   "toc": "The problem",
+   "tone": "ink",
+   "eyebrow": "The problem",
+   "heading": "Getting a client to their first demo took 2.5–3 weeks",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "In an internal audit with the founders, the refunds traced back to **how long it took to get a client going.**"
+    },
+    {
+     "type": "timeline",
+     "title": "Where the first weeks went",
+     "source": "*Founder's records across all 8 clients",
+     "rows": [
+      {
+       "label": "Waiting on face cloning",
+       "from": 0,
+       "to": 5,
+       "note": "~1 week, 3–4 reminders",
+       "hint": "Async step, and crucial to the effectiveness of the demos."
+      },
+      {
+       "label": "Pilot demo back-and-forth",
+       "from": 5,
+       "to": 15,
+       "note": "~6 rounds over Slack, ~2 weeks"
+      }
+     ],
+     "max": 15,
+     "unit": "business days",
+     "marks": [
+      {
+       "at": 15,
+       "text": "First demo, before: 2.5–3 weeks (5 at worst)",
+       "tone": "bad"
+      },
+      {
+       "at": 7,
+       "text": "After the redesign: 7 business days",
+       "tone": "ok"
+      }
+     ]
+    },
+    {
+     "type": "p",
+     "text": "Aayush put it simply: clients have **the most intent in their first week.**"
+    },
+    {
+     "type": "moments",
+     "heading": "Initial founder feedback",
+     "items": [
+      [
+       "Too much back and forth for the pilot demo",
+       "About **6 rounds of revisions** on average, over Slack, between the founder and clients, across **2 weeks.**"
+      ],
+      [
+       "Critical setup was missing",
+       "**60% had cloned their face**, after 1–2 weeks and 3–4 reminders."
+      ],
+      [
+       "The dashboard overwhelmed people",
+       "**12 menu items**, with tabs inside tabs and no clear visual hierarchy."
+      ],
+      [
+       "Onboarding was manual",
+       "Aayush set up every client by hand, and **he was signing more clients.**"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "clients",
+   "toc": "Clients",
+   "tone": "ink",
+   "eyebrow": "Voice of the client",
+   "heading": "What clients told us",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "I spoke with **6 of driftwood's 8 clients** about where they got stuck. Hover a card to see the theme it fed."
+    },
+    {
+     "type": "quotes",
+     "note": "Paraphrased from client calls, including the offboarding call with the one client who churned.",
+     "items": [
+      {
+       "text": "The dashboard **overwhelmed me**, and I **couldn't find things.**",
+       "who": "An overwhelmed client",
+       "face": "classic",
+       "theme": 0
+      },
+      {
+       "text": "The timeline to get demos booked was **too long.** We needed to **move faster.**",
+       "who": "Our one churned client",
+       "face": "shocked",
+       "theme": 1
+      },
+      {
+       "text": "I wish **editing the pilot demo** was quicker.",
+       "who": "A client in their pilot",
+       "face": "swim",
+       "theme": 2
+      },
+      {
+       "text": "It felt **messy and unusable.** Honestly, I don't know **how my demos are doing** and which ones are going better.",
+       "who": "A frustrated client",
+       "face": "sleepy",
+       "theme": 0
+      },
+      {
+       "text": "I needed time to **look okay on camera**, and then I **forgot about it** a few times. I had other stuff going on.",
+       "who": "A client, on face cloning",
+       "face": "shades",
+       "theme": 1
+      },
+      {
+       "text": "Revisions went back and forth over Slack, and it just **felt inefficient.**",
+       "who": "A client in their pilot",
+       "face": "right",
+       "theme": 2
+      }
+     ],
+     "themes": [
+      "Hard to find things",
+      "Slow to the first demo",
+      "Slow to edit"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "question",
+   "toc": "The question",
+   "tone": "navy",
+   "eyebrow": "The big question",
+   "blocks": [
+    {
+     "type": "hmw",
+     "text": "How might we get new clients to __their first great demo faster__, so they feel they're getting what they paid for?"
+    },
+    {
+     "type": "measures",
+     "lead": "Every idea was measured on:",
+     "items": [
+      [
+       "Days to first demo",
+       "From signing to the first demo sent",
+       "Was 2.5–3 weeks"
+      ],
+      [
+       "Days iterating",
+       "From the first pilot demo to the one the client picks",
+       "Was about 2 weeks"
+      ],
+      [
+       "Set-up rate",
+       "Clients who record their face, and how fast",
+       "Was 60%, in 1–2 weeks"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "v1",
+   "toc": "V1: self-serve",
+   "tone": "ink",
+   "eyebrow": "Building · V1",
+   "heading": "V1: onboarding and a storyboard editor, built for speed",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "**Assumption:** Creating a short onboarding flow, and then letting clients edit the pilot demo on their own, would get their first demo approved sooner."
+    },
+    {
+     "type": "screens",
+     "n": 1,
+     "title": "Onboarding, screen by screen",
+     "lead": "Click a screen to see how it went from first draft to shipped.",
+     "items": [
+      {
+       "src": "shots/latest/1-sign-in-shipped.jpg",
+       "alt": "Sign in: the helm with Continue with Google",
+       "view": "v1-onboarding",
+       "title": "Sign in"
+      },
+      {
+       "src": "iter/face/05-grey-to-dark-face.jpg",
+       "alt": "Face and voice in V1 onboarding: read a line aloud while it records",
+       "view": "v1-face",
+       "title": "Face and voice, later moved out"
+      },
+      {
+       "src": "screens/v2-connect.jpg",
+       "alt": "Connect LinkedIn and X",
+       "view": "connect",
+       "notes": [
+        {
+         "x": 61,
+         "y": 38,
+         "text": "Opens in a small window, X can't send people back",
+         "dx": 14,
+         "dy": -16
+        },
+        {
+         "x": 17.5,
+         "y": 21.5,
+         "text": "Done steps turn bold, skipped ones stay plain",
+         "dx": 8.5,
+         "dy": 38.5
+        }
+       ],
+       "title": "Connect LinkedIn and X"
+      },
+      {
+       "src": "shots/latest/3-leads-a-empty.jpg",
+       "alt": "Who should get your demo? Six leads uploaded from a CSV",
+       "view": "leads",
+       "notes": [
+        {
+         "x": 57,
+         "y": 69,
+         "text": "",
+         "dx": 16,
+         "dy": 12
+        }
+       ],
+       "title": "Add leads"
+      },
+      {
+       "src": "screens/v2-team.jpg",
+       "alt": "Invite your team, with three email chips and Start pilot",
+       "view": "team",
+       "notes": [
+        {
+         "x": 74,
+         "y": 79,
+         "text": "",
+         "dx": -30,
+         "dy": 10
+        }
+       ],
+       "title": "Invite the team, then Start pilot"
+      }
+     ]
+    },
+    {
+     "type": "step",
+     "n": 2,
+     "title": "A storyboard editor for the pilot demo",
+     "bullets": [
+      "Clients approve, change or cut each shot themselves, **in place of Slack threads.**",
+      "First a single mic for every change. Clients wanted finer control, so each section got **its own editor, with typing and a mic.**"
+     ],
+     "frame": {
+      "src": "iter/v1-storyboard/09-final-storyboard.jpg",
+      "alt": "The storyboard editor: one shot open, with Says and On screen, each with its own mic",
+      "view": "v1-storyboard"
+     }
+    },
+    {
+     "type": "callout",
+     "label": "What we learned",
+     "text": "Aayush wanted onboarding to feel personal, so we kept it as an in person,** live experience **that the founder would talk through on call**, with a flow to guide it.** Only the pilot demo needed to be async. **The trade-off:** face cloning moved out of onboarding, and we couldn't afford to lose days waiting on it, so I designed ways to make sure **it didn't slip through the cracks.**"
+    }
+   ]
+  },
+  {
+   "id": "v2",
+   "toc": "V2: face cloning",
+   "tone": "ink",
+   "eyebrow": "Building · V2 · Shipped",
+   "heading": "V2: we took face cloning out of onboarding. So where does it go?",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "**Assumption:** clients have the most intent right after the kickoff call, so if the ask lands then, **they will set up their face on their own.**"
+    },
+    {
+     "type": "options",
+     "items": [
+      {
+       "where": "In onboarding",
+       "verdict": "no",
+       "why": "60% did it, after 1–2 weeks and 3–4 reminders."
+      },
+      {
+       "where": "Live on the call",
+       "verdict": "no",
+       "why": "Aayush explains it in person, but clients can't film on a call or without good light."
+      },
+      {
+       "where": "An email after the call",
+       "verdict": "yes",
+       "why": "Aayush builds the trust in person. Clients record when they're ready, at the top of their inbox."
+      }
+     ]
+    },
+    {
+     "type": "step",
+     "n": 1,
+     "title": "The email lands right after the call",
+     "bullets": [
+      "One card, two buttons: **Set up**, or **Remind me tomorrow.**",
+      "We tried \"Set up\" alone and saw **2 people open the email and leave it.** \"Remind me tomorrow\" brings it back to the top of their inbox at a better time, so we didn't have to chase them."
+     ],
+     "frame": {
+      "src": "screens/face-email.gif",
+      "alt": "The face and voice email: a talking welcome in the porthole, then Set up or Remind me tomorrow",
+      "view": "face-email",
+      "narrow": true,
+      "lit": true
+     }
+    },
+    {
+     "type": "vote",
+     "title": "How should the dashboard remind them? Tested with 8 people.",
+     "items": [
+      [
+       "Alert widget at the top of Home",
+       6,
+       true
+      ],
+      [
+       "Pop-up by the Face & Voice tab",
+       2,
+       false
+      ]
+     ],
+     "note": "The alert stays until they've recorded, and the email reuses the same card.",
+     "shots": [
+      "screens/face-remind-widget.jpg",
+      "screens/face-remind-popup.jpg"
+     ],
+     "faces": [
+      {
+       "src": "screens/face-loop.gif",
+       "x": 22.5,
+       "y": 10,
+       "w": 10.625
+      },
+      null
+     ]
+    },
+    {
+     "type": "result",
+     "text": "From 60% in 1–2 weeks to **every client in 2–3 days.**"
+    },
+    {
+     "type": "result",
+     "text": "Onboarded **6 new clients.** First demo in **7 business days**, down from 2.5–3 weeks."
+    }
+   ]
+  },
+  {
+   "id": "dashboard",
+   "toc": "Dashboard",
+   "tone": "ink",
+   "eyebrow": "The dashboard",
+   "heading": "Clients couldn't find things, so I tested what they needed and rebuilt the IA around it",
+   "blocks": [
+    {
+     "type": "needs",
+     "title": "What clients needed the dashboard for",
+     "items": [
+      {
+       "need": "See how my demos are doing, and whether they turn into meetings",
+       "n": 8,
+       "to": "Pipeline"
+      },
+      {
+       "need": "A place to edit the approach",
+       "n": 5,
+       "to": "Strategy"
+      },
+      {
+       "need": "A place to compare how things are doing",
+       "n": 2,
+       "sub": "2 thought of it on their own, and 4 more said it would help when asked.",
+       "to": "Demo styles",
+       "prompted": 4
+      }
+     ],
+     "note": "I broke Home into the actions people wanted most, in the order they asked for them: one section each.",
+     "legend": [
+      "Asked for it on their own",
+      "Said yes when asked"
+     ],
+     "shots": [
+      {
+       "src": "screens/home-pipeline.jpg",
+       "title": "Pipeline: how demos are doing, down to meetings"
+      },
+      {
+       "src": "screens/home-strategy.jpg",
+       "title": "Strategy: leads and triggers, to change the approach"
+      },
+      {
+       "src": "screens/home-demo-styles.jpg",
+       "title": "Demo styles: which demos are going better"
+      }
+     ]
+    },
+    {
+     "type": "pair",
+     "a": {
+      "label": "Before: Home",
+      "src": "shots/old/14a-today.jpg",
+      "alt": "The old Home: an Overview page under a 12-item menu",
+      "view": "dashboard-before"
+     },
+     "b": {
+      "label": "After: Home",
+      "src": "shots/before-face/8a-home-check-in.jpg",
+      "alt": "The new Home: Pipeline first, six menu items",
+      "view": "dashboard",
+      "notes": [
+       {
+        "x": 9,
+        "y": 40,
+        "text": "Reduced 12 tabs to 6 focused tabs in the nav bar",
+        "dx": 19.2,
+        "dy": 84.9
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "taste",
+   "toc": "Overriding the AI",
+   "tone": "ink",
+   "eyebrow": "AI taste",
+   "heading": "Where I overrode the AI, on logic and on looks",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "I designed in the production codebase with Claude Code. **65 logged iterations**, each with screenshots and a trade-offs log. These are the moments I said no."
+    },
+    {
+     "type": "overrides",
+     "items": [
+      {
+       "said": "The lighting on my face is not actually good right now. Fix how it evaluates that.",
+       "ai": "A light check that averaged the middle of the camera frame, so a lit wall behind a dim face passed.",
+       "shipped": "It reads only the skin inside the face oval and fails light from behind or the side. It holds for every skin tone.",
+       "n": "26 → 27"
+      },
+      {
+       "said": "the voice thing for the lead list shouldn't be in onboarding.",
+       "ai": "A mic on the onboarding leads step, so clients could say who they wanted to reach.",
+       "shipped": "Onboarding stays one action: upload a sheet. Describing who you want is strategy, so it moved to the dashboard with the lead list.",
+       "before": "iter/leads/02-leads-as-you-speak.jpg",
+       "after": "shots/latest/2b-skipped-connect-stays-plain.jpg",
+       "n": "35 → 36"
+      },
+      {
+       "said": "is create your first demo the right cta? becuase theyre waiting on the team to help put it together",
+       "ai": "The last step ended on Create demo, implying an instant, self-made demo.",
+       "shipped": "Start pilot: our team makes your first demos and emails you when they're ready.",
+       "before": "iter/team/07-plus-leads-row.jpg",
+       "after": "iter/team/08-start-pilot.jpg",
+       "n": "45 → 46"
+      },
+      {
+       "said": "Too hyper realistic on the all hands thing and I think you need to drop the wheel. The concept isn't premium.",
+       "ai": "A lit 3D helm with a spin, a light sweep and sparkles on every invite.",
+       "shipped": "A plain Invite your team step: emails as chips you can remove, then Start pilot.",
+       "before": "iter/team/03-3d-helm.jpg",
+       "after": "iter/team/08-start-pilot.jpg",
+       "n": "14 → 64"
+      },
+      {
+       "said": "its so sudden right now. its giving me a seizure.",
+       "ai": "Publish switched the page from light to dark in a single frame.",
+       "shipped": "One even fade over 900ms on the card's own easing. No sudden dark or flash.",
+       "before": "iter/launch/night-before-snap.jpg",
+       "after": "iter/launch/night-after-fade.jpg",
+       "n": "61 → 64",
+       "stack": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "outcome",
+   "toc": "Outcome",
+   "tone": "navy",
+   "eyebrow": "The outcome",
+   "heading": "We onboarded 6 new clients through the new flow",
+   "blocks": [
+    {
+     "type": "outcome",
+     "items": [
+      {
+       "label": "Days to first demo",
+       "before": "2.5–3 weeks",
+       "after": "7 business days",
+       "b": 15,
+       "a": 7
+      },
+      {
+       "label": "Days iterating on the pilot demo",
+       "before": "About 2 weeks",
+       "after": "3 days",
+       "b": 10,
+       "a": 3
+      },
+      {
+       "label": "Face cloning",
+       "before": "60% in 1–2 weeks",
+       "after": "Everyone in 2–3 days",
+       "b": 10,
+       "a": 3
+      }
+     ],
+     "note": "Next to measure: demos booked"
+    }
+   ]
+  },
+  {
+   "id": "learnings",
+   "toc": "Learnings",
+   "tone": "ink",
+   "eyebrow": "Learnings",
+   "heading": "Reflection and next steps",
+   "blocks": [
+    {
+     "type": "lessons",
+     "items": [
+      [
+       "Frame a problem by what it costs",
+       "This was retention and usage **before it was onboarding.**"
+      ],
+      [
+       "Understand the business before the flow",
+       "I designed fully async when **only the pilot demo needed to be.**"
+      ],
+      [
+       "Next",
+       "Track demos booked and refunds for the 6 new clients **through their first subscription period.**"
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "views": {
+  "dashboard": {
+   "title": "Main dashboard",
+   "clip": [
+    "dashboard",
+    "dashboard-menu",
+    "storyboard-peek",
+    "phone"
+   ],
+   "iter": "dashboard",
+   "live": "/dashboard?mock=live"
+  },
+  "dashboard-before": {
+   "title": "The old dashboard",
+   "images": [
+    "shots/old/14a-today.jpg",
+    "shots/old/14b-inbox.jpg",
+    "shots/old/14c-leads-lists.jpg",
+    "shots/old/14j-face.jpg"
+   ]
+  },
+  "v1-onboarding": {
+   "title": "V1 onboarding",
+   "iter": "v1-onboarding",
+   "clip": [
+    "signin"
+   ],
+   "live": "/dashboard?mock=1"
+  },
+  "v1-storyboard": {
+   "title": "Storyboard editor",
+   "clip": [
+    "storyboard"
+   ],
+   "iter": "v1-storyboard",
+   "live": "storyboard/index.html"
+  },
+  "connect": {
+   "title": "Connect accounts",
+   "clip": [
+    "connect"
+   ],
+   "iter": "connect",
+   "live": "/dashboard?mock=1"
+  },
+  "leads": {
+   "title": "Add leads",
+   "clip": "leads",
+   "iter": "leads",
+   "live": "/dashboard?mock=1"
+  },
+  "team": {
+   "title": "Invite team",
+   "clip": "team",
+   "iter": "team",
+   "live": "/dashboard?mock=1"
+  },
+  "face": {
+   "title": "Face and voice",
+   "clip": [
+    "face-email"
+   ],
+   "iter": "face",
+   "live": "/dashboard?mock=live"
+  },
+  "launch": {
+   "title": "Pilot dashboard and launch",
+   "clip": [
+    "pilot-launch"
+   ],
+   "iter": "launch",
+   "live": "/dashboard?mock=sample"
+  },
+  "face-email": {
+   "title": "Face and voice email",
+   "iter": "email"
+  },
+  "v1-face": {
+   "title": "Face and voice in V1 onboarding",
+   "iter": "v1-face"
+  }
+ },
+ "cursors": {
+  "shots/before-face/8a-home-check-in.jpg": [
+   47,
+   44
+  ]
+ }
+}

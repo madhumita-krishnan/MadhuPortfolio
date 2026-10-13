@@ -88,6 +88,19 @@
         }
       },
       {
+        "slug": "driftwood-retention",
+        "name": "Driftwood onboarding",
+        "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks.",
+        "tags": "Shipped · Web · Product design + code",
+        "media": {
+          "type": "browser",
+          "src": "assets/case-studies/driftwood-retention/shots/before-face/8a-home-check-in.jpg",
+          "url": "driftwood.sh/dashboard",
+          "tab": "driftwood · dashboard",
+          "alt": "The redesigned driftwood Home: Pipeline with sent, opened, replies and meetings booked"
+        }
+      },
+      {
         "slug": "spotify-mix",
         "name": "Spotify Mix redesign",
         "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it.",
