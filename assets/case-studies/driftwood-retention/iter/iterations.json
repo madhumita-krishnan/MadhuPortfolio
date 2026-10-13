@@ -456,7 +456,7 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/12-light-check-full-screen.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Full screen, room and all",
    "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
    "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
@@ -464,15 +464,15 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/13-take-in-viewport.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
-   "title": "The take, on the Face & Voice page",
-   "why": "The script sits above the camera, so you read each line and see yourself at once. The camera stays on from the check.",
-   "ask": "when they do the lighting check I need this full screen. but when they record I do the smaller view port that I created.",
+   "folder": "72-porthole-take",
+   "title": "The take, in a porthole",
+   "why": "One line to read sits above the camera, and a ring round it fills over the minute. The camera stays on from the check.",
+   "ask": "when the user reads it should be in the circle not rectangle.",
    "screen": "Full screen"
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/14-paused-in-viewport.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Paused, the take kept",
    "why": "Pause keeps the take. Leaving the tab pauses it too, and Resume picks up at the same sentence.",
    "ask": "what is built in for people who get interrupted when they start recording?",
@@ -480,7 +480,7 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/15-saved-preparing-voice.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Saved, your voice on its way",
    "why": "The take saves and your voice is prepared in the background, so you can leave the page.",
    "screen": "Full screen"
@@ -718,7 +718,7 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/12-light-check-full-screen.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Full screen, room and all",
    "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
    "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
@@ -726,15 +726,15 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/13-take-in-viewport.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
-   "title": "The take, on the Face & Voice page",
-   "why": "The script sits above the camera, so you read each line and see yourself at once. The camera stays on from the check.",
-   "ask": "when they do the lighting check I need this full screen. but when they record I do the smaller view port that I created.",
+   "folder": "72-porthole-take",
+   "title": "The take, in a porthole",
+   "why": "One line to read sits above the camera, and a ring round it fills over the minute. The camera stays on from the check.",
+   "ask": "when the user reads it should be in the circle not rectangle.",
    "screen": "Full screen"
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/14-paused-in-viewport.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Paused, the take kept",
    "why": "Pause keeps the take. Leaving the tab pauses it too, and Resume picks up at the same sentence.",
    "ask": "what is built in for people who get interrupted when they start recording?",
@@ -742,7 +742,7 @@
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/15-saved-preparing-voice.jpg",
-   "folder": "71-check-full-screen-take-in-viewport",
+   "folder": "72-porthole-take",
    "title": "Saved, your voice on its way",
    "why": "The take saves and your voice is prepared in the background, so you can leave the page.",
    "screen": "Full screen"
