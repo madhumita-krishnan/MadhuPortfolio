@@ -515,7 +515,8 @@
        "src": "screens/home-demo-styles.jpg",
        "title": "Demo styles: which demos are going better"
       }
-     ]
+     ],
+     "live": "/dashboard?mock=live&face=ready"
     },
     {
      "type": "pair",
@@ -567,7 +568,8 @@
        "shipped": "The camera fills the laptop screen. The check reads only the skin inside the face oval and fails light from behind or the side, for every skin tone.",
        "n": "26 → 69",
        "before": "iter/face/04-one-ring-no-box.jpg",
-       "after": "iter/face/09-full-screen-camera.jpg"
+       "after": "iter/face/09-full-screen-camera.jpg",
+       "live": "/dashboard?mock=live#face"
       },
       {
        "said": "the voice thing for the lead list shouldn't be in onboarding.",
@@ -575,7 +577,8 @@
        "shipped": "Most clients already keep their leads in a sheet, as the founder pointed out, so onboarding only uploads one. Typing who to reach moved to the main dashboard.",
        "before": "iter/leads/02-leads-as-you-speak.jpg",
        "after": "shots/latest/2b-skipped-connect-stays-plain.jpg",
-       "n": "35 → 36"
+       "n": "35 → 36",
+       "live": "/dashboard?mock=1"
       },
       {
        "said": "is create your first demo the right cta? becuase theyre waiting on the team to help put it together",
@@ -583,7 +586,8 @@
        "shipped": "Start pilot: our team makes your first demos and emails you when they're ready.",
        "before": "iter/team/07-plus-leads-row.jpg",
        "after": "iter/team/08-start-pilot.jpg",
-       "n": "45 → 46"
+       "n": "45 → 46",
+       "live": "/dashboard?mock=1"
       },
       {
        "said": "Too hyper realistic on the all hands thing and I think you need to drop the wheel. The concept isn't premium.",
@@ -591,7 +595,8 @@
        "shipped": "A plain Invite your team step: emails as chips you can remove, then Start pilot.",
        "before": "iter/team/03-3d-helm.jpg",
        "after": "iter/team/08-start-pilot.jpg",
-       "n": "14 → 64"
+       "n": "14 → 64",
+       "live": "/dashboard?mock=1"
       },
       {
        "said": "its so sudden right now. its giving me a seizure.",
@@ -600,7 +605,8 @@
        "before": "iter/launch/night-before-snap.jpg",
        "after": "iter/launch/night-after-fade.jpg",
        "n": "61 → 64",
-       "stack": true
+       "stack": true,
+       "live": "/dashboard?mock=sample"
       }
      ]
     }
@@ -806,7 +812,7 @@
     "face-email"
    ],
    "iter": "face",
-   "live": "/dashboard?mock=live"
+   "live": "/dashboard?mock=live#face"
   },
   "launch": {
    "title": "Pilot dashboard and launch",
@@ -822,7 +828,8 @@
   },
   "v1-face": {
    "title": "Face and voice in V1 onboarding",
-   "iter": "v1-face"
+   "iter": "v1-face",
+   "live": "/dashboard?mock=live#face"
   }
  },
  "cursors": {

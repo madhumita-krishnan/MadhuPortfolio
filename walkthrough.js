@@ -44,12 +44,13 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
   const shotGroups = [['Latest shipped (iteration 65)', 'shots/latest'], ['Home before the face widget (64)', 'shots/before-face'], ['Old dashboard (45)', 'shots/old'],
     ...Object.keys(iters).map(k => [`Iterations: ${k}`, `iter/${k}`]), ['Deck screens', 'screens']]
     .map(([label, rel]) => ({ label, files: listDir(rel) })).filter(g => g.files.length);
+  /* a /path is the live dashboard; anything else is a prototype shipped with the case study */
+  const liveURL = l => l ? (l.startsWith('/') ? cs.liveBase + l : A(l)) : '';
   const views = {};
   for (const [id, v] of Object.entries(cs.views || {})) {
     const strip = (iters[v.iter] || []).map((i, j) => ({ src: asset(i.src), title: i.title || '', why: i.why || '', ask: i.ask || '', screen: i.screen || '', key: `iter:${v.iter}.${j}` }))
       .concat((v.images || []).map(src => ({ src: A(src), title: '', why: '' })));
-    views[id] = { title: v.title, clips: [].concat(v.clip || []).map(n => clips[n]).filter(Boolean), strip, live: v.live ? (v.live.startsWith('/') ? cs.liveBase + v.live : A(v.live)) : '' };
-    /* a /path is the live dashboard; anything else is a prototype shipped with the case study */
+    views[id] = { title: v.title, clips: [].concat(v.clip || []).map(n => clips[n]).filter(Boolean), strip, live: liveURL(v.live) };
   }
 
   /* ---------- pieces ---------- */
@@ -180,7 +181,7 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
       case 'needs': {
         /* the section shots open the viewer, on the one clicked, with the others a step away */
         const nid = 'needs-' + p.replace(/\D+/g, '-');
-        if (b.shots) views[nid] = { title: b.title, clips: [], live: '', strip: b.shots.map(sh => ({ src: A(sh.src), title: sh.title, why: '' })) };
+        if (b.shots) views[nid] = { title: b.title, clips: [], live: liveURL(b.live), strip: b.shots.map(sh => ({ src: A(sh.src), title: sh.title, why: '' })) };
         return `<figure class="needs fu" data-draw><p class="chart-title"${E(`${p}.title`)}>${esc(b.title)}</p>${b.items.map((it, i) => {
           const n = typeof it.n === 'number' ? it.n : 0, pr = it.prompted || 0;
           return `<div class="nrow"><div class="nneed"><span${E(`${p}.items.${i}.need`)}>${md(it.need)}</span>${it.sub ? `<em${E(`${p}.items.${i}.sub`)}>${md(it.sub)}</em>` : ''}</div>
@@ -217,7 +218,7 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
          wording has no screens to show, so it reads as words alone */
       case 'overrides': {
         const detail = (o, i) => { const id = 'ovr-' + i, pics = o.before && o.after;
-          if (pics) views[id] = { title: 'Where I overrode the AI · iterations ' + o.n, clips: [], strip: [], live: '',
+          if (pics) views[id] = { title: 'Where I overrode the AI · iterations ' + o.n, clips: [], strip: [], live: liveURL(o.live),
             side: { quote: o.said, a: { src: A(o.before), label: 'The AI built', text: o.ai }, b: { src: A(o.after), label: 'What shipped', text: o.shipped } } };
           const img = k => pics ? `<img src="${A(o[k])}" alt="" loading="lazy">` : '';
           return `<div class="ovr-d${i ? '' : ' on'}${pics ? '' : ' words'}" data-i="${i}">
@@ -1110,7 +1111,7 @@ function special(v) {
   cmpEl.hidden = mode_ !== 'cmp'; sideEl.hidden = mode_ !== 'side'; dlg.classList.toggle('side-mode', mode_ === 'side');
   if (!mode_) return false;
   vid.pause(); vid.hidden = true; still.hidden = true; vMouse.hidden = true; strip.hidden = true; $('.v-groups', dlg).innerHTML = '';
-  $('.v-tabs', dlg).hidden = true; live.hidden = true; $('.v-cap', dlg).style.minHeight = ''; cap([]);
+  $('.v-tabs', dlg).hidden = true; live.hidden = !v.live; if (v.live) live.href = v.live; $('.v-cap', dlg).style.minHeight = ''; cap([]);
   if (v.compare) {
     const [ia, ib] = $$('img', cmpEl); ia.src = v.compare.a.src; ib.src = v.compare.b.src;
     $('.la', cmpEl).textContent = v.compare.a.label; $('.lb', cmpEl).textContent = v.compare.b.label;
