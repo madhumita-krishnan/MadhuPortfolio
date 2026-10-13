@@ -57,10 +57,10 @@
     "name": "edit-text",
     "file": "edit-text.webm",
     "poster": "edit-text.jpg",
-    "title": "Edit text and the callout mover",
-    "description": "On the portfolio page in Edit text mode: a label is rewritten in place, then a callout is dragged off the line it covered. Neither goes through a prompt.",
+    "title": "Edit text, Swap image and callouts",
+    "description": "On the portfolio page in Edit text mode: a caption rewritten in place, a screen swapped from every saved iteration, and a new callout added where it's needed. None of it goes through a prompt.",
     "liveUrl": null,
-    "seconds": 11.3
+    "seconds": 22.5
   },
   {
     "name": "storyboard-peek",

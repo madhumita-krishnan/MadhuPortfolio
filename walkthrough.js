@@ -20,6 +20,7 @@ const ICONS = {
   back: 'M19 12 L5 12 M11 6 L5 12 L11 18', arrow: 'M5 12 L19 12 M13 6 L19 12 L13 18',
   external: 'M7 17 L17 7 M9 7 L17 7 L17 15', swap: 'M9 7 L4 12 L9 17 M15 7 L20 12 L15 17',
   check: 'M5 12.25 L9.5 16.75 L19 7.25', edit: 'M4.5 19.5 L5.5 15.5 L16.5 4.5 L19.5 7.5 L8.5 18.5 Z',
+  plus: 'M12 5 L12 19 M5 12 L19 12',
   pointer: 'M6.5 3.5 L6.5 18.5 L10.1 15.1 L12.5 20.5 L14.8 19.5 L12.4 14.1 L17.5 14.1 Z',
   star: 'M12 3.86 L14.29 9.7 L20.56 10.08 L15.71 14.06 L17.29 20.14 L12 16.76 L6.71 20.14 L8.29 14.06 L3.44 10.08 L9.71 9.7 Z'
 };
@@ -225,15 +226,18 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
           <div class="ovr-panel">${b.items.map(detail).join('')}</div></div>`;
       }
       /* how I work: the Edit text clip beside a tally of where the iterations went */
+      /* I streamline my productivity: two parts, each a heading, its evidence, then a line */
       case 'process': {
         const t = b.track, max = Math.max(...t.rows.map(r => r[1]));
-        return `<div class="process">${b.heading ? `<h3 class="sub rv"${E(`${p}.heading`)}>${esc(b.heading)}</h3>` : ''}<div class="proc-grid">
-          <figure class="proc fu"><video src="${A(b.tools.clip)}" poster="${A(b.tools.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="Edit text mode: a label rewritten in place, then a callout dragged"></video>
-            <figcaption><h4${E(`${p}.tools.title`)}>${esc(b.tools.title)}</h4><p${E(`${p}.tools.text`)}>${md(b.tools.text)}</p></figcaption></figure>
-          <figure class="proc fu" data-draw><div class="tally"><p class="tally-stat"${E(`${p}.track.stat`)}>${esc(t.stat)}</p><p class="chart-title"${E(`${p}.track.chart`)}>${esc(t.chart)}</p>
+        return `<div class="process">
+          <div class="proc fu"><h3 class="sub"${E(`${p}.tools.title`)}>${esc(b.tools.title)}</h3>
+            <video src="${A(b.tools.clip)}" poster="${A(b.tools.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="Edit text mode: a caption rewritten, a screen swapped from saved iterations, and a callout added"></video>
+            <p class="body"${E(`${p}.tools.text`)}>${md(b.tools.text)}</p></div>
+          <div class="proc fu" data-draw><h3 class="sub"${E(`${p}.track.title`)}>${esc(t.title)}</h3>
+            <div class="tally"><p class="tally-stat"${E(`${p}.track.stat`)}>${esc(t.stat)}</p><p class="chart-title"${E(`${p}.track.chart`)}>${esc(t.chart)}</p>
             ${t.rows.map(([l, n], i) => `<div class="trow2" title="${esc(l)}: ${n} iterations"><span${E(`${p}.track.rows.${i}.0`)}>${esc(l)}</span><i style="--w:${(n / max * 100).toFixed(1)}%"></i><b>${n}</b></div>`).join('')}
             <p class="fine"${E(`${p}.track.note`)}>${esc(t.note)}</p></div>
-            <figcaption><h4${E(`${p}.track.title`)}>${esc(t.title)}</h4><p${E(`${p}.track.text`)}>${md(t.text)}</p></figcaption></figure></div></div>`;
+            <p class="body"${E(`${p}.track.text`)}>${md(t.text)}</p></div></div>`;
       }
       case 'lessons': return `<div class="lessons">${b.items.map(([t, d], i) => `<div class="lesson fu"><h4${E(`${p}.items.${i}.0`)}>${esc(t)}</h4><p class="rv"${E(`${p}.items.${i}.1`)}>${md(d)}</p></div>`).join('')}</div>`;
       default: throw new Error(`walkthrough: unknown block type "${b.type}" in ${cs.slug}`);
@@ -468,6 +472,9 @@ h3.sub{font-size:24px;margin:72px 0 26px}
 .v-mouse{width:18px;height:auto;aspect-ratio:18/22}
 .v-stage>svg.v-mouse{position:absolute;inset:auto}
 .frame.placing,.frame.placing *{cursor:crosshair!important}
+.add-note{position:absolute;top:10px;right:226px;z-index:5;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 12px;border-radius:999px;background:#1b1f29;border:1px solid var(--pink);color:#fff;font-size:13px;font-weight:500}
+.add-note .ic{width:13px;height:13px}
+.frame.noting,.frame.noting *{cursor:crosshair!important}.frame.noting .add-note{background:var(--pink)}
 .place{position:absolute;top:10px;right:132px;z-index:5;padding:7px 12px;border-radius:999px;background:#1b1f29;border:1px solid var(--pink);color:#fff;font-size:13px;font-weight:500}
 .frame.placing .place{background:var(--pink)}
 /* every icon: a centred 24-unit shape in currentColor; icon + words sit on one centre line */
@@ -724,16 +731,12 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .ovr-d.on .ovr-pair img{filter:none}
 .ovr-pair figcaption{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6f7a;margin-top:8px}
 .ovr-pair .kept figcaption{color:var(--blue)}
-.process{margin:40px 0 20px}
-.proc-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:22px -90px 0}
-@media (max-width:1060px){.proc-grid{margin-inline:0}}@media (max-width:760px){.proc-grid{grid-template-columns:1fr}}
-/* the two cards share rows (subgrid), so the clip and the tally are one height and both captions start on one line */
-.proc-grid{grid-template-rows:auto auto}
-.proc{margin:0;display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:18px}
-.proc video,.tally{width:100%;aspect-ratio:16/10;border-radius:14px;border:1px solid #232733;background:#13151a;display:block}
-.proc video{height:100%;aspect-ratio:auto;min-height:280px;object-fit:contain;object-position:center;background:#0f1013}
-.proc figcaption h4{font-size:20px;font-weight:500;color:var(--hi);margin-bottom:6px}
-.proc figcaption p{font-size:16px;line-height:1.6}
+.process{margin:0 0 20px}
+/* both parts stay inside the text column; only big diagrams and screens run wider */
+.proc{margin:0 0 56px;display:grid;row-gap:18px}
+.proc h3.sub{margin:0 0 4px}
+.proc video,.tally{width:100%;border-radius:14px;border:1px solid #232733;background:#13151a;display:block}
+.proc video{aspect-ratio:1100/688;object-fit:cover;background:#0f1013}
 /* the tally: one hue, longest first, the count at the end of each bar */
 .tally{aspect-ratio:auto;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;gap:9px}
 .tally-stat{font-size:15px;color:var(--hi);font-weight:500}
@@ -760,8 +763,8 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
   .js body{cursor:none}.js a,.js button,.js .q{cursor:none}
   .cursor{display:block;position:fixed;left:0;top:0;z-index:60;pointer-events:none;width:42px;height:42px;margin:-21px 0 0 -21px;transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),opacity .3s}
   .cursor svg{width:100%;height:100%;fill:none;stroke:var(--cy);stroke-width:4;transition:fill .3s,transform 4s linear}
-  /* plain words under the ring, as first designed; white on a soft dark halo so they read on a bright screenshot and on the dark page alike */
-  .cursor span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:7px;font-size:11px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.95),0 1px 5px rgba(0,0,0,.85),0 0 14px rgba(0,0,0,.6);white-space:nowrap;opacity:0;transition:opacity .3s}
+  /* plain words under the ring, as first designed, in the page's blue; a soft dark halo keeps them readable on a bright screenshot */
+  .cursor span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:7px;font-size:11px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--blue-soft);text-shadow:0 0 2px rgba(0,0,0,.95),0 1px 5px rgba(0,0,0,.85),0 0 14px rgba(0,0,0,.6);white-space:nowrap;opacity:0;transition:opacity .3s}
   .cursor.link svg{fill:rgba(95,192,216,.55)}
   .cursor.frame-on{width:64px;height:64px;margin:-32px 0 0 -32px}.cursor.frame-on span{opacity:1}.cursor.frame-on svg{transform:rotate(90deg)}
   .cursor.gone{opacity:0}
@@ -1366,6 +1369,46 @@ if (/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)) {
         m.style.left = x + '%'; m.style.top = y + '%';
       });
       say(remove ? 'Mouse removed' : 'Mouse saved'); placing.classList.remove('placing'); placing = null;
+    } catch (err) { say('Not saved: ' + err.message); }
+  }, true);
+  /* add a callout: "+ Callout" on a screen, click where it should point, then type the words.
+     The server appends it to that screen's notes; the label lands beside the pin, selected,
+     so typing replaces the placeholder, and it saves on Enter like any other text */
+  let noting = null;
+  btn.addEventListener('click', () => {
+    if (editing()) $$('.frame[data-src-path]').forEach(f => {
+      if (f.closest('.hero')) return;   // the hero's screen carries no callouts
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'add-note'; b.innerHTML = IC('plus') + '<span>Callout</span>';
+      b.addEventListener('click', e => { e.stopPropagation(); if (noting) noting.classList.remove('noting');
+        noting = noting === f ? null : f; if (noting) { f.classList.add('noting'); say('Click where the callout should point'); } });
+      f.append(b);
+    });
+    else { $$('.add-note').forEach(b => b.remove()); if (noting) noting.classList.remove('noting'); noting = null; }
+  });
+  document.addEventListener('click', async e => {
+    if (!noting || !noting.contains(e.target) || e.target.closest('button')) return;
+    e.stopPropagation(); e.preventDefault();
+    const f = noting, shot = $('.shot', f), img = $('img', shot), r = img.getBoundingClientRect();
+    const x = +((e.clientX - r.left) / r.width * 100).toFixed(1), y = +((e.clientY - r.top) / r.height * 100).toFixed(1);
+    const dx = x > 70 ? -16 : 16, dy = y > 70 ? -14 : 14, text = 'New callout', base = f.dataset.srcPath.replace(/[.]src$/, '');
+    f.classList.remove('noting'); noting = null;
+    try {
+      const res = await fetch('/__note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: document.body.dataset.slug, base, x, y, dx, dy, text }) });
+      if (!res.ok) throw new Error(await res.text());
+      const { i } = await res.json(), NS = 'http://www.w3.org/2000/svg';
+      let svg = $('.notes-svg', shot);
+      if (!svg) { svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'notes-svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-hidden', 'true'); shot.append(svg); }
+      const path = document.createElementNS(NS, 'path'); path.dataset.i = i; path.setAttribute('pathLength', '1');
+      const dot = document.createElementNS(NS, 'circle'); dot.dataset.i = i; dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('r', '.6');
+      svg.append(path, dot);
+      const lab = document.createElement('span'); lab.className = 'note';
+      Object.assign(lab.dataset, { i, x, y, dx, dy, note: base + '.notes.' + i, edit: base + '.notes.' + i + '.text', orig: text });
+      lab.style.left = x + dx + '%'; lab.style.top = y + dy + '%'; lab.textContent = text; lab.contentEditable = 'true'; lab.spellcheck = true;
+      const pin = document.createElement('span'); pin.className = 'note-pin'; pin.dataset.i = i; pin.style.left = x + '%'; pin.style.top = y + '%'; pin.title = 'Drag to move where the line points';
+      shot.append(lab, pin); fitNotes(f);
+      lab.focus(); getSelection().selectAllChildren(lab);
+      say('Type the callout · Enter saves');
     } catch (err) { say('Not saved: ' + err.message); }
   }, true);
   /* while editing, clicks on text inside frames don't open the viewer */

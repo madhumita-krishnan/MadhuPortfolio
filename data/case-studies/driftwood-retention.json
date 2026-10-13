@@ -641,38 +641,24 @@
    ]
   },
   {
-   "id": "learnings",
-   "toc": "Learnings",
+   "id": "process",
+   "toc": "Productivity",
    "tone": "ink",
-   "eyebrow": "Learnings",
-   "heading": "Reflection and next steps",
+   "eyebrow": "Process",
+   "heading": "I streamline my productivity",
    "blocks": [
     {
-     "type": "lessons",
-     "items": [
-      [
-       "Frame a problem by what it costs",
-       "This was retention and usage **before it was onboarding.**"
-      ],
-      [
-       "Understand the business before the flow",
-       "I designed fully async when **only the pilot demo needed to be.**"
-      ]
-     ]
-    },
-    {
      "type": "process",
-     "heading": "How I work",
      "tools": {
-      "title": "Build tools for the slow parts",
-      "text": "Describing a copy fix or where a callout sits made prompts long and slow, so I built an **Edit text mode** and a **callout mover** to do both by hand in seconds.",
+      "title": "I code tools for myself when I'm blocked",
+      "text": "Describing a copy fix, a screen swap or where a callout sits made prompts long and slow, so I built **Edit text**, **Swap image** and **callouts** to do them by hand in seconds.",
       "clip": "clips/edit-text.webm",
       "poster": "clips/edit-text.jpg"
      },
      "track": {
-      "title": "Track my own iterations",
-      "text": "Every screen was captured at every iteration, with the prompt behind it, so I can see **how many tries each screen took** and where I lost time.",
-      "stat": "66 iterations · 2,868 screenshots · 6 days",
+      "title": "I track my hours and iterations to design better",
+      "text": "Every screen was captured at every iteration, with the prompt behind it, so I can see **how many tries each screen took**, where I lost time, and why.",
+      "stat": "66 iterations · 2,868 screenshots · 6 days · a median 24 minutes between tries",
       "chart": "Iterations that touched each part",
       "rows": [
        [
@@ -710,10 +696,27 @@
       ],
       "note": "One iteration can touch several parts. Tagged from the prompt and title of each iteration."
      }
-    },
+    }
+   ]
+  },
+  {
+   "id": "learnings",
+   "toc": "Learnings",
+   "tone": "ink",
+   "eyebrow": "Learnings",
+   "heading": "Reflection and next steps",
+   "blocks": [
     {
      "type": "lessons",
      "items": [
+      [
+       "Frame a problem by what it costs",
+       "This was retention and usage **before it was onboarding.**"
+      ],
+      [
+       "Understand the business before the flow",
+       "I designed fully async when **only the pilot demo needed to be.**"
+      ],
       [
        "Next",
        "Track demos booked and refunds for the 6 new clients **through their first subscription period.**"
