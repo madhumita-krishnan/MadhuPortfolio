@@ -4,7 +4,11 @@
   "order": 0,
   "title": "Coded prototypes are easy to build now — and weirdly hard to share.",
   "tagline": "A private, revocable way to share a coded prototype with the exact people you choose — and see how they actually use it.",
-  "tags": ["In testing", "Open source", "Built with Claude Code"],
+  "tags": [
+    "In research",
+    "Open source",
+    "Built with Claude Code"
+  ],
   "heroMedia": {
     "frame": "mac",
     "src": "assets/projects/vantage.mp4",
@@ -14,20 +18,46 @@
     "alt": "The Vantage console — issuing one personal link per person, then reading usability results"
   },
   "meta": [
-    { "label": "Role", "value": "Design + build, solo" },
-    { "label": "Timeline", "value": "2 days, Sept 2026" },
-    { "label": "Read", "value": "The launch post", "href": "https://lnkd.in/p/dBbzPTGv" },
-    { "label": "Code", "value": "On GitHub", "href": "https://github.com/madhumita-krishnan/vantage" }
+    {
+      "label": "Role",
+      "value": "Design + build, solo"
+    },
+    {
+      "label": "Timeline",
+      "value": "2 days, Sept 2026"
+    },
+    {
+      "label": "Read",
+      "value": "The launch post",
+      "href": "https://lnkd.in/p/dBbzPTGv"
+    },
+    {
+      "label": "Code",
+      "value": "On GitHub",
+      "href": "https://github.com/madhumita-krishnan/vantage"
+    }
   ],
   "intro": [
     "You've built a coded prototype and want to show it to five specific people. Sending the HTML, screen sharing, Vercel, chat artifacts and Figma plugins all fall short. A staff designer, Michał Krzton, posted exactly this problem — it had 42 comments twelve hours later — and a conversation with designer Adrian Mendoza about how AI is changing our workflows got me curious enough to build the answer.",
     "Vantage lets you share a coded prototype securely with the people you choose. Each person gets a personal link you can revoke, and if you set up a usability test you get tasks, feedback and results back. It runs as one Node process with no third-party packages, so a security team can read every line."
   ],
   "stats": [
-    { "value": "2 days", "label": "from a LinkedIn post to a working, self-hostable version" },
-    { "value": "49", "label": "defects I found and fixed across two line-by-line self-audits" },
-    { "value": "0", "label": "third-party packages in the server — every line is readable" },
-    { "value": "20", "label": "end-to-end tests covering sign-in, limits and the tester flow" }
+    {
+      "value": "2 days",
+      "label": "from a LinkedIn post to a working, self-hostable version"
+    },
+    {
+      "value": "49",
+      "label": "defects I found and fixed across two line-by-line self-audits"
+    },
+    {
+      "value": "0",
+      "label": "third-party packages in the server — every line is readable"
+    },
+    {
+      "value": "20",
+      "label": "end-to-end tests covering sign-in, limits and the tester flow"
+    }
   ],
   "sections": [
     {
@@ -48,10 +78,13 @@
     }
   ],
   "reflection": {
-    "label": "Honest status",
-    "heading": "It's not done, and I'm still finding out if it's the right answer",
+    "label": "Where it is now",
+    "heading": "Now I'm asking the people who already built one",
     "body": [
-      "Nobody but me has used Vantage yet, so this is intent, not evidence. I made it open source to learn from people who know more than I do — if you've hit this same wall, or you think I'm solving the wrong problem, I want to hear it."
+      "Nobody but me has used Vantage yet. So instead of adding features, I'm talking to designers at larger companies that built their own version in-house, to find out if I'm solving the right problem.",
+      "The first was a product designer at a large consumer tech company. Their team spent real time on permissions so outside testers could open a prototype at all. But sharing outside turned out to be the smaller use. Mostly they share with teammates, and the features people like are for review: screenshot any part of a prototype, leave a comment, and whoever opens it lands on that exact spot.",
+      "Two more things I didn't expect. Their tool collects no test data. Researchers record the sessions and pull out what happened by hand. And the designer thought big companies will be slow to trust a new tool with their prototypes, while founders, small studios and early-career designers could use it now.",
+      "That's one conversation, so it's a lead, not a finding. If you've hit this same wall, or you think I'm solving the wrong problem, I want to hear it."
     ]
   }
 }
