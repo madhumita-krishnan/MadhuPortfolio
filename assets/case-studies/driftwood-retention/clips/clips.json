@@ -90,15 +90,6 @@
     "seconds": 14.6
   },
   {
-    "name": "face-email",
-    "file": "face-email.webm",
-    "poster": "face-email.jpg",
-    "title": "Face & Voice email",
-    "description": "The email sent after onboarding: the same deep-tide Face & Voice card as the dashboard, a talking welcome in the porthole, and one Set up button.",
-    "liveUrl": null,
-    "seconds": 4.7
-  },
-  {
     "name": "phone",
     "file": "phone.webm",
     "poster": "phone.jpg",
