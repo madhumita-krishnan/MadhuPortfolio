@@ -1392,7 +1392,7 @@ if (/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)) {
     e.stopPropagation(); e.preventDefault();
     const f = noting, shot = f.classList.contains('shot') ? f : $('.shot', f), img = $('img', shot), r = (img || shot).getBoundingClientRect();
     const x = +((e.clientX - r.left) / r.width * 100).toFixed(1), y = +((e.clientY - r.top) / r.height * 100).toFixed(1);
-    const dx = x > 70 ? -16 : 16, dy = y > 70 ? -14 : 14, text = 'New callout', base = f.dataset.noteBase || f.dataset.srcPath.replace(/[.]src$/, '');
+    const dx = x > 60 ? -26 : 26, dy = y > 55 ? -24 : 24, text = 'New callout', base = f.dataset.noteBase || f.dataset.srcPath.replace(/[.]src$/, '');
     f.classList.remove('noting'); noting = null;
     try {
       const res = await fetch('/__note', { method: 'POST', headers: { 'Content-Type': 'application/json' },

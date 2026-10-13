@@ -482,7 +482,7 @@
       {
        "need": "See how my demos are doing, and whether they turn into meetings",
        "n": 8,
-       "to": "Pipeline"
+       "to": "Home/Pipeline"
       },
       {
        "need": "A place to edit the approach",
@@ -658,7 +658,7 @@
      "track": {
       "title": "I track my hours and iterations to design better",
       "text": "Every screen was captured at every iteration, with the prompt behind it, so I can see **how many tries each screen took**, where I lost time, and why.",
-      "stat": "66 iterations · 2,868 screenshots · a median 24 minutes between tries",
+      "stat": "66 iterations & 2,868 screenshots",
       "chart": "Iterations that touched each part",
       "rows": [
        [
