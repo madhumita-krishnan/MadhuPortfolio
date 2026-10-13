@@ -881,6 +881,7 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 .v-why{font-size:16px;color:#c5c9d1}
 .v-ask{font-family:'Madhu Hand','Shadows Into Light',cursive;font-size:21px;color:var(--pink);margin-top:4px}
 .v-ask:empty{display:none}
+.v-strip[hidden]{display:none}
 .v-strip{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .v-strip button{flex:0 0 auto;width:150px;text-align:left;opacity:.5;transition:opacity .3s}
 .v-strip button:hover,.v-strip button[aria-current=true]{opacity:1}

@@ -455,27 +455,34 @@
    "original": true
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
-   "folder": "69-face-full-screen-camera",
+   "src": "assets/case-studies/driftwood-retention/iter/face/12-light-check-full-screen.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
    "title": "Full screen, room and all",
    "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
    "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
    "screen": "Full screen"
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/10-light-behind-you.jpg",
-   "folder": "69-face-full-screen-camera",
-   "title": "Light behind you: what to change",
-   "why": "When the window is behind you, the face falls into shadow. The bar drops to Too dark and one line says how to move. Record anyway stays.",
-   "ask": "is there a bar or something where people can see if they have good enough lighting? or if they need to move?",
+   "src": "assets/case-studies/driftwood-retention/iter/face/13-take-in-viewport.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
+   "title": "The take, on the Face & Voice page",
+   "why": "The script sits above the camera, so you read each line and see yourself at once. The camera stays on from the check.",
+   "ask": "when they do the lighting check I need this full screen. but when they record I do the smaller view port that I created.",
    "screen": "Full screen"
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/11-paused.jpg",
-   "folder": "69-face-full-screen-camera",
+   "src": "assets/case-studies/driftwood-retention/iter/face/14-paused-in-viewport.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
    "title": "Paused, the take kept",
-   "why": "An interruption used to mean Start over. Now it pauses, on its own when you leave the tab or press esc, and Resume picks up at the same sentence after a 3-2-1.",
+   "why": "Pause keeps the take. Leaving the tab pauses it too, and Resume picks up at the same sentence.",
    "ask": "what is built in for people who get interrupted when they start recording?",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/15-saved-preparing-voice.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
+   "title": "Saved, your voice on its way",
+   "why": "The take saves and your voice is prepared in the background, so you can leave the page.",
    "screen": "Full screen"
   }
  ],
@@ -694,7 +701,7 @@
    "screen": "Face step in onboarding"
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/05-grey-to-dark-face.jpg",
+   "src": "assets/case-studies/driftwood-retention/iter/face/05-grey-to-dark.jpg",
    "folder": "25-finish-page-photo-hub-varied-turns",
    "title": "Read words turn dark",
    "why": "Black on blue hid your progress, so words to read are grey, read words go dark, and a caret marks your place.",
@@ -710,27 +717,34 @@
    "original": true
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
-   "folder": "69-face-full-screen-camera",
+   "src": "assets/case-studies/driftwood-retention/iter/face/12-light-check-full-screen.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
    "title": "Full screen, room and all",
    "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
    "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
    "screen": "Full screen"
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/10-light-behind-you.jpg",
-   "folder": "69-face-full-screen-camera",
-   "title": "Light behind you: what to change",
-   "why": "When the window is behind you, the face falls into shadow. The bar drops to Too dark and one line says how to move. Record anyway stays.",
-   "ask": "is there a bar or something where people can see if they have good enough lighting? or if they need to move?",
+   "src": "assets/case-studies/driftwood-retention/iter/face/13-take-in-viewport.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
+   "title": "The take, on the Face & Voice page",
+   "why": "The script sits above the camera, so you read each line and see yourself at once. The camera stays on from the check.",
+   "ask": "when they do the lighting check I need this full screen. but when they record I do the smaller view port that I created.",
    "screen": "Full screen"
   },
   {
-   "src": "assets/case-studies/driftwood-retention/iter/face/11-paused.jpg",
-   "folder": "69-face-full-screen-camera",
+   "src": "assets/case-studies/driftwood-retention/iter/face/14-paused-in-viewport.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
    "title": "Paused, the take kept",
-   "why": "An interruption used to mean Start over. Now it pauses, on its own when you leave the tab or press esc, and Resume picks up at the same sentence after a 3-2-1.",
+   "why": "Pause keeps the take. Leaving the tab pauses it too, and Resume picks up at the same sentence.",
    "ask": "what is built in for people who get interrupted when they start recording?",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/15-saved-preparing-voice.jpg",
+   "folder": "71-check-full-screen-take-in-viewport",
+   "title": "Saved, your voice on its way",
+   "why": "The take saves and your voice is prepared in the background, so you can leave the page.",
    "screen": "Full screen"
   }
  ]

@@ -301,8 +301,8 @@
        "title": "Sign in"
       },
       {
-       "src": "iter/face/05-grey-to-dark-face.jpg",
-       "alt": "Face and voice in V1 onboarding: read a line aloud while it records",
+       "src": "iter/face/13-take-in-viewport.jpg",
+       "alt": "Face and voice: read a line aloud while it records, the camera under the script",
        "view": "v1-face",
        "title": "Face and voice"
       },
@@ -445,17 +445,8 @@
      ],
      "note": "The alert stays until they've recorded, and the email reuses the same card.",
      "shots": [
-      "screens/face-remind-widget.jpg",
+      "screens/face-home-set-up.jpg",
       "screens/face-remind-popup.jpg"
-     ],
-     "faces": [
-      {
-       "src": "screens/face-loop.gif",
-       "x": 22.5,
-       "y": 10,
-       "w": 10.625
-      },
-      null
      ]
     },
     {
@@ -568,8 +559,8 @@
        "shipped": "The camera fills the laptop screen. The check reads only the skin inside the face oval and fails light from behind or the side, for every skin tone.",
        "n": "26 → 69",
        "before": "iter/face/04-one-ring-no-box.jpg",
-       "after": "iter/face/09-full-screen-camera.jpg",
-       "live": "/dashboard?mock=live#face"
+       "after": "iter/face/12-light-check-full-screen.jpg",
+       "live": "/dashboard?mock=live#face/setup"
       },
       {
        "said": "the voice thing for the lead list shouldn't be in onboarding.",
@@ -784,7 +775,7 @@
     "storyboard"
    ],
    "iter": "v1-storyboard",
-   "live": "storyboard/index.html"
+   "live": "/dashboard/storyboard/demo-s1-v2"
   },
   "connect": {
    "title": "Connect accounts",
