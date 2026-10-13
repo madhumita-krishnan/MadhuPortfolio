@@ -1,0 +1,57 @@
+{
+  "slug": "vantage",
+  "name": "Vantage",
+  "order": 0,
+  "title": "Coded prototypes are easy to build now — and weirdly hard to share.",
+  "tagline": "A private, revocable way to share a coded prototype with the exact people you choose — and see how they actually use it.",
+  "tags": ["In testing", "Open source", "Built with Claude Code"],
+  "heroMedia": {
+    "frame": "mac",
+    "src": "assets/projects/vantage.mp4",
+    "poster": "assets/projects/vantage-poster.jpg",
+    "url": "localhost:8787",
+    "tab": "Vantage — share a prototype privately",
+    "alt": "The Vantage console — issuing one personal link per person, then reading usability results"
+  },
+  "meta": [
+    { "label": "Role", "value": "Design + build, solo" },
+    { "label": "Timeline", "value": "2 days, Sept 2026" },
+    { "label": "Read", "value": "The launch post", "href": "https://lnkd.in/p/dBbzPTGv" },
+    { "label": "Code", "value": "On GitHub", "href": "https://github.com/madhumita-krishnan/vantage" }
+  ],
+  "intro": [
+    "You've built a coded prototype and want to show it to five specific people. Sending the HTML, screen sharing, Vercel, chat artifacts and Figma plugins all fall short. A staff designer, Michał Krzton, posted exactly this problem — it had 42 comments twelve hours later — and a conversation with designer Adrian Mendoza about how AI is changing our workflows got me curious enough to build the answer.",
+    "Vantage lets you share a coded prototype securely with the people you choose. Each person gets a personal link you can revoke, and if you set up a usability test you get tasks, feedback and results back. It runs as one Node process with no third-party packages, so a security team can read every line."
+  ],
+  "stats": [
+    { "value": "2 days", "label": "from a LinkedIn post to a working, self-hostable version" },
+    { "value": "49", "label": "defects I found and fixed across two line-by-line self-audits" },
+    { "value": "0", "label": "third-party packages in the server — every line is readable" },
+    { "value": "20", "label": "end-to-end tests covering sign-in, limits and the tester flow" }
+  ],
+  "sections": [
+    {
+      "label": "How I used AI",
+      "heading": "Building it was the fast part",
+      "body": [
+        "Claude Code had a working version running over a weekend. I didn't want to put my name on code I couldn't vouch for, so once it worked I stopped adding things and started reading.",
+        "I asked Claude to go through its own code the way four different people would: a staff engineer, a security reviewer, a privacy officer and an engineering director. The first pass turned up nineteen issues, two of them serious. I fixed seventeen that day. Then I went through the whole thing again, line by line, and found thirty more. I'm not proud of the count. I am glad I could read the code well enough to find them."
+      ]
+    },
+    {
+      "label": "Where I overrode it",
+      "heading": "The calls it didn't make on its own",
+      "body": [
+        "It suggested a watermark to stop screenshots. A watermark doesn't stop a screenshot. I took it out and wrote down plainly what the tool can't do.",
+        "On security it wrote the dangerous defaults up as warnings in a doc. I changed them so you can't get them wrong: the server won't start with open sign-in unless you switch it on deliberately, and a hosted bill can't go above zero. And twice, when it handed me a screenshot or a made-up version of a real interface, I sent it back and asked for the real thing."
+      ]
+    }
+  ],
+  "reflection": {
+    "label": "Honest status",
+    "heading": "It's not done, and I'm still finding out if it's the right answer",
+    "body": [
+      "Nobody but me has used Vantage yet, so this is intent, not evidence. I made it open source to learn from people who know more than I do — if you've hit this same wall, or you think I'm solving the wrong problem, I want to hear it."
+    ]
+  }
+}

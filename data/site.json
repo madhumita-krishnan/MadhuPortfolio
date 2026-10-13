@@ -74,6 +74,19 @@
     "title": "Selected Projects",
     "projects": [
       {
+        "slug": "vantage",
+        "name": "Vantage",
+        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them.",
+        "tags": "In testing · Web · Open source",
+        "media": {
+          "type": "landscape-video",
+          "src": "assets/projects/vantage.mp4",
+          "poster": "assets/projects/vantage-poster.jpg",
+          "ar": "1064/672",
+          "alt": "The Vantage console — creating a private share and reading usability results"
+        }
+      },
+      {
         "slug": "driftwood",
         "name": "Driftwood",
         "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
