@@ -1059,7 +1059,8 @@ function showGroup(k) {
   const g = groups(); grp = g.includes(k) ? k : g[0];
   $$('.v-groups button', dlg).forEach(b => b.setAttribute('aria-selected', b.dataset.g === grp));
   const ids = cur_.strip.map((s, i) => i).filter(i => (cur_.strip[i].screen || '') === grp);
-  fillStrip(ids.map(i => cur_.strip[i]), (s, j) => s.title ? (j + 1) + ' of ' + ids.length + ' · ' + s.title : '', j => pick(ids[j]));
+  /* every tab opens on the original, before any edit */
+  fillStrip(ids.map(i => cur_.strip[i]), (s, j) => s.title ? (s.key ? (j ? j + ' of ' + (ids.length - 1) : 'Original') : (j + 1) + ' of ' + ids.length) + ' · ' + s.title : '', j => pick(ids[j]));
   pick(ids.includes(idx) ? idx : ids[0] ?? 0);
 }
 const vMouse = $('.v-mouse', dlg); vMouse.innerHTML = window.__MOUSE || '';

@@ -96,6 +96,15 @@
    "screen": "Shot review"
   },
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14g-library-storyboards.jpg",
+   "folder": "original",
+   "title": "Storyboards waited in a list",
+   "why": "Before my edits: a storyboard sat under Demos until someone pressed Review.",
+   "ask": "",
+   "screen": "Generate and publish",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/05-cut-are-you-sure.jpg",
    "folder": "33-premium-storyboard-3d-launch-bento-dashboard",
    "title": "Are you sure, before a cut",
@@ -118,6 +127,15 @@
    "why": "Approve, Change and Cut became a raised white thumb; approved shows a tide wash and a tick, within the palette.",
    "ask": "I really really hate the way the editor look when you press approve change and cut",
    "screen": "Shot review"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/01-one-mic.jpg",
+   "folder": "original",
+   "title": "The first storyboard: one mic for the whole demo",
+   "why": "Before my edits: the first build of the storyboard.",
+   "ask": "",
+   "screen": "Final mockup",
+   "original": true
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/v1-storyboard/08-final-no-edits-publish.jpg",
@@ -175,6 +193,14 @@
   }
  ],
  "connect": [
+  {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14l-settings-accounts.jpg",
+   "folder": "original",
+   "title": "Sending accounts, inside Settings",
+   "why": "Before my edits: LinkedIn and email were connected from a Settings tab.",
+   "ask": "",
+   "original": true
+  },
   {
    "src": "assets/case-studies/driftwood-retention/iter/connect/01-cards-from-settings.jpg",
    "folder": "08-cut-questions-add-linkedin-x-team",
@@ -234,6 +260,14 @@
  ],
  "leads": [
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14c-leads-lists.jpg",
+   "folder": "original",
+   "title": "The old Audiences page",
+   "why": "Before my edits: lists, contacts and companies in three tabs.",
+   "ask": "",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/leads/01-csv-or-voice.jpg",
    "folder": "35-numbered-steps-add-leads-csv-voice",
    "title": "Drop a CSV, or say names",
@@ -275,6 +309,14 @@
   }
  ],
  "team": [
+  {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14o-settings-team.jpg",
+   "folder": "original",
+   "title": "Team, inside Settings",
+   "why": "Before my edits: members and invites in a Settings tab.",
+   "ask": "",
+   "original": true
+  },
   {
    "src": "assets/case-studies/driftwood-retention/iter/team/01-members-roles.jpg",
    "folder": "08-cut-questions-add-linkedin-x-team",
@@ -332,6 +374,15 @@
   }
  ],
  "face": [
+  {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14j-face.jpg",
+   "folder": "original",
+   "title": "The old Face cloning page",
+   "why": "Before my edits: the script beside a small camera, and a permission box.",
+   "ask": "",
+   "screen": "Face step in onboarding",
+   "original": true
+  },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/01-two-boxes.jpg",
    "folder": "02-face-cloning-step",
@@ -395,6 +446,15 @@
    "screen": "After onboarding"
   },
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14j-face.jpg",
+   "folder": "original",
+   "title": "The old Face cloning page",
+   "why": "Before my edits: the script beside a small camera, and a permission box.",
+   "ask": "",
+   "screen": "Full screen",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
    "folder": "69-face-full-screen-camera",
    "title": "Full screen, room and all",
@@ -421,6 +481,15 @@
  ],
  "dashboard": [
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14a-today.jpg",
+   "folder": "original",
+   "title": "The old Home, under a 12-item menu",
+   "why": "Before my edits: every page of the first dashboard sat in one long menu, with tabs inside tabs.",
+   "ask": "",
+   "screen": "Menu",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/dashboard/01-menu-three-sections.jpg",
    "folder": "30-sidebar-no-face-pilot-and-main-dashboard",
    "title": "A left menu, three sections",
@@ -429,12 +498,30 @@
    "screen": "Menu"
   },
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14a-today.jpg",
+   "folder": "original",
+   "title": "The old Home: an Overview page",
+   "why": "Before my edits: an Overview of sending, results and meetings in small tables.",
+   "ask": "",
+   "screen": "Home layout",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/dashboard/02-one-section-per-screen.jpg",
    "folder": "34-full-screen-sections-five-styles-comparison",
    "title": "One section per screen",
    "why": "Each section is a screen tall and snaps, so widgets can be big, each with its own shape.",
    "ask": "I think things should feel big and sizable. like to the point where only one section is visible at a time as you scroll.",
    "screen": "Home layout"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14i-metrics.jpg",
+   "folder": "original",
+   "title": "The old Metrics page",
+   "why": "Before my edits: numbers by channel in a table.",
+   "ask": "",
+   "screen": "Charts",
+   "original": true
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/dashboard/03-running-totals-faces.jpg",
@@ -567,6 +654,15 @@
  ],
  "v1-face": [
   {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14j-face.jpg",
+   "folder": "original",
+   "title": "The old Face cloning page",
+   "why": "Before my edits: the script beside a small camera, and a permission box.",
+   "ask": "",
+   "screen": "Face step in onboarding",
+   "original": true
+  },
+  {
    "src": "assets/case-studies/driftwood-retention/iter/face/01-two-boxes.jpg",
    "folder": "02-face-cloning-step",
    "title": "Two boxes to tick",
@@ -603,6 +699,15 @@
    "title": "Read words turn dark",
    "why": "Black on blue hid your progress, so words to read are grey, read words go dark, and a caret marks your place.",
    "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/shots/old/14j-face.jpg",
+   "folder": "original",
+   "title": "The old Face cloning page",
+   "why": "Before my edits: the script beside a small camera, and a permission box.",
+   "ask": "",
+   "screen": "Full screen",
+   "original": true
   },
   {
    "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
