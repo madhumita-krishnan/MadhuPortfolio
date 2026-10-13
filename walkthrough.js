@@ -887,23 +887,11 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .picker .pk-grid button:hover img{border-color:var(--pink)}
 .picker .pk-grid button.cur img{border-color:var(--cy)}
 .picker .pk-grid span{display:block;font-size:11px;color:#8d929e;margin-top:4px;word-break:break-all}
-/* ---- buttons and labels in m--k's own system (2026-10-13 her ask: match the main site):
-   DM Sans, uppercase, wide tracking, full pills; the filled button is the site's night
-   accent (terracotta on dark), the quiet one a hairline outline. Values from data/theme.json */
-:root{--mk-accent:#E08A52;--mk-press:#C9703B;--mk-on:#1D130B;--mk-ui:'DM Sans',-apple-system,sans-serif}
-.pill a{font-family:var(--mk-ui);font-size:15px;letter-spacing:.05em}
-.pill a.cta,.v-live,.btn-o{font-family:var(--mk-ui);font-weight:500;font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap;transition:background-color .2s,border-color .2s,color .2s}
-.pill a.cta,.v-live{background:var(--mk-accent);color:var(--mk-on);border:1.5px solid var(--mk-accent);min-height:42px;padding:0 22px}
-.pill a.cta:hover,.v-live:hover{background:var(--mk-press);border-color:var(--mk-press);color:var(--mk-on)}
-.explore .v-live{min-height:48px;padding:0 26px;font-size:12px}
-.v-live .ic,.btn-o .ic{width:14px;height:14px}
-.btn-o{min-height:44px;padding:0 22px;border:1.5px solid var(--mk-accent);color:var(--mk-accent);background:none}
-.btn-o:hover{background:var(--mk-press);border-color:var(--mk-press);color:var(--mk-on)}
+/* the design system button: the page's own blue pill, outlined, beside the filled Explore ones */
+.btn-o{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;text-decoration:none;color:var(--blue-soft);border:1px solid rgba(169,196,245,.55);padding:9px 18px;border-radius:999px;transition:background-color .2s,color .2s}
+.btn-o:hover{background:var(--blue-soft);color:#111}
+.btn-o .ic{width:14px;height:14px}
 .ds-row{margin-top:26px;display:flex;justify-content:center}
-.v-close,.v-tabs button,.v-groups button{font-family:var(--mk-ui);text-transform:uppercase;letter-spacing:.12em;font-size:11.5px}
-/* labels: the site's eyebrow voice */
-.eyebrow,.iter-n,.ovr-dl dt,.ovr-pair figcaption,.tally .chart-title,.verdict,.v-side figcaption b,.cursor span{font-family:var(--mk-ui);letter-spacing:.14em}
-.eyebrow{font-size:12.5px;font-weight:500;color:var(--mk-accent)}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}

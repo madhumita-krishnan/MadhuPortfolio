@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Driftwood — Design System Showcase</title>
+    <title>Driftwood · Design System Showcase</title>
     <style>
       @font-face {
         font-family: "Public Sans";
@@ -27,10 +27,10 @@
         src: url(./fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2");
       }
       :root {
-        /* ── Tokens, verbatim from the shipped code (landing/src/index.css @theme) ── */
+        /* ── Shared tokens, verbatim from landing/src/index.css (:root and the @theme block) ── */
         --ground: #ffffff;
         --ink: #16181b;
-        --gray: #6a737d;
+        --gray: #6a737d;          /* --color-ink-soft */
         --gray-light: #9aa2ab;
         --line: #e9ebee;
         --tide: #15557e;
@@ -38,10 +38,26 @@
         --tide-wash: #eaf1f7;
         --wash-a: #f4f8fb;
         --sand: #eef2f5;
-        --ok: #2a9d5c;
+        --ok: #197142;
+        --alert: #b42318;
         --redact: #d4d9de;
 
-        /* ── The sea's scenery palette (from design-language.md, settled with the founder) ── */
+        /* ── Product tokens, from landing/src/pilot/pilot.css and demos/storyboard.css ── */
+        --panel: #f4f6f8;         /* the dashboard's page, and the storyboard's */
+        --menu-line: #e6eaee;
+        --edge: #d3d9df;          /* --sv-edge: outlined pills, the round back */
+        --num-blue: #2a73a8;      /* --pl-num-blue: the number under the pointer */
+        --hi: #9ec7e4;            /* the greeting on the dark card */
+        --r-widget: 1.2rem;       /* --pl-r */
+        --r-panel: 1.75rem;
+        --r-field: 0.8rem;        /* --sv-r-s */
+        --lift: 0 1px 1px rgb(22 24 27 / 0.03), 0 2px 4px rgb(22 24 27 / 0.03), 0 6px 12px rgb(22 24 27 / 0.035), 0 14px 28px rgb(22 24 27 / 0.04);
+        --raise: 0 2px 4px rgb(22 24 27 / 0.06), 0 12px 24px rgb(22 24 27 / 0.12), 0 24px 40px rgb(22 24 27 / 0.10);
+        --focus: 0 0 0 3px rgb(21 85 126 / 0.28);
+        --ease-card: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --ease-thumb: cubic-bezier(0.3, 1.25, 0.5, 1);
+
+        /* ── The sea's scenery palette (design-language.md, settled with the founder) ── */
         --duck: #f0c33c;
         --duck-beak: #e08a2e;
         --terracotta: #b25e42;
@@ -56,7 +72,7 @@
         --font-voice: Georgia, "Times New Roman", serif;
         --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-        /* ── Surfaces ── */
+        /* ── Site surfaces ── */
         --r-win: 12px;
         --r-pill: 999px;
         --shadow-win: 0 1px 2px rgba(22, 24, 27, 0.05), 0 24px 48px -24px rgba(22, 24, 27, 0.18);
@@ -69,82 +85,94 @@
         font-size: 15px; line-height: 1.5;
         -webkit-font-smoothing: antialiased;
       }
-      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      p, li, figcaption, .rule-card span, .swatch__use, .say, .cut, .type-sample__meta { text-wrap: pretty; }
+      h1, h2, h3, h4 { text-wrap: balance; }
+      .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
       nav {
         position: sticky; top: 0; align-self: start;
-        padding: 32px; background: var(--wash-a);
+        padding: 32px 28px; background: var(--wash-a);
         border-right: 1px solid var(--line);
-        height: 100vh; box-sizing: border-box;
+        height: 100vh; box-sizing: border-box; overflow-y: auto;
       }
       nav .nav__brand {
+        display: flex; align-items: center; gap: 10px;
         font-family: var(--font-brand); font-weight: 600; font-size: 1.18rem;
         letter-spacing: 0.005em;
-        padding-bottom: 24px; border-bottom: 1px solid var(--line);
-        margin-bottom: 12px;
+        padding-bottom: 20px; border-bottom: 1px solid var(--line);
+        margin-bottom: 8px;
       }
-      nav .nav__brand small { display: block; font-family: var(--font-sans); font-weight: 400; font-size: 12px; color: var(--gray); margin-top: 4px; }
-      nav a { display: block; padding: 9px 0; text-decoration: none; color: var(--gray); font-size: 14px; }
+      nav .nav__brand svg { width: 26px; height: 26px; flex: none; }
+      nav .nav__brand small { display: block; font-family: var(--font-sans); font-weight: 400; font-size: 12px; color: var(--gray); margin-top: 2px; letter-spacing: 0; }
+      nav .nav__group { margin: 18px 0 2px; font-size: 12px; font-weight: 600; color: var(--gray-light); }
+      nav a { display: block; padding: 6px 0; text-decoration: none; color: var(--gray); font-size: 14px; }
       nav a:hover, nav a:focus-visible { color: var(--tide); }
       nav a.is-current { color: var(--ink); font-weight: 600; }
-      main { padding: 32px; max-width: 1100px; }
-      section { padding: 32px 0; border-bottom: 1px solid var(--line); }
-      section h2 { font-weight: 600; font-size: 28px; letter-spacing: -0.014em; margin: 0 0 24px; }
-      section h3 { font-weight: 600; font-size: 17px; margin: 32px 0 14px; }
+      main { padding: 32px 40px; max-width: 1100px; min-width: 0; }
+      section { padding: 40px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 8px; }
+      section h2 { font-weight: 600; font-size: 28px; letter-spacing: -0.014em; margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      section h3 { font-weight: 600; font-size: 17px; margin: 40px 0 8px; }
+      section h3 + .section-intro { margin-top: 0; }
       .section-intro { color: var(--gray); max-width: 720px; margin: 0 0 24px; }
       .section-intro strong { color: var(--ink); }
       em.voice { font-family: var(--font-voice); font-style: italic; color: var(--tide); letter-spacing: 0; }
+      a.inline { color: var(--tide); }
+      .eyebrow { font-size: 13px; font-weight: 600; color: var(--tide); margin: 0; }
+
+      /* Product / Site tags */
+      .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border-radius: var(--r-pill); font-family: var(--font-sans); font-size: 12px; font-weight: 600; letter-spacing: 0; vertical-align: middle; }
+      .tag--product { background: var(--tide-wash); color: var(--tide); }
+      .tag--site { background: var(--sand); color: var(--gray); }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; font-size: 13px; color: var(--gray); margin: 4px 0 20px; }
+      .legend span { display: inline-flex; align-items: center; gap: 8px; }
 
       /* Swatches */
-      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+      .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 14px; }
       .swatch { background: #fff; border: 1px solid var(--line); border-radius: var(--r-win); overflow: hidden; }
-      .swatch__color { height: 80px; border-bottom: 1px solid var(--line); }
+      .swatch__color { height: 72px; border-bottom: 1px solid var(--line); }
       .swatch__meta { padding: 12px; }
       .swatch__label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-      .swatch__name, .swatch__hex { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--gray); word-break: break-all; }
+      .swatch__name, .swatch__hex { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--gray); word-break: break-word; }
+      .swatch__use { display: block; font-size: 12px; color: var(--gray); margin-top: 6px; line-height: 1.4; }
 
       .type-sample { padding: 16px 0; border-bottom: 1px dashed var(--line); }
       .type-sample:last-of-type { border-bottom: none; }
-      .type-sample__meta { font-family: var(--font-mono); font-size: 12px; color: var(--gray-light); margin-top: 8px; }
+      .type-sample__meta { font-family: var(--font-mono); font-size: 12px; color: var(--gray); margin-top: 8px; }
 
       .demo-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 0; }
-      .demo-row__label { font-family: var(--font-mono); font-size: 12px; color: var(--gray-light); min-width: 130px; }
-      .space-chip { display: inline-block; background: var(--ink); }
 
-      /* ── Components, straight from the shipped rules ── */
+      /* ── Site components, straight from the shipped rules ── */
       .dw-btn {
         font-family: var(--font-sans); font-weight: 600; font-size: 15px;
         border-radius: var(--r-pill); padding: 12px 26px; cursor: pointer;
-        border: 1.5px solid transparent;
+        border: 1.5px solid transparent; transition: background 240ms, border-color 240ms;
       }
       .dw-btn--primary { background: var(--tide); color: #fff; }
       .dw-btn--primary:hover { background: var(--tide-deep); }
       .dw-btn--ghost { background: none; border-color: var(--line); color: var(--ink); }
       .dw-btn--ghost:hover { border-color: var(--gray-light); }
+      .dw-btn--quiet { background: none; border: 0; padding: 12px 6px; color: var(--gray); font-weight: 400; }
+      .dw-btn--quiet:hover { color: var(--ink); }
+      .dw-btn:focus-visible, button:focus-visible { outline: 2px solid var(--tide); outline-offset: 2px; }
 
       .label { font-size: 0.85rem; color: var(--gray); }
       .redact { display: inline-block; background: var(--redact); border-radius: 2px; height: 0.9em; vertical-align: baseline; }
-
       .chip-wash {
         display: inline-block; background: var(--tide-wash); color: var(--tide);
         border-radius: var(--r-pill); padding: 5px 14px; font-size: 13px; font-weight: 600;
       }
-      .status-ok { color: var(--ok); font-weight: 600; font-size: 14px; }
-      .status-ok::before { content: "●"; font-size: 9px; vertical-align: 2px; margin-right: 6px; }
+      .status-ok { display: inline-flex; align-items: center; gap: 7px; color: var(--ok); font-weight: 600; font-size: 14px; }
+      .status-ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
       .app-window {
         background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
         box-shadow: var(--shadow-win); width: 420px; max-width: 100%; overflow: hidden;
       }
-      .app-window__bar {
-        display: flex; align-items: center; gap: 6px; padding: 10px 14px;
-        border-bottom: 1px solid var(--line);
-      }
+      .app-window__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
       .app-window__bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
       .app-window__bar span { margin-left: 8px; font-size: 0.85rem; color: var(--gray); }
       .app-window__body { padding: 18px; }
-      .app-window__body .kpi { font-weight: 750; color: var(--tide); font-size: 26px; font-variant-numeric: tabular-nums; }
-      .app-window__body .kpi-label { font-size: 0.85rem; color: var(--gray); margin-top: 2px; }
-
       .mat {
         background: var(--tide-wash); border-radius: calc(var(--r-win) + 0.9rem);
         padding: 20px; width: 460px; max-width: 100%; box-sizing: border-box;
@@ -155,17 +183,13 @@
         display: inline-flex; align-items: center; gap: 0.6rem;
         font-family: var(--font-brand); font-weight: 600; font-size: 1.5rem; letter-spacing: 0.005em;
       }
-      .wordmark .helm {
-        width: 34px; height: 34px; border-radius: 8px; background: var(--tide);
-        color: #fff; display: inline-flex; align-items: center; justify-content: center;
-        font-size: 17px;
-      }
+      .wordmark svg { width: 34px; height: 34px; flex: none; }
 
-      /* The water — a static frame of the ASCII sea (the real one runs at ~15fps on canvas) */
+      /* The water: a static frame of the ASCII sea (the real one runs at ~15fps on canvas) */
       .sea {
         font-family: var(--font-mono); font-size: 13px; line-height: 1.25;
         background: #fff; border: 1px solid var(--line); border-radius: var(--r-win);
-        padding: 16px 18px; overflow-x: auto; margin: 0; white-space: pre;
+        padding: 16px 18px; overflow-x: auto; margin: 0; white-space: pre; max-width: 100%; box-sizing: border-box;
       }
       .sea .w1 { color: rgba(21, 85, 126, 0.25); }
       .sea .w2 { color: rgba(21, 85, 126, 0.45); }
@@ -180,117 +204,473 @@
 
       .rule-card {
         border-left: 3px solid var(--tide); background: var(--wash-a);
-        padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 660px; margin: 10px 0;
+        padding: 12px 16px; border-radius: 0 8px 8px 0; max-width: 680px; margin: 10px 0;
       }
       .rule-card b { display: block; margin-bottom: 2px; }
-      .rule-card span { color: var(--gray); font-size: 14px; }
+      .rule-card span { display: block; color: var(--gray); font-size: 14px; }
+      .rule-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+      .rule-grid .rule-card { max-width: none; }
 
       /* Screens */
-      .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-      .screen-strip figure { margin: 0; }
-      .screen-strip img, .screen-strip video { width: 100%; height: auto; display: block; border-radius: var(--r-win); border: 1px solid var(--line); box-shadow: var(--shadow-win); }
-      .screen-strip figcaption { font-size: 12px; color: var(--gray-light); padding-top: 6px; }
+      .screen-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 8px; }
+      .screen-strip.is-two { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+      .screen-strip figure, figure.shot { margin: 0; min-width: 0; }
+      .screen-strip img, .screen-strip video, figure.shot img { width: 100%; height: auto; display: block; border-radius: var(--r-win); border: 1px solid var(--line); box-shadow: var(--shadow-win); background: var(--panel); }
+      .screen-strip figcaption, figure.shot figcaption { font-size: 13px; color: var(--gray); padding-top: 8px; }
+      .screen-strip figcaption b, figure.shot figcaption b { color: var(--ink); font-weight: 600; }
+      figure.is-phone { max-width: 250px; }
+      .screen-strip.is-even img { aspect-ratio: 1400 / 918; object-fit: cover; object-position: top; }
+      .phone-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+      .phone-row > div { flex: 1 1 260px; min-width: 0; }
 
-      .provenance { font-size: 13px; color: var(--gray-light); max-width: 720px; }
-      code { font-family: var(--font-mono); font-size: 0.9em; }
+      .provenance { font-size: 13px; color: var(--gray); max-width: 720px; }
+      code { font-family: var(--font-mono); font-size: 0.88em; }
+
+      /* ── Product specimens: rebuilt here from pilot.css / storyboard.css values ── */
+      .stage { background: var(--panel); border-radius: var(--r-panel); padding: 2rem; box-sizing: border-box; max-width: 100%; }
+      .stage.is-flat { padding: 1.5rem; }
+      .split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+      .notes { margin: 0; padding: 0; list-style: none; counter-reset: n; display: grid; gap: 14px; }
+      .notes li { position: relative; padding-left: 34px; color: var(--gray); font-size: 14px; }
+      .notes li b { color: var(--ink); font-weight: 600; }
+      .notes li::before { counter-increment: n; content: counter(n); position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--tide-wash); color: var(--tide); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+      .notes.is-plain li::before { content: ""; width: 7px; height: 7px; top: 8px; left: 8px; background: var(--tide); }
+
+      .widget { background: #fff; border-radius: var(--r-widget); box-shadow: var(--lift); padding: 1.75rem; box-sizing: border-box; min-width: 0; }
+      .widget__head { display: flex; align-items: baseline; gap: 0.6rem; min-height: 1.6rem; }
+      .widget__label { color: var(--gray); font-size: 0.92rem; font-weight: 400; margin: 0; }
+      .delta { display: inline-flex; align-items: center; gap: 0.3em; color: var(--num-blue); font-size: 0.8rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+      .delta svg { width: 0.85em; height: 0.85em; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+      .widget__num { margin: 0.5rem 0 0; font-size: 3.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--ink); transition: color 360ms ease-out; }
+      .widget:hover .widget__num, .widget:focus-within .widget__num { color: var(--num-blue); }
+      .widget__line { margin: 0.2rem 0 0; color: var(--gray); font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+      .chart { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); grid-template-rows: 8.5rem auto; margin-top: 1.25rem; font-size: 0.8rem; color: var(--gray); }
+      .chart__y { position: relative; }
+      .chart__y span { position: absolute; right: 0.4rem; transform: translateY(-50%); font-variant-numeric: tabular-nums; }
+      .chart__plot { position: relative; display: flex; align-items: flex-end; gap: 3px; border-bottom: 1px solid var(--line); background: linear-gradient(var(--line), var(--line)) 0 0 / 100% 1px no-repeat, linear-gradient(var(--line), var(--line)) 0 50% / 100% 1px no-repeat; }
+      .chart__plot .wk { position: absolute; top: 0; bottom: 0; border-left: 1px dashed #cfd6dd; }
+      .bar { position: relative; flex: 1; container-type: inline-size; cursor: default; }
+      .bar::before { content: ""; position: absolute; inset: 0; background: var(--tide); border-radius: 12cqw 12cqw 0 0; transition: background 160ms; }
+      .bar:hover::before { background: var(--num-blue); }
+      .chart__x { grid-column: 2; display: flex; justify-content: space-between; padding-top: 6px; font-variant-numeric: tabular-nums; }
+
+      .range { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: calc(5 * 2.9rem); padding: 0.22rem; border-radius: 999px; background: linear-gradient(180deg, #e9edf1, #f1f3f6); box-shadow: inset 0 1px 2px rgb(16 24 40 / 0.08), inset 0 0 0 1px rgb(16 24 40 / 0.04); }
+      .range__thumb { position: absolute; top: 0.22rem; bottom: 0.22rem; left: 0.22rem; width: calc((100% - 0.44rem) / 5); border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgb(16 24 40 / 0.1), 0 3px 8px rgb(16 24 40 / 0.08), 0 8px 20px rgb(13 60 91 / 0.06); transform: translateX(calc(100% * var(--at, 1))); transition: transform 460ms var(--ease-thumb); }
+      .range button { position: relative; height: 2rem; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--gray); font: inherit; font-size: 0.8rem; cursor: pointer; transition: color 200ms; }
+      .range button:hover { color: var(--ink); }
+      .range button[aria-checked="true"] { color: var(--ink); font-weight: 600; }
+      .range button:active { transform: scale(0.96); }
+      .sect-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 1.5rem; }
+      .sect-head h4 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+
+      /* pill buttons, every state (dp-btn / sv-pill) */
+      .pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; height: 2.5rem; padding: 0 1.25rem; border: 1px solid var(--edge); border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 0.92rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background 150ms, border-color 150ms, color 150ms, transform 120ms; box-sizing: border-box; }
+      .pill:hover { border-color: #b9c1c9; background: #fafbfc; }
+      .pill:active { transform: scale(0.98); }
+      .pill:focus-visible { outline: none; box-shadow: var(--focus); }
+      .pill.is-primary { border-color: var(--tide); background: var(--tide); color: #fff; }
+      .pill.is-primary:hover { border-color: var(--tide-deep); background: var(--tide-deep); }
+      .pill:disabled { border-color: var(--line); background: #fff; color: #a8b0b8; cursor: default; transform: none; }
+      .pill.is-primary:disabled { border-color: #9fb8c9; background: #9fb8c9; color: #fff; }
+      .pill svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+      /* icons: SVG shapes centred on their box */
+      .ico { display: grid; place-items: center; flex: none; padding: 0; border: 1px solid var(--edge); border-radius: 999px; background: #fff; color: var(--ink); cursor: pointer; transition: background 150ms, transform 120ms; }
+      .ico:active { transform: scale(0.95); }
+      .ico svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .ico.is-wash { border: 0; background: var(--tide-wash); color: var(--tide); }
+      .ico.is-tide { border: 0; background: var(--tide); color: #fff; }
+      .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px; }
+      .icon-cell { display: grid; justify-items: center; gap: 10px; padding: 18px 8px 14px; border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; text-align: center; font-size: 12px; color: var(--gray); }
+      .icon-cell .ico { position: relative; width: 3rem; height: 3rem; cursor: default; }
+      .icon-cell .ico svg { width: 1.5rem; height: 1.5rem; }
+      .guides .icon-cell .ico::before, .guides .icon-cell .ico::after { content: ""; position: absolute; background: rgb(178 94 66 / 0.55); pointer-events: none; }
+      .guides .icon-cell .ico::before { left: 50%; top: -6px; bottom: -6px; width: 1px; }
+      .guides .icon-cell .ico::after { top: 50%; left: -6px; right: -6px; height: 1px; }
+      .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray); cursor: pointer; margin-bottom: 14px; }
+      .toggle input { accent-color: var(--tide); }
+
+      /* the onboarding rail and docked row */
+      .ob { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 2rem; background: #fff; border: 1px solid var(--line); border-radius: var(--r-win); padding: 1.75rem; }
+      .rail { margin: 0; padding: 0; list-style: none; border-left: 1px solid var(--line); display: grid; gap: 0.1rem; align-self: start; }
+      .rail li { display: flex; align-items: center; gap: 0.7rem; margin-left: -1px; padding: 0.55rem 0.9rem; border-left: 2px solid transparent; color: var(--gray); font-size: 0.92rem; }
+      .rail li i { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 1px solid var(--line); font-style: normal; font-size: 0.8rem; font-weight: 600; color: var(--gray); flex: none; }
+      .rail li.is-done { color: var(--ink); font-weight: 600; }
+      .rail li.is-done i { border-color: transparent; background: var(--tide-wash); color: var(--tide); }
+      .rail li.is-current { border-left-color: var(--tide); color: var(--ink); }
+      .rail li.is-current i { border-color: transparent; background: var(--tide); color: #fff; }
+      .rail li small { margin-left: auto; white-space: nowrap; font-size: 0.75rem; font-weight: 400; color: var(--gray-light); }
+      .ob__step { display: grid; justify-items: center; align-content: start; text-align: center; min-width: 0; }
+      .ob__step h4 { margin: 0; font-size: 1.75rem; font-weight: 620; letter-spacing: -0.02em; line-height: 1.15; }
+      .ob__step p { margin: 0.6rem 0 0; color: var(--gray); font-size: 0.95rem; }
+      .sheet { margin: 1.5rem 0 0; width: min(100%, 22rem); height: 7.5rem; border: 1.5px dashed var(--edge); border-radius: var(--r-widget); display: grid; place-items: center; align-content: center; gap: 6px; color: var(--gray); font-size: 0.85rem; box-sizing: border-box; }
+      .sheet svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: var(--tide); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .dock { position: relative; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 2rem; padding-top: 1.5rem; }
+      .dock::before, .dock::after { content: ""; position: absolute; top: 0; left: 0; height: 2px; border-radius: 2px; }
+      .dock::before { right: 0; background: var(--line); }
+      .dock::after { width: 75%; background: var(--tide); }
+      .dock .pill svg { width: 1rem; height: 1rem; }
+
+      /* the launch night */
+      .night { position: relative; overflow: hidden; height: 15rem; border-radius: var(--r-widget); background: #fff; border: 1px solid var(--line); }
+      .night::before { content: ""; position: absolute; inset: 0; background: rgb(5 20 32 / 0.9); opacity: 0; }
+      .night.is-on::before { opacity: 1; transition: opacity 900ms var(--ease-card); }
+      .night__stars { position: absolute; inset: 0; margin: 0; padding: 18px; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; white-space: pre; color: var(--duck); opacity: 0; overflow: hidden; }
+      .night.is-on .night__stars { opacity: 1; transition: opacity 700ms ease-out 700ms; }
+      .night__stars .t { color: rgb(126 182 219); }
+      .night__stars .w { color: #fff; }
+      .night__stars .tc { color: var(--terracotta); }
+      .night__card { position: absolute; left: 50%; top: 50%; width: min(13rem, 60%); aspect-ratio: 16 / 9; border-radius: 0.6rem; background: #fff; box-shadow: var(--shadow-win); translate: -50% -50%; transform: translateY(2.5rem) scale(0.86); display: grid; place-items: center; font-size: 0.8rem; color: var(--gray); }
+      .night.is-on .night__card { transform: none; transition: transform 900ms var(--ease-card); box-shadow: 0 30px 80px rgb(0 0 0 / 0.45); }
+      .night__go { position: absolute; right: 14px; bottom: 14px; z-index: 2; }
+
+      /* the menu column */
+      .compare { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+      .compare figure { margin: 0; width: 200px; max-width: 100%; }
+      .compare img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: var(--r-win); background: #fff; }
+      .compare figcaption { font-size: 13px; color: var(--gray); padding-top: 8px; }
+      .compare .notes { flex: 1 1 300px; }
+
+      /* Face & Voice card */
+      .face-cta { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.5rem 2.25rem; min-height: 12.5rem; padding: 2rem 2.5rem; overflow: hidden; border-radius: var(--r-widget); background: var(--tide-deep); box-shadow: var(--lift); color: #fff; box-sizing: border-box; }
+      .face-cta__porthole { display: grid; width: 8.5rem; height: 8.5rem; place-items: center; border-radius: 999px; background: color-mix(in srgb, var(--tide) 60%, var(--tide-deep)); box-shadow: 0 0 0 4px rgb(255 255 255 / 0.14), 0 0 0 10px rgb(255 255 255 / 0.05), 0 12px 28px rgb(0 0 0 / 0.28); }
+      .face-cta__porthole > * { grid-area: 1 / 1; }
+      .face-cta__porthole .helm { width: 3.25rem; height: 3.25rem; opacity: 0.85; }
+      .face-cta__play { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border: 0; border-radius: 999px; background: rgb(255 255 255 / 0.92); color: var(--tide-deep); cursor: pointer; transition: transform 120ms; }
+      .face-cta__play:hover { background: #fff; transform: scale(1.06); }
+      .face-cta__play svg { width: 1rem; height: 1rem; fill: currentColor; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+      .face-cta__hi { margin: 0; color: var(--hi); font-size: 0.92rem; font-weight: 600; }
+      .face-cta h4 { margin: 0.35rem 0 0; color: #fff; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+      .face-cta__copy p:last-child { margin: 0.5rem 0 0; color: rgb(255 255 255 / 0.74); font-size: 0.92rem; }
+      .face-cta__go { min-height: 2.75rem; padding: 0 1.6rem; border: 0; border-radius: 999px; background: #fff; color: var(--tide-deep); font: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: background 200ms; }
+      .face-cta__go:hover { background: var(--tide-wash); }
+      .face-cta__go:focus-visible, .face-cta__play:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+      .vote { display: grid; gap: 10px; max-width: 520px; margin: 18px 0 0; }
+      .vote div { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem; gap: 10px; align-items: center; font-size: 14px; color: var(--gray); }
+      .vote div b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+      .vote i { display: block; height: 8px; border-radius: 999px; background: var(--line); margin-top: 6px; overflow: hidden; }
+      .vote i::before { content: ""; display: block; height: 100%; width: var(--w); background: var(--tide); border-radius: inherit; }
+      .vote div.is-low i::before { background: #aeb8c2; }
+      .result { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin: 18px 0 0; padding: 12px 16px; border-radius: var(--r-widget); background: var(--tide-wash); color: var(--tide-deep); font-size: 15px; }
+      .result b { font-weight: 700; }
+
+      /* Storyboard specimen */
+      .sv { background: var(--panel); border-radius: var(--r-panel); padding: 1.75rem; display: grid; gap: 1.5rem; box-sizing: border-box; }
+      .sv__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; }
+      .sv__title { flex: 1 1 260px; min-width: 0; }
+      .sv__line { display: flex; align-items: center; gap: 0.75rem; }
+      .sv__line h4 { margin: 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 2.5rem; }
+      .sv__recap { margin: 0.4rem 0 0; color: var(--gray); font-size: 0.92rem; }
+      .sv .ico.back { width: 2.5rem; height: 2.5rem; }
+      .sv .ico.back svg { width: 1.1rem; height: 1.1rem; }
+      .chip { display: inline-flex; align-items: center; height: 1.6rem; padding: 0 0.7rem; border-radius: 999px; background: var(--tide-wash); color: var(--tide); font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+      .sv__panel { position: relative; }
+      .sv__body { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 28.5fr); gap: 1.5rem; align-items: start; }
+      .sv__player { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-widget); background: #0f1113; box-shadow: var(--lift); display: grid; place-items: center; }
+      .sv__player .ico { width: 3.25rem; height: 3.25rem; border: 0; background: rgb(255 255 255 / 0.92); color: var(--ink); cursor: default; }
+      .sv__player .ico svg { width: 1.2rem; height: 1.2rem; fill: currentColor; }
+      .sv__player i { position: absolute; left: 1rem; bottom: 0.8rem; color: rgb(255 255 255 / 0.8); font-style: normal; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+      @media (max-width: 960px) { .sv__body { grid-template-columns: minmax(0, 1fr); } }
+      .sv__shot { display: flex; align-items: baseline; gap: 0.5rem; }
+      .sv__shot span { color: var(--gray); font-weight: 600; }
+      .sv__shot h5 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+      .sv__shot time { margin-left: auto; color: var(--gray); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+      .sv__label { display: flex; align-items: center; justify-content: space-between; height: 1.6rem; margin: 1.5rem 0 0.4rem; color: var(--gray); font-size: 0.8rem; }
+      .sv__state { padding: 0 0.5rem; border: 0; border-radius: 999px; background: none; color: var(--tide); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+      .sv__state:hover { background: var(--tide-wash); }
+      .field { position: relative; min-height: 4.6rem; padding: 0.75rem 3.25rem 0.75rem 1rem; border: 1px solid var(--line); border-radius: var(--r-field); box-sizing: border-box; font-size: 0.92rem; transition: border-color 150ms, box-shadow 150ms; }
+      .field:hover { border-color: var(--edge); }
+      .field:focus-within { border-color: var(--tide); }
+      .field.is-listening { border-color: var(--tide); box-shadow: 0 0 0 3px var(--tide-wash); }
+      .field [contenteditable] { outline: none; min-height: 1.5em; overflow-wrap: anywhere; }
+      .mic { position: absolute; top: 0.55rem; right: 0.55rem; width: 2.25rem; height: 2.25rem; }
+      .mic svg { width: 1.05rem; height: 1.05rem; }
+      .mic.is-on { background: var(--tide); color: #fff; }
+      .mic.is-on::after { content: ""; position: absolute; inset: -4px; border: 2px solid var(--tide); border-radius: inherit; opacity: 0; animation: ping 1.2s ease-out infinite; }
+      @keyframes ping { 0% { opacity: 0.55; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.25); } }
+      .note { position: absolute; top: calc(100% + 0.5rem); right: 0; left: 0; z-index: 6; padding: 1.25rem; border-radius: var(--r-field); background: #fff; box-shadow: var(--raise); }
+      .note[hidden] { display: none; }
+      .note__head { display: flex; align-items: center; justify-content: space-between; height: 2rem; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.92rem; }
+      .note__head .ico { width: 2rem; height: 2rem; border: 0; }
+      .note__head .ico svg { width: 0.9rem; height: 0.9rem; }
+      .note__text { padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 0.6rem; font-size: 0.92rem; min-height: 3.5rem; outline: none; }
+      .note__text:focus { border-color: var(--tide); box-shadow: var(--focus); }
+      .note__text i { color: var(--gray); }
+      .note__foot { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
+      .cut-shot { margin-top: 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0; border: 0; background: none; color: var(--gray); font: inherit; font-size: 0.92rem; cursor: pointer; }
+      .cut-shot:hover { color: var(--ink); }
+      .cut-shot svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .strip-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+      .strip-head b { font-weight: 600; font-size: 0.92rem; }
+      .strip-head span { color: var(--gray); font-size: 0.8rem; }
+      .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+      .tile { position: relative; min-width: 0; display: grid; gap: 0.45rem; padding: 0.3rem; border-radius: 0.9rem; transition: background 150ms; }
+      .tile:hover { background: var(--panel); }
+      .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-field); background: linear-gradient(180deg, #dde3e9 0 18%, #eef1f4 18% 100%); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+      .thumb::after { content: ""; position: absolute; left: 22%; right: 22%; top: 34%; bottom: 18%; border-radius: 3px; background: #cfd6dd; }
+      .tile.is-selected .thumb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--tide); }
+      .tile__meta { display: flex; justify-content: space-between; gap: 0.4rem; font-size: 0.8rem; }
+      .tile__meta b { min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .tile__meta b span { color: var(--gray); font-weight: 400; margin-right: 0.25rem; }
+      .tile__meta time { color: var(--gray); font-variant-numeric: tabular-nums; }
+      .edited { position: absolute; left: 0.45rem; bottom: 0.45rem; z-index: 1; }
+      .edited[hidden], .tile.is-cut .edited { display: none; }
+      .thumb-wrap { position: relative; }
+      .tile__cut { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 2; width: 1.9rem; height: 1.9rem; border: 0; box-shadow: 0 1px 3px rgb(16 24 40 / 0.18); opacity: 0; transition: opacity 150ms; }
+      .tile__cut svg { width: 0.95rem; height: 0.95rem; }
+      .tile:hover .tile__cut, .tile:focus-within .tile__cut { opacity: 1; }
+      @media (hover: none) { .tile__cut { opacity: 1; } }
+      .tile.is-cut .thumb, .tile.is-new .thumb { background: none; box-shadow: none; outline: 1.5px dashed var(--edge); outline-offset: -1.5px; display: grid; place-items: center; align-content: center; gap: 0.4rem; font-size: 0.75rem; color: var(--gray); text-align: center; }
+      .tile.is-cut .thumb::after, .tile.is-new .thumb::after { display: none; }
+      .tile.is-cut .tile__meta, .tile.is-cut .tile__cut { visibility: hidden; }
+      .tile.is-new .thumb svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: var(--gray); stroke-width: 1.8; stroke-linecap: round; }
+      .tile .pill.is-small { height: 1.9rem; padding: 0 0.9rem; font-size: 0.8rem; }
+
+      /* Words */
+      .words { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+      .word-card { border: 1px solid var(--line); border-radius: var(--r-win); padding: 16px 18px; background: #fff; }
+      .word-card b { display: block; font-size: 15px; margin-bottom: 8px; }
+      .word-card p { margin: 0 0 6px; font-size: 14px; color: var(--gray); }
+      .say, .cut { display: block; margin-top: 8px; font-size: 14px; padding-left: 26px; position: relative; }
+      .say { color: var(--ink); }
+      .cut { color: var(--gray); text-decoration: line-through; text-decoration-color: var(--gray-light); }
+      .say svg, .cut svg { position: absolute; left: 0; top: 2px; width: 16px; height: 16px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .say svg { stroke: var(--tide); }
+      .cut svg { stroke: var(--gray-light); }
+
+      .space-list { display: grid; gap: 10px; max-width: 640px; }
+      .space-list div { display: grid; grid-template-columns: 4.5rem 9rem minmax(0, 1fr); gap: 12px; align-items: center; font-size: 14px; color: var(--gray); }
+      .space-list code { color: var(--ink); }
+      .space-list i { display: block; height: 12px; background: var(--tide); border-radius: 2px; opacity: 0.85; }
+      .radii { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+      .radii div { display: grid; gap: 8px; font-size: 13px; color: var(--gray); }
+      .radii i { display: block; height: 72px; background: #fff; border: 1.5px solid var(--tide); }
+      .radii b { color: var(--ink); font-weight: 600; }
+      .elev { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; padding: 28px; background: var(--panel); border-radius: var(--r-panel); }
+      .elev div { height: 96px; background: #fff; border-radius: var(--r-widget); padding: 14px; box-sizing: border-box; font-size: 13px; color: var(--gray); }
+      .elev b { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+      .bars-demo { display: flex; align-items: flex-end; gap: 18px; height: 110px; padding: 0 4px; border-bottom: 1px solid var(--line); }
+      .bars-demo .bar { flex: none; }
+
+      @media (max-width: 1180px) { .strip { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      @media (max-width: 960px) {
+        .split { grid-template-columns: minmax(0, 1fr); }
+      }
       @media (max-width: 720px) {
-        .layout { grid-template-columns: 1fr; }
-        nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+        .layout { grid-template-columns: minmax(0, 1fr); }
+        nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 20px 16px; overflow: visible; }
+        nav .nav__group { display: none; }
+        nav .nav__links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+        main { padding: 8px 16px 32px; }
+        section { padding: 32px 0; }
+        section h2 { font-size: 24px; }
+        .stage { padding: 1rem; border-radius: var(--r-widget); }
+        .widget { padding: 1.25rem; }
+        .ob { grid-template-columns: minmax(0, 1fr); padding: 1.25rem; }
+        .rule-grid { grid-template-columns: minmax(0, 1fr); }
+        .rail { border-left: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem; }
+        .rail li { margin: 0; padding: 0.4rem 0.2rem; border-left: 0; }
+        .rail li.is-current { border-left: 0; }
+        .rail li small { display: none; }
+        .face-cta { grid-template-columns: auto minmax(0, 1fr); padding: 1.5rem; }
+        .face-cta__porthole { width: 6rem; height: 6rem; }
+        .face-cta__porthole .helm { width: 2.4rem; height: 2.4rem; }
+        .face-cta__go { grid-column: 1 / -1; justify-self: start; }
+        .face-cta h4 { font-size: 1.35rem; }
+        .sv { padding: 1rem; }
+        .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .sv__line h4 { font-size: 1.4rem; }
+        .space-list div { grid-template-columns: 4rem 5rem minmax(0, 1fr); }
+        .elev { padding: 16px; }
+        .range { width: 100%; }
+        figure.is-phone { max-width: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .range__thumb, .night::before, .night__card, .night__stars, .widget__num { transition: none !important; }
+        .mic.is-on::after { animation: none; }
       }
     </style>
   </head>
   <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <!-- The HelmMark, copied from landing/src/components/HelmMark.tsx -->
+      <symbol id="helm" viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="14" fill="#15557e" />
+        <g transform="translate(32 32) scale(0.88)" fill="none" stroke="#f7f4ec" stroke-linecap="round" stroke-linejoin="round">
+          <circle r="22.5" stroke-width="3.4" />
+          <g stroke-width="3.6">
+            <line y1="-22.5" y2="-27.5" /><line y1="-22.5" y2="-27.5" transform="rotate(45)" /><line y1="-22.5" y2="-27.5" transform="rotate(90)" /><line y1="-22.5" y2="-27.5" transform="rotate(135)" />
+            <line y1="-22.5" y2="-27.5" transform="rotate(180)" /><line y1="-22.5" y2="-27.5" transform="rotate(225)" /><line y1="-22.5" y2="-27.5" transform="rotate(270)" /><line y1="-22.5" y2="-27.5" transform="rotate(315)" />
+          </g>
+          <g stroke-width="2.5">
+            <line y1="-8.5" y2="-19.5" /><line y1="-8.5" y2="-19.5" transform="rotate(45)" /><line y1="-8.5" y2="-19.5" transform="rotate(90)" /><line y1="-8.5" y2="-19.5" transform="rotate(135)" />
+            <line y1="-8.5" y2="-19.5" transform="rotate(180)" /><line y1="-8.5" y2="-19.5" transform="rotate(225)" /><line y1="-8.5" y2="-19.5" transform="rotate(270)" /><line y1="-8.5" y2="-19.5" transform="rotate(315)" />
+          </g>
+          <circle r="7.5" stroke-width="2.6" fill="#15557e" />
+          <circle r="2.8" fill="#f7f4ec" stroke="none" />
+        </g>
+      </symbol>
+      <!-- Icons: each shape's bounding box is centred on its 24×24 viewBox -->
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M6.5 5.5v13L17.5 12z" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12" /></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M6 11a6 6 0 0 0 12 0M12 17v4" /></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V5M8 9l4-4 4 4M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3" /></symbol>
+      <symbol id="i-cut" viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.5" /><circle cx="7" cy="17" r="2.5" /><path d="M9.1 8.4L19.5 17M9.1 15.6L19.5 7" /></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+    </svg>
+
     <div class="layout">
       <nav aria-label="Sections">
-        <div class="nav__brand">driftwood<small>design system showcase</small></div>
-        <a href="#brand">Brand</a>
-        <a href="#colors">Colors</a>
-        <a href="#type">Type</a>
-        <a href="#surfaces">Surfaces &amp; components</a>
-        <a href="#water">The water</a>
-        <a href="#rules">Rules</a>
-        <a href="#screens">Shipped</a>
+        <div class="nav__brand"><svg aria-hidden="true"><use href="#helm" /></svg><div>driftwood<small>design system showcase</small></div></div>
+        <div class="nav__links">
+          <a href="#brand">Driftwood</a>
+          <p class="nav__group">Foundations</p>
+          <a href="#colors">Colour</a>
+          <a href="#type">Type</a>
+          <a href="#shape">Spacing &amp; shape</a>
+          <a href="#icons">Icons</a>
+          <p class="nav__group">Product</p>
+          <a href="#onboarding">Onboarding</a>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#face">Face &amp; Voice</a>
+          <a href="#storyboard">Storyboard editor</a>
+          <a href="#patterns">Interaction patterns</a>
+          <a href="#words">Words</a>
+          <p class="nav__group">Site</p>
+          <a href="#site">Site components</a>
+          <a href="#water">The water</a>
+          <a href="#screens">Shipped</a>
+        </div>
       </nav>
       <main>
+        <!-- ─────────────── Driftwood ─────────────── -->
         <section id="brand">
-          <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tide); margin: 0">Design system</p>
+          <p class="eyebrow">Design system · updated October 2026</p>
           <h2 style="margin-top: 8px">Driftwood</h2>
           <p class="section-intro">
-            The shipped design language of <strong>driftwood.sh</strong> — landing page and dashboard.
-            Pure white ground, a gray ink scale, hairline borders, and <strong>one tide-blue accent</strong>.
-            The signature isn't a color at all: it's an ASCII character sea, with a rubber duck in it, always.
+            The design language of <strong>driftwood.sh</strong> and the product behind it: onboarding, the
+            dashboard and the storyboard editor. One tide-blue accent, and an ASCII sea with a rubber duck in it.
           </p>
+          <div class="legend">
+            <span><span class="tag tag--product">Product</span> the app clients use after they sign</span>
+            <span><span class="tag tag--site">Site</span> the marketing site</span>
+          </div>
           <div class="demo-row">
-            <span class="wordmark"><span class="helm">⎈</span>driftwood</span>
-            <button class="dw-btn dw-btn--primary">Book a demo</button>
+            <span class="wordmark"><svg aria-hidden="true"><use href="#helm" /></svg>driftwood</span>
+            <button class="dw-btn dw-btn--primary">Start pilot</button>
             <span class="chip-wash">demo-led outbound</span>
             <span class="status-ok">live</span>
           </div>
         </section>
 
+        <!-- ─────────────── Colour ─────────────── -->
         <section id="colors">
-          <h2>Colors</h2>
+          <h2>Colour</h2>
           <p class="section-intro">
-            Values are <strong>verbatim from the shipped code</strong> — this is a coded, live site, so
-            the tokens below are copied from its CSS, not sampled.
+            Copied from the shipped CSS. The site and the dashboard share one set, defined twice
+            and kept in sync, and the product adds a panel-blue ground for its white widgets.
           </p>
 
           <h3>Ground &amp; ink</h3>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #ffffff"></div><div class="swatch__meta"><span class="swatch__label">Ground</span><span class="swatch__name">--ground</span><span class="swatch__hex">#FFFFFF — white. Not off-white, not gradient</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #16181b"></div><div class="swatch__meta"><span class="swatch__label">Ink</span><span class="swatch__name">--ink</span><span class="swatch__hex">#16181B</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #6a737d"></div><div class="swatch__meta"><span class="swatch__label">Gray — body / labels</span><span class="swatch__name">--gray</span><span class="swatch__hex">#6A737D</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #9aa2ab"></div><div class="swatch__meta"><span class="swatch__label">Gray light — decorative only</span><span class="swatch__name">--gray-light</span><span class="swatch__hex">#9AA2AB</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #e9ebee"></div><div class="swatch__meta"><span class="swatch__label">Line — all hairlines</span><span class="swatch__name">--line</span><span class="swatch__hex">#E9EBEE</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #d4d9de"></div><div class="swatch__meta"><span class="swatch__label">Redaction bar</span><span class="swatch__name">--redact</span><span class="swatch__hex">#D4D9DE</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #ffffff"></div><div class="swatch__meta"><span class="swatch__label">Ground</span><span class="swatch__name">--color-paper</span><span class="swatch__hex">#FFFFFF</span><span class="swatch__use">Site pages, onboarding, the menu column, widgets</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #16181b"></div><div class="swatch__meta"><span class="swatch__label">Ink</span><span class="swatch__name">--color-ink</span><span class="swatch__hex">#16181B</span><span class="swatch__use">Titles, names, big numbers</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #6a737d"></div><div class="swatch__meta"><span class="swatch__label">Ink soft</span><span class="swatch__name">--color-ink-soft</span><span class="swatch__hex">#6A737D</span><span class="swatch__use">Body, widget labels, the quiet line</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #9aa2ab"></div><div class="swatch__meta"><span class="swatch__label">Gray light</span><span class="swatch__name">--gray-light</span><span class="swatch__hex">#9AA2AB</span><span class="swatch__use">Decorative only; under AA for labels</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #e9ebee"></div><div class="swatch__meta"><span class="swatch__label">Line</span><span class="swatch__name">--color-line</span><span class="swatch__hex">#E9EBEE</span><span class="swatch__use">Every hairline</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #d4d9de"></div><div class="swatch__meta"><span class="swatch__label">Redaction bar</span><span class="swatch__name">--redact</span><span class="swatch__hex">#D4D9DE</span><span class="swatch__use">Names and companies we withhold</span></div></div>
           </div>
 
           <h3>The one accent</h3>
-          <p class="section-intro">"One accent. If a design wants a second accent color, the design is wrong." — the system's own rule.</p>
+          <p class="section-intro">If a design wants a second accent colour, the design is wrong. Brand colours inside a demo stay inside its window.</p>
           <div class="swatch-grid">
-            <div class="swatch"><div class="swatch__color" style="background: #15557e"></div><div class="swatch__meta"><span class="swatch__label">Tide</span><span class="swatch__name">--tide</span><span class="swatch__hex">#15557E</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #0d3c5b"></div><div class="swatch__meta"><span class="swatch__label">Tide deep — hover</span><span class="swatch__name">--tide-deep</span><span class="swatch__hex">#0D3C5B</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #eaf1f7"></div><div class="swatch__meta"><span class="swatch__label">Tide wash — chips, mats</span><span class="swatch__name">--tide-wash</span><span class="swatch__hex">#EAF1F7</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #f4f8fb"></div><div class="swatch__meta"><span class="swatch__label">Wash A — sheet tint</span><span class="swatch__name">--wash-a</span><span class="swatch__hex">#F4F8FB</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #2a9d5c"></div><div class="swatch__meta"><span class="swatch__label">OK — live status only</span><span class="swatch__name">--ok</span><span class="swatch__hex">#2A9D5C</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #15557e"></div><div class="swatch__meta"><span class="swatch__label">Tide</span><span class="swatch__name">--color-tide</span><span class="swatch__hex">#15557E</span><span class="swatch__use">The way on, the current place, bars and lines</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #0d3c5b"></div><div class="swatch__meta"><span class="swatch__label">Tide deep</span><span class="swatch__name">--color-tide-deep</span><span class="swatch__hex">#0D3C5B</span><span class="swatch__use">Hover, and the Face &amp; Voice card</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #eaf1f7"></div><div class="swatch__meta"><span class="swatch__label">Tide wash</span><span class="swatch__name">--color-tide-wash</span><span class="swatch__hex">#EAF1F7</span><span class="swatch__use">Chips, the current menu item, mics, done discs</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #2a73a8"></div><div class="swatch__meta"><span class="swatch__label">Number blue <span class="tag tag--product">Product</span></span><span class="swatch__name">--pl-num-blue</span><span class="swatch__hex">#2A73A8</span><span class="swatch__use">The number under the pointer, and changes beside names</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #f4f8fb"></div><div class="swatch__meta"><span class="swatch__label">Wash A <span class="tag tag--site">Site</span></span><span class="swatch__name">--wash-a</span><span class="swatch__hex">#F4F8FB</span><span class="swatch__use">Section sheet tint, sparingly</span></div></div>
           </div>
 
-          <h3>Scenery palette — weathered coast, not postcard</h3>
-          <p class="section-intro">The sea's inhabitants get their own settled palette. One terracotta covers crab, buoys, and coconut. And the ducks are rubber-duck yellow, always — a gray gull was tried and rejected.</p>
+          <h3>Product grounds &amp; edges <span class="tag tag--product">Product</span></h3>
+          <p class="section-intro">The dashboard is a white menu column on a panel-blue page, its widgets white on a soft lift.</p>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #f4f6f8"></div><div class="swatch__meta"><span class="swatch__label">Panel blue</span><span class="swatch__name">.pl-page:has(.pl-menu)</span><span class="swatch__hex">#F4F6F8</span><span class="swatch__use">The dashboard and storyboard page</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #e6eaee"></div><div class="swatch__meta"><span class="swatch__label">Menu hairline</span><span class="swatch__name">.pl-side</span><span class="swatch__hex">#E6EAEE</span><span class="swatch__use">The menu column's edge</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #d3d9df"></div><div class="swatch__meta"><span class="swatch__label">Edge</span><span class="swatch__name">--sv-edge</span><span class="swatch__hex">#D3D9DF</span><span class="swatch__use">Outlined pills, the round back</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #eef2f5"></div><div class="swatch__meta"><span class="swatch__label">Sand</span><span class="swatch__name">--color-sand</span><span class="swatch__hex">#EEF2F5</span><span class="swatch__use">Quiet chips</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #9ec7e4"></div><div class="swatch__meta"><span class="swatch__label">Greeting blue</span><span class="swatch__name">.pl-face-cta-hi</span><span class="swatch__hex">#9EC7E4</span><span class="swatch__use">"Welcome, Marc" on the dark card</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: rgb(5 20 32 / 0.9)"></div><div class="swatch__meta"><span class="swatch__label">Night</span><span class="swatch__name">.pl-launch::before</span><span class="swatch__hex">rgb(5 20 32 / .9)</span><span class="swatch__use">The launch's night, fading in over 900ms</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: rgb(126 182 219)"></div><div class="swatch__meta"><span class="swatch__label">Lit tide</span><span class="swatch__name">LaunchScene.ts</span><span class="swatch__hex">rgb(126 182 219)</span><span class="swatch__use">The sea's ASCII at night</span></div></div>
+          </div>
+
+          <h3>Status</h3>
+          <div class="swatch-grid">
+            <div class="swatch"><div class="swatch__color" style="background: #197142"></div><div class="swatch__meta"><span class="swatch__label">OK</span><span class="swatch__name">--color-ok</span><span class="swatch__hex">#197142</span><span class="swatch__use">Live and active dots only</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #b42318"></div><div class="swatch__meta"><span class="swatch__label">Alert</span><span class="swatch__name">--color-alert</span><span class="swatch__hex">#B42318</span><span class="swatch__use">One needs-attention dot on internal admin cards</span></div></div>
+          </div>
+          <div class="rule-card"><b>Red isn't in the product palette</b><span>Inside the pilot every alert reads as ink. Errors, Cut and Disconnect use ink and graphite, and decisions use a tide wash and a tick.</span></div>
+
+          <h3>Scenery palette: a weathered coast</h3>
+          <p class="section-intro">The sea's cast has its own settled palette. One terracotta covers crab, buoys and coconut, and the ducks stay rubber-duck yellow, always.</p>
           <div class="swatch-grid">
             <div class="swatch"><div class="swatch__color" style="background: #f0c33c"></div><div class="swatch__meta"><span class="swatch__label">Duck (protected)</span><span class="swatch__name">--duck</span><span class="swatch__hex">#F0C33C</span></div></div>
             <div class="swatch"><div class="swatch__color" style="background: #e08a2e"></div><div class="swatch__meta"><span class="swatch__label">Duck beak</span><span class="swatch__name">--duck-beak</span><span class="swatch__hex">#E08A2E</span></div></div>
             <div class="swatch"><div class="swatch__color" style="background: #b25e42"></div><div class="swatch__meta"><span class="swatch__label">The one terracotta</span><span class="swatch__name">--terracotta</span><span class="swatch__hex">#B25E42</span></div></div>
-            <div class="swatch"><div class="swatch__color" style="background: #657d6a"></div><div class="swatch__meta"><span class="swatch__label">Palm — sea-glass</span><span class="swatch__name">--palm</span><span class="swatch__hex">#657D6A</span></div></div>
+            <div class="swatch"><div class="swatch__color" style="background: #657d6a"></div><div class="swatch__meta"><span class="swatch__label">Palm, sea-glass</span><span class="swatch__name">--palm</span><span class="swatch__hex">#657D6A</span></div></div>
             <div class="swatch"><div class="swatch__color" style="background: #b0956a"></div><div class="swatch__meta"><span class="swatch__label">Sand, wet</span><span class="swatch__name">--sand-wet</span><span class="swatch__hex">#B0956A</span></div></div>
             <div class="swatch"><div class="swatch__color" style="background: #ceba92"></div><div class="swatch__meta"><span class="swatch__label">Sand, dry</span><span class="swatch__name">--sand-dry</span><span class="swatch__hex">#CEBA92</span></div></div>
             <div class="swatch"><div class="swatch__color" style="background: #3f7ea9"></div><div class="swatch__meta"><span class="swatch__label">Splash blue</span><span class="swatch__name">--splash</span><span class="swatch__hex">#3F7EA9</span></div></div>
           </div>
         </section>
 
+        <!-- ─────────────── Type ─────────────── -->
         <section id="type">
           <h2>Type</h2>
           <p class="section-intro">
-            <strong>Public Sans</strong> (variable) for everything functional, <strong>Source Serif 4</strong>
-            only for the wordmark, and <strong>Georgia italic in tide</strong> as the voice accent —
-            one phrase per heading, only where a phrase genuinely outranks the line.
-            Mono is banned from chrome (it reads "AI-generated"); IBM Plex Mono survives only inside the review queue.
+            <strong>Public Sans</strong> for everything you read and press, <strong>Source Serif 4</strong> only
+            for the wordmark. The product holds one scale with two weights: 400 to read, 600 for names and numbers.
           </p>
+
+          <h3>The product scale <span class="tag tag--product">Product</span></h3>
           <div class="type-sample">
-            <div style="font-size: clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem); font-weight: 620; letter-spacing: -0.028em; line-height: 1.1">Ship a custom demo in every cold message</div>
+            <div style="font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15">Triggers</div>
+            <div class="type-sample__meta">page title · 1.75rem · 600 · −0.02em · a page's first heading is its title, whatever tag it uses</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em">Pipeline</div>
+            <div class="type-sample__meta">section title · 1.25rem · 600</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: 0.92rem"><b style="font-weight: 600">Dana Whitfield, Meridian</b> · Same-day booking is dropping reservations</div>
+            <div class="type-sample__meta">body · 0.92rem · 400 · a card title is body set 600</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: 0.8rem; color: var(--gray)">2 replied · 3 opened · 4 sent · 3 queued</div>
+            <div class="type-sample__meta">small · 0.8rem · axis values, chips, the range track</div>
+          </div>
+          <div class="type-sample">
+            <div style="font-size: 3.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums">472</div>
+            <div class="type-sample__meta">big number · 3.75rem · 600 · −0.03em · tabular · every big number the same size, the hero of its widget</div>
+          </div>
+          <div class="rule-card"><b>Line things up by where the pixels stop</b><span>A big numeral carries more side space than the label over it, so it is pulled back by the measured difference until "472" and "Sent" share a left edge in ink.</span></div>
+          <div class="rule-card"><b>Spacing follows meaning</b><span>A line sits close under its own title (0.35 to 0.5rem); separate groups sit a full gap apart; a page heading gets twice the gap. Inner pages carry no serif flourishes.</span></div>
+
+          <h3>The site <span class="tag tag--site">Site</span></h3>
+          <div class="type-sample">
+            <div style="font-size: clamp(2.05rem, 1.15rem + 2.75vw, 3.15rem); font-weight: 620; letter-spacing: -0.028em; line-height: 1.1">Ship <em class="voice">tailored demos</em></div>
             <div class="type-sample__meta">hero H1 · Public Sans 620 (a real variable-font notch above 600) · −0.028em · one step above the shared scale</div>
           </div>
           <div class="type-sample">
-            <div style="font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 350; letter-spacing: -0.014em; line-height: 1.15">The numbers you'll <span style="font-weight: 750; color: var(--tide)">10%</span> keep</div>
-            <div class="type-sample__meta">section heading · shared scale, weight 350 — a light ground under a heavy accent figure (750)</div>
+            <div style="font-size: clamp(2rem, 1.2rem + 2.8vw, 3.2rem); font-weight: 600; letter-spacing: -0.014em; line-height: 1.15">Don't send your leads <em class="voice">slop</em></div>
+            <div class="type-sample__meta">section heading · shared scale · 600 · −0.014em · one voice phrase per heading, on the phrase that carries the meaning</div>
           </div>
           <div class="type-sample">
-            <div style="font-size: 1.35rem; font-weight: 600">Don't send <em class="voice">AI slop</em> to your prospects</div>
-            <div class="type-sample__meta">em.voice · Georgia italic in tide · at most one per heading, earn it or drop it</div>
-          </div>
-          <div class="type-sample">
-            <div class="wordmark" style="font-size: 1.18rem"><span class="helm" style="width: 26px; height: 26px; font-size: 13px">⎈</span>driftwood</div>
-            <div class="type-sample__meta">wordmark · Source Serif 4 · 600 · 1.18rem · +0.005em · always beside the HelmMark tile</div>
+            <div class="wordmark" style="font-size: 1.18rem"><svg aria-hidden="true" style="width: 26px; height: 26px"><use href="#helm" /></svg>driftwood</div>
+            <div class="type-sample__meta">wordmark · Source Serif 4 · 600 · 1.18rem · +0.005em · always beside the HelmMark tile, on the site, the dashboard and the email</div>
           </div>
           <div class="type-sample">
             <div>The agent researches each prospect, builds them a working custom demo, and sends it from your own account.</div>
@@ -298,38 +678,442 @@
           </div>
           <div class="type-sample">
             <div class="label">Every message is human reviewed before it sends</div>
-            <div class="type-sample__meta">label · 0.85rem · gray (not gray-light — labels carry information, AA floor) · sentence case, no pills, no caps, no mono</div>
+            <div class="type-sample__meta">label · 0.85rem · gray, the AA floor for information · sentence case · no pills, caps or mono</div>
           </div>
         </section>
 
-        <section id="surfaces">
-          <h2>Surfaces &amp; components</h2>
+        <!-- ─────────────── Spacing & shape ─────────────── -->
+        <section id="shape">
+          <h2>Spacing &amp; shape <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">One spacing system on every dashboard page, inner pages included. Corners are round and soft, every button a full pill.</p>
+
+          <h3>Spacing</h3>
+          <div class="space-list">
+            <div><code>0.4rem</code><i style="width: 0.4rem"></i><span>a line under its own title</span></div>
+            <div><code>1.5rem</code><i style="width: 1.5rem"></i><span>between widgets, and under a panel's title</span></div>
+            <div><code>1.75rem</code><i style="width: 1.75rem"></i><span>inside a widget</span></div>
+            <div><code>2rem</code><i style="width: 2rem"></i><span>menu to widgets, and widgets to the window's edge</span></div>
+            <div><code>2.5rem</code><i style="width: 2.5rem"></i><span>inside a panel</span></div>
+            <div><code>3rem</code><i style="width: 3rem"></i><span>under a page's heading and its line</span></div>
+            <div><code>4rem</code><i style="width: 4rem"></i><span>between panels</span></div>
+          </div>
+
+          <h3>Corners</h3>
+          <div class="radii">
+            <div><i style="border-radius: 1.2rem"></i><span><b>Widget</b> · 1.2rem</span></div>
+            <div><i style="border-radius: 1.75rem"></i><span><b>Panel</b> · 1.75rem</span></div>
+            <div><i style="border-radius: 0.8rem"></i><span><b>Field</b> · 0.8rem</span></div>
+            <div><i style="border-radius: 999px; height: 44px; margin: 14px 0"></i><span><b>Pill</b> · every button, chip and track</span></div>
+            <div><i style="border-radius: 12px"></i><span><b>Site window</b> · 12px</span></div>
+          </div>
+          <div class="rule-card"><b>Nested corners nest</b><span>An outer radius is the inner one plus the gap between them, so a thumb in a track and a field in a widget share one curve.</span></div>
+
+          <h3>Elevation</h3>
+          <p class="section-intro">Depth is built from stacked layers, each doubling the blur and shedding alpha. Premium means gradual shading.</p>
+          <div class="elev">
+            <div style="box-shadow: var(--lift)"><b>Lift</b>widgets, cards and the menu's popovers · four layers, ≤0.04 alpha</div>
+            <div style="box-shadow: var(--raise)"><b>Raise</b>a tile being dragged, a spoken note · three layers</div>
+            <div style="box-shadow: var(--shadow-win); border-radius: 12px"><b>Window</b>site artifacts and screenshots <span class="tag tag--site">Site</span></div>
+          </div>
+
+          <h3>Bars</h3>
+          <p class="section-intro">Bars and columns are solid. Each rounds its top corners by 12% of its own width, so thin day bars read nearly square and wide columns softly round.</p>
+          <div class="bars-demo" aria-label="Three bars of different widths, each with corners at 12 percent of its width">
+            <span class="bar" style="width: 8px; height: 60%"></span>
+            <span class="bar" style="width: 24px; height: 80%"></span>
+            <span class="bar" style="width: 56px; height: 70%"></span>
+            <span class="bar" style="width: 96px; height: 92%"></span>
+          </div>
+        </section>
+
+        <!-- ─────────────── Icons ─────────────── -->
+        <section id="icons">
+          <h2>Icons</h2>
+          <p class="section-intro">Every icon is a drawn SVG shape, centred on its box. Glyphs sit where their font puts them, so ‹ × ✓ ▶ drift off a button's centre.</p>
+          <label class="toggle"><input type="checkbox" id="guides" checked /> Show centre lines</label>
+          <div class="icon-grid guides" id="icon-grid">
+            <div class="icon-cell"><span class="ico"><svg><use href="#i-back" /></svg></span>Back</div>
+            <div class="icon-cell"><span class="ico is-wash" style="color: var(--tide-deep)"><svg style="fill: currentColor"><use href="#i-play" /></svg></span>Play</div>
+            <div class="icon-cell"><span class="ico"><svg><use href="#i-close" /></svg></span>Close</div>
+            <div class="icon-cell"><span class="ico is-tide"><svg><use href="#i-check" /></svg></span>Connected</div>
+            <div class="icon-cell"><span class="ico is-tide"><svg><use href="#i-plus" /></svg></span>Add</div>
+            <div class="icon-cell"><span class="ico is-wash"><svg><use href="#i-upload" /></svg></span>Upload</div>
+            <div class="icon-cell"><span class="ico is-wash"><svg><use href="#i-mic" /></svg></span>Mic</div>
+            <div class="icon-cell"><span class="ico"><svg><use href="#i-cut" /></svg></span>Cut</div>
+          </div>
+          <div class="rule-grid" style="margin-top: 14px">
+            <div class="rule-card"><b>Checked in code</b><span>The CSS test fails on any icon character in the source or a CSS <code>content:</code>, and the QA walk measures every icon-only button's shape against its centre (±1px).</span></div>
+            <div class="rule-card"><b>An icon says what comes in</b><span>Upload is an arrow into a tray, because leads arrive as a sheet. Add is a +, small and flat.</span></div>
+            <div class="rule-card"><b>When in doubt, a label</b><span>Edit is the word Edit on an outlined pill, ink on a darker outline so it reads at a glance.</span></div>
+            <div class="rule-card"><b>Logos fill their badge</b><span>Each channel wears its own mark at its own size on its brand colour. Filters use the monochrome marks in ink.</span></div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Onboarding ─────────────── -->
+        <section id="onboarding">
+          <h2>Onboarding <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">Four steps the founder walks through with a new client on the kickoff call. Questions about the product stay on the call, where a person can ask follow-ups.</p>
+
+          <div class="ob" aria-label="Specimen: the onboarding rail and the docked Back and Continue row">
+            <ol class="rail">
+              <li class="is-done"><i>1</i>Sign in<small>done</small></li>
+              <li><i>2</i>Connect accounts<small>skipped</small></li>
+              <li class="is-current"><i>3</i>Add leads</li>
+              <li><i>4</i>Invite team</li>
+            </ol>
+            <div class="ob__step">
+              <h4>Who should get your demo?</h4>
+              <p>Upload a sheet of leads.</p>
+              <div class="sheet"><svg aria-hidden="true"><use href="#i-upload" /></svg>Drop a CSV or Excel file</div>
+              <div class="dock">
+                <button class="pill"><svg aria-hidden="true"><use href="#i-back" /></svg>Back</button>
+                <button class="pill is-primary">Continue</button>
+              </div>
+            </div>
+          </div>
+          <p class="provenance" style="margin-top: 10px">Specimen built from <code>pilot.css</code>. The step's copy here is a placeholder for the layout.</p>
+
+          <div class="rule-grid">
+            <div class="rule-card"><b>Progress like TurboTax</b><span>A sidebar of numbered sections. A section turns bold only once its work is done; pressing past it is a skip, and a skipped section stays plain.</span></div>
+            <div class="rule-card"><b>Back bottom left, the way on bottom right</b><span>One row docked just under the tallest step (37rem from the top), as wide as the step's object (44rem). Back is the outlined twin of the way on, and the line along its top fills in tide.</span></div>
+            <div class="rule-card"><b>One centred column, one object</b><span>Head, the object, at most one control, the main button. Each step is centred on the whole screen, whatever the sidebar takes.</span></div>
+            <div class="rule-card"><b>Steps sit on the page</b><span>No box around a step. Regions hold a fixed size and stay top-aligned, so the step keeps still as things land in it.</span></div>
+          </div>
+
+          <h3>The four steps</h3>
+          <div class="screen-strip is-two">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/1-sign-in-shipped.jpg" alt="Sign in: the helm with Continue with Google" /><figcaption><b>1 · Sign in.</b> Google is the only sign-in, so it sits at the centre of the helm. Sign-in stays bare, with no progress line.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/2d-linkedin-connected-bold.jpg" alt="Connect LinkedIn and X: LinkedIn connected, with Disconnect and Connect X" /><figcaption><b>2 · Connect accounts.</b> The helm diagram over two buttons. LinkedIn and X each sign in in a small window over the page and land you back connected. Disconnect turns into Undo for five seconds.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/3-leads-b-csv-uploaded.jpg" alt="Add leads: a CSV uploaded into the sheet, rows listed" /><figcaption><b>3 · Add leads.</b> Upload a sheet, CSV or Excel. The sheet is the drop zone, fixed in size, its rows scrolling on their own track. Every row has an ×; an upload has Undo.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/3b-team-pasted-bold.jpg" alt="Invite your team: email chips, then Start pilot" /><figcaption><b>4 · Invite team.</b> Addresses wait as chips with an ×, free to take back. Start pilot names what happens next: Driftwood's team makes the first demos.</figcaption></figure>
+          </div>
+
+          <h3>The launch: night arrives gently</h3>
+          <p class="section-intro">The first Publish turns the page to night in the sea's ASCII. The blue fades in evenly over 900ms on the card's own easing, landing with the card; the stars follow.</p>
+          <div class="night" id="night" aria-label="Specimen: the launch night fading in">
+            <pre class="night__stars" aria-hidden="true"><span class="t">·   ·      ·    -   ·      ·   ~    ·    ·</span>      <span class="t">·   ·      ·    -   ·      ·   ~    ·    ·</span>
+     <span>*</span>          <span class="w">+</span>                <span class="tc">|</span>               <span>*</span>          <span class="w">+</span>                <span class="tc">|</span>
+   <span>* | *</span>      <span class="w">·</span>           <span class="w">·</span>    <span class="tc">-+-</span>       <span>·</span>             <span>* | *</span>      <span class="w">·</span>           <span class="w">·</span>    <span class="tc">-+-</span>       <span>·</span>
+     <span>*</span>                               <span class="tc">|</span>               <span>*</span>                               <span class="tc">|</span>
+<span class="t">  ~   -   ~    ·   ~   -   ~    ·   ~   -   ~</span>          <span class="t">  ~   -   ~    ·   ~   -   ~    ·   ~   -   ~</span>
+<span class="t">≈ ~ ≈ ≈ ~ ≈  ~ ≈ ≈ ~ ≈ ~  ≈ ≈ ~ ≈ ≈ ~ ≈ ~ ≈ ≈</span>          <span class="t">≈ ~ ≈ ≈ ~ ≈  ~ ≈ ≈ ~ ≈ ~  ≈ ≈ ~ ≈ ≈ ~ ≈ ~ ≈ ≈</span></pre>
+            <div class="night__card">the demo</div>
+            <button class="pill night__go" id="night-go">Play</button>
+          </div>
+          <figure class="shot" style="margin-top: 20px">
+            <img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/iter/launch/night-after-fade.jpg" alt="Four frames of the launch at 0, 150, 450 and 900 milliseconds: the page darkens evenly as the card lifts" />
+            <figcaption>The shipped launch at 0, 150, 450 and 900ms. An earlier version went dark in one frame; the designer called it "so sudden", so the night became one even fade.</figcaption>
+          </figure>
+          <div class="rule-card"><b>Darkness never arrives at once</b><span>A sudden dark or flash can hurt. Night comes up as one even blue over the whole page, the stars after it. The paper that rolls into the bottle is a clean sheet with the faintest grain.</span></div>
+        </section>
+
+        <!-- ─────────────── Dashboard ─────────────── -->
+        <section id="dashboard">
+          <h2>Dashboard <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">Home shows how the demos are doing, and the detail sits one press away. A white menu column on a panel-blue page, with white widgets on a soft lift.</p>
+
+          <h3>The menu: twelve items to six</h3>
+          <p class="section-intro">Clients said the old dashboard overwhelmed them. The menu now holds what people come for, actions first.</p>
+          <div class="compare">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/menu-before.jpg" alt="The old menu: twelve items" /><figcaption>Before: 12 items, tabs inside tabs</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/menu-after.jpg" alt="The new menu: Home, Approvals with a count of 8, Inbox, Strategy, Demos, Face and Voice" /><figcaption>After: 6 items</figcaption></figure>
+            <ol class="notes">
+              <li><b>Home, Approvals, Inbox, Strategy, Demos, Face &amp; Voice.</b> Grouped by what you came to do. A tab names one place, with no second row of segments.</li>
+              <li><b>Approvals counts what waits,</b> so what needs you is answered before a click.</li>
+              <li><b>Face &amp; Voice stays until it's recorded,</b> then moves under Demos.</li>
+              <li><b>Set-up lives behind your name</b> at the menu's foot: sending accounts, team, assets, integrations.</li>
+              <li><b>The menu is the frame.</b> Logo on top, you at the foot, held in view as the page scrolls, with no header bar. Names in title case.</li>
+            </ol>
+          </div>
+
+          <h3>Widget anatomy</h3>
+          <p class="section-intro">Every Home widget reads top down the same way. Point at the widget and its number turns blue; point at a bar and the bar becomes the number.</p>
+          <div class="split">
+            <div class="stage">
+              <div class="sect-head">
+                <h4>Pipeline</h4>
+                <div class="range" role="radiogroup" aria-label="Range" id="range" style="--at: 1">
+                  <span class="range__thumb" aria-hidden="true"></span>
+                  <button role="radio" aria-checked="false">1w</button>
+                  <button role="radio" aria-checked="true">1m</button>
+                  <button role="radio" aria-checked="false">6m</button>
+                  <button role="radio" aria-checked="false">1y</button>
+                  <button role="radio" aria-checked="false">All</button>
+                </div>
+              </div>
+              <div class="widget" id="sent-widget" tabindex="0" aria-label="Specimen widget: Sent">
+                <div class="widget__head"><p class="widget__label">Sent</p><span class="delta"><svg aria-hidden="true"><use href="#i-up" /></svg>87%</span></div>
+                <p class="widget__num" id="sent-num">472</p>
+                <p class="widget__line" id="sent-line">Last month</p>
+                <div class="chart">
+                  <div class="chart__y"><span style="top: 0">40</span><span style="top: 50%">20</span><span style="top: 100%">0</span></div>
+                  <div class="chart__plot" id="sent-plot"></div>
+                  <div class="chart__x"><span>Sep 10</span><span>Sep 17</span><span>Sep 24</span><span>Oct 1</span></div>
+                </div>
+              </div>
+              <p class="provenance" style="margin: 12px 0 0">Values from the shipped demo account (Marc Andreessen, example workspace).</p>
+            </div>
+            <ol class="notes">
+              <li><b>A quiet label,</b> soft and regular, with the change on the period before beside it in plain words.</li>
+              <li><b>The big number,</b> 3.75rem, ink until the pointer arrives.</li>
+              <li><b>One quiet line</b> of context: the range, a rate, or who leads.</li>
+              <li><b>Then the chart or list.</b> Values on every gridline, dates along the foot, a faint dashed line where each week starts.</li>
+              <li><b>The range is a seen control:</b> a sunken track with the pick on a raised white thumb that glides (460ms, a soft settle). 1w and 1m read day by day.</li>
+            </ol>
+          </div>
+
+          <div class="rule-grid" style="margin-top: 16px">
+            <div class="rule-card"><b>Each week on its own</b><span>Check-in numbers are graphs over time, never running totals. A readout names what and when.</span></div>
+            <div class="rule-card"><b>Sizes vary by weight</b><span>Sent and Meetings are wide, Opened and Replies narrow; triggers stand as tall as their share of leads.</span></div>
+            <div class="rule-card"><b>Pointing at one thing lights it everywhere</b><span>Hover a demo style and its bar, line and table row light up together.</span></div>
+            <div class="rule-card"><b>Every compared thing is drawn and named</b><span>Three demos means three lines, named in a key by their stroke: solid tide, pale, dashed.</span></div>
+            <div class="rule-card"><b>Every widget is a door</b><span>Sent and Replies open their Inbox tab, Opened and Meetings the detail, a trigger its page.</span></div>
+            <div class="rule-card"><b>Lists never rest sliced</b><span>Long lists fade at their edges and come to rest on a whole row, with room around every row.</span></div>
+          </div>
+
+          <h3>Home, in three sections</h3>
+          <p class="section-intro">Home follows what clients asked the dashboard for, in the order they asked, one section each.</p>
+          <div class="screen-strip is-even">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/home-pipeline.jpg" alt="Pipeline: sent, opened, replies and meetings booked" /><figcaption><b>Pipeline.</b> How demos are doing, down to meetings. Asked for by 8 people.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/home-strategy.jpg" alt="Strategy: leads and triggers" /><figcaption><b>Strategy.</b> Leads and triggers, to change the approach. Asked for by 5.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/home-demo-styles.jpg" alt="Demo styles: reply rate, still watching, and the table" /><figcaption><b>Demo styles.</b> Which demos are going better. 2 thought of it on their own; 4 more said yes when asked.</figcaption></figure>
+          </div>
+
+          <h3>Approvals</h3>
+          <p class="section-intro">Each card holds the lead, the demo and the message. The decision is the one tide pill; everything else is outlined.</p>
+          <div class="screen-strip is-two">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/14a-approvals-emails.jpg" alt="Approvals, Emails: a card with the demo video, the email and Approve email and queue" /><figcaption><b>Emails.</b> Grouped by company, the demo beside its message.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/14b-approvals-demos.jpg" alt="Approvals, Demos: Demo 2 ready for review, and a sample demo with Approve demo" /><figcaption><b>Demos.</b> What's ready for review sits on top, with Review as its way on.</figcaption></figure>
+          </div>
+
+          <h3>Triggers</h3>
+          <div class="split" style="align-items: center">
+            <figure class="shot"><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/8d3-trigger-swiped-undo.jpg" alt="Home's Strategy: a trigger swiped away, with Raised a round removed and Undo over the column" /><figcaption>A trigger swiped away, Undo right where it was.</figcaption></figure>
+            <ol class="notes is-plain">
+              <li><b>Each trigger is its own widget:</b> its name, leads found, and what it watches on hover.</li>
+                            <li><b>Swipe left to delete.</b> "Delete" shows behind the card as it's pulled; a short pull springs back; Undo waits five seconds.</li>
+              <li><b>Add where the list ends:</b> the + sits centred at the foot of the column, and its field opens there.</li>
+            </ol>
+          </div>
+
+          <h3>On a phone</h3>
+          <div class="phone-row">
+            <figure class="shot is-phone"><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/shots/latest/13a-phone-home.jpg" alt="Home on a phone: logo and name side by side, the menu as a row, the Face and Voice card, then Pipeline" /><figcaption>Home at phone width</figcaption></figure>
+            <div>
+              <ol class="notes is-plain">
+                <li><b>The logo and you sit side by side,</b> with the menu as a row under them, its current place underlined in tide.</li>
+                <li><b>Widgets stack in one column</b> and keep their reading order.</li>
+                <li><b>The range track fills its row.</b></li>
+                <li><b>A row that outgrows its widget scrolls sideways,</b> fading at the edge, before the widget grows.</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Face & Voice ─────────────── -->
+        <section id="face">
+          <h2>Face &amp; Voice <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">Recording a face moved out of onboarding, so the ask lands right after the call. One dark card on Home, and the same card by email.</p>
+
+          <div class="face-cta" aria-label="Specimen: the Face and Voice card">
+            <div class="face-cta__porthole">
+              <button class="face-cta__play" aria-label="Play the welcome"><svg aria-hidden="true"><use href="#i-play" /></svg></button>
+            </div>
+            <div class="face-cta__copy">
+              <p class="face-cta__hi">Welcome, Marc</p>
+              <h4>Set up your face and voice</h4>
+              <p>A real face earns more replies.</p>
+            </div>
+            <button class="face-cta__go">Set up</button>
+          </div>
+
+          <div class="rule-grid" style="margin-top: 18px">
+            <div class="rule-card"><b>The one dark thing on Home</b><span>A full-width tide-deep card above Pipeline. The first task stands out in the palette's own deepest blue.</span></div>
+            <div class="rule-card"><b>A porthole with a welcome</b><span>A ringed 8.5rem porthole plays a welcome from the founder, who greets each client by name.</span></div>
+            <div class="rule-card"><b>Stays until it's recorded</b><span>It goes once the voice is ready. Home waits for the face status before drawing, so the card never pops in.</span></div>
+            <div class="rule-card"><b>One white button</b><span>Set up, on the tide, opens Face &amp; Voice. One way on.</span></div>
+          </div>
+
+          <h3>How Home should remind them</h3>
+          <p class="section-intro">Two designs, tested with 8 people.</p>
+          <div class="vote">
+            <div><span>Alert widget at the top of Home<i style="--w: 75%"></i></span><b>6</b></div>
+            <div class="is-low"><span>Pop-up by the Face &amp; Voice tab<i style="--w: 25%"></i></span><b>2</b></div>
+          </div>
+
+          <h3>The email</h3>
+          <div class="phone-row">
+            <figure class="shot" style="max-width: 340px"><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/screens/face-email-remind.jpg" alt="The Face and Voice email: the same deep tide card, Set up and Remind me tomorrow, signed by Aayush" /><figcaption>The email that lands after the kickoff call</figcaption></figure>
+            <div>
+              <ol class="notes is-plain">
+                <li><b>The same card as the widget,</b> so the email and Home read as one ask.</li>
+                <li><b>Two choices: Set up, or Remind me tomorrow.</b> With Set up alone, 2 people opened the email and left it. Remind me tomorrow brings it back to the top of the inbox at a better time.</li>
+                <li><b>Signed by the founder,</b> who built the trust in person on the call.</li>
+                <li><b>Built for email:</b> tables, inline styles, a bulletproof button, no web fonts, SVG or video.</li>
+              </ol>
+              <p class="result">Face set-up went from 60% in 1–2 weeks to <b>every client in 2–3 days.</b></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Storyboard ─────────────── -->
+        <section id="storyboard">
+          <h2>Storyboard editor <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">Clients edit the pilot demo themselves, shot by shot, in the place of Slack threads. One action carries every decision. Try it: edit a line, use a mic, cut a shot.</p>
+
+          <div class="sv" id="sv" aria-label="Specimen: the storyboard editor">
+            <div class="sv__head">
+              <div class="sv__title">
+                <div class="sv__line">
+                  <button class="ico back" aria-label="Back"><svg aria-hidden="true"><use href="#i-back" /></svg></button>
+                  <h4>Demo 2</h4>
+                  <span class="chip">Version 1</span>
+                </div>
+                <p class="sv__recap">Finds where people drop off in their sign-up, then shows the fix.</p>
+              </div>
+              <button class="pill is-primary" id="sv-main" style="min-width: 10.5rem">Publish</button>
+            </div>
+            <div class="sv__body">
+            <div class="sv__player" aria-hidden="true"><span class="ico"><svg><use href="#i-play" /></svg></span><i>0:06 / 0:18</i></div>
+            <div class="widget sv__panel">
+              <div class="sv__shot"><span>3</span><h5>The cause</h5><time>0:06</time></div>
+              <div class="sv__label"><span>Says</span><button class="sv__state" id="sv-revert" hidden>Revert</button></div>
+              <div class="field" id="says-field">
+                <div contenteditable="true" spellcheck="false" id="says" aria-label="Says">The email check times out on a slow network, and the form clears itself.</div>
+                <button class="ico is-wash mic" id="mic" aria-label="Say a change"><svg aria-hidden="true"><use href="#i-mic" /></svg></button>
+                <div class="note" id="note" hidden>
+                  <div class="note__head"><span id="note-title">Listening…</span><button class="ico" id="note-close" aria-label="Close"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                  <div class="note__text" id="note-text" contenteditable="true" spellcheck="false"></div>
+                  <div class="note__foot"><button class="pill" id="note-discard">Discard</button><button class="pill is-primary" id="note-apply" disabled>Apply</button></div>
+                </div>
+              </div>
+              <div class="sv__label"><span>On screen</span></div>
+              <div class="field">
+                <div contenteditable="true" spellcheck="false" aria-label="On screen">The form resets after eight seconds, with no message.</div>
+                <button class="ico is-wash mic" tabindex="-1" aria-hidden="true"><svg><use href="#i-mic" /></svg></button>
+              </div>
+              <button class="cut-shot"><svg aria-hidden="true"><use href="#i-cut" /></svg>Cut shot</button>
+            </div>
+            </div>
+            <div class="widget">
+              <div class="strip-head"><b>Shots</b><span id="shot-count">6 shots</span></div>
+              <ul class="strip" id="strip"></ul>
+            </div>
+          </div>
+          <p class="provenance" style="margin-top: 10px">Specimen rebuilt from <code>storyboard.css</code>. Shot names and lines are the shipped sample demo's.</p>
+
+          <div class="rule-grid">
+            <div class="rule-card"><b>The way back sits on the title row</b><span>An icon-only round back, level with the name. The Version chip opens the other versions; the recap travels with the name.</span></div>
+            <div class="rule-card"><b>One action: Publish ↔ Make version N</b><span>Publish approves every shot as made. Any edit or cut turns it into Make version N, so per-shot Approve, Change and Cut buttons went.</span></div>
+            <div class="rule-card"><b>Says and On screen, each with a mic</b><span>Edited in place. A spoken note shows Listening… while words arrive, then Your note to fix, Discard or Apply.</span></div>
+            <div class="rule-card"><b>Edited, with Revert</b><span>A changed shot wears an Edited badge in the strip, and Revert appears beside its field.</span></div>
+            <div class="rule-card"><b>Cut has Undo in its place</b><span>For five seconds, right where the shot was. The "Are you sure?" dialog went.</span></div>
+            <div class="rule-card"><b>Drag to reorder</b><span>The tile lifts on the raise shadow and the others slide. Alt+Arrow moves and Delete cuts from the keyboard.</span></div>
+            <div class="rule-card"><b>Fields stay two lines tall</b><span>A long line scrolls inside its field, so the Shots strip stays above the fold on a laptop.</span></div>
+            <div class="rule-card"><b>A new shot waits dashed</b><span>Something still being made waits in its place and can't be opened.</span></div>
+          </div>
+
+          <h3>Shipped</h3>
+          <div class="screen-strip is-two">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/iter/v1-storyboard/09-final-storyboard.jpg" alt="The storyboard: video beside shot 3, Says and On screen with mics, the Shots strip" /><figcaption><b>The editor.</b> The video beside the selected shot, the strip under them.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/iter/v1-storyboard/14-final-note-fixed-before-applying.jpg" alt="Your note under the Says field, with Discard and Apply" /><figcaption><b>Your note.</b> The spoken words, fixed by hand before Apply.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/iter/v1-storyboard/11-final-the-fix-lifted-into-slot-2.jpg" alt="The fix being dragged into slot 2, the tile lifted" /><figcaption><b>Drag.</b> The tile lifts; the others make room.</figcaption></figure>
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood-retention/iter/v1-storyboard/16-final-cut-with-undo.jpg" alt="After the fix cut, with Undo in its place in the strip" /><figcaption><b>Cut.</b> Undo waits where the shot was.</figcaption></figure>
+          </div>
+        </section>
+
+        <!-- ─────────────── Patterns ─────────────── -->
+        <section id="patterns">
+          <h2>Interaction patterns <span class="tag tag--product">Product</span></h2>
+          <p class="section-intro">The principles behind every screen, each learned from a real miss across 66 logged iterations. People act with confidence when every step is safe.</p>
+          <div class="rule-grid">
+            <div class="rule-card"><b>Undo right where it happened</b><span>A costly action shows at once and its button becomes Undo for a few seconds. Adding is free to take back.</span></div>
+            <div class="rule-card"><b>Instant response</b><span>The screen reacts straight away and the real work happens quietly. "Disconnecting…" for five seconds felt slow.</span></div>
+            <div class="rule-card"><b>Two choices at most at the bottom</b><span>One main button and one quiet way back. Back sits bottom left and the way on bottom right, in one place on every step.</span></div>
+            <div class="rule-card"><b>One way on</b><span>Two controls that do the same thing is one too many. The way forward appears once it's possible.</span></div>
+            <div class="rule-card"><b>Everything holds still</b><span>Regions keep their size whatever they hold. A frame swaps its contents and keeps its corners and shadow. The menu stays put.</span></div>
+            <div class="rule-card"><b>Calm, restrained motion</b><span>Words soften out, then the object moves, then new words come in. Each turn moves its own way; letters and faces never spin.</span></div>
+            <div class="rule-card"><b>Never strand people in another tab</b><span>A sign-in that can't redirect back opens as a small window over the page and lands you where you were.</span></div>
+            <div class="rule-card"><b>Delight lives in the sea, sparingly</b><span>The log sails while a demo is made; the first Publish gets fireworks, a bottle and a splash. The cast is water creatures only.</span></div>
+            <div class="rule-card"><b>A popup you open stays</b><span>Until ×, Escape or a click outside, so it can be read and scrolled. A panel that slides in can be swiped away.</span></div>
+            <div class="rule-card"><b>Secondary looks secondary</b><span>Only the way on looks recommended. A decision is quiet and whole: a raised white thumb, a tide wash and a tick.</span></div>
+            <div class="rule-card"><b>Respect a skip</b><span>A skipped step is never asked for again. Heavy asks, like recording a face, come later by email.</span></div>
+            <div class="rule-card"><b>Every button has its whole journey</b><span>Rest, hover, pressed, keyboard focus, disabled, and busy, its label saying so: "Opening…".</span></div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Words ─────────────── -->
+        <section id="words">
+          <h2>Words</h2>
+          <p class="section-intro">Short, plain and true to what happens next. The theme lives in the visuals, so the copy stays simple.</p>
+          <div class="words">
+            <div class="word-card"><b>Value first, in their words</b>
+              <span class="say"><svg aria-hidden="true"><use href="#i-check" /></svg>A real face earns more replies.</span>
+              <span class="say"><svg aria-hidden="true"><use href="#i-check" /></svg>Prospects see a name they know.</span>
+            </div>
+            <div class="word-card"><b>Two lines at most under a heading</b>
+              <p>Widen the line before adding one. Shorter wins.</p>
+              <span class="say"><svg aria-hidden="true"><use href="#i-check" /></svg>Sign in to start.</span>
+            </div>
+            <div class="word-card"><b>Never the word "nothing"</b>
+              <p>It reads as AI-written. Filler goes too.</p>
+              <span class="cut"><svg aria-hidden="true"><use href="#i-close" /></svg>Nothing else to set up</span>
+              <span class="cut"><svg aria-hidden="true"><use href="#i-close" /></svg>You're all set</span>
+            </div>
+            <div class="word-card"><b>No contrast sentences</b>
+              <p>No "X, not Y", "rather than" or "instead of". Say the good thing plainly.</p>
+              <span class="cut"><svg aria-hidden="true"><use href="#i-close" /></svg>…so nothing waits on you</span>
+            </div>
+            <div class="word-card"><b>Buttons are one or two words</b>
+              <p>And they name what really happens.</p>
+              <span class="say"><svg aria-hidden="true"><use href="#i-check" /></svg>Start pilot</span>
+              <span class="cut"><svg aria-hidden="true"><use href="#i-close" /></svg>Create your first demo</span>
+            </div>
+            <div class="word-card"><b>No orphan words</b>
+              <p>A paragraph, caption or heading never ends on a line of one word. Running text wraps pretty; headings balance.</p>
+            </div>
+            <div class="word-card"><b>A title needs no line under it</b>
+              <p>The page already shows what it's for. A line stays only where it names the next step.</p>
+              <span class="cut"><svg aria-hidden="true"><use href="#i-close" /></svg>Sent messages, upcoming outreach, and replies in one place.</span>
+            </div>
+            <div class="word-card"><b>Words must be true</b>
+              <p>Copy about what is recorded or sent matches the code, and words match the intent: the team step talks about teammates.</p>
+            </div>
+            <div class="word-card"><b>Say it once</b>
+              <p>Approval is said once in the whole flow, if at all. A card names LinkedIn once.</p>
+              <span class="say"><svg aria-hidden="true"><use href="#i-check" /></svg>Sent!</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─────────────── Site components ─────────────── -->
+        <section id="site">
+          <h2>Site components <span class="tag tag--site">Site</span></h2>
+          <p class="section-intro">The marketing site's surfaces. Pills, windows and mats share the product's tokens.</p>
 
           <h3>Buttons</h3>
-          <p class="section-intro">Pills, always. Primary = tide fill, hover tide-deep. <strong>There are no black buttons.</strong></p>
+          <p class="section-intro">Pills, always, on the site and in the product. Primary is tide with a tide-deep hover, secondary is outlined, tertiary is quiet text. There are no black buttons.</p>
           <div class="demo-row">
             <button class="dw-btn dw-btn--primary">Book a demo</button>
             <button class="dw-btn dw-btn--primary" style="background: var(--tide-deep)">Hover</button>
             <button class="dw-btn dw-btn--ghost">See a sample message</button>
+            <button class="dw-btn dw-btn--quiet">View all</button>
           </div>
 
           <h3>Windows</h3>
-          <p class="section-intro">White, 1px line border, 12px radius, and a stacked shadow — 4–5 layers, each doubling the blur and shedding alpha. A single big blur bands against white.</p>
+          <p class="section-intro">White, a 1px line border, 12px radius, and a stacked shadow. Artifacts are pixel-real: real chrome and real screenshots.</p>
           <div class="demo-row">
             <div class="app-window">
               <div class="app-window__bar"><i></i><i></i><i></i><span>driftwood · dashboard</span></div>
-              <div class="app-window__body">
-                <div style="display: flex; gap: 32px">
-                  <div><div class="kpi">14</div><div class="kpi-label">demos shipped this week</div></div>
-                  <div><div class="kpi">96%</div><div class="kpi-label">reviewed &amp; approved</div></div>
-                  <div style="align-self: center"><span class="status-ok">agent live</span></div>
-                </div>
+              <div class="app-window__body" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between">
+                <span>A demo built for <span class="redact" style="width: 84px"></span></span>
+                <span class="status-ok">agent live</span>
               </div>
             </div>
           </div>
 
           <h3>The mat</h3>
-          <p class="section-intro">A tide-wash plate on the white sheet, radius <code>--r-win + 0.9rem</code> — it seats a window instead of a divider separating sections.</p>
+          <p class="section-intro">A tide-wash plate on the white sheet, radius <code>--r-win + 0.9rem</code>. It seats a window and parts one section from the next.</p>
           <div class="demo-row">
             <div class="mat">
               <div class="app-window">
@@ -343,89 +1127,222 @@
           </div>
 
           <h3>Redaction &amp; chips</h3>
-          <p class="section-intro">Identity we withhold is a gray bar, 2px radius — used consistently for names, companies, addresses. Tinted chips take the wash, never a new color.</p>
+          <p class="section-intro">Identity we withhold is a gray bar with a 2px radius, used for names, companies and addresses. Tinted chips take the wash.</p>
           <div class="demo-row">
             <span>Built for <span class="redact" style="width: 90px"></span> at <span class="redact" style="width: 70px"></span></span>
             <span class="chip-wash">human reviewed</span>
             <span class="status-ok">live</span>
           </div>
+
+          <h3>Site rules</h3>
+          <div class="rule-card"><b>One voice phrase per heading</b><span>Every site heading carries one Georgia-italic phrase in tide, on the phrase that carries the meaning, and never two.</span></div>
+          <div class="rule-card"><b>No em dashes in site copy</b><span>The one exception is the slop parody card. Slop uses em dashes; that's the joke.</span></div>
+          <div class="rule-card"><b>Break lines on meaning</b><span><code>text-wrap: balance</code> can split a phrase across lines, so bound phrases get an <code>&amp;nbsp;</code> and the turn lands where the sense turns.</span></div>
+          <div class="rule-card"><b>Real people, real numbers</b><span>Numbers are stated as observed fact with attribution. Real names appear only with consent; otherwise redaction bars.</span></div>
+          <div class="rule-card"><b>Quality floor, unannounced</b><span>Responsive · visible keyboard focus · reduced motion respected · every interactive element has hover, active, focus and disabled · data has loading, empty and error.</span></div>
         </section>
 
+        <!-- ─────────────── The water ─────────────── -->
         <section id="water">
           <h2>The water</h2>
           <p class="section-intro">
-            The signature: an <strong>ASCII character sea on 2D canvas</strong> — never rendered 3D.
-            Six characters by wave height, ~15fps terminal cadence, tide-blue by depth. It carries the
-            hero and thin strips at section seams. Movers patrol back and forth — nothing wraps,
-            nothing disappears, it turns around. And every sea strip carries a yellow duck.
+            The signature: an <strong>ASCII character sea on a 2D canvas</strong>, six characters by wave height at a
+            terminal's ~15fps, tide-blue by depth. Every sea strip carries a yellow duck.
           </p>
-          <pre class="sea" aria-label="A static frame of the ASCII sea: waves, a rubber duck, a buoy, and the proof island with its palm">
+          <pre class="sea" aria-label="A static frame of the ASCII sea: waves, a rubber duck, a buoy, and the proof island">
 <span class="w1">· - · · - ·</span> <span class="w2">~ - ~ ~</span> <span class="w3">≈ ~ ≈</span> <span class="w2">~ - ~</span> <span class="w1">· - · ·</span> <span class="w2">~ ~ - ~</span> <span class="w1">· · - ·</span>
 <span class="w2">- ~ - ~ -</span> <span class="duck">▸<b>ᵕ</b></span><span class="beak">›</span> <span class="w3">≈ ≈ ~ ≈</span> <span class="w4">≋ ≈ ≋</span> <span class="w3">≈ ~ ≈ ≈</span> <span class="buoy">ø</span> <span class="w2">~ - ~ - ~ -</span>
-<span class="w3">≈ ~ ≈ ≈ ~</span> <span class="w4">≋ ≈ ≋ ≋ ≈</span> <span class="w3">≈ ≈ ~</span>   <span class="palmc">🌴</span><span class="sandd">█ █ █</span><span class="sandw">▒ ▒</span> <span class="w3">≈ ~ ≈</span> <span class="w4">≋ ≈</span>
+<span class="w3">≈ ~ ≈ ≈ ~</span> <span class="w4">≋ ≈ ≋ ≋ ≈</span> <span class="w3">≈ ≈ ~</span>   <span class="sandd">█ █ █</span><span class="sandw">▒ ▒</span> <span class="w3">≈ ~ ≈</span> <span class="w4">≋ ≈</span>
 <span class="w4">≋ ≈ ≋ ≈ ≋ ≋</span> <span class="w3">≈ ≈ ~ ≈</span> <span class="w4">≋ ≋ ≈</span> <span class="sandw">▒ ▒ ▒</span> <span class="w4">≈ ≋ ≋ ≈ ≋ ≈ ≋</span>
           </pre>
-          <div class="rule-card"><b>chars by height</b><span><code>' ' · - ~ ≈ ≋</code> — grid 8 × 10.5px cells, tide-blue rgba by depth</span></div>
-          <div class="rule-card"><b>the ducks are protected</b><span>rubber-duck yellow #F0C33C + #E08A2E beak, always — they are the debugging duck, the one deliberate CS in-joke on the page</span></div>
-          <div class="rule-card"><b>scenery is earned, not decorated</b><span>the driftwood log with its duck captain, ships (never on phone-width strips), islands, terracotta buoys, the castaway on the proof island — phone to his ear: "hold on, sending you the demo"</span></div>
+          <div class="rule-card"><b>Chars by height</b><span><code>' ' · - ~ ≈ ≋</code> on a grid of 8 × 10.5px cells, tide-blue rgba by depth.</span></div>
+          <div class="rule-card"><b>Movers patrol and turn around</b><span>Ducks, ships and the log cruise back and forth across the visible water and face their heading.</span></div>
+          <div class="rule-card"><b>The ducks are protected</b><span>Rubber-duck yellow #F0C33C with a #E08A2E beak, always. They are the debugging duck, the one deliberate CS in-joke.</span></div>
+          <div class="rule-card"><b>Scenery is earned</b><span>The driftwood log and its duck captain, ships (kept off phone-width strips), islands, terracotta buoys, and the castaway on the proof island, phone to his ear: "hold on, sending you the demo".</span></div>
+          <div class="rule-card"><b>In the product <span class="tag tag--product">Product</span></b><span>While the first demo is made, the welcome sits over the sea with the log sailing. The first Publish is drawn in the same ASCII, lit for night.</span></div>
         </section>
 
-        <section id="rules">
-          <h2>Rules the system holds itself to</h2>
-          <div class="rule-card"><b>One accent</b><span>if a design wants a second accent color, the design is wrong. In-artifact brand colors (Brex orange inside a Brex demo) never leak into page chrome.</span></div>
-          <div class="rule-card"><b>Earn it or drop it</b><span>a heading takes a voice italic only when one phrase genuinely outranks the rest of the line — two hero headings had theirs pulled.</span></div>
-          <div class="rule-card"><b>No em dashes in site copy</b><span>sole exception: the slop parody card. Slop uses em dashes — that's the joke.</span></div>
-          <div class="rule-card"><b>Break lines on meaning, not on measure</b><span><code>text-wrap: balance</code> doesn't know which words belong together — bind phrases with <code>&amp;nbsp;</code> so the turn lands where the sense turns.</span></div>
-          <div class="rule-card"><b>Quality floor, unannounced</b><span>responsive · visible keyboard focus · reduced-motion respected · every interactive element has hover/active/focus/disabled · data has loading/empty/error.</span></div>
-        </section>
-
+        <!-- ─────────────── Shipped ─────────────── -->
         <section id="screens">
           <h2>Shipped</h2>
-          <p class="section-intro">This one isn't a mockup — it's live at <a href="https://driftwood.sh" target="_blank" rel="noopener" style="color: var(--tide)">driftwood.sh</a>.</p>
+          <p class="section-intro">All of it is live code at <a class="inline" href="https://driftwood.sh" target="_blank" rel="noopener">driftwood.sh</a>, the site and the product on the same tokens.</p>
+          <h3>The product <span class="tag tag--product">Product</span></h3>
           <div class="screen-strip">
-            <figure><img src="../assets/case-studies/driftwood/site-hero.jpg" alt="The shipped driftwood.sh homepage hero" /><figcaption>The shipped homepage — the waterline lands at the fold</figcaption></figure>
-            <figure><video src="../assets/case-studies/driftwood/home.mp4" autoplay muted loop playsinline></video><figcaption>Home, in motion — the sea, the duck, the dashboard window</figcaption></figure>
-            <figure><video src="../assets/case-studies/driftwood/casestudies.mp4" autoplay muted loop playsinline></video><figcaption>The case-study coverflow deck</figcaption></figure>
-            <figure><video src="../assets/case-studies/driftwood/dashboard.mp4" autoplay muted loop playsinline></video><figcaption>The dashboard on the same tokens</figcaption></figure>
+            <figure><video data-lazy src="../assets/case-studies/driftwood-retention/clips/dashboard.webm" poster="../assets/case-studies/driftwood-retention/clips/dashboard.jpg" muted loop playsinline preload="none"></video><figcaption>The dashboard: Pipeline, the range, the widgets</figcaption></figure>
+            <figure><video data-lazy src="../assets/case-studies/driftwood-retention/clips/storyboard.webm" poster="../assets/case-studies/driftwood-retention/clips/storyboard.jpg" muted loop playsinline preload="none"></video><figcaption>The storyboard editor</figcaption></figure>
+            <figure><video data-lazy src="../assets/case-studies/driftwood-retention/clips/pilot-launch.webm" poster="../assets/case-studies/driftwood-retention/clips/pilot-launch.jpg" muted loop playsinline preload="none"></video><figcaption>The first Publish, night and all</figcaption></figure>
+          </div>
+          <h3>The site <span class="tag tag--site">Site</span></h3>
+          <div class="screen-strip">
+            <figure><img loading="lazy" decoding="async" src="../assets/case-studies/driftwood/site-hero.jpg" alt="The shipped driftwood.sh homepage hero" /><figcaption>The homepage, the waterline landing at the fold</figcaption></figure>
+            <figure><video data-lazy src="../assets/case-studies/driftwood/home.mp4" muted loop playsinline preload="none"></video><figcaption>Home in motion: the sea, the duck, the dashboard window</figcaption></figure>
+            <figure><video data-lazy src="../assets/case-studies/driftwood/casestudies.mp4" muted loop playsinline preload="none"></video><figcaption>The case-study coverflow deck</figcaption></figure>
           </div>
         </section>
 
         <section style="border-bottom: none">
           <p class="provenance">
-            Provenance: Driftwood shipped as code, so unlike the Stack and Spotify Mix showcases nothing
-            here is sampled — tokens are copied verbatim from <code>landing/src/index.css</code> and the
-            rules from <code>design/design-language.md</code>, the project's own source of truth. Fonts are
-            the site's self-hosted files. The sea above is a static hand-set frame of the real canvas animation.
+            Provenance: Driftwood shipped as code, so every value here is copied from it. Shared tokens come from
+            <code>landing/src/index.css</code>; product tokens from <code>src/pilot/pilot.css</code> and
+            <code>src/demos/storyboard.css</code>; rules from <code>design/design-language.md</code> and
+            <code>design/design-rules.md</code>, the project's one rules list. Specimens are rebuilt from those values;
+            screenshots and clips are the shipped product on its demo account. The sea is a hand-set still of the canvas.
           </p>
         </section>
       </main>
     </div>
     <script>
       (() => {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* nav: mark the section in view */
         const links = Array.from(document.querySelectorAll('nav a[href^="#"]'));
-        const sections = links
-          .map((a) => document.getElementById(a.getAttribute('href').slice(1)))
-          .filter(Boolean);
-        if (!sections.length) return;
+        const sections = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
         const setCurrent = () => {
-          const probe = window.innerHeight * 0.33;
+          const probe = innerHeight * 0.33;
           let current = sections[0];
-          for (const s of sections) {
-            if (s.getBoundingClientRect().top <= probe) current = s;
-          }
-          if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
-            current = sections[sections.length - 1];
-          }
+          for (const s of sections) if (s.getBoundingClientRect().top <= probe) current = s;
+          if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) current = sections[sections.length - 1];
           links.forEach((a) => {
             const on = a.getAttribute('href') === '#' + current.id;
             a.classList.toggle('is-current', on);
-            if (on) a.setAttribute('aria-current', 'true');
-            else a.removeAttribute('aria-current');
+            on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current');
           });
         };
         addEventListener('scroll', setCurrent, { passive: true });
         addEventListener('resize', setCurrent, { passive: true });
         setCurrent();
+
+        /* videos play only while in view */
+        const vids = document.querySelectorAll('video[data-lazy]');
+        if (!reduce && 'IntersectionObserver' in window) {
+          const io = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? e.target.play().catch(() => {}) : e.target.pause())), { threshold: 0.35 });
+          vids.forEach((v) => io.observe(v));
+        } else vids.forEach((v) => v.setAttribute('controls', ''));
+
+        /* icon centre lines */
+        document.getElementById('guides').addEventListener('change', (e) => document.getElementById('icon-grid').classList.toggle('guides', e.target.checked));
+
+        /* range track: the thumb glides to the pick */
+        const range = document.getElementById('range');
+        range.querySelectorAll('button').forEach((b, i, all) =>
+          b.addEventListener('click', () => {
+            range.style.setProperty('--at', i);
+            all.forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+          })
+        );
+
+        /* Sent widget: 28 days from the demo account; pointing at a bar makes it the number */
+        const days = [18, 21, 19, 18, 14, 4, 3, 22, 25, 24, 21, 18, 4, 4, 23, 25, 24, 22, 18, 4, 4, 26, 29, 27, 25, 20, 6, 4];
+        const plot = document.getElementById('sent-plot');
+        const num = document.getElementById('sent-num');
+        const line = document.getElementById('sent-line');
+        const start = new Date(2025, 8, 10);
+        const fmt = (i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        days.forEach((v, i) => {
+          const bar = document.createElement('span');
+          bar.className = 'bar';
+          bar.style.height = (v / 40) * 100 + '%';
+          bar.addEventListener('mouseenter', () => { num.textContent = v; line.textContent = fmt(i); });
+          plot.appendChild(bar);
+        });
+        [7, 14, 21].forEach((d) => {
+          const wk = document.createElement('i');
+          wk.className = 'wk';
+          wk.style.left = `calc(${(d / 28) * 100}% - 1.5px)`;
+          plot.appendChild(wk);
+        });
+        plot.addEventListener('mouseleave', () => { num.textContent = days.reduce((a, b) => a + b, 0); line.textContent = 'Last month'; });
+
+        /* the launch night */
+        const night = document.getElementById('night');
+        const go = document.getElementById('night-go');
+        go.addEventListener('click', () => {
+          const on = !night.classList.contains('is-on');
+          night.classList.toggle('is-on', on);
+          go.textContent = on ? 'Reset' : 'Play';
+        });
+
+        /* storyboard specimen */
+        const shots = [['Intro', '0:00'], ['The drop-off', '0:03'], ['The cause', '0:06'], ['The fix', '0:09'], ['After the fix', '0:12'], ['Close', '0:15']];
+        const strip = document.getElementById('strip');
+        const count = document.getElementById('shot-count');
+        const main = document.getElementById('sv-main');
+        const says = document.getElementById('says');
+        const original = says.textContent;
+        const revert = document.getElementById('sv-revert');
+        let cuts = 0, noted = false;
+        const live = () => strip.querySelectorAll('.tile:not(.is-cut):not(.is-new)').length;
+        const refresh = () => {
+          const edited = says.textContent.trim() !== original || noted;
+          document.getElementById('edited-3').hidden = !edited;
+          revert.hidden = !edited;
+          main.textContent = edited || cuts ? 'Make version 2' : 'Publish';
+          count.textContent = live() + ' shots';
+        };
+        const cutIcon = '<svg aria-hidden="true"><use href="#i-cut" /></svg>';
+        shots.forEach(([name, t], i) => {
+          const li = document.createElement('li');
+          li.className = 'tile' + (i === 2 ? ' is-selected' : '');
+          li.innerHTML = `<div class="thumb-wrap"><div class="thumb"></div>${i === 2 ? '<span class="chip edited" id="edited-3" hidden>Edited</span>' : ''}</div><button class="ico tile__cut" aria-label="Cut ${name}">${cutIcon}</button><div class="tile__meta"><b><span>${i + 1}</span>${name}</b><time>${t}</time></div>`;
+          li.querySelector('.tile__cut').addEventListener('click', () => {
+            li.classList.add('is-cut');
+            cuts++;
+            const thumb = li.querySelector('.thumb');
+            thumb.innerHTML = `<span>${name} cut</span><button class="pill is-small">Undo</button>`;
+            const timer = setTimeout(() => { li.remove(); refresh(); }, 5000);
+            thumb.querySelector('button').addEventListener('click', () => {
+              clearTimeout(timer);
+              li.classList.remove('is-cut');
+              thumb.innerHTML = '';
+              cuts--;
+              refresh();
+              li.querySelector('.tile__cut').focus();
+            });
+            thumb.querySelector('button').focus();
+            refresh();
+          });
+          strip.appendChild(li);
+        });
+        const add = document.createElement('li');
+        add.className = 'tile is-new';
+        add.innerHTML = '<div class="thumb"><svg aria-hidden="true"><use href="#i-plus" /></svg></div><div class="tile__meta"><b style="font-weight: 400; color: var(--gray)">Add shot</b></div>';
+        strip.appendChild(add);
+
+        document.querySelector('.cut-shot').addEventListener('click', () => strip.querySelector('.tile.is-selected:not(.is-cut) .tile__cut')?.click());
+        says.addEventListener('input', refresh);
+        revert.addEventListener('click', () => { says.textContent = original; noted = false; refresh(); });
+        main.addEventListener('click', () => { main.textContent = main.textContent === 'Publish' ? 'Publishing…' : 'Making version 2…'; main.disabled = true; setTimeout(() => { main.disabled = false; refresh(); }, 1400); });
+
+        /* the mic: Listening… then Your note, Discard or Apply */
+        const mic = document.getElementById('mic');
+        const field = document.getElementById('says-field');
+        const note = document.getElementById('note');
+        const noteText = document.getElementById('note-text');
+        const noteTitle = document.getElementById('note-title');
+        const apply = document.getElementById('note-apply');
+        const spoken = 'Make it say it gives up on a slow network, and that it wipes what they typed.';
+        let typing;
+        const closeNote = () => { clearInterval(typing); note.hidden = true; mic.classList.remove('is-on'); field.classList.remove('is-listening'); mic.focus(); };
+        mic.addEventListener('click', () => {
+          if (!note.hidden) return closeNote();
+          note.hidden = false; mic.classList.add('is-on'); field.classList.add('is-listening');
+          noteTitle.textContent = 'Listening…'; apply.disabled = true; noteText.textContent = '';
+          const words = spoken.split(' ');
+          let n = 0;
+          typing = setInterval(() => {
+            n++;
+            noteText.innerHTML = words.slice(0, n).join(' ') + (n < words.length ? ' <i>…</i>' : '');
+            if (n >= words.length) {
+              clearInterval(typing);
+              mic.classList.remove('is-on'); field.classList.remove('is-listening');
+              noteTitle.textContent = 'Your note'; apply.disabled = false;
+            }
+          }, reduce ? 0 : 140);
+        });
+        document.getElementById('note-close').addEventListener('click', closeNote);
+        document.getElementById('note-discard').addEventListener('click', closeNote);
+        apply.addEventListener('click', () => { noted = true; closeNote(); refresh(); });
       })();
     </script>
   </body>
