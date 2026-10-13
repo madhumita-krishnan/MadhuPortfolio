@@ -266,7 +266,7 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
 <!-- her hand has no digits, dashes or brackets yet; these few glyphs come from a thin
      handwritten stand-in until she writes them (text= keeps the download to those glyphs) -->
 <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&text=0123456789%E2%80%93%E2%80%94-():%2F%25%2B%E2%86%92%C3%97%3F%26%22%E2%80%9C%E2%80%9D&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js');
 /* a refresh always starts at the top of the walkthrough (a #view- link still opens its viewer) */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -291,6 +291,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
   <p class="brand"><img src="${A('logo.svg')}" alt="" width="34" height="34">driftwood</p>
   <h1${E('title')}>${md(cs.title)}</h1>
   <p class="sub"${E('subtitle')}>${md(cs.subtitle)}</p>
+  ${cs.designSystem ? `<p class="ds-row"><a class="btn-o" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"><span>View design system</span>${ic('external')}</a></p>` : ''}
   <div class="stage">
     <div class="mac"><div class="screen frame bare" role="button" tabindex="0" data-view="${esc(cs.hero.main.view)}" data-src-path="hero.main.src" data-src="${esc(cs.hero.main.src)}" aria-label="Explore: ${esc(cs.hero.main.alt)}">
       <span class="shot"><img src="${A(cs.hero.main.src)}" alt="${esc(cs.hero.main.alt)}" fetchpriority="high">${mouseHTML(cs.hero.main.src)}</span></div><span class="base" aria-hidden="true"></span></div>
@@ -886,6 +887,24 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .picker .pk-grid button:hover img{border-color:var(--pink)}
 .picker .pk-grid button.cur img{border-color:var(--cy)}
 .picker .pk-grid span{display:block;font-size:11px;color:#8d929e;margin-top:4px;word-break:break-all}
+/* ---- buttons and labels in m--k's own system (2026-10-13 her ask: match the main site):
+   DM Sans, uppercase, wide tracking, full pills; the filled button is the site's night
+   accent (terracotta on dark), the quiet one a hairline outline. Values from data/theme.json */
+:root{--mk-accent:#E08A52;--mk-press:#C9703B;--mk-on:#1D130B;--mk-ui:'DM Sans',-apple-system,sans-serif}
+.pill a{font-family:var(--mk-ui);font-size:15px;letter-spacing:.05em}
+.pill a.cta,.v-live,.btn-o{font-family:var(--mk-ui);font-weight:500;font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap;transition:background-color .2s,border-color .2s,color .2s}
+.pill a.cta,.v-live{background:var(--mk-accent);color:var(--mk-on);border:1.5px solid var(--mk-accent);min-height:42px;padding:0 22px}
+.pill a.cta:hover,.v-live:hover{background:var(--mk-press);border-color:var(--mk-press);color:var(--mk-on)}
+.explore .v-live{min-height:48px;padding:0 26px;font-size:12px}
+.v-live .ic,.btn-o .ic{width:14px;height:14px}
+.btn-o{min-height:44px;padding:0 22px;border:1.5px solid var(--mk-accent);color:var(--mk-accent);background:none}
+.btn-o:hover{background:var(--mk-press);border-color:var(--mk-press);color:var(--mk-on)}
+.ds-row{margin-top:26px;display:flex;justify-content:center}
+.v-close,.v-tabs button,.v-groups button{font-family:var(--mk-ui);text-transform:uppercase;letter-spacing:.12em;font-size:11.5px}
+/* labels: the site's eyebrow voice */
+.eyebrow,.iter-n,.ovr-dl dt,.ovr-pair figcaption,.tally .chart-title,.verdict,.v-side figcaption b,.cursor span{font-family:var(--mk-ui);letter-spacing:.14em}
+.eyebrow{font-size:12.5px;font-weight:500;color:var(--mk-accent)}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   .q-in{transition:none}

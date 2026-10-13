@@ -94,10 +94,13 @@
         "tags": "Shipped · Web · Product design + code",
         "media": {
           "type": "browser",
-          "src": "assets/case-studies/driftwood-retention/shots/before-face/8a-home-check-in.jpg",
+          "src": "assets/case-studies/driftwood-retention/home-thumb.mp4",
           "url": "driftwood.sh/dashboard",
           "tab": "driftwood · dashboard",
-          "alt": "The redesigned driftwood Home: Pipeline with sent, opened, replies and meetings booked"
+          "alt": "A tour of the redesigned driftwood dashboard: Pipeline, Strategy and the Face & Voice card",
+          "poster": "assets/case-studies/driftwood-retention/home-thumb-poster.jpg",
+          "autoplay": true,
+          "ar": "1280/800"
         }
       },
       {

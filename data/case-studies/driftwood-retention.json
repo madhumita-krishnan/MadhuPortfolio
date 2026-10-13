@@ -44,11 +44,11 @@
       ],
       [
        "Role",
-       "Product design engineer: design and shipped front end"
+       "Product design engineer: designed and shipped the front end"
       ],
       [
        "Timeline",
-       "18 days of design, build and onboarding new clients"
+       "18 days of designing, building and onboarding new clients"
       ],
       [
        "Team",
@@ -286,7 +286,7 @@
    "blocks": [
     {
      "type": "p",
-     "text": "**Assumption:** Creating a short onboarding flow, and then letting clients edit the pilot demo on their own, would get their first demo approved sooner."
+     "text": "**Assumption:** creating a short onboarding flow and then letting clients edit the pilot demo on their own, would get their first demo approved sooner."
     },
     {
      "type": "screens",
@@ -314,7 +314,7 @@
         {
          "x": 63.1,
          "y": 41,
-         "text": "Opens in a small pop up window",
+         "text": "Opens in a small pop-up window",
          "dx": 18.9,
          "dy": 17
         },
@@ -377,7 +377,7 @@
     {
      "type": "callout",
      "label": "What we learned",
-     "text": "Aayush wanted onboarding to feel personal, so we kept it as an in person,** live experience **that the founder would talk through on call**, with a flow to guide it.** Only the pilot demo needed to be async. **The trade-off:** face cloning moved out of onboarding, and we couldn't afford to lose days waiting on it, so I designed ways to make sure **it didn't slip through the cracks.**"
+     "text": "Aayush wanted onboarding to feel personal, so we kept it an **in-person, live experience** that the founder talks through on the call, **with a flow to guide it.** Only the pilot demo needed to be async. **The trade-off:** face cloning moved out of onboarding, and we couldn't afford to lose days waiting on it, so I designed ways to make sure **it didn't slip through the cracks.**"
     }
    ]
   },
@@ -556,7 +556,7 @@
    "blocks": [
     {
      "type": "p",
-     "text": "I designed in the production codebase with Claude Code. **65 logged iterations**, each with screenshots and a trade-offs log. These are the moments I said no."
+     "text": "I designed in the production codebase with Claude Code. **66 logged iterations**, each with screenshots and a trade-offs log. These are the moments I said no."
     },
     {
      "type": "overrides",
@@ -569,8 +569,8 @@
       },
       {
        "said": "the voice thing for the lead list shouldn't be in onboarding.",
-       "ai": "A mic on the onboarding leads step, so clients could say who they wanted to reach.",
-       "shipped": "Onboarding stays one action: upload a sheet. Describing who you want is strategy, so it moved to the dashboard with the lead list.",
+       "ai": "A chat box on the onboarding leads step, to type out who you want to reach.",
+       "shipped": "Most clients already keep their leads in a sheet, as the founder pointed out, so onboarding only uploads one. Typing who to reach moved to the main dashboard.",
        "before": "iter/leads/02-leads-as-you-speak.jpg",
        "after": "shots/latest/2b-skipped-connect-stays-plain.jpg",
        "n": "35 → 36"
@@ -810,5 +810,6 @@
    47,
    44
   ]
- }
+ },
+ "designSystem": "design-systems/driftwood.html"
 }

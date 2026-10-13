@@ -347,6 +347,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
 
 /* SIZES */
 .btn.sm{min-height:38px;padding:0 20px;font-size:.68rem;letter-spacing:.12em}
+nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
 .btn.lg{min-height:62px;padding:0 40px;font-size:.9rem;letter-spacing:.16em}
 
 /* ICON — a circle, so it is sized rather than padded. aspect-ratio keeps it round whatever
@@ -414,9 +415,10 @@ nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-
    the day/night toggle (2026-08-19: "make it the same style as the nav bar at the top") —
    a second fixed pill, so it reads as the nav's counterweight in the opposite corner. */
 nav.bar.glass,.w-chip.glass,.theme-toggle.glass{backdrop-filter:url(#glassWarp) blur(${g.blur}) saturate(${g.saturate})}
-.wordmark{font-family:var(--font-display);font-size:1.35rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
+.wordmark{font-family:var(--font-display);font-size:1.55rem;letter-spacing:.02em;text-decoration:none;color:var(--text-primary);margin-right:8px;white-space:nowrap}
 .nav-links{display:flex;gap:2px;align-items:center}
-.nav-links a,.theme-toggle{font-family:var(--font-utility);font-size:.74rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
+/* header type a step up (2026-10-13, "the font on my website header is too small") */
+.nav-links a,.theme-toggle{font-family:var(--font-utility);font-size:.88rem;letter-spacing:.05em;text-decoration:none;color:var(--text-secondary);
   padding:10px 13px;border-radius:var(--r-pill);transition:color var(--motion-fast) var(--ease-standard),background var(--motion-fast) var(--ease-standard)}
 /* hover keeps the color shift only — the wash pill left with the handwriting swap
    (2026-08-19: "remove the hover highlight thing. just do the text") */
@@ -2179,7 +2181,7 @@ function browserFrame(m, { eager = false } = {}) {
   const { isVideo, body } = mediaBody(m, eager);
   return `<div class="browser">
       ${chromeHTML(m)}
-      <div class="browser-body"${isVideo ? ' data-video' : ''}>${body}</div>
+      <div class="browser-body"${isVideo ? ` data-video${m.autoplay ? ' data-autoplay' : ''}` : ''}${m.ar ? ` style="aspect-ratio:${esc(m.ar)}"` : ''}>${body}</div>
     </div>`;
 }
 
