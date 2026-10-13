@@ -23,7 +23,7 @@
     "pos": "left"
    },
    {
-    "src": "screens/face-email-remind.jpg",
+    "src": "screens/face-email.gif",
     "alt": "The face and voice email",
     "pos": "right"
    }
@@ -421,8 +421,8 @@
       "We tried \"Set up\" alone and saw **2 people open the email and leave it.** \"Remind me tomorrow\" brings it back to the top of their inbox at a better time, so we didn't have to chase them."
      ],
      "frame": {
-      "src": "screens/face-email-remind.jpg",
-      "alt": "The face and voice email: Madhu in the porthole, then Set up or Remind me tomorrow",
+      "src": "screens/face-email.gif",
+      "alt": "The face and voice email: a talking welcome in the porthole, then Set up or Remind me tomorrow",
       "view": "face-email",
       "narrow": true,
       "lit": true
@@ -445,8 +445,17 @@
      ],
      "note": "The alert stays until they've recorded, and the email reuses the same card.",
      "shots": [
-      "screens/face-home-set-up.jpg",
+      "screens/face-remind-widget.jpg",
       "screens/face-remind-popup.jpg"
+     ],
+     "faces": [
+      {
+       "src": "screens/face-loop.gif",
+       "x": 22.5,
+       "y": 10,
+       "w": 10.625
+      },
+      null
      ]
     },
     {
