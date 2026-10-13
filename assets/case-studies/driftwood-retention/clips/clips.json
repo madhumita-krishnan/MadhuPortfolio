@@ -49,9 +49,18 @@
     "file": "storyboard.webm",
     "poster": "storyboard.jpg",
     "title": "Storyboard editor",
-    "description": "Scrolling a demo's storyboard, each shot is approved, cut or sent back for a change, and Generate asks before the cut goes.",
-    "liveUrl": "/dashboard/storyboard/demo-s2-v1?mock=sample",
-    "seconds": 15.8
+    "description": "The storyboard editor: drag a shot into a new place, say a change to a line and read it before it applies, then cut a shot with Undo in its place.",
+    "liveUrl": null,
+    "seconds": 15.3
+  },
+  {
+    "name": "edit-text",
+    "file": "edit-text.webm",
+    "poster": "edit-text.jpg",
+    "title": "Edit text and the callout mover",
+    "description": "On the portfolio page in Edit text mode: a label is rewritten in place, then a callout is dragged off the line it covered. Neither goes through a prompt.",
+    "liveUrl": null,
+    "seconds": 11.3
   },
   {
     "name": "storyboard-peek",

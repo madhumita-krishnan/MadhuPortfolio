@@ -6,7 +6,7 @@
  "prev": "driftwood",
  "next": "spotify-mix",
  "title": "Race to a faster first demo",
- "subtitle": "Identifying systemic process lag so new clients reach their first demo in a week, for driftwood, an a16z speedrun startup",
+ "subtitle": "How I got new clients at driftwood, an a16z speedrun startup, to their first demo in 7 business days.",
  "tagline": "Driftwood was refunding more than half its revenue. A shorter onboarding on the founder's call, a storyboard editor, and a calmer dashboard got new clients to their first demo in 7 business days.",
  "liveBase": "https://driftwood-landing-git-main-dashboard-driftwood-d31ce40d.vercel.app",
  "dir": "assets/case-studies/driftwood-retention",
@@ -32,7 +32,7 @@
  "sections": [
   {
    "id": "feel",
-   "toc": "The feeling",
+   "toc": "Overview",
    "tone": "ink",
    "blocks": [
     {
@@ -62,13 +62,6 @@
        "Process",
        "Client interviews, journey mapping with the founder, prototyping in production code"
       ]
-     ]
-    },
-    {
-     "type": "hook",
-     "lines": [
-      "An idea you know is good is exhilarating.",
-      "It's a nightmare when execution can't keep up with how fast you're dreaming."
      ]
     }
    ]
@@ -319,18 +312,18 @@
        "view": "connect",
        "notes": [
         {
-         "x": 61,
-         "y": 38,
-         "text": "Opens in a small window, X can't send people back",
-         "dx": 14,
-         "dy": -16
+         "x": 63.1,
+         "y": 41,
+         "text": "Opens in a small pop up window",
+         "dx": 18.9,
+         "dy": 17
         },
         {
-         "x": 17.5,
-         "y": 21.5,
+         "x": 17.8,
+         "y": 20.9,
          "text": "Done steps turn bold, skipped ones stay plain",
-         "dx": 8.5,
-         "dy": 38.5
+         "dx": -37.2,
+         "dy": -20.2
         }
        ],
        "title": "Connect LinkedIn and X"
@@ -542,10 +535,14 @@
         "x": 9,
         "y": 40,
         "text": "Reduced 12 tabs to 6 focused tabs in the nav bar",
-        "dx": 19.2,
-        "dy": 84.9
+        "dx": 34.5,
+        "dy": 76.6
        }
       ]
+     },
+     "explore": {
+      "label": "Explore the dashboard",
+      "href": "/dashboard?mock=live"
      }
     }
    ]
@@ -660,7 +657,63 @@
       [
        "Understand the business before the flow",
        "I designed fully async when **only the pilot demo needed to be.**"
+      ]
+     ]
+    },
+    {
+     "type": "process",
+     "heading": "How I work",
+     "tools": {
+      "title": "Build tools for the slow parts",
+      "text": "Describing a copy fix or where a callout sits made prompts long and slow, so I built an **Edit text mode** and a **callout mover** to do both by hand in seconds.",
+      "clip": "clips/edit-text.webm",
+      "poster": "clips/edit-text.jpg"
+     },
+     "track": {
+      "title": "Track my own iterations",
+      "text": "Every screen was captured at every iteration, with the prompt behind it, so I can see **how many tries each screen took** and where I lost time.",
+      "stat": "66 iterations · 2,868 screenshots · 6 days",
+      "chart": "Iterations that touched each part",
+      "rows": [
+       [
+        "Dashboard",
+        26
+       ],
+       [
+        "Face and voice",
+        22
+       ],
+       [
+        "Connect accounts",
+        17
+       ],
+       [
+        "Storyboard editor",
+        13
+       ],
+       [
+        "Team invite",
+        13
+       ],
+       [
+        "Launch moment",
+        13
+       ],
+       [
+        "Sign in",
+        11
+       ],
+       [
+        "Add leads",
+        7
+       ]
       ],
+      "note": "One iteration can touch several parts. Tagged from the prompt and title of each iteration."
+     }
+    },
+    {
+     "type": "lessons",
+     "items": [
       [
        "Next",
        "Track demos booked and refunds for the 6 new clients **through their first subscription period.**"

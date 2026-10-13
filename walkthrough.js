@@ -196,7 +196,10 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
         const id = 'cmp-' + p.replace(/\D+/g, '-');
         views[id] = { title: `${b.a.label} / ${b.b.label}`, clips: [], strip: [], live: '',
           compare: { a: { src: A(b.a.src), label: b.a.label }, b: { src: A(b.b.src), label: b.b.label } } };
-        return `<div class="pair">${['a', 'b'].map(k => `<div class="fu"><p class="eyebrow"${E(`${p}.${k}.label`)}>${esc(b[k].label)}</p>${frame(Object.assign({}, b[k], { view: id }), `${p}.${k}`)}</div>`).join('')}</div>`;
+        /* each side opens its own viewer when it has one (the whole screen, zoomable, with its
+           iterations and live link); the wipe compare is the fallback */
+        return `<div class="pair">${['a', 'b'].map(k => `<div class="fu"><p class="eyebrow"${E(`${p}.${k}.label`)}>${esc(b[k].label)}</p>${frame(Object.assign({}, b[k], { view: b[k].view || id }), `${p}.${k}`)}</div>`).join('')}</div>
+          ${b.explore ? `<p class="explore fu"><a class="v-live" href="${esc(cs.liveBase + b.explore.href)}" target="_blank" rel="noopener"><span${E(`${p}.explore.label`)}>${esc(b.explore.label)}</span>${ic('external')}</a></p>` : ''}`;
       }
       case 'outcome': {
         const max = Math.max(...b.items.map(i => i.b));
@@ -220,6 +223,17 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
            the longest and the page never jumps */
         return `<div class="overrides fu" data-ovr><ol class="ovr-list">${b.items.map((o, i) => `<li><div role="button" tabindex="0" class="ovr-q${i ? '' : ' on'}" data-i="${i}" aria-pressed="${!i}"><span class="said">“<span${E(`${p}.items.${i}.said`)}>${esc(o.said)}</span>”</span><span class="iter-n">Iterations ${esc(o.n)}</span></div></li>`).join('')}</ol>
           <div class="ovr-panel">${b.items.map(detail).join('')}</div></div>`;
+      }
+      /* how I work: the Edit text clip beside a tally of where the iterations went */
+      case 'process': {
+        const t = b.track, max = Math.max(...t.rows.map(r => r[1]));
+        return `<div class="process">${b.heading ? `<h3 class="sub rv"${E(`${p}.heading`)}>${esc(b.heading)}</h3>` : ''}<div class="proc-grid">
+          <figure class="proc fu"><video src="${A(b.tools.clip)}" poster="${A(b.tools.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="Edit text mode: a label rewritten in place, then a callout dragged"></video>
+            <figcaption><h4${E(`${p}.tools.title`)}>${esc(b.tools.title)}</h4><p${E(`${p}.tools.text`)}>${md(b.tools.text)}</p></figcaption></figure>
+          <figure class="proc fu" data-draw><div class="tally"><p class="tally-stat"${E(`${p}.track.stat`)}>${esc(t.stat)}</p><p class="chart-title"${E(`${p}.track.chart`)}>${esc(t.chart)}</p>
+            ${t.rows.map(([l, n], i) => `<div class="trow2" title="${esc(l)}: ${n} iterations"><span${E(`${p}.track.rows.${i}.0`)}>${esc(l)}</span><i style="--w:${(n / max * 100).toFixed(1)}%"></i><b>${n}</b></div>`).join('')}
+            <p class="fine"${E(`${p}.track.note`)}>${esc(t.note)}</p></div>
+            <figcaption><h4${E(`${p}.track.title`)}>${esc(t.title)}</h4><p${E(`${p}.track.text`)}>${md(t.text)}</p></figcaption></figure></div></div>`;
       }
       case 'lessons': return `<div class="lessons">${b.items.map(([t, d], i) => `<div class="lesson fu"><h4${E(`${p}.items.${i}.0`)}>${esc(t)}</h4><p class="rv"${E(`${p}.items.${i}.1`)}>${md(d)}</p></div>`).join('')}</div>`;
       default: throw new Error(`walkthrough: unknown block type "${b.type}" in ${cs.slug}`);
@@ -263,7 +277,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 <div class="cursor gone" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="${scallop}"/></svg><span>Click to explore</span></div>
 
 <nav class="pill" aria-label="Main">
-  <a class="wm" href="index.html">${esc(site.wordmark)}</a>
+  <a class="wm wm-load" href="index.html">${(m => m ? `<span class="wm-m">${esc(m[1])}</span><span class="wm-d">${esc(m[2])}</span><span class="wm-k">${esc(m[3])}</span>` : esc(site.wordmark))(String(site.wordmark).match(/^(.)(-+)(.)$/))}</a>
   <a href="index.html#work">Work</a><a class="nav-opt" href="index.html#about">About</a><a class="nav-res" href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a>
   <a class="cta" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav>
@@ -345,7 +359,21 @@ img{display:block;max-width:100%}
 .pill a:hover{color:var(--hi)}
 .pill a.cta{background:#fff;color:#111;font-weight:500}
 /* the wordmark keeps the site's own face — Cormorant Garamond, as in the main nav */
-.pill a.wm{font:500 22px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:var(--hi);padding:6px 14px 6px 4px}
+.pill a.wm{font:400 22px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:var(--hi);padding:6px 14px 6px 4px;--wm-dx:.34em}
+/* the home page's wordmark greeting, copied from build.js: M and K start together and ease
+   apart as the dashes appear; hovering squishes them back. --wm-dx is half the width of "--" */
+.wm-m,.wm-k,.wm-d{display:inline-block}
+.wm-m,.wm-k{transition:transform .38s cubic-bezier(.2,.7,.2,1)}
+.wm-d{transform-origin:50% 50%;transition:transform .38s cubic-bezier(.2,.7,.2,1),opacity .28s cubic-bezier(.33,0,.2,1)}
+.wm:hover .wm-m{transform:translateX(var(--wm-dx))}
+.wm:hover .wm-k{transform:translateX(calc(-1*var(--wm-dx)))}
+.wm:hover .wm-d{opacity:0;transform:scaleX(.1)}
+@keyframes wm-in-m{from{transform:translateX(var(--wm-dx))}to{transform:none}}
+@keyframes wm-in-k{from{transform:translateX(calc(-1*var(--wm-dx)))}to{transform:none}}
+@keyframes wm-in-d{from{opacity:0;transform:scaleX(.1)}to{opacity:1;transform:none}}
+.wm-load .wm-m{animation:wm-in-m .8s cubic-bezier(.2,.7,.2,1) .5s backwards}
+.wm-load .wm-k{animation:wm-in-k .8s cubic-bezier(.2,.7,.2,1) .5s backwards}
+.wm-load .wm-d{animation:wm-in-d .8s cubic-bezier(.2,.7,.2,1) .5s backwards}
 /* one arrow button for the whole page: project edges, the viewer carousel, the footer */
 .arrow-btn{flex:none;width:48px;height:48px;padding:0;border-radius:50%;border:1px solid #2a2f3a;display:grid;place-items:center;background:rgba(15,16,19,.75);color:#e9eaee;transition:border-color .2s,transform .3s var(--ease)}
 .arrow-btn:hover,a:hover>*>.arrow-btn{border-color:#5a6070;transform:scale(1.06)}
@@ -619,7 +647,8 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 @media (max-width:640px){.nrow{grid-template-columns:1fr auto;row-gap:8px}.nrow .dots{display:none}}
 .vote-shots{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:6px -60px 30px}
 .vshot{margin:0}.vimg{position:relative;display:block}
-.vimg>img:first-child{width:100%;border-radius:12px;border:1px solid #2a2e38;filter:brightness(.7) saturate(.7)}
+.vimg>img:first-child{width:100%;border-radius:12px;border:1px solid #2a2e38;filter:brightness(.7) saturate(.7);transition:filter .5s var(--ease)}
+.vshot:hover .vimg>img:first-child{filter:none}
 .vshot.win .vimg>img:first-child{border-color:#3d5c8f;filter:none}
 .vimg .face-loop{position:absolute;aspect-ratio:1;border-radius:50%;object-fit:cover}
 .vshot figcaption{margin-top:14px;display:flex;flex-direction:column;gap:10px}
@@ -646,8 +675,11 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .ia-arrow{align-self:center;text-align:center;font-size:26px;color:var(--blue)}
 .ia figcaption{grid-column:1/-1}
 
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px -90px 70px}
-@media (max-width:1060px){.pair{margin-inline:0}}
+/* wide: the two Homes run almost the window's width, so both read at a glance */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:30px calc(50% - min(640px, 50vw - 24px)) 48px}
+.explore{display:flex;justify-content:center;margin:0 0 70px}
+.explore .v-live{display:inline-flex;align-items:center;gap:8px;font-size:15px;padding:11px 20px}
+.explore .v-live .ic{width:15px;height:15px}
 @media (max-width:700px){.pair{grid-template-columns:1fr}}
 
 .outcome{margin:20px 0 10px}
@@ -691,6 +723,26 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .ovr-d.on .ovr-pair img{filter:none}
 .ovr-pair figcaption{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6f7a;margin-top:8px}
 .ovr-pair .kept figcaption{color:var(--blue)}
+.process{margin:40px 0 20px}
+.proc-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:22px -90px 0}
+@media (max-width:1060px){.proc-grid{margin-inline:0}}@media (max-width:760px){.proc-grid{grid-template-columns:1fr}}
+/* the two cards share rows (subgrid), so the clip and the tally are one height and both captions start on one line */
+.proc-grid{grid-template-rows:auto auto}
+.proc{margin:0;display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:18px}
+.proc video,.tally{width:100%;aspect-ratio:16/10;border-radius:14px;border:1px solid #232733;background:#13151a;display:block}
+.proc video{height:100%;aspect-ratio:auto;min-height:280px;object-fit:contain;object-position:center;background:#0f1013}
+.proc figcaption h4{font-size:20px;font-weight:500;color:var(--hi);margin-bottom:6px}
+.proc figcaption p{font-size:16px;line-height:1.6}
+/* the tally: one hue, longest first, the count at the end of each bar */
+.tally{aspect-ratio:auto;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;gap:9px}
+.tally-stat{font-size:15px;color:var(--hi);font-weight:500}
+.tally .chart-title{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7d828f;margin:2px 0 4px}
+.trow2{display:grid;grid-template-columns:128px 1fr 28px;align-items:center;gap:12px;font-size:13px;color:#a9adb7;padding:2px 0;border-radius:4px}
+.trow2 i{height:10px;width:0;border-radius:0 4px 4px 0;background:var(--blue);transition:width 1.1s var(--ease)}
+.in .trow2 i,.trow2.in i{width:var(--w)}
+.trow2 b{font-weight:500;color:var(--hi);text-align:right}
+.trow2:hover{color:var(--hi)}.trow2:hover i{background:var(--blue-soft)}
+.tally .fine{margin-top:6px;font-size:11px;color:#7d828f}
 .lessons{margin-top:10px}
 .lesson{padding:26px 0;border-top:1px solid #1d2028}
 .lesson h4{font-size:20px;font-weight:500;color:var(--hi);margin-bottom:6px}
@@ -707,7 +759,8 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
   .js body{cursor:none}.js a,.js button,.js .q{cursor:none}
   .cursor{display:block;position:fixed;left:0;top:0;z-index:60;pointer-events:none;width:42px;height:42px;margin:-21px 0 0 -21px;transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),opacity .3s}
   .cursor svg{width:100%;height:100%;fill:none;stroke:var(--cy);stroke-width:4;transition:fill .3s,transform 4s linear}
-  .cursor span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:8px;padding:5px 10px;border-radius:999px;background:rgba(12,14,18,.9);box-shadow:0 4px 14px rgba(0,0,0,.35);font-size:11px;font-weight:500;line-height:1.2;letter-spacing:.06em;text-transform:uppercase;color:#fff;white-space:nowrap;opacity:0;transition:opacity .3s}
+  /* plain words under the ring, as first designed; white on a soft dark halo so they read on a bright screenshot and on the dark page alike */
+  .cursor span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:7px;font-size:11px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.95),0 1px 5px rgba(0,0,0,.85),0 0 14px rgba(0,0,0,.6);white-space:nowrap;opacity:0;transition:opacity .3s}
   .cursor.link svg{fill:rgba(95,192,216,.55)}
   .cursor.frame-on{width:64px;height:64px;margin:-32px 0 0 -32px}.cursor.frame-on span{opacity:1}.cursor.frame-on svg{transform:rotate(90deg)}
   .cursor.gone{opacity:0}
