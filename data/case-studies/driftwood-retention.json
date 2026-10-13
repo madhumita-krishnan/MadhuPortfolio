@@ -658,7 +658,7 @@
      "track": {
       "title": "I track my hours and iterations to design better",
       "text": "Every screen was captured at every iteration, with the prompt behind it, so I can see **how many tries each screen took**, where I lost time, and why.",
-      "stat": "66 iterations · 2,868 screenshots · 6 days · a median 24 minutes between tries",
+      "stat": "66 iterations · 2,868 screenshots · a median 24 minutes between tries",
       "chart": "Iterations that touched each part",
       "rows": [
        [
@@ -694,7 +694,8 @@
         7
        ]
       ],
-      "note": "One iteration can touch several parts. Tagged from the prompt and title of each iteration."
+      "note": "One iteration can touch several parts. Tagged from the prompt and title of each iteration.",
+      "notes": []
      }
     }
    ]

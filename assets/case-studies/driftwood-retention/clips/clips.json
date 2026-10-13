@@ -60,7 +60,7 @@
     "title": "Edit text, Swap image and callouts",
     "description": "On the portfolio page in Edit text mode: a caption rewritten in place, a screen swapped from every saved iteration, and a new callout added where it's needed. None of it goes through a prompt.",
     "liveUrl": null,
-    "seconds": 22.5
+    "seconds": 22.4
   },
   {
     "name": "storyboard-peek",

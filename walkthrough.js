@@ -234,9 +234,9 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
             <video src="${A(b.tools.clip)}" poster="${A(b.tools.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="Edit text mode: a caption rewritten, a screen swapped from saved iterations, and a callout added"></video>
             <p class="body"${E(`${p}.tools.text`)}>${md(b.tools.text)}</p></div>
           <div class="proc fu" data-draw><h3 class="sub"${E(`${p}.track.title`)}>${esc(t.title)}</h3>
-            <div class="tally"><p class="tally-stat"${E(`${p}.track.stat`)}>${esc(t.stat)}</p><p class="chart-title"${E(`${p}.track.chart`)}>${esc(t.chart)}</p>
+            <div class="shot tally-shot" data-note-base="${p}.track"><div class="tally"><p class="tally-stat"${E(`${p}.track.stat`)}>${esc(t.stat)}</p><p class="chart-title"${E(`${p}.track.chart`)}>${esc(t.chart)}</p>
             ${t.rows.map(([l, n], i) => `<div class="trow2" title="${esc(l)}: ${n} iterations"><span${E(`${p}.track.rows.${i}.0`)}>${esc(l)}</span><i style="--w:${(n / max * 100).toFixed(1)}%"></i><b>${n}</b></div>`).join('')}
-            <p class="fine"${E(`${p}.track.note`)}>${esc(t.note)}</p></div>
+            <p class="fine"${E(`${p}.track.note`)}>${esc(t.note)}</p></div>${notesHTML(t.notes, `${p}.track`)}</div>
             <p class="body"${E(`${p}.track.text`)}>${md(t.text)}</p></div></div>`;
       }
       case 'lessons': return `<div class="lessons">${b.items.map(([t, d], i) => `<div class="lesson fu"><h4${E(`${p}.items.${i}.0`)}>${esc(t)}</h4><p class="rv"${E(`${p}.items.${i}.1`)}>${md(d)}</p></div>`).join('')}</div>`;
@@ -738,6 +738,8 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .proc video,.tally{width:100%;border-radius:14px;border:1px solid #232733;background:#13151a;display:block}
 .proc video{aspect-ratio:1100/688;object-fit:cover;background:#0f1013}
 /* the tally: one hue, longest first, the count at the end of each bar */
+/* the tally runs about two thirds of the column, leaving room on its right for callouts */
+.tally-shot{max-width:540px}.tally-shot .add-note{top:-46px;right:0}
 .tally{aspect-ratio:auto;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;gap:9px}
 .tally-stat{font-size:15px;color:var(--hi);font-weight:500}
 .tally .chart-title{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7d828f;margin:2px 0 4px}
@@ -1376,7 +1378,7 @@ if (/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)) {
      so typing replaces the placeholder, and it saves on Enter like any other text */
   let noting = null;
   btn.addEventListener('click', () => {
-    if (editing()) $$('.frame[data-src-path]').forEach(f => {
+    if (editing()) $$('.frame[data-src-path], [data-note-base]').forEach(f => {
       if (f.closest('.hero')) return;   // the hero's screen carries no callouts
       const b = document.createElement('button'); b.type = 'button'; b.className = 'add-note'; b.innerHTML = IC('plus') + '<span>Callout</span>';
       b.addEventListener('click', e => { e.stopPropagation(); if (noting) noting.classList.remove('noting');
@@ -1388,9 +1390,9 @@ if (/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)) {
   document.addEventListener('click', async e => {
     if (!noting || !noting.contains(e.target) || e.target.closest('button')) return;
     e.stopPropagation(); e.preventDefault();
-    const f = noting, shot = $('.shot', f), img = $('img', shot), r = img.getBoundingClientRect();
+    const f = noting, shot = f.classList.contains('shot') ? f : $('.shot', f), img = $('img', shot), r = (img || shot).getBoundingClientRect();
     const x = +((e.clientX - r.left) / r.width * 100).toFixed(1), y = +((e.clientY - r.top) / r.height * 100).toFixed(1);
-    const dx = x > 70 ? -16 : 16, dy = y > 70 ? -14 : 14, text = 'New callout', base = f.dataset.srcPath.replace(/[.]src$/, '');
+    const dx = x > 70 ? -16 : 16, dy = y > 70 ? -14 : 14, text = 'New callout', base = f.dataset.noteBase || f.dataset.srcPath.replace(/[.]src$/, '');
     f.classList.remove('noting'); noting = null;
     try {
       const res = await fetch('/__note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
