@@ -26,7 +26,10 @@ const ICONS = {
 };
 const ic = (name, cls = '') => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
 
-module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT }) {
+module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS }) {
+  /* app case studies (a phone hero) draw every narrow screen in the site's own iPhone frame,
+     the same device the main template uses (build.js phoneFrame + PHONE_CSS) */
+  const bezel = !!cs.hero.phone;
   const A = p => asset(/^(https?:|assets\/)/.test(p) ? p : `${cs.dir}/${p}`);
   /* **bold** and __underline__ inside escaped prose — the only markup the copy needs */
   const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/__(.+?)__/g, '<u>$1</u>').replace(/\bTK\b/g, '<mark class="tk">TK</mark>');
@@ -77,6 +80,8 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
   const mouseHTML = src => { const c = (cs.cursors || {})[src]; return c ? `<svg class="mouse" viewBox="0 0 18 22" style="left:${c[0]}%;top:${c[1]}%" aria-hidden="true">${MOUSE}</svg>` : ''; };
   /* a div, not a <button>: editable text can't live inside a button */
   const frame = (f, p, cls = '') => {
+    if (bezel && f.narrow) return `<div class="frame narrow phoned ${cls}${f.lit ? ' lit' : ''}" role="button" tabindex="0" data-view="${esc(f.view)}" data-src-path="${p}.src" data-src="${esc(f.src)}" aria-label="Explore: ${esc(f.alt)}">
+      <span class="shot">${phoneFrame(`<img src="${A(f.src)}" alt="${esc(f.alt)}"${screenFit(`${cs.dir}/${f.src}`)} loading="lazy" decoding="async">`, { island: f.island !== false })}${notesHTML(f.notes, p)}</span></div>`;
     const isGif = /\.gif$/.test(f.src);
     /* a gif renders as its still poster until hovered, so a dimmed frame isn't secretly
        burning CPU, then swaps to the moving original */
@@ -200,11 +205,15 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
           <figcaption${E(`${p}.caption`)}>${esc(b.caption)}</figcaption></figure>`;
       case 'pair': {
         const id = 'cmp-' + p.replace(/\D+/g, '-');
-        views[id] = { title: `${b.a.label} / ${b.b.label}`, clips: [], strip: [], live: '',
-          compare: { a: { src: A(b.a.src), label: b.a.label }, b: { src: A(b.b.src), label: b.b.label } } };
+        views[id] = b.side
+          ? { title: b.title || `${b.a.label} / ${b.b.label}`, clips: [], strip: [], live: '',
+              side: { quote: '', note: b.caption || '', a: { src: A(b.a.src), label: b.a.label, text: '' }, b: { src: A(b.b.src), label: b.b.label, text: '' } } }
+          : { title: `${b.a.label} / ${b.b.label}`, clips: [], strip: [], live: '',
+              compare: { a: { src: A(b.a.src), label: b.a.label }, b: { src: A(b.b.src), label: b.b.label } } };
         /* each side opens its own viewer when it has one (the whole screen, zoomable, with its
            iterations and live link); the wipe compare is the fallback */
         return `<div class="pair">${['a', 'b'].map(k => `<div class="fu"><p class="eyebrow"${E(`${p}.${k}.label`)}>${esc(b[k].label)}</p>${frame(Object.assign({}, b[k], { view: b[k].view || id }), `${p}.${k}`)}</div>`).join('')}</div>
+          ${b.caption ? `<p class="pair-cap fu"${E(`${p}.caption`)}>${md(b.caption)}</p>` : ''}
           ${b.explore ? `<p class="explore fu"><a class="v-live" href="${esc(cs.liveBase + b.explore.href)}" target="_blank" rel="noopener"><span${E(`${p}.explore.label`)}>${esc(b.explore.label)}</span>${ic('external')}</a></p>` : ''}`;
       }
       case 'outcome': {
@@ -280,9 +289,9 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
 /* a refresh always starts at the top of the walkthrough (a #view- link still opens its viewer) */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, '', location.pathname);</script>
-<style>${CSS(asset)}</style>
+<style>${CSS(asset, bezel ? PHONE_CSS : '')}</style>
 </head>
-<body data-tone="ink" data-slug="${esc(cs.slug)}" data-dir="${esc(cs.dir)}">
+<body data-tone="ink"${cs.hero.phone ? ' data-phone' : ''} data-slug="${esc(cs.slug)}" data-dir="${esc(cs.dir)}">
 <div class="cursor gone" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="${scallop}"/></svg><span>Click to explore</span></div>
 
 <nav class="pill" aria-label="Main">
@@ -297,14 +306,17 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 
 <main>
 <header id="top" class="hero sec" data-tone="ink">
-  <p class="brand"><img src="${A('logo.svg')}" alt="" width="34" height="34">driftwood</p>
+  <p class="brand"><img src="${A((cs.brand || {}).logo || 'logo.svg')}" alt="" width="34" height="34">${esc((cs.brand || {}).name || 'driftwood')}</p>
   <h1${E('title')}>${md(cs.title)}</h1>
   <p class="sub"${E('subtitle')}>${md(cs.subtitle)}</p>
   ${cs.designSystem ? `<p class="ds-row"><a class="btn-o" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"><span>View design system</span>${ic('external')}</a></p>` : ''}
   <div class="stage">
+    ${cs.hero.phone ? `<div class="hero-phone">${phoneFrame(cs.hero.phone.video
+      ? `<video src="${A(cs.hero.phone.video)}" poster="${A(cs.hero.phone.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(cs.hero.phone.alt)}"></video>`
+      : `<img src="${A(cs.hero.phone.src)}" alt="${esc(cs.hero.phone.alt)}" fetchpriority="high">`, { island: cs.hero.phone.island !== false })}</div>` : `
     <div class="mac"><div class="screen frame bare" role="button" tabindex="0" data-view="${esc(cs.hero.main.view)}" data-src-path="hero.main.src" data-src="${esc(cs.hero.main.src)}" aria-label="Explore: ${esc(cs.hero.main.alt)}">
-      <span class="shot"><img src="${A(cs.hero.main.src)}" alt="${esc(cs.hero.main.alt)}" fetchpriority="high">${mouseHTML(cs.hero.main.src)}</span></div><span class="base" aria-hidden="true"></span></div>
-    ${cs.hero.floats.map(f => `<img class="float ${f.pos}" src="${A(f.src)}" alt="${esc(f.alt)}">`).join('')}
+      <span class="shot"><img src="${A(cs.hero.main.src)}" alt="${esc(cs.hero.main.alt)}" fetchpriority="high">${mouseHTML(cs.hero.main.src)}</span></div><span class="base" aria-hidden="true"></span></div>`}
+    ${(cs.hero.floats || []).map(f => `<img class="float ${f.pos}" src="${A(f.src)}" alt="${esc(f.alt)}">`).join('')}
   </div>
 </header>
 
@@ -343,7 +355,7 @@ ${cs.sections.map(section).join('\n')}
 </html>`;
 };
 
-const CSS = asset => `
+const CSS = (asset, PHONE_CSS) => `
 @font-face{font-family:'Madhu Hand';src:url(${asset('assets/fonts/madhu-hand.woff')}) format('woff');font-display:swap}
 :root{--ink:#0f1013;--navy:#121a2c;--card:#161a24;--line:#262a33;--dim:#6b6f7a;--body:#a9adb7;--hi:#f3f4f6;--blue:#8fb2f2;--blue-soft:#a9c4f5;--pink:#ec6fa0;--ok:#62b58f;--bad:#e2686b;--cy:#5fc0d8;--lab:220px;
   --ease:cubic-bezier(.2,.7,.2,1)}
@@ -437,6 +449,10 @@ h3.sub{font-size:24px;margin:72px 0 26px}
 .mac{position:relative;width:min(760px,86%);margin:0 auto;transform:translateY(calc(var(--p) * -30px))}
 .mac .screen{display:block;width:100%;border:10px solid #1d1f25;border-bottom-width:14px;border-radius:18px 18px 4px 4px;overflow:hidden;background:#fff;box-shadow:0 40px 120px -30px rgba(80,120,200,.35)}
 .mac .screen img{width:100%;height:auto}
+${PHONE_CSS || ''}
+/* the app hero: the site's iPhone, a little larger than the in-page screens */
+.hero-phone{display:flex;justify-content:center;transform:translateY(calc(var(--p) * -30px))}
+.hero-phone .phone-media{max-width:270px}
 .mac .base{display:block;height:14px;margin:0 -7%;background:linear-gradient(#2b2e36,#16181d);border-radius:0 0 14px 14px}
 .float{position:absolute;border-radius:16px;border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 6px rgba(255,255,255,.04);animation:rise 1.2s .35s var(--ease) both}
 .float.left{width:min(250px,28%);left:0;bottom:-6%;transform:translateY(calc(var(--p) * -110px)) rotate(-2deg)}
@@ -690,6 +706,21 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 
 /* wide: the two Homes run almost the window's width, so both read at a glance */
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:30px calc(50% - min(640px, 50vw - 24px)) 48px}
+.pair:has(.narrow){margin-inline:0}.pair:has(.narrow) .eyebrow{text-align:center}
+/* app walkthroughs (2026-10-13): her phone screens are 1x-2x exports, so they show in the iPhone
+   frame at the size the main template used, instead of stretching soft */
+.frame.phoned{max-width:222px;margin:0 auto;background:none;border:0;border-radius:0;box-shadow:none}
+.frame.phoned .phone-media{max-width:none}
+/* no unsharp mask here: at this size the screens are at about their native pixels, and the
+   SVG filter under the dimming filter painted the screens black */
+.frame.phoned img,.hero-phone img{border-radius:0;filter:none!important}
+.frame.phoned .phone-screen{transition:filter .7s var(--ease)}
+@media (hover:hover){.frame.phoned .phone-screen{filter:brightness(.42) saturate(.6)}
+  .frame.phoned:hover .phone-screen,.frame.phoned:focus-visible .phone-screen,.frame.phoned.lit .phone-screen{filter:none}
+  .frame.phoned:hover{box-shadow:none}}
+body[data-phone] .v-side figure{justify-items:center}
+body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100%}
+.pair-cap{margin:-26px auto 64px;max-width:640px;text-align:center;font-size:16px;color:var(--dim)}
 .explore{display:flex;justify-content:center;margin:0 0 70px}
 .explore .v-live{display:inline-flex;align-items:center;gap:8px;font-size:15px;padding:11px 20px}
 .explore .v-live .ic{width:15px;height:15px}
@@ -1120,7 +1151,7 @@ function special(v) {
   } else {
     $$('figure', sideEl).forEach((f, i) => { const d = i ? v.side.b : v.side.a; $('img', f).src = d.src;
       $('figcaption', f).innerHTML = '<b></b>'; $('b', f).textContent = d.label; $('figcaption', f).append(d.text); });
-    cap([], [v.side.quote]);
+    cap(v.side.note ? [[v.side.note]] : [], [v.side.quote]);
   }
   navP.hidden = navN.hidden = true;
   return true;

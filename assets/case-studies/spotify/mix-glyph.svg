@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Mix has no logo; its mark is the Mix glyph from the playlist Mix pill (design-systems/spotify.html, #i-mixer), white on Spotify's dark surface -->
+  <rect width="64" height="64" rx="14" fill="#1f1f1f"/>
+  <svg x="17" y="15" width="30" height="34" viewBox="99.5 443.5 13.5 15" color="#ffffff">
+    <path d="M102.5 451.75L102.5 444.75" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+    <path d="M109.5 448.75L109.5 444.75" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+    <path d="M103.125 455.25L103.125 454.625L101.875 454.625L101.875 455.25L102.5 455.25L103.125 455.25ZM101.875 457.25C101.875 457.595 102.155 457.875 102.5 457.875C102.845 457.875 103.125 457.595 103.125 457.25L102.5 457.25L101.875 457.25ZM102.5 455.25L101.875 455.25L101.875 457.25L102.5 457.25L103.125 457.25L103.125 455.25L102.5 455.25Z" fill="currentColor"/>
+    <path d="M108.875 457.25C108.875 457.595 109.155 457.875 109.5 457.875C109.845 457.875 110.125 457.595 110.125 457.25L109.5 457.25L108.875 457.25ZM110.125 451.75L110.125 451.125L108.875 451.125L108.875 451.75L109.5 451.75L110.125 451.75ZM109.5 457.25L110.125 457.25L110.125 451.75L109.5 451.75L108.875 451.75L108.875 457.25L109.5 457.25Z" fill="currentColor"/>
+    <rect x="107" y="448.25" width="5" height="2" rx="0.2" fill="currentColor"/>
+    <rect x="100" y="451.75" width="5" height="2" rx="0.2" fill="currentColor"/>
+  </svg>
+</svg>

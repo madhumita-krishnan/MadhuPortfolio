@@ -105,6 +105,73 @@ const easedFade = (dir, peak, end, color = a => `rgba(0,0,0,${a})`) => {
   }
   return `linear-gradient(to ${dir},${stops.join(',')})`;
 };
+/* the iPhone frame's CSS, shared with the walkthrough template (walkthrough.js) so
+   every phone on the site is the same device */
+const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ----------
+   Every dimension is a fraction of the screen width SW, so one frame scales to any
+   size. Screen is 9:19.5 (0.4615); black glass bezel 0.0305·SW; titanium rail
+   0.0213·SW; screen corner radius 0.1341·SW. Border T = 0.0518·SW, so the device is
+   1.1036·SW wide and 2.2705·SW tall — that is the aspect-ratio below. Percentages
+   here are of the DEVICE width, i.e. the spec fraction divided by 1.1036.
+   Container query units make 1cqw = 1% of the device width, which is what lets the
+   rail be shaded by distance inward (see .phone) rather than with a flat gradient. */
+.phone-media{container-type:inline-size;width:100%;max-width:222px}
+.phone{position:relative;aspect-ratio:1.1036/2.2705;
+  --rail:1.930cqw;              /* 0.0213·SW */
+  --border:4.694cqw;            /* rail + black bezel = T */
+  border-radius:16.85% / 8.19%; /* (screen radius + T) as % of device w / h */
+  background:#8E9195;
+  /* distance-inward metallic ramp: each inset ring follows the rounded corners, so the
+     specular highlight lands ON the visible rail and wraps the corners correctly.
+     A left-to-right gradient would hide the highlight under the black bezel. */
+  box-shadow:
+    inset 0 0 0 calc(var(--rail)*.06) rgb(108,110,114),
+    inset 0 0 0 calc(var(--rail)*.16) rgb(172,175,180),
+    inset 0 0 0 calc(var(--rail)*.30) rgb(240,242,245),
+    inset 0 0 0 calc(var(--rail)*.50) rgb(214,216,220),
+    inset 0 0 0 calc(var(--rail)*.70) rgb(190,193,198),
+    inset 0 0 0 calc(var(--rail)*.86) rgb(160,163,168),
+    inset 0 0 0 var(--rail) rgb(112,114,119);
+  filter:drop-shadow(0 1.1cqw 1.9cqw rgba(12,14,20,.28)) drop-shadow(0 2.8cqw 4.7cqw rgba(12,14,20,.20))}
+/* key light from the upper left, so the frame is not symmetrical and synthetic.
+   Only visible over the rail — the glass layer covers the middle. */
+.phone::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(152deg,rgba(255,255,255,.34),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 64%,rgba(0,0,0,.18))}
+/* black glass, inset by the rail; radius = screen radius + bezel */
+.phone::after{content:"";position:absolute;inset:var(--rail);z-index:2;pointer-events:none;
+  border-radius:14.92% / 7.25%;background:#08080A;
+  box-shadow:inset 0 0 0 1px rgba(60,61,64,.9)}
+.phone-screen{position:absolute;inset:var(--border);z-index:3;overflow:hidden;background:#000;
+  border-radius:12.15% / 5.91%}
+.phone-screen img,.phone-screen video{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:top center}
+/* Sources within ~5% of 9:19.5 are stretched rather than cropped, so nothing is lost
+   off the bottom of the screen. build.js decides this per source — see screenFit(). */
+.phone-screen img[data-fit=fill]{object-fit:fill}
+/* The still screens are only ~300px wide at source, so on a Retina display they are
+   being upscaled. A gentle unsharp mask restores edge definition on the upscale — it
+   cannot invent detail, only re-crisp what is there. Videos are already sharp, so the
+   filter is scoped to images. */
+.phone-screen img{filter:url(#screenSharpen)}
+/* Dynamic Island: 0.3186 × 0.0915 of SW, sitting 0.0274·SW below the screen top */
+.phone-island{position:absolute;z-index:4;left:50%;transform:translateX(-50%);
+  top:7.18cqw;width:28.87cqw;height:8.29cqw;border-radius:999px;background:#06060A}
+.phone-island::after{content:"";position:absolute;right:19%;top:50%;transform:translateY(-50%);
+  width:2.1cqw;height:2.1cqw;border-radius:50%;background:radial-gradient(circle at 36% 32%,#243042,#0A0C12 70%)}
+/* side buttons. The inner end fades to the rail colour so they read as tucked under
+   it rather than pasted on top (a child can't paint behind its parent's background). */
+.phone-btn{position:absolute;z-index:0}
+.phone-btn.l{left:-.97cqw;width:2.4cqw;border-radius:.6cqw 0 0 .6cqw;
+  background:linear-gradient(90deg,#5C5F63,#9A9DA1 46%,rgba(150,153,157,0))}
+.phone-btn.r{right:-.97cqw;width:2.4cqw;border-radius:0 .6cqw .6cqw 0;
+  background:linear-gradient(270deg,#5C5F63,#9A9DA1 46%,rgba(150,153,157,0))}
+.phone-btn.action{top:16%;height:4.2%}
+.phone-btn.volup{top:23%;height:6.4%}
+.phone-btn.voldn{top:31%;height:6.4%}
+.phone-btn.power{top:24%;height:9%}
+.phone-btn.camera{top:36%;height:4.6%}
+@media (max-width:760px){.phone-media{max-width:178px}}`;
+
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -895,70 +962,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   .wproject .project-media-wrap{order:-1}}
 .project-media-wrap{display:flex;justify-content:center}
 
-/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ----------
-   Every dimension is a fraction of the screen width SW, so one frame scales to any
-   size. Screen is 9:19.5 (0.4615); black glass bezel 0.0305·SW; titanium rail
-   0.0213·SW; screen corner radius 0.1341·SW. Border T = 0.0518·SW, so the device is
-   1.1036·SW wide and 2.2705·SW tall — that is the aspect-ratio below. Percentages
-   here are of the DEVICE width, i.e. the spec fraction divided by 1.1036.
-   Container query units make 1cqw = 1% of the device width, which is what lets the
-   rail be shaded by distance inward (see .phone) rather than with a flat gradient. */
-.phone-media{container-type:inline-size;width:100%;max-width:222px}
-.phone{position:relative;aspect-ratio:1.1036/2.2705;
-  --rail:1.930cqw;              /* 0.0213·SW */
-  --border:4.694cqw;            /* rail + black bezel = T */
-  border-radius:16.85% / 8.19%; /* (screen radius + T) as % of device w / h */
-  background:#8E9195;
-  /* distance-inward metallic ramp: each inset ring follows the rounded corners, so the
-     specular highlight lands ON the visible rail and wraps the corners correctly.
-     A left-to-right gradient would hide the highlight under the black bezel. */
-  box-shadow:
-    inset 0 0 0 calc(var(--rail)*.06) rgb(108,110,114),
-    inset 0 0 0 calc(var(--rail)*.16) rgb(172,175,180),
-    inset 0 0 0 calc(var(--rail)*.30) rgb(240,242,245),
-    inset 0 0 0 calc(var(--rail)*.50) rgb(214,216,220),
-    inset 0 0 0 calc(var(--rail)*.70) rgb(190,193,198),
-    inset 0 0 0 calc(var(--rail)*.86) rgb(160,163,168),
-    inset 0 0 0 var(--rail) rgb(112,114,119);
-  filter:drop-shadow(0 1.1cqw 1.9cqw rgba(12,14,20,.28)) drop-shadow(0 2.8cqw 4.7cqw rgba(12,14,20,.20))}
-/* key light from the upper left, so the frame is not symmetrical and synthetic.
-   Only visible over the rail — the glass layer covers the middle. */
-.phone::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
-  background:linear-gradient(152deg,rgba(255,255,255,.34),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 64%,rgba(0,0,0,.18))}
-/* black glass, inset by the rail; radius = screen radius + bezel */
-.phone::after{content:"";position:absolute;inset:var(--rail);z-index:2;pointer-events:none;
-  border-radius:14.92% / 7.25%;background:#08080A;
-  box-shadow:inset 0 0 0 1px rgba(60,61,64,.9)}
-.phone-screen{position:absolute;inset:var(--border);z-index:3;overflow:hidden;background:#000;
-  border-radius:12.15% / 5.91%}
-.phone-screen img,.phone-screen video{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:top center}
-/* Sources within ~5% of 9:19.5 are stretched rather than cropped, so nothing is lost
-   off the bottom of the screen. build.js decides this per source — see screenFit(). */
-.phone-screen img[data-fit=fill]{object-fit:fill}
-/* The still screens are only ~300px wide at source, so on a Retina display they are
-   being upscaled. A gentle unsharp mask restores edge definition on the upscale — it
-   cannot invent detail, only re-crisp what is there. Videos are already sharp, so the
-   filter is scoped to images. */
-.phone-screen img{filter:url(#screenSharpen)}
-/* Dynamic Island: 0.3186 × 0.0915 of SW, sitting 0.0274·SW below the screen top */
-.phone-island{position:absolute;z-index:4;left:50%;transform:translateX(-50%);
-  top:7.18cqw;width:28.87cqw;height:8.29cqw;border-radius:999px;background:#06060A}
-.phone-island::after{content:"";position:absolute;right:19%;top:50%;transform:translateY(-50%);
-  width:2.1cqw;height:2.1cqw;border-radius:50%;background:radial-gradient(circle at 36% 32%,#243042,#0A0C12 70%)}
-/* side buttons. The inner end fades to the rail colour so they read as tucked under
-   it rather than pasted on top (a child can't paint behind its parent's background). */
-.phone-btn{position:absolute;z-index:0}
-.phone-btn.l{left:-.97cqw;width:2.4cqw;border-radius:.6cqw 0 0 .6cqw;
-  background:linear-gradient(90deg,#5C5F63,#9A9DA1 46%,rgba(150,153,157,0))}
-.phone-btn.r{right:-.97cqw;width:2.4cqw;border-radius:0 .6cqw .6cqw 0;
-  background:linear-gradient(270deg,#5C5F63,#9A9DA1 46%,rgba(150,153,157,0))}
-.phone-btn.action{top:16%;height:4.2%}
-.phone-btn.volup{top:23%;height:6.4%}
-.phone-btn.voldn{top:31%;height:6.4%}
-.phone-btn.power{top:24%;height:9%}
-.phone-btn.camera{top:36%;height:4.6%}
-@media (max-width:760px){.phone-media{max-width:178px}}
+${PHONE_CSS}
 
 /* the landscape card and the Mac window must end up the SAME box. The window is
    1.945 of body plus 80 logical px of chrome at a 1280pt reference, i.e. total height
@@ -2675,7 +2679,7 @@ fs.writeFileSync(path.join(DIST, 'index.html'), lintIcons(renderHome(), 'index.h
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
-  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT }) : renderCase(cs), `${cs.slug}.html`));
+  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS }) : renderCase(cs), `${cs.slug}.html`));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the design-system showcase pages are standalone HTML (their own tokens, their own
