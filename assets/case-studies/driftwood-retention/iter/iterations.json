@@ -393,6 +393,30 @@
    "why": "The email after onboarding uses the same card; its video is a still that opens the dashboard, where the welcome plays.",
    "ask": "the goal is after onboarding we email them with a face cloning button/link for them to be routed. design this email as well.",
    "screen": "After onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Full screen, room and all",
+   "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
+   "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/10-light-behind-you.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Light behind you: what to change",
+   "why": "When the window is behind you, the face falls into shadow. The bar drops to Too dark and one line says how to move. Record anyway stays.",
+   "ask": "is there a bar or something where people can see if they have good enough lighting? or if they need to move?",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/11-paused.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Paused, the take kept",
+   "why": "An interruption used to mean Start over. Now it pauses, on its own when you leave the tab or press esc, and Resume picks up at the same sentence after a 3-2-1.",
+   "ask": "what is built in for people who get interrupted when they start recording?",
+   "screen": "Full screen"
   }
  ],
  "dashboard": [
@@ -579,6 +603,30 @@
    "title": "Read words turn dark",
    "why": "Black on blue hid your progress, so words to read are grey, read words go dark, and a caret marks your place.",
    "screen": "Face step in onboarding"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/09-full-screen-camera.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Full screen, room and all",
+   "why": "In the small porthole the light on a face couldn't be judged. Full screen, the check reads the skin in the oval against the room behind it, and a light bar shows where you stand.",
+   "ask": "the reason that you were not able to pick up that camera lighting is because when the viewport is small and not full screen, it doesn't ... evaluate the lighting properly",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/10-light-behind-you.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Light behind you: what to change",
+   "why": "When the window is behind you, the face falls into shadow. The bar drops to Too dark and one line says how to move. Record anyway stays.",
+   "ask": "is there a bar or something where people can see if they have good enough lighting? or if they need to move?",
+   "screen": "Full screen"
+  },
+  {
+   "src": "assets/case-studies/driftwood-retention/iter/face/11-paused.jpg",
+   "folder": "69-face-full-screen-camera",
+   "title": "Paused, the take kept",
+   "why": "An interruption used to mean Start over. Now it pauses, on its own when you leave the tab or press esc, and Resume picks up at the same sentence after a 3-2-1.",
+   "ask": "what is built in for people who get interrupted when they start recording?",
+   "screen": "Full screen"
   }
  ]
 }
