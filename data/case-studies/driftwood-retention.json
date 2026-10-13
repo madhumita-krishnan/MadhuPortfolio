@@ -23,7 +23,7 @@
     "pos": "left"
    },
    {
-    "src": "screens/face-email.jpg",
+    "src": "screens/face-email.gif",
     "alt": "The face and voice email",
     "pos": "right"
    }
@@ -304,7 +304,7 @@
        "src": "iter/face/05-grey-to-dark-face.jpg",
        "alt": "Face and voice in V1 onboarding: read a line aloud while it records",
        "view": "v1-face",
-       "title": "Face and voice, later moved out"
+       "title": "Face and voice"
       },
       {
        "src": "screens/v2-connect.jpg",
@@ -312,11 +312,11 @@
        "view": "connect",
        "notes": [
         {
-         "x": 63.1,
-         "y": 41,
+         "x": 60.8,
+         "y": 50.2,
          "text": "Opens in a small pop-up window",
-         "dx": 18.9,
-         "dy": 17
+         "dx": 21.2,
+         "dy": 7.8
         },
         {
          "x": 17.8,
@@ -542,7 +542,7 @@
      },
      "explore": {
       "label": "Explore the dashboard",
-      "href": "/dashboard?mock=live"
+      "href": "/dashboard?mock=live&face=ready"
      }
     }
    ]
@@ -556,16 +556,18 @@
    "blocks": [
     {
      "type": "p",
-     "text": "I designed in the production codebase with Claude Code. **66 logged iterations**, each with screenshots and a trade-offs log. These are the moments I said no."
+     "text": "I designed in the production codebase with Claude Code. **66 logged iterations**, each with screenshots and a trade-offs log."
     },
     {
      "type": "overrides",
      "items": [
       {
        "said": "The lighting on my face is not actually good right now. Fix how it evaluates that.",
-       "ai": "A light check that averaged the middle of the camera frame, so a lit wall behind a dim face passed.",
-       "shipped": "It reads only the skin inside the face oval and fails light from behind or the side. It holds for every skin tone.",
-       "n": "26 → 27"
+       "ai": "A light check inside a small round porthole. At that size the camera couldn't read the light on a face, so a lit wall behind a dim face passed.",
+       "shipped": "The camera fills the laptop screen. The check reads only the skin inside the face oval and fails light from behind or the side, for every skin tone.",
+       "n": "26 → 69",
+       "before": "iter/face/04-one-ring-no-box.jpg",
+       "after": "iter/face/09-full-screen-camera.jpg"
       },
       {
        "said": "the voice thing for the lead list shouldn't be in onboarding.",
@@ -695,7 +697,22 @@
        ]
       ],
       "note": "One iteration can touch several parts. Tagged from the prompt and title of each iteration.",
-      "notes": []
+      "notes": [
+       {
+        "x": 97.8,
+        "y": 25.3,
+        "text": "The Founder had edits and then didn't like the edits he suggested so there was a bit of rework.",
+        "dx": 33.5,
+        "dy": -9.1
+       },
+       {
+        "x": 99.3,
+        "y": 34.4,
+        "text": "This was due to the direction change from onboarding to notification",
+        "dx": 49.1,
+        "dy": 42.5
+       }
+      ]
      }
     }
    ]
@@ -733,8 +750,7 @@
    "clip": [
     "dashboard",
     "dashboard-menu",
-    "storyboard-peek",
-    "phone"
+    "storyboard-peek"
    ],
    "iter": "dashboard",
    "live": "/dashboard?mock=live"

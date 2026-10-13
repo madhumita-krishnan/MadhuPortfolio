@@ -177,14 +177,18 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT 
           `<i class="${j < n ? 'on' : ''}" style="--i:${j}"></i>`).join('')}</span><b>${n} of 8</b></div>`).join('')}
           <figcaption${E(`${p}.note`)}>${esc(b.note)}</figcaption></figure>`; }
       /* what clients needed the dashboard for, with how many asked, and the section each became */
-      case 'needs': return `<figure class="needs fu" data-draw><p class="chart-title"${E(`${p}.title`)}>${esc(b.title)}</p>${b.items.map((it, i) => {
+      case 'needs': {
+        /* the section shots open the viewer, on the one clicked, with the others a step away */
+        const nid = 'needs-' + p.replace(/\D+/g, '-');
+        if (b.shots) views[nid] = { title: b.title, clips: [], live: '', strip: b.shots.map(sh => ({ src: A(sh.src), title: sh.title, why: '' })) };
+        return `<figure class="needs fu" data-draw><p class="chart-title"${E(`${p}.title`)}>${esc(b.title)}</p>${b.items.map((it, i) => {
           const n = typeof it.n === 'number' ? it.n : 0, pr = it.prompted || 0;
           return `<div class="nrow"><div class="nneed"><span${E(`${p}.items.${i}.need`)}>${md(it.need)}</span>${it.sub ? `<em${E(`${p}.items.${i}.sub`)}>${md(it.sub)}</em>` : ''}</div>
           <span class="dots">${Array.from({ length: 8 }, (_, j) => `<i class="${j < n ? 'on' : j < n + pr ? 'asked' : ''}" style="--i:${j}"></i>`).join('')}</span><b>${typeof it.n === 'number' ? it.n : md(String(it.n))}${pr ? ` <small>+${pr}</small>` : ''} of 8</b>
           <span class="nto">${ic('arrow')}<span${E(`${p}.items.${i}.to`)}>${esc(it.to)}</span></span></div>`; }).join('')}
           ${b.legend ? `<p class="nlegend"><span><i class="on"></i>${esc(b.legend[0])}</span><span><i class="asked"></i>${esc(b.legend[1])}</span></p>` : ''}
           ${b.note ? `<figcaption${E(`${p}.note`)}>${md(b.note)}</figcaption>` : ''}
-          ${b.shots ? `<div class="nshots">${b.shots.map((sh, i) => `<figure><img src="${A(sh.src)}" alt="${esc(sh.title)}" loading="lazy"><figcaption${E(`${p}.shots.${i}.title`)}>${esc(sh.title)}</figcaption></figure>`).join('')}</div>` : ''}</figure>`;
+          ${b.shots ? `<div class="nshots">${b.shots.map((sh, i) => `<figure role="button" tabindex="0" data-view="${nid}" aria-label="Enlarge: ${esc(sh.title)}"><img src="${A(sh.src)}" alt="${esc(sh.title)}" loading="lazy"><figcaption${E(`${p}.shots.${i}.title`)}>${esc(sh.title)}</figcaption></figure>`).join('')}</div>` : ''}</figure>`; }
       /* the menu before and after, as the real menus, side by side */
       case 'menu': if (b.shots) return `<figure class="ia ia-shots fu"><figure><p class="eyebrow">Before · ${b.before.length}</p><img src="${A(b.shots[0])}" alt="The old menu: ${esc(b.before.join(', '))}" loading="lazy"></figure>
           <span class="ia-arrow" aria-hidden="true">${ic('arrow')}</span><figure><p class="eyebrow">After · ${b.after.length}</p><img src="${A(b.shots[1])}" alt="The new menu: ${esc(b.after.join(', '))}" loading="lazy"></figure>
@@ -614,7 +618,7 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .notes-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .notes-svg path{fill:none;stroke:var(--pink);stroke-width:1.4;vector-effect:non-scaling-stroke;stroke-dasharray:.012 .012;stroke-dashoffset:0}
 .notes-svg circle{fill:var(--pink)}
-.note{position:absolute;z-index:4;width:max-content;max-width:190px;transform:translate(-50%,-50%);font-family:'Madhu Hand','Shadows Into Light',cursive;font-size:20px;line-height:1.05;color:var(--pink);text-align:center;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.55);transition:opacity .6s}
+.note{position:absolute;z-index:4;width:max-content;max-width:190px;transform:translate(-50%,-50%);font-family:'Madhu Hand','Shadows Into Light',cursive;font-size:20px;line-height:1.85;color:var(--pink);text-align:center;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.55);transition:opacity .6s}
 .js .fu:not(.in) .note{opacity:0}
 
 .callout{margin:60px 0;padding:26px 28px;border-left:2px solid var(--blue);background:linear-gradient(90deg,rgba(143,178,242,.08),transparent)}
@@ -645,7 +649,7 @@ figcaption{font-size:12px;color:#5f636d;margin-top:20px}
 .nlegend i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--blue)}.nlegend i.on{background:var(--blue)}.nlegend i.asked{border-style:dashed}
 .nshots{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:48px -60px 0}
 /* each Home section shown whole at one shared height; a taller one sits on the dashboard's own ground */
-.nshots figure{margin:0}.nshots img{width:100%;aspect-ratio:1400/918;object-fit:contain;object-position:center top;border-radius:12px;border:1px solid #2a2e38;background:#f4f6f8}
+.nshots figure{margin:0;cursor:zoom-in}.nshots img{width:100%;aspect-ratio:1400/918;object-fit:contain;object-position:center top;border-radius:12px;border:1px solid #2a2e38;background:#f4f6f8}
 .nshots figcaption{margin-top:14px;font-size:14px;color:#c5c9d1}
 @media (max-width:1000px){.nshots{margin-inline:0}}@media (max-width:640px){.nshots{grid-template-columns:1fr}}
 .ia-shots{display:grid;grid-template-columns:1fr auto 1fr;gap:28px;align-items:start;max-width:620px;margin:50px auto}
@@ -1095,7 +1099,7 @@ function pick(i) {
   const k = it.key ? f => it.key + '.' + f : () => '';
   cap(it.title ? [[it.title, k('title')], [it.why, k('why')]] : [], [it.ask, k('ask')]);
   const st = $('.v-stage', dlg); st.classList.remove('zoom'); st.scrollTop = 0; setTimeout(navState);
-  const ids = cur_.strip.map((s, j) => j).filter(j => (cur_.strip[j].screen || '') === (cur_.strip[i] || {}).screen);
+  const ids = cur_.strip.map((s, j) => j).filter(j => (cur_.strip[j].screen || '') === ((cur_.strip[i] || {}).screen || ''));
   mark(Math.max(0, ids.indexOf(i)));
 }
 const cmpEl = $('.v-cmp', dlg), sideEl = $('.v-side', dlg);
