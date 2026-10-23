@@ -842,9 +842,21 @@
     var dir = base.replace(/stick\.js.*$/, '') + 'assets/clay/';
     var ver = (base.match(/\?v=[^&#]*/) || [''])[0];   // the build's cache-buster, so a re-rendered frame isn't served stale
     fetch(dir + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (m) {
-      CLAY.man = m; var n = 0, total = 0;
-      Object.keys(m).forEach(function (k) { if (k[0] === '_') return; m[k].forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
-        im.onload = function () { if (++n === total) { CLAY.ready = true; draw(performance.now()); start(); } }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
+      CLAY.man = m;
+      /* triple frames (2026-10-23) is ~11MB of clay: she appears once the CORE motions are in, and
+         the celebrations, climb and monkey bars stream in behind; a frame that hasn't arrived yet is
+         covered by her last drawn clay frame (clayFigure), never by the stick figure */
+      var CORE = ['idle-wave-sign', 'walk-x3', 'run-x3', 'jump-land-slide-x3', 'hang-swing-climb-x3'];
+      function loadSet(keys, done) {
+        var n = 0, total = 0;
+        keys.forEach(function (k) { (m[k] || []).forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
+          im.onload = im.onerror = function () { if (++n === total) done(); }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
+        if (!total) done();
+      }
+      loadSet(CORE, function () {
+        CLAY.ready = true; draw(performance.now()); start();
+        loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0; }), function () {});
+      });
       /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
       if (m._smile) CLAY.img.smile = [].concat(m._smile).map(function (n) { var sm = new Image(); sm.src = dir + n + ver; return sm; });   // same box as idle-wave-sign-0, only the face differs
     }).catch(function () { CLAY.on = false; });
@@ -854,30 +866,27 @@
   /* her ask (2026-10-23, "the wave is spazzy. smile and only wave one hand"): frames 2/5 and 3/4 are
      DIFFERENT hands with the body turned opposite ways, so mixing them flipped her back and forth.
      Only 3↔4 now: one hand, one stance, both smiling, unhurried. */
-  var WAVE_T = [[3, .5], [4, .7], [3, .5], [4, 1.3]];
   var CART = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [6, 1], [5, 1], [11], [3, 1], [2, 1], [1, 1], [14]];   /* [frame, mirror] — a full roll */
+  /* x3 (2026-10-23): frames 3-5 of idle-wave-sign-x3 are the one hand, one stance, smiling; ping-pong them */
+  var WAVE_T = [[3, .25], [4, .25], [5, .35], [4, .25], [3, .25], [4, .25], [5, .6], [4, .4], [3, .4]];
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
   /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
      lifted; rot in radians about the anchor; flip mirrors on top of dir */
-  /* monkey-bars frames in hand-over-hand order. In profile the two hands read alike, so one cycle is
-     free arm hanging (2) → swinging forward (5) → reaching (4) → full reach (7), then the reaching hand
-     takes the grip and the other drops: 6 → 1 → 0 → 3. Two hand-swaps per stick-figure reach cycle. */
-  var MONKEY_SEQ = [2, 5, 4, 7, 6, 1, 0, 3];
   var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
     CLAY.dist += Math.abs(fig.x - CLAY.lastX); CLAY.lastX = fig.x;
-    if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide', k: 5 };
-    if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide', k: 6 };
+    if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide-x3', k: 12 };
+    if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
         if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
-        if (sp > 230) return { s: 'run3', k: Math.floor(CLAY.dist / 9) % 16, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
-        return { s: 'walk2', k: Math.floor(CLAY.dist / 5.5) % 16 };
+        if (sp > 230) return { s: 'run-x3', k: Math.floor(CLAY.dist / 3) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
+        return { s: 'walk-x3', k: Math.floor(CLAY.dist / 1.83) % 48 };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
-        if (fig.flip) return { s: 'jump-land-slide', k: 3, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
-        return { s: 'jump-land-slide', k: vy < -380 ? 1 : vy < -90 ? 2 : vy < 120 ? 3 : 4, mid: true }; }
+        if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
+        return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
       case 'hang': {
         var h = fig.hang, hs = o.hands || [], hx = 0, hy = 0, n = 0;
         hs.forEach(function (q) { if (q) { hx += q.x; hy += q.y; n++; } });
@@ -888,21 +897,21 @@
         /* travelling along the line: hand over hand, like the stick figure (her ask 2026-10-23,
            "monkey bars and alternating hands"). The 8 clay frames follow the same reach phase that
            alternates the stick figure's grips; each frame's top is its gripping hand. */
-        if (h.reach && CLAY.man.monkey) return { s: 'monkey', k: MONKEY_SEQ[Math.floor(h.reach / (Math.PI * 2) * 8) % 8], anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir };
-        return { s: 'hang-swing-climb', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
+        if (h.reach && CLAY.man['monkey-x3']) return { s: 'monkey-x3', k: Math.floor(h.reach / (Math.PI * 2) * 24) % 24, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir };
+        return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
-        if (t < .45) return { s: 'climb2', k: t < .2 ? 3 : 4, anchor: 'hands', ax: m.x1, ay: m.y1 };
-        return { s: 'climb2', k: 6 + Math.min(4, Math.floor((t - .45) / .55 * 5)) }; }
-      case 'wave': return { s: 'idle-wave-sign', k: timedAt(WAVE_T, fig.wave * 3) };
-      case 'sign': return { s: 'star-bow', k: 2 };
+        if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1, ay: m.y1 };
+        return { s: 'climb-x3', k: 18 + Math.min(12, Math.floor((t - .45) / .55 * 13)) }; }
+      case 'wave': return { s: 'idle-wave-sign-x3', k: timedAt(WAVE_T, fig.wave * 3) };
+      case 'sign': return { s: 'star-bow-x3', k: 8 };
       case 'celeb': { var c = fig.celeb, ct = c.t;
         switch (c.name) {
-          case 'star': return { s: 'star-bow', k: ct < .22 ? 0 : ct < .78 ? 1 : 2, lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
-          case 'backflip': return { s: 'backflip', k: Math.min(7, Math.floor(ct * 8)), lift: Math.sin(Math.PI * ct) * .5 };
-          case 'dance': return { s: 'dance2', k: Math.min(15, Math.floor(ct * 16)) };
-          case 'cartwheel': { var e = CART[Math.min(15, Math.floor(ct * 16))]; return { s: 'cartwheel3', k: e[0], flip: !!e[1] }; }
-          case 'bow': return { s: 'star-bow', k: [3, 4, 5, 5, 4, 6][Math.min(5, Math.floor(ct * 6))] };
+          case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
+          case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: Math.sin(Math.PI * ct) * .5 };
+          case 'dance': return { s: 'dance-x3', k: Math.min(47, Math.floor(ct * 48)) };
+          case 'cartwheel': { var e = CART[Math.min(15, Math.floor(ct * 16))]; return { s: 'cartwheel3', k: e[0], flip: !!e[1] }; }   // still the 15-frame roll: both x3 renders failed (limbs clipped / off-model)
+          case 'bow': return { s: 'star-bow-x3', k: [9, 10, 11, 12, 12, 12, 11, 10, 13, 14][Math.min(9, Math.floor(ct * 10))] };
         }
         return { s: 'idle-wave-sign', k: 0 }; }
     }
@@ -911,7 +920,9 @@
   function clayFigure(px, py, dir, o) {
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
     if (!f) return false;
-    var im = CLAY.img[f.f]; if (!im || !im.complete) return false;
+    var im = CLAY.img[f.f];
+    if (!im || !im.complete || !im.naturalWidth) { if (!CLAY.last) return false; im = CLAY.last.im; f = CLAY.last.f; }   // still streaming in: hold her last frame
+    else CLAY.last = { im: im, f: f };
     /* hover smile, stepped like clay on the 12fps clock: neutral → soft smile → eyes-closed grin,
        and back down on leave. Standing frame only; re-tested per draw, so she also smiles when SHE
        walks under a still cursor. naturalWidth, not complete: a missing file is "complete" too. */
