@@ -847,9 +847,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    headline lands, then adds .handoff: the name steps back to a smaller size and the bio grows into
    the lead. Reduced motion lands on the hand-off state with no movement. */
 .hero.revealed.handoff h1{font-size:clamp(1.9rem,3.6vw,3rem);transition:font-size 900ms var(--ease-standard)}
-.hero.handoff .hero-line{width:min(100%,1040px);font-size:clamp(1.55rem,2.9vw,2.55rem);line-height:1.38;
+.hero.handoff .hero-line{width:min(100%,1040px);font-size:clamp(1.1rem,min(2.4vw,3.2vh),2.3rem);line-height:1.36;   /* height-aware, so say hey! and Resume stay on the first screen */
   transition:font-size 900ms var(--ease-standard),line-height 900ms var(--ease-standard)}
 .rm-mode .hero.handoff h1,.rm-mode .hero.handoff .hero-line{transition:none}
+@media (max-width:600px){.hero.handoff .hero-line{line-height:1.3}}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
