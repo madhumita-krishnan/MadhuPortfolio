@@ -909,7 +909,7 @@
           case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
           case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: Math.sin(Math.PI * ct) * .5 };
           case 'dance': return { s: 'dance-x3', k: Math.min(47, Math.floor(ct * 48)) };
-          case 'cartwheel': return { s: 'cartwheel-x3', k: Math.min(29, Math.floor(ct * 30)) };   // 30 frames, one roll, mirroring baked into the render
+          case 'cartwheel': { var cn = CLAY.man['cartwheel-x3'].length; return { s: 'cartwheel-x3', k: Math.min(cn - 1, Math.floor(ct * cn)) }; }   // 45 frames (3x the old 15), one roll
           case 'bow': return { s: 'star-bow-x3', k: [9, 10, 11, 12, 12, 12, 11, 10, 13, 14][Math.min(9, Math.floor(ct * 10))] };
         }
         return { s: 'idle-wave-sign', k: 0 }; }
