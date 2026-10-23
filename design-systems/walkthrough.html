@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Walkthrough · Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" />
+    <style>
+      @font-face { font-family: "Madhu Hand"; src: url(../assets/fonts/madhu-hand.woff) format("woff"); font-display: swap; }
+      /* ── Tokens, verbatim from walkthrough.js CSS() :root ── */
+      :root {
+        --ink: #0f1013; --navy: #121a2c; --card: #161a24; --line: #262a33;
+        --dim: #6b6f7a; --body: #a9adb7; --hi: #f3f4f6;
+        --blue: #8fb2f2; --blue-soft: #a9c4f5; --pink: #ec6fa0;
+        --ok: #62b58f; --bad: #e2686b; --cy: #5fc0d8;
+        --ease: cubic-bezier(.2,.7,.2,1);
+        --font: "Plus Jakarta Sans", system-ui, sans-serif;
+        --hand: "Madhu Hand", "Shadows Into Light", cursive;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      body { background: var(--ink); color: var(--body); font: 300 16px/1.65 var(--font); -webkit-font-smoothing: antialiased; }
+      p, li, dd, figcaption { text-wrap: pretty; }
+      h1, h2, h3 { text-wrap: balance; }
+      b { color: var(--hi); font-weight: 600; }
+      a { color: inherit; }
+      button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+      code, .mono { font: 400 12.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: #c5c9d1; }
+      img { display: block; max-width: 100%; }
+
+      /* ── Documentation shell (not part of the system) ── */
+      .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+      nav.side { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; padding: 32px 26px; border-right: 1px solid #1d2028; background: #0c0d10; }
+      .side .brand { display: flex; align-items: center; gap: 10px; font: 600 18px var(--font); color: var(--hi); letter-spacing: -.01em; padding-bottom: 18px; border-bottom: 1px solid #1d2028; margin-bottom: 10px; }
+      .side .brand img { width: 26px; height: 26px; border-radius: 7px; }
+      .side .brand small { display: block; font-size: 12px; font-weight: 400; color: var(--dim); letter-spacing: 0; }
+      .side .grp { margin: 18px 0 2px; font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: #4f535d; }
+      .side a { display: block; padding: 5px 0; font-size: 14px; color: var(--dim); text-decoration: none; transition: color .2s; }
+      .side a:hover, .side a:focus-visible { color: var(--hi); }
+      .side a.is-current { color: var(--hi); font-weight: 600; }
+      .side .back { margin-top: 26px; padding-top: 16px; border-top: 1px solid #1d2028; }
+      main { padding: 56px 56px 120px; max-width: 1080px; min-width: 0; }
+      section { padding: 56px 0; border-bottom: 1px solid #1d2028; scroll-margin-top: 8px; }
+      section:first-child { padding-top: 0; }
+      .eyebrow { font: 500 13px/1 var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 14px; }
+      h1 { font-size: clamp(38px, 5vw, 60px); line-height: 1.04; font-weight: 600; color: var(--hi); letter-spacing: -.025em; margin-bottom: 18px; }
+      h2 { font-size: clamp(26px, 3vw, 34px); line-height: 1.18; font-weight: 600; color: var(--hi); letter-spacing: -.01em; margin-bottom: 12px; }
+      h3 { font-size: 17px; font-weight: 500; color: var(--hi); margin: 40px 0 10px; }
+      .intro { font-size: 18px; max-width: 720px; margin-bottom: 26px; }
+      .lede { font-size: 20px; line-height: 1.6; max-width: 760px; }
+      .note-s { font-size: 13px; color: var(--dim); margin-top: 14px; max-width: 720px; }
+      .rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .rule { padding: 22px; border-radius: 14px; background: rgba(255,255,255,.035); border: 1px solid #232b40; }
+      .rule h4 { font-size: 17px; font-weight: 600; color: var(--hi); margin-bottom: 6px; }
+      .rule p { font-size: 14.5px; line-height: 1.55; color: #8d93a1; }
+
+      /* swatches */
+      .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+      .sw { border-radius: 12px; overflow: hidden; border: 1px solid #23262e; background: #13151a; }
+      .sw i { display: block; height: 70px; border-bottom: 1px solid #23262e; }
+      .sw div { padding: 10px 12px 12px; }
+      .sw b { display: block; font-size: 13px; }
+      .sw code { display: block; font-size: 12px; color: var(--dim); }
+      .sw span { display: block; font-size: 12px; line-height: 1.4; color: #8d93a1; margin-top: 6px; }
+
+      /* type specimens */
+      .spec { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 24px; align-items: baseline; padding: 22px 0; border-top: 1px dashed #23262e; }
+      .spec:first-of-type { border-top: 0; }
+      .spec dt { font-size: 13px; color: var(--dim); }
+      .spec dt code { display: block; margin-top: 4px; font-size: 12px; color: #7d828f; }
+      .spec dd { min-width: 0; }
+
+      /* token tables */
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: #5f636d; padding: 0 12px 10px 0; }
+      td { padding: 12px 12px 12px 0; border-top: 1px solid #1d2028; vertical-align: top; }
+      td:first-child { color: var(--hi); font-weight: 500; white-space: nowrap; }
+
+      /* specimens' stage */
+      .board { padding: 34px; border-radius: 16px; border: 1px solid #1f232c; background: #13151a; display: flex; flex-wrap: wrap; gap: 18px 22px; align-items: center; }
+      .board.col { flex-direction: column; align-items: stretch; }
+      .board.navy { background: var(--navy); }
+      .cap { font-size: 12px; color: #5f636d; margin-top: 10px; }
+      .demo-row { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; }
+
+      /* ── Components, copied verbatim from walkthrough.js (fixed positions made static) ── */
+      .ic { display: block; flex: none; width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 18px; border-radius: 999px; background: rgba(22,27,40,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid #232a3a; }
+      .pill a { white-space: nowrap; font-size: 16px; font-weight: 400; color: #9aa0ad; text-decoration: none; padding: 8px 18px; border-radius: 999px; transition: color .2s; }
+      .pill a:hover { color: var(--hi); }
+      .pill a.cta { background: #fff; color: #111; font-weight: 500; }
+      .pill a.wm { font: 400 22px/1 "Cormorant Garamond", Georgia, serif; letter-spacing: .02em; color: var(--hi); padding: 6px 14px 6px 4px; --wm-dx: .34em; }
+      .wm-m, .wm-k, .wm-d { display: inline-block; }
+      .wm-m, .wm-k { transition: transform .38s cubic-bezier(.2,.7,.2,1); }
+      .wm-d { transform-origin: 50% 50%; transition: transform .38s cubic-bezier(.2,.7,.2,1), opacity .28s cubic-bezier(.33,0,.2,1); }
+      .wm:hover .wm-m { transform: translateX(var(--wm-dx)); }
+      .wm:hover .wm-k { transform: translateX(calc(-1 * var(--wm-dx))); }
+      .wm:hover .wm-d { opacity: 0; transform: scaleX(.1); }
+      .arrow-btn { flex: none; width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1px solid #2a2f3a; display: grid; place-items: center; background: rgba(15,16,19,.75); color: #e9eaee; transition: border-color .2s, transform .3s var(--ease); }
+      .arrow-btn:hover { border-color: #5a6070; transform: scale(1.06); }
+      .arrow-btn .ic { width: 20px; height: 20px; stroke-width: 1.6; }
+      .btn-o { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; text-decoration: none; color: var(--blue-soft); border: 1px solid rgba(169,196,245,.55); padding: 9px 18px; border-radius: 999px; transition: background-color .2s, color .2s; }
+      .btn-o:hover { background: var(--blue-soft); color: #111; }
+      .btn-o .ic { width: 14px; height: 14px; }
+      .v-live { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; text-decoration: none; color: #111; background: var(--blue-soft); padding: 9px 16px; border-radius: 999px; font-weight: 500; }
+      .v-live .ic { width: 15px; height: 15px; }
+      .v-close { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; padding: 9px 16px; border-radius: 999px; border: 1px solid #333845; color: #e6e8ec; }
+      .v-close:hover { border-color: #5a6070; }
+      .v-tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: #171a21; border: 1px solid #262a33; --i: 0; user-select: none; }
+      .v-thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); transform: translateX(calc(var(--i) * 100%)); transition: transform .4s cubic-bezier(.3,.7,.2,1); }
+      .v-tabs button { position: relative; z-index: 1; padding: 7px 18px; border-radius: 999px; font-size: 14px; color: #9aa0ad; }
+      .v-tabs button[aria-selected=true] { color: #111; font-weight: 500; }
+      .v-tabs button:focus-visible { outline: 2px solid var(--cy); outline-offset: 2px; }
+      .v-groups { display: flex; gap: 8px; flex-wrap: wrap; }
+      .v-groups button { padding: 6px 14px; border-radius: 999px; border: 1px solid #2c3242; font-size: 13px; color: #9aa0ad; }
+      .v-groups button[aria-selected=true] { background: var(--blue-soft); border-color: var(--blue-soft); color: #10141f; font-weight: 500; }
+      .v-groups button em { font-style: normal; opacity: .6; margin-left: 6px; }
+      .verdict { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; color: var(--bad); border: 1px solid rgba(226,104,107,.4); }
+      .verdict .ic { width: 13px; height: 13px; }
+      .verdict.yes { color: #f2c46d; border-color: rgba(242,196,109,.5); }
+      .was { display: inline-block; font-size: 14px; color: var(--bad); border: 1px solid rgba(226,104,107,.4); border-radius: 999px; padding: 3px 12px; }
+      mark.tk { background: #f2c46d; color: #1b1406; font-weight: 700; padding: 0 5px; border-radius: 4px; }
+
+      .measures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; }
+      .measure { padding: 24px 22px; border-radius: 14px; background: rgba(255,255,255,.035); border: 1px solid #232b40; }
+      .measure h4 { color: var(--hi); font-size: 19px; font-weight: 600; margin-bottom: 8px; }
+      .measure p { font-size: 15px; line-height: 1.5; color: #8d93a1; margin-bottom: 18px; }
+      .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; }
+      .opt { padding: 24px 20px; border-radius: 14px; border: 1px solid #232733; background: #14161c; }
+      .opt.yes { border-color: #3d5c8f; background: linear-gradient(180deg, #152038, #121827); }
+      .opt .verdict { margin-bottom: 16px; }
+      .opt h4 { color: var(--hi); font-size: 19px; font-weight: 600; margin-bottom: 8px; }
+      .opt p { font-size: 15px; line-height: 1.55; color: #8d93a1; }
+      .callout { padding: 26px 28px; border-left: 2px solid var(--blue); background: linear-gradient(90deg, rgba(143,178,242,.08), transparent); width: 100%; }
+      .callout p:last-child { font-size: 20px; color: #c8ccd4; }
+      .result { display: flex; gap: 14px; align-items: center; padding: 20px 24px; border-radius: 14px; border: 1px solid #233046; background: #121827; font-size: 19px; color: #c5c9d1; width: 100%; }
+      .result .ic.lead { width: 20px; height: 20px; color: #f2c46d; }
+
+      .q { position: relative; min-height: 236px; perspective: 1100px; outline: none; width: 100%; cursor: pointer; }
+      .q-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .75s cubic-bezier(.3,.7,.2,1); }
+      .q:hover .q-in, .q:focus-visible .q-in { transform: rotateY(180deg); }
+      .q-front, .q-back { position: absolute; inset: 0; padding: 22px 18px 18px; display: flex; flex-direction: column; border-radius: 14px; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+      .q-front { background: linear-gradient(180deg, #141a2b, #11141c); border: 1px solid #1d2232; }
+      .qm { width: 24px; fill: var(--blue); margin-bottom: 22px; }
+      .q-front p { font-size: 14px; line-height: 1.5; color: #b5bac4; font-weight: 400; }
+      .q-front cite { margin-top: auto; font-size: 11px; font-style: italic; color: #8fb2f2; }
+      .q-back { background: var(--t); color: #10141f; align-items: center; justify-content: center; text-align: center; transform: rotateY(180deg); }
+      .q-back p { font-weight: 600; font-size: 17px; }
+      .t0 { --t: #a9c4f5; } .t1 { --t: #f2c46d; } .t2 { --t: #8fd8c6; }
+      .quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+
+      .dots { display: flex; gap: 8px; }
+      .dots i { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #3a3f4b; }
+      .dots i.on { background: #7d828f; border-color: #7d828f; }
+      .win .dots i.on { background: var(--blue); border-color: var(--blue); }
+      .dots i.asked { border-color: var(--blue); border-style: dashed; }
+      .vrow { display: flex; align-items: center; gap: 18px; padding: 12px 0; }
+      .vrow .hl { flex: 0 0 280px; font-size: 15px; color: #9da2ad; }
+      .vrow b { font-weight: 500; font-size: 15px; color: #8d929e; } .vrow.win b { color: var(--blue); }
+
+      .chart { width: 100%; --lab: 200px; }
+      .hrow { position: relative; display: flex; align-items: center; height: 58px; }
+      .hl { flex: 0 0 var(--lab); font-size: 15px; color: #9da2ad; padding-right: 16px; }
+      .track { position: relative; flex: 1; height: 100%; }
+      .bar { position: absolute; left: 0; top: 50%; height: 3px; margin-top: -1.5px; width: 0; border-radius: 2px; transition: width 1.4s var(--ease); }
+      .bar.ok { background: var(--ok); } .bar.bad { background: var(--bad); height: 5px; margin-top: -2.5px; } .bar.dim { background: #7d828f; }
+      .in .bar { width: var(--w); }
+      .end { position: absolute; top: 50%; transform: translate(10px, -50%); font-size: 16px; font-weight: 500; opacity: 0; transition: opacity .5s 1.2s; }
+      .end.ok { color: var(--ok); } .end.bad { color: var(--bad); } .end.dim { color: #9196a1; }
+      .in .end { opacity: 1; }
+      .obar { position: relative; display: flex; align-items: center; gap: 14px; height: 34px; }
+      .obar span { height: 6px; border-radius: 3px; width: 0; transition: width 1.4s var(--ease); }
+      .obar.before span { background: #4a4f5b; } .obar.after span { background: var(--blue); transition-delay: .4s; }
+      .in .obar span { width: calc(var(--w) * .62); }
+      .obar em { font-style: normal; font-size: 17px; white-space: nowrap; }
+      .obar.before em { color: #8b909b; text-decoration: line-through; text-decoration-color: #555; }
+      .obar.after em { color: var(--hi); font-weight: 600; font-size: 22px; }
+
+      .frame { display: block; width: 100%; max-width: 520px; position: relative; cursor: pointer; border-radius: 16px; background: #1a1d24; border: 1px solid #2a2e38; text-align: left; box-shadow: 0 30px 80px -40px rgba(0,0,0,.8); transition: transform .6s var(--ease), border-color .4s, box-shadow .6s; }
+      .frame .chrome { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: #1e2129; border-bottom: 1px solid #2a2e38; border-radius: 15px 15px 0 0; }
+      .frame .chrome i { width: 9px; height: 9px; border-radius: 50%; background: #3a3e48; }
+      .frame .chrome span { margin-left: 12px; font-size: 11px; color: #6e7380; background: #15171c; border-radius: 6px; padding: 2px 12px; }
+      .frame .shot { position: relative; display: block; }
+      .frame img { width: 100%; border-radius: 0 0 15px 15px; transition: filter .7s var(--ease); }
+      @media (hover: hover) {
+        .frame img { filter: brightness(.42) saturate(.6); }
+        .frame:hover img, .frame:focus-visible img { filter: none; }
+        .frame:hover { border-color: #4a5268; box-shadow: 0 40px 100px -40px rgba(95,192,216,.25); }
+      }
+      .frame:focus-visible { outline: 2px solid var(--cy); outline-offset: 4px; }
+      .note { position: absolute; z-index: 4; width: max-content; max-width: 190px; transform: translate(-50%, -50%); font-family: var(--hand); font-size: 20px; line-height: 1.85; color: var(--pink); text-align: center; pointer-events: none; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+      .note-dot { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--pink); z-index: 4; }
+
+      .toc-demo { display: flex; flex-direction: column; gap: 6px; padding: 16px 28px 16px 20px; border-radius: 14px; background: rgba(15,16,19,.88); }
+      .toc-demo a { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #5d616b; text-decoration: none; letter-spacing: .02em; }
+      .toc-demo a::before { content: ''; flex: none; width: 30px; height: 2px; border-radius: 1px; background: #3a3f4a; transform: scaleX(.4); transform-origin: left; transition: transform .3s var(--ease), background .3s; }
+      .toc-demo a.on { color: var(--hi); font-weight: 600; } .toc-demo a.on::before { transform: scaleX(.73); background: var(--hi); }
+      .toc-demo a:hover { color: var(--hi); } .toc-demo a:hover::before { transform: none; background: #b8bcc5; }
+      .ring { position: relative; width: 64px; height: 64px; }
+      .ring svg { width: 100%; height: 100%; fill: none; stroke: var(--cy); stroke-width: 4; transform: rotate(90deg); }
+      .ring span { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 7px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--blue-soft); white-space: nowrap; }
+      .ring.link svg { fill: rgba(95,192,216,.55); width: 42px; height: 42px; transform: none; }
+      .ring.link { width: 42px; height: 42px; }
+
+      .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+      .icon-grid figure { padding: 20px 10px 14px; border-radius: 12px; background: #13151a; border: 1px solid #1f232c; display: grid; justify-items: center; gap: 12px; }
+      .icon-grid .ic { width: 26px; height: 26px; color: var(--hi); }
+      .icon-grid figcaption { font: 400 12px ui-monospace, "SF Mono", Menlo, monospace; color: var(--dim); }
+
+      .ease-demo { width: 100%; display: grid; gap: 12px; }
+      .ease-demo div { position: relative; height: 34px; border-radius: 999px; background: #171a21; border: 1px solid #262a33; }
+      .ease-demo i { position: absolute; top: 5px; left: 5px; width: 22px; height: 22px; border-radius: 50%; background: var(--blue-soft); transition: left 1.4s var(--ease); }
+      .ease-demo.go i { left: calc(100% - 27px); }
+      .ease-demo span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--dim); }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        nav.side { position: static; height: auto; border-right: 0; border-bottom: 1px solid #1d2028; }
+        nav.side .links { display: flex; flex-wrap: wrap; gap: 2px 16px; }
+        nav.side .grp { width: 100%; }
+        main { padding: 40px 16px 80px; }
+        .rules, .measures, .options, .quotes { grid-template-columns: 1fr; }
+        .spec { grid-template-columns: 1fr; gap: 8px; }
+        .chart { --lab: 110px; } .vrow { flex-wrap: wrap; } .vrow .hl { flex-basis: 100%; }
+        .board { padding: 20px; }
+        table { font-size: 13px; }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="side" aria-label="Sections">
+        <div class="brand"><img src="../assets/case-studies/driftwood-retention/logo.svg" alt="" /><span>Walkthrough<small>The case-study template</small></span></div>
+        <div class="links">
+          <p class="grp">Identity</p>
+          <a href="#about">About</a>
+          <a href="#principles">Principles</a>
+          <p class="grp">Foundations</p>
+          <a href="#color">Colour</a>
+          <a href="#type">Type</a>
+          <a href="#shape">Shape and surface</a>
+          <a href="#motion">Motion</a>
+          <a href="#icons">Icons</a>
+          <a href="#layout">Layout</a>
+          <p class="grp">Components</p>
+          <a href="#nav">Navigation</a>
+          <a href="#buttons">Buttons and chips</a>
+          <a href="#cards">Cards and callouts</a>
+          <a href="#data">Charts and tallies</a>
+          <a href="#screens">Screens and notes</a>
+          <p class="grp">Reference</p>
+          <a href="#source">Source</a>
+        </div>
+        <a class="back" href="./index.html">All design systems</a>
+      </nav>
+
+      <main>
+        <section id="about">
+          <p class="eyebrow">Design system</p>
+          <h1>The walkthrough</h1>
+          <p class="lede">The look I designed the Driftwood retention case study in: a dark page that reads one idea at a time, screens you can step into, and my own hand only where I'm pointing at something.</p>
+          <p class="note-s">Every value here is copied from <code>walkthrough.js</code>, the template that builds the page. Spotify Mix uses it too, so a change there shows up on both.</p>
+          <p style="margin-top:26px"><a class="btn-o" href="../driftwood-retention.html"><span>See it on the case study</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L19 12 M13 6 L19 12 L13 18"/></svg></a></p>
+        </section>
+
+        <section id="principles">
+          <p class="eyebrow">Principles</p>
+          <h2>Six rules the page keeps</h2>
+          <div class="rules">
+            <div class="rule"><h4>One thing on screen at a time</h4><p>Each idea gets its own screen of space. Once the next section's title reaches the middle of the screen, the one you just read blurs back.</p></div>
+            <div class="rule"><h4>Dark ground, light reading</h4><p>Near-black ink behind everything. Body copy sits at a soft grey, and only headings and the words that matter reach full white.</p></div>
+            <div class="rule"><h4>Quiet until pointed at</h4><p>Screens sit dimmed and the contents column waits as dashes. Hover or focus brings them up to full strength.</p></div>
+            <div class="rule"><h4>Red marks the problem, blue the answer</h4><p>Gold marks the option that won and pink is my hand. No colour is there just for decoration.</p></div>
+            <div class="rule"><h4>My hand only points</h4><p>Madhu Hand is kept for notes drawn onto screens and for the question under a screen in the viewer. Running copy is never handwritten.</p></div>
+            <div class="rule"><h4>No orphan words</h4><p>Running text wraps so a last line never holds one word. Headings and short labels balance their lines.</p></div>
+          </div>
+        </section>
+
+        <section id="color">
+          <p class="eyebrow">Colour</p>
+          <h2>Thirteen named tokens</h2>
+          <p class="intro">These are named in <code>:root</code>. Every other colour on the page is a step between them, listed below.</p>
+          <h3>Ground</h3>
+          <div class="sw-grid">
+            <div class="sw"><i style="background:#0f1013"></i><div><b>Ink</b><code>--ink #0f1013</code><span>The page</span></div></div>
+            <div class="sw"><i style="background:#121a2c"></i><div><b>Navy</b><code>--navy #121a2c</code><span>A section can turn the whole page navy as you scroll into it</span></div></div>
+            <div class="sw"><i style="background:#161a24"></i><div><b>Card</b><code>--card #161a24</code><span>Raised panels</span></div></div>
+            <div class="sw"><i style="background:#262a33"></i><div><b>Line</b><code>--line #262a33</code><span>Borders, tab tracks</span></div></div>
+            <div class="sw"><i style="background:#090a0d"></i><div><b>Viewer</b><code>#090a0d</code><span>The full-screen viewer, darker than the page</span></div></div>
+          </div>
+          <h3>Text</h3>
+          <div class="sw-grid">
+            <div class="sw"><i style="background:#f3f4f6"></i><div><b>Hi</b><code>--hi #f3f4f6</code><span>Headings, bold words</span></div></div>
+            <div class="sw"><i style="background:#a9adb7"></i><div><b>Body</b><code>--body #a9adb7</code><span>Running copy</span></div></div>
+            <div class="sw"><i style="background:#6b6f7a"></i><div><b>Dim</b><code>--dim #6b6f7a</code><span>Labels, captions</span></div></div>
+          </div>
+          <h3>Signal</h3>
+          <div class="sw-grid">
+            <div class="sw"><i style="background:#8fb2f2"></i><div><b>Blue</b><code>--blue #8fb2f2</code><span>Eyebrows, the decision, charts</span></div></div>
+            <div class="sw"><i style="background:#a9c4f5"></i><div><b>Blue soft</b><code>--blue-soft #a9c4f5</code><span>Filled buttons, step titles</span></div></div>
+            <div class="sw"><i style="background:#5fc0d8"></i><div><b>Cyan</b><code>--cy #5fc0d8</code><span>Focus rings, the cursor, the compare wipe</span></div></div>
+            <div class="sw"><i style="background:#ec6fa0"></i><div><b>Pink</b><code>--pink #ec6fa0</code><span>Notes drawn in my hand</span></div></div>
+            <div class="sw"><i style="background:#62b58f"></i><div><b>OK</b><code>--ok #62b58f</code><span>A good number</span></div></div>
+            <div class="sw"><i style="background:#e2686b"></i><div><b>Bad</b><code>--bad #e2686b</code><span>The problem, a rejected option</span></div></div>
+            <div class="sw"><i style="background:#f2c46d"></i><div><b>Gold</b><code>#f2c46d</code><span>The option chosen, highlights</span></div></div>
+          </div>
+          <h3>Client themes</h3>
+          <div class="sw-grid">
+            <div class="sw"><i style="background:#a9c4f5"></i><div><b>Theme 1</b><code>.t0 #a9c4f5</code></div></div>
+            <div class="sw"><i style="background:#f2c46d"></i><div><b>Theme 2</b><code>.t1 #f2c46d</code></div></div>
+            <div class="sw"><i style="background:#8fd8c6"></i><div><b>Theme 3</b><code>.t2 #8fd8c6</code></div></div>
+          </div>
+          <h3>Steps between</h3>
+          <table>
+            <tr><th>Use</th><th>Value</th></tr>
+            <tr><td>Hairline rules</td><td><code>#1d2028</code> section rules, <code>#23262e</code> chart grid</td></tr>
+            <tr><td>Borders</td><td><code>#2a2e38</code> frames, <code>#232b40</code> blue-tinted cards, <code>#3d5c8f</code> the chosen card</td></tr>
+            <tr><td>Muted text</td><td><code>#8d93a1</code> card copy, <code>#9aa0ad</code> nav links, <code>#c5c9d1</code> captions, <code>#5f636d</code> fine print</td></tr>
+            <tr><td>Glass</td><td><code>rgba(22,27,40,.82)</code> nav pill, <code>rgba(15,16,19,.88)</code> open contents column</td></tr>
+          </table>
+        </section>
+
+        <section id="type">
+          <p class="eyebrow">Type</p>
+          <h2>One sans, a serif wordmark, and my hand</h2>
+          <p class="intro"><b>Plus Jakarta Sans</b> sets everything, from 300 for body copy to 600 for headings. The M--K wordmark keeps the site's Cormorant Garamond. Madhu Hand is for notes only.</p>
+          <dl>
+            <div class="spec"><dt>Hero title<code>clamp(38px, 6.2vw, 74px) / 1.04 · 600 · −.025em</code></dt><dd style="font-size:clamp(34px,5vw,60px);line-height:1.04;font-weight:600;color:var(--hi);letter-spacing:-.025em">Race to a faster first demo</dd></div>
+            <div class="spec"><dt>Hook line<code>clamp(30px, 4.2vw, 50px) / 1.2 · 500 · −.015em</code></dt><dd style="font-size:clamp(26px,3.6vw,44px);line-height:1.2;font-weight:500;letter-spacing:-.015em;color:#d9dce2">About <b style="color:var(--bad)">6 rounds of revisions</b>, across 2 weeks</dd></div>
+            <div class="spec"><dt>Section title<code>clamp(30px, 4vw, 44px) / 1.18 · 600 · −.01em</code></dt><dd style="font-size:clamp(28px,3.4vw,40px);line-height:1.18;font-weight:600;color:var(--hi);letter-spacing:-.01em">Getting a client to their first demo took 2.5–3 weeks</dd></div>
+            <div class="spec"><dt>The question<code>clamp(28px, 3.6vw, 40px) / 1.3 · 600</code></dt><dd style="font-size:clamp(24px,3vw,34px);line-height:1.3;font-weight:600;color:var(--hi);letter-spacing:-.01em">How might we get new clients to their first great demo faster?</dd></div>
+            <div class="spec"><dt>Hero subline<code>clamp(19px, 2.4vw, 30px) · 300</code></dt><dd style="font-size:clamp(19px,2.4vw,28px);font-weight:300;color:var(--hi)">How I got new clients at driftwood to their first demo in 7 business days</dd></div>
+            <div class="spec"><dt>Lede<code>22px / 1.6 · 300</code></dt><dd style="font-size:22px;line-height:1.6">The founder, Aayush, was signing clients fast and onboarding each one by hand with coding agents.</dd></div>
+            <div class="spec"><dt>Subhead<code>21px · 500 · hi</code></dt><dd style="font-size:21px;font-weight:500;color:var(--hi)">What clients told us</dd></div>
+            <div class="spec"><dt>Body<code>18px / 1.65 · 300 (16px under 700px)</code></dt><dd style="font-size:18px;line-height:1.65">Running copy is light and soft grey, so the <b>few bold words</b> do the work of a highlighter.</dd></div>
+            <div class="spec"><dt>Eyebrow<code>13px / 1 · 500 · .12em · caps · blue</code></dt><dd><p class="eyebrow" style="margin:0">The problem</p></dd></div>
+            <div class="spec"><dt>Label<code>11–12px · .08em · caps</code></dt><dd style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7d828f">Kept · iteration 4</dd></div>
+            <div class="spec"><dt>Fine print<code>12px · #5f636d</code></dt><dd style="font-size:12px;color:#5f636d">Paraphrased from client calls</dd></div>
+            <div class="spec"><dt>Wordmark<code>Cormorant Garamond 22px · 400 · .02em</code></dt><dd style="font:400 30px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:var(--hi)">M--K</dd></div>
+            <div class="spec"><dt>Note<code>Madhu Hand 20px / 1.85 · pink</code></dt><dd style="font:20px/1.85 var(--hand);color:var(--pink)">Reduced 12 tabs to 6 focused tabs</dd></div>
+          </dl>
+        </section>
+
+        <section id="shape">
+          <p class="eyebrow">Shape and surface</p>
+          <h2>Round controls, soft cards, hairline borders</h2>
+          <table>
+            <tr><th>Token</th><th>Value</th><th>Where</th></tr>
+            <tr><td>Pill</td><td><code>999px</code></td><td>Every button, chip, tab track, the nav</td></tr>
+            <tr><td>Frame</td><td><code>16px</code></td><td>Screens in their browser chrome, the IA board</td></tr>
+            <tr><td>Card</td><td><code>14px</code></td><td>Measures, options, quotes, results, the viewer stage</td></tr>
+            <tr><td>Shot</td><td><code>12px</code></td><td>Bare screenshots in grids</td></tr>
+            <tr><td>Thumb</td><td><code>8–10px</code></td><td>Viewer strip, compare pairs</td></tr>
+            <tr><td>Border</td><td><code>1px solid</code></td><td>Always one pixel. Weight comes from colour, never thickness</td></tr>
+            <tr><td>Frame shadow</td><td><code>0 30px 80px -40px rgba(0,0,0,.8)</code></td><td>Lit on hover to <code>0 40px 100px -40px rgba(95,192,216,.25)</code></td></tr>
+            <tr><td>Hero glow</td><td><code>0 40px 120px -30px rgba(80,120,200,.35)</code></td><td>The laptop screen in the hero</td></tr>
+            <tr><td>Glass</td><td><code>blur(14px)</code> nav, <code>blur(12px)</code> contents column</td><td>Only on things that float over the page</td></tr>
+          </table>
+        </section>
+
+        <section id="motion">
+          <p class="eyebrow">Motion</p>
+          <h2>One curve, driven by scroll</h2>
+          <p class="intro">Everything eases on <code>cubic-bezier(.2,.7,.2,1)</code>: quick to start, long to settle. Where the browser supports scroll timelines, motion is tied to the scrollbar. Without them, the text simply shows at full strength.</p>
+          <div class="board col">
+            <div class="ease-demo" id="ease"><div><i></i><span>--ease · 1.4s</span></div></div>
+            <p class="demo-row"><button class="v-close" type="button" id="ease-go">Play the curve</button></p>
+          </div>
+          <table style="margin-top:28px">
+            <tr><th>Move</th><th>Spec</th></tr>
+            <tr><td>Fade up</td><td>Blocks rise 28px and fade in over <code>.9s</code> as they enter</td></tr>
+            <tr><td>Brighten</td><td>Text goes from <code>.22</code> to full opacity between entering and 38% covered</td></tr>
+            <tr><td>Read past</td><td>A section you've read blurs to <code>6px</code> at <code>.3</code> opacity over <code>.7s</code></td></tr>
+            <tr><td>Hook lines</td><td>Each line fades in through the middle 40–60% of its scroll range and out after</td></tr>
+            <tr><td>Bars draw</td><td><code>1.4s</code>. End labels arrive after <code>1.2s</code>, once the bar is there</td></tr>
+            <tr><td>Tally dots</td><td>Fill one by one, <code>90ms</code> apart</td></tr>
+            <tr><td>Underline</td><td>Key words get a 2px underline that draws across over <code>1.2s</code></td></tr>
+            <tr><td>Card flip</td><td><code>.75s cubic-bezier(.3,.7,.2,1)</code> on the vertical axis, 1100px perspective</td></tr>
+            <tr><td>Top bar</td><td>Slides away reading down and drops back on any scroll up, <code>.6s cubic-bezier(.22,1,.36,1)</code></td></tr>
+            <tr><td>Viewer</td><td>Opens from <code>.985</code> scale over <code>.45s</code>. Screens slide in 70px from the side you're heading to</td></tr>
+          </table>
+        </section>
+
+        <section id="icons">
+          <p class="eyebrow">Icons</p>
+          <h2>Nine strokes on a 24 grid</h2>
+          <p class="intro">Each icon is one path in <code>currentColor</code>, 2px stroke with round caps and joins (1.6px inside the arrow button), sized at 1.1em so it sits on the words' centre line.</p>
+          <div class="icon-grid" id="icon-grid"></div>
+        </section>
+
+        <section id="layout">
+          <p class="eyebrow">Layout</p>
+          <h2>An 820px column that screens break out of</h2>
+          <table>
+            <tr><th>Rule</th><th>Value</th></tr>
+            <tr><td>Reading column</td><td><code>max-width: 820px</code>, 24px gutters, sections open with 120px above (90px on phones)</td></tr>
+            <tr><td>Breakouts</td><td>Quotes and themes −40px, side-by-side screens −60px or −70px, compare panels −90px. The two-Home pair runs to 1280px wide</td></tr>
+            <tr><td>Chart label column</td><td><code>--lab: 220px</code>, 118px on phones</td></tr>
+            <tr><td>Contents column</td><td>Docked bottom-left from the second section on. Hidden under 1180px</td></tr>
+            <tr><td>Breakpoints</td><td><code>1180</code> contents column off · <code>1060</code> breakouts pull in · <code>760</code> card grids stack · <code>700</code> phone type, nav trims to wordmark + say hey · <code>640</code> two-up grids stack</td></tr>
+          </table>
+        </section>
+
+        <section id="nav">
+          <p class="eyebrow">Navigation</p>
+          <h2>A floating pill, edge arrows, a column of dashes</h2>
+          <div class="board">
+            <div class="pill"><a class="wm" href="../index.html"><span class="wm-m">M</span><span class="wm-d">--</span><span class="wm-k">K</span></a><a href="../index.html#work">Work</a><a href="../index.html#about">About</a><a class="cta" href="#nav">say hey!</a></div>
+            <a class="arrow-btn" href="#nav" aria-label="Previous project (example)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12 L5 12 M11 6 L5 12 L11 18"/></svg></a>
+            <a class="arrow-btn" href="#nav" aria-label="Next project (example)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L19 12 M13 6 L19 12 L13 18"/></svg></a>
+          </div>
+          <p class="cap">The pill is fixed 18px from the top. The arrows sit 24px in from each edge. Hover the wordmark: M and K close up as the dashes fold away.</p>
+          <div class="board" style="margin-top:22px">
+            <nav class="toc-demo" aria-label="Contents (example)"><a href="#nav">The situation</a><a href="#nav">Who they are</a><a class="on" href="#nav">The problem</a><a href="#nav">Voice of the client</a><a href="#nav">The big question</a></nav>
+            <div class="ring"><svg viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="18"/></svg><span>Explore</span></div>
+            <div class="ring link"><svg viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="18"/></svg></div>
+          </div>
+          <p class="cap">On the page the dashes only show labels when you move onto them, like the macOS Dock. The cursor is a cyan ring: it fills over a link and grows to 64px with a label over a screen.</p>
+        </section>
+
+        <section id="buttons">
+          <p class="eyebrow">Buttons and chips</p>
+          <h2>Sentence-case labels in pills</h2>
+          <div class="board">
+            <a class="v-live" href="#buttons"><span>Open live prototype</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 L17 7 M9 7 L17 7 L17 15"/></svg></a>
+            <a class="btn-o" href="#buttons"><span>View design system</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 L17 7 M9 7 L17 7 L17 15"/></svg></a>
+            <button class="v-close" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12 L5 12 M11 6 L5 12 L11 18"/></svg><span>Back</span></button>
+            <div class="v-tabs" role="tablist" id="tabs"><span class="v-thumb" aria-hidden="true"></span><button type="button" role="tab" aria-selected="true">Interaction</button><button type="button" role="tab" aria-selected="false">Iterations</button></div>
+          </div>
+          <p class="cap">Filled soft blue for the main action, a blue outline beside it, a grey outline for going back. The switch's white thumb slides to the side you pick (try it).</p>
+          <div class="board" style="margin-top:22px">
+            <div class="v-groups" role="tablist"><button type="button" aria-selected="true">Home<em>6</em></button><button type="button" aria-selected="false">Face and voice<em>4</em></button><button type="button" aria-selected="false">Email<em>3</em></button></div>
+            <span class="verdict"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L19 12"/></svg>Not this</span>
+            <span class="verdict yes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.25 L9.5 16.75 L19 7.25"/></svg>Chosen</span>
+            <span class="was">Was 60%, in 1–2 weeks</span>
+            <span><mark class="tk">6</mark> focused tabs</span>
+          </div>
+          <p class="cap">Group chips, verdict chips, the red "was" chip and the gold highlight. Uppercase is kept for tiny labels only.</p>
+        </section>
+
+        <section id="cards">
+          <p class="eyebrow">Cards and callouts</p>
+          <h2>Panels that hold one idea each</h2>
+          <div class="board col">
+            <div class="measures">
+              <div class="measure"><h4>Days to first demo</h4><p>From signing to the first demo sent</p><span class="was">Was 2.5–3 weeks</span></div>
+              <div class="measure"><h4>Days iterating</h4><p>From the first pilot demo to the one the client picks</p><span class="was">Was about 2 weeks</span></div>
+              <div class="measure"><h4>Set-up rate</h4><p>Clients who record their face, and how fast</p><span class="was">Was 60%, in 1–2 weeks</span></div>
+            </div>
+            <div class="options">
+              <div class="opt"><span class="verdict"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L19 12"/></svg>Not this</span><h4>In onboarding</h4><p>60% did it, after 1–2 weeks and 3–4 reminders.</p></div>
+              <div class="opt yes"><span class="verdict yes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.25 L9.5 16.75 L19 7.25"/></svg>Chosen</span><h4>An email after the call</h4><p>Aayush builds the trust in person. Clients record when they’re ready, at the top of their inbox.</p></div>
+              <div class="opt"><span class="verdict"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L19 12"/></svg>Not this</span><h4>Live on the call</h4><p>Clients can’t film on a call or without good light.</p></div>
+            </div>
+            <div class="quotes">
+              <div class="q" tabindex="0"><div class="q-in"><div class="q-front"><svg class="qm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5H3v8h4c0 4-2 5-4 5v3zm11 0c3 0 7-1 7-8V5h-7v8h4c0 4-2 5-4 5v3z"/></svg><p>The dashboard overwhelmed me, and I couldn’t find things.</p><cite>An overwhelmed client</cite></div><div class="q-back t0"><p>Hard to find things</p></div></div></div>
+              <div class="q" tabindex="0"><div class="q-in"><div class="q-front"><svg class="qm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5H3v8h4c0 4-2 5-4 5v3zm11 0c3 0 7-1 7-8V5h-7v8h4c0 4-2 5-4 5v3z"/></svg><p>The timeline to get demos booked was too long. We needed to move faster.</p><cite>Our one churned client</cite></div><div class="q-back t1"><p>Slow to the first demo</p></div></div></div>
+              <div class="q" tabindex="0"><div class="q-in"><div class="q-front"><svg class="qm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5H3v8h4c0 4-2 5-4 5v3zm11 0c3 0 7-1 7-8V5h-7v8h4c0 4-2 5-4 5v3z"/></svg><p>I wish editing the pilot demo was quicker.</p><cite>A client in their pilot</cite></div><div class="q-back t2"><p>Slow to edit</p></div></div></div>
+            </div>
+            <div class="callout"><p class="eyebrow">What we learned</p><p>Aayush wanted onboarding to feel personal, so we kept it an in-person, live experience with a flow to guide it.</p></div>
+            <div class="result"><svg class="ic lead" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.86 L14.29 9.7 L20.56 10.08 L15.71 14.06 L17.29 20.14 L12 16.76 L6.71 20.14 L8.29 14.06 L3.44 10.08 L9.71 9.7 Z"/></svg><span>Onboarded <b>6 new clients.</b> First demo in <b>7 business days</b>, down from 2.5–3 weeks.</span></div>
+          </div>
+          <p class="cap">Measure cards, option cards (the chosen one gets a navy gradient and blue border), quote cards that flip to their theme on hover or focus, a callout with a blue rule, and a result row with a gold star. Copy from the case study.</p>
+        </section>
+
+        <section id="data">
+          <p class="eyebrow">Charts and tallies</p>
+          <h2>Thin lines on dark, labels at the tips</h2>
+          <div class="board col" id="charts">
+            <div class="chart">
+              <div class="hrow"><span class="hl">Before</span><span class="track"><span class="bar dim" style="--w:80%"></span><span class="end dim" style="left:80%">dim</span></span></div>
+              <div class="hrow"><span class="hl">The problem</span><span class="track"><span class="bar bad" style="--w:30%"></span><span class="end bad" style="left:30%">bad</span></span></div>
+              <div class="hrow"><span class="hl">The fix</span><span class="track"><span class="bar ok" style="--w:60%"></span><span class="end ok" style="left:60%">ok</span></span></div>
+            </div>
+            <div>
+              <div class="vrow"><span class="hl">Pop-up by the Face &amp; Voice tab</span><span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>2 of 8</b></div>
+              <div class="vrow win"><span class="hl">Alert widget at the top of Home</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><b>6 of 8</b></div>
+            </div>
+            <div>
+              <div class="obar before"><span style="--w:100%"></span><em>2.5–3 weeks</em></div>
+              <div class="obar after"><span style="--w:47%"></span><em>7 business days</em></div>
+            </div>
+          </div>
+          <p class="cap">Bars are 3px (5px for the bad one) and draw in when they scroll into view. Tallies are eight dots: grey when filled, blue on the winner, dashed for asked-but-not-yet. Before and after bars put the old number struck through above the new one. The tally and before/after bars carry the case study's own numbers; the first chart shows the three bar tones.</p>
+        </section>
+
+        <section id="screens">
+          <p class="eyebrow">Screens and notes</p>
+          <h2>Dimmed until you look, annotated in my hand</h2>
+          <div class="board">
+            <div class="frame" tabindex="0">
+              <div class="chrome"><i></i><i></i><i></i><span>driftwood.sh/dashboard</span></div>
+              <span class="shot"><img src="../assets/case-studies/driftwood-retention/shots/before-face/8a-home-check-in.jpg" alt="The Driftwood dashboard home with a check-in card" loading="lazy" />
+                <span class="note-dot" style="left:9%;top:40%"></span><span class="note" style="left:44%;top:12%;max-width:none">Reduced 12 tabs to 6 focused tabs</span></span>
+            </div>
+          </div>
+          <p class="cap">Screens sit in browser chrome at <code>brightness(.42) saturate(.6)</code> and come to full colour on hover or focus. Clicking opens the full-screen viewer, with an Interaction / Iterations switch, a strip of thumbnails and a before/after wipe. Notes are Madhu Hand in pink, joined to their spot by a dotted pink line. App screens use the site's own iPhone bezel instead of browser chrome.</p>
+        </section>
+
+        <section id="source">
+          <p class="eyebrow">Source</p>
+          <h2>Where these values live</h2>
+          <table>
+            <tr><th>What</th><th>File</th></tr>
+            <tr><td>Tokens and component CSS</td><td><code>walkthrough.js</code>, the <code>CSS()</code> block</td></tr>
+            <tr><td>Icons</td><td><code>walkthrough.js</code>, <code>ICONS</code></td></tr>
+            <tr><td>iPhone bezel</td><td><code>build.js</code>, <code>phoneFrame</code> and <code>PHONE_CSS</code></td></tr>
+            <tr><td>Pages built with it</td><td>Driftwood retention, Spotify Mix (<code>"template": "walkthrough"</code> in the case JSON)</td></tr>
+          </table>
+          <p class="note-s">This page is a copy written by hand. If a value in <code>walkthrough.js</code> changes, update it here as well.</p>
+        </section>
+      </main>
+    </div>
+    <script>
+      (() => {
+        /* nav: mark the section in view (same scrollspy as the other showcases) */
+        const links = Array.from(document.querySelectorAll('nav.side a[href^="#"]'));
+        const sections = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+        const setCurrent = () => {
+          const probe = innerHeight * 0.33;
+          let current = sections[0];
+          for (const s of sections) if (s.getBoundingClientRect().top <= probe) current = s;
+          if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) current = sections[sections.length - 1];
+          links.forEach((a) => {
+            const on = a.getAttribute('href') === '#' + current.id;
+            a.classList.toggle('is-current', on);
+            on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current');
+          });
+        };
+        addEventListener('scroll', setCurrent, { passive: true });
+        addEventListener('resize', setCurrent, { passive: true });
+        setCurrent();
+
+        /* icons: the template's own paths */
+        const ICONS = {
+          prev: 'M15 6 L9 12 L15 18', next: 'M9 6 L15 12 L9 18',
+          back: 'M19 12 L5 12 M11 6 L5 12 L11 18', arrow: 'M5 12 L19 12 M13 6 L19 12 L13 18',
+          external: 'M7 17 L17 7 M9 7 L17 7 L17 15', swap: 'M9 7 L4 12 L9 17 M15 7 L20 12 L15 17',
+          check: 'M5 12.25 L9.5 16.75 L19 7.25', edit: 'M4.5 19.5 L5.5 15.5 L16.5 4.5 L19.5 7.5 L8.5 18.5 Z',
+          plus: 'M12 5 L12 19 M5 12 L19 12',
+          pointer: 'M6.5 3.5 L6.5 18.5 L10.1 15.1 L12.5 20.5 L14.8 19.5 L12.4 14.1 L17.5 14.1 Z',
+          star: 'M12 3.86 L14.29 9.7 L20.56 10.08 L15.71 14.06 L17.29 20.14 L12 16.76 L6.71 20.14 L8.29 14.06 L3.44 10.08 L9.71 9.7 Z'
+        };
+        document.getElementById('icon-grid').innerHTML = Object.entries(ICONS).map(([n, d]) =>
+          `<figure><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><figcaption>${n}</figcaption></figure>`).join('');
+
+        /* the switch */
+        const tabs = document.getElementById('tabs');
+        tabs.querySelectorAll('button').forEach((b, i, all) => b.addEventListener('click', () => {
+          tabs.style.setProperty('--i', i);
+          all.forEach((x) => x.setAttribute('aria-selected', x === b));
+        }));
+
+        /* the curve */
+        const ease = document.getElementById('ease');
+        document.getElementById('ease-go').addEventListener('click', () => ease.classList.toggle('go'));
+
+        /* charts draw once they're in view */
+        const charts = document.getElementById('charts');
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver((es, io) => es.forEach((e) => { if (e.isIntersecting) { charts.classList.add('in'); io.disconnect(); } }), { threshold: 0.3 }).observe(charts);
+        } else charts.classList.add('in');
+      })();
+    </script>
+  </body>
+</html>
