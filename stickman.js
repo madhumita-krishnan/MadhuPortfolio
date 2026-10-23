@@ -866,7 +866,6 @@
   /* her ask (2026-10-23, "the wave is spazzy. smile and only wave one hand"): frames 2/5 and 3/4 are
      DIFFERENT hands with the body turned opposite ways, so mixing them flipped her back and forth.
      Only 3↔4 now: one hand, one stance, both smiling, unhurried. */
-  var CART = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [6, 1], [5, 1], [11], [3, 1], [2, 1], [1, 1], [14]];   /* [frame, mirror] — a full roll */
   /* x3 (2026-10-23): frames 3-5 of idle-wave-sign-x3 are the one hand, one stance, smiling; ping-pong them */
   var WAVE_T = [[3, .25], [4, .25], [5, .35], [4, .25], [3, .25], [4, .25], [5, .6], [4, .4], [3, .4]];
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
@@ -910,7 +909,7 @@
           case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
           case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: Math.sin(Math.PI * ct) * .5 };
           case 'dance': return { s: 'dance-x3', k: Math.min(47, Math.floor(ct * 48)) };
-          case 'cartwheel': { var e = CART[Math.min(15, Math.floor(ct * 16))]; return { s: 'cartwheel3', k: e[0], flip: !!e[1] }; }   // still the 15-frame roll: both x3 renders failed (limbs clipped / off-model)
+          case 'cartwheel': return { s: 'cartwheel-x3', k: Math.min(29, Math.floor(ct * 30)) };   // 30 frames, one roll, mirroring baked into the render
           case 'bow': return { s: 'star-bow-x3', k: [9, 10, 11, 12, 12, 12, 11, 10, 13, 14][Math.min(9, Math.floor(ct * 10))] };
         }
         return { s: 'idle-wave-sign', k: 0 }; }
