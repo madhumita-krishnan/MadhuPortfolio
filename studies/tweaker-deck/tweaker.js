@@ -126,7 +126,13 @@
     var out = el('div', { class: 'tw-out' });
     var outText = el('textarea', { 'aria-label': 'Values to send back', spellcheck: 'false' });
     out.appendChild(outText);
+    /* Save (her ask 2026-10-23: "I made changes on the sliders. I need a save button"): only when the
+       page passes save(values) — e.g. a POST to the local dev server that writes them into the source */
+    var saveBtn = cfg.save ? el('button', { class: 'tw-btn', type: 'button', text: 'Save', title: 'Write these values into the site', onclick: function () {
+      Promise.resolve().then(function () { return cfg.save(JSON.parse(JSON.stringify(v))); }).then(function () { toast('Saved into the site'); }, function () { toast('Could not save. Is the dev server running?'); });
+    } }) : null;
     var acts = el('div', { class: 'tw-acts' }, [
+      saveBtn,
       el('button', { class: 'tw-btn', type: 'button', text: 'Copy values', title: 'Paste these back into the chat to bake them in', onclick: copy }),
       el('button', { class: 'tw-btn', type: 'button', text: 'Paste values', onclick: function () { out.classList.toggle('on'); outText.value = ''; outText.placeholder = 'Paste a values block here'; outText.focus(); } }),
       abBtn,

@@ -138,7 +138,32 @@ function handleNote(req, res) {
   });
 }
 
+/* /__tweak — the tweakers' Save button (localhost only). POST {name, values} merges one tweaker's
+   values into data/tweaks.json, which build.js bakes in as that visual's defaults; GET returns the file
+   so a tweaker opens on what was saved. Names are slugs, values plain numbers/strings/booleans. */
+const TWEAKS = path.join(ROOT, 'data', 'tweaks.json');
+function handleTweak(req, res) {
+  const loop = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  if (!loop) { res.writeHead(403); return res.end('localhost only'); }
+  const all = () => { try { return JSON.parse(fs.readFileSync(TWEAKS, 'utf8')); } catch (e) { return {}; } };
+  if (req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify(all())); }
+  let body = '';
+  req.on('data', c => { body += c; if (body.length > 2e4) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const { name, values } = JSON.parse(body);
+      if (!/^[a-z0-9-]+$/.test(name) || !values || typeof values !== 'object') throw new Error('bad request');
+      const clean = {};
+      for (const [k, v] of Object.entries(values)) if (/^[a-zA-Z0-9_]+$/.test(k) && ['number', 'string', 'boolean'].includes(typeof v)) clean[k] = v;
+      const t = all(); t[name] = clean;
+      fs.writeFileSync(TWEAKS, JSON.stringify(t, null, 2) + '\n');
+      res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true }));
+    } catch (e) { res.writeHead(400); res.end(String(e.message)); }
+  });
+}
+
 http.createServer((req, res) => {
+  if (req.url === '/__tweak' && (req.method === 'POST' || req.method === 'GET')) return handleTweak(req, res);
   if (req.method === 'POST' && req.url === '/__edit') return handleEdit(req, res);
   if (req.method === 'POST' && req.url === '/__cursor') return handleCursor(req, res);
   if (req.method === 'POST' && req.url === '/__note') return handleNote(req, res);

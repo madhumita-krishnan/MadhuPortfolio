@@ -172,6 +172,15 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
 .phone-btn.camera{top:36%;height:4.6%}
 @media (max-width:760px){.phone-media{max-width:178px}}`;
 
+/* the tweakers' saved values (data/tweaks.json, written by the dev server's /__tweak when she presses
+   Save) become each visual's defaults. Missing file = the hand-set defaults. */
+const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'tweaks.json'), 'utf8')); } catch (e) { return {}; } })();
+function deckTweaks() {
+  const t = TWEAKS['case-deck']; if (!t) return '';
+  const u = { card: ['--deck-card', 'px'], gap: ['--deck-gap', 'px'], title: ['--deck-title', 'px'], stagger: ['--deck-stagger', '%'], side: ['--deck-side', ''], radius: ['--deck-radius', 'px'], bg: ['--deck-bg', ''] };
+  const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k][0] + ':' + v + u[k][1]).join(';');
+  return decl ? '.deck-sec{' + decl + '}' : '';
+}
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -911,13 +920,14 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   transition:background var(--motion-base) var(--ease-standard)}
 .brand:hover{background:var(--ink-blue)}
 
-/* THE WALL ROLLS IN (her ask 2026-10-23; it used to rise from behind an undrawn line).
-   Each mark rolls in from the left like a coin: rotation is matched to distance travelled
-   (360deg over 140px, about a 44px wheel) so it rolls rather than slides, and back.out lets
-   it roll a hair past its spot and rock back. GSAP drives it (vendor/gsap.min.js, which
-   app.js loads only when the wall nears view). .gs-roll holds the marks hidden until GSAP
-   takes over, and app.js adds it only when motion is allowed, so no-JS and reduced motion
-   simply show the wall. The slot no longer clips: a clipped slot would hide the roll. */
+/* THE WALL ARRIVES AS WISPS OF DOTS (her ask 2026-10-23, after the coin roll: "make the logos roll
+   in like whisp dots"). Each mark is sampled from its own mask into square dots that drift in from
+   the left on curling paths, settle into the letterforms, then hand over to the crisp masked logo.
+   GSAP drives the timing (vendor/gsap.min.js, fetched only when the wall nears view); one canvas over
+   the row (.brands-wisp) draws every dot. .gs-roll holds the marks hidden until then, and app.js adds
+   it only when motion is allowed, so no-JS and reduced motion simply show the wall. */
+.brands-row{position:relative}
+.brands-wisp{position:absolute;pointer-events:none;z-index:1}
 .brand-slot{display:block;line-height:0}
 /* display:block is load-bearing: inside a slot .brand is an inline span, where height:38px
    does not apply and the mark collapses to nothing */
@@ -936,6 +946,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
 /* ------------------------------------------------ the deck (deck.html preview, see deckHTML) */
+${deckTweaks()}
 .deck-sec{max-width:none;padding-left:0;padding-right:0}
 .deck-sec .section-title{max-width:1240px;margin-left:auto;margin-right:auto;padding:0 calc(var(--space)*6)}
 /* every dial reads a --deck-* override first, which the tweaker (studies/tweaker-deck/) sets on :root */
@@ -986,6 +997,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
     0 1px 3px rgba(30,54,52,.10)}
 .w-chip.glass::after{opacity:1}
 .w-tags{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
+/* the tech stack (her ask 2026-10-23: "a tech stack of all the things I used, the language it was coded
+   in, if I used GitHub"), from site.json work.projects[].stack — only what the repos and case studies verify */
+.w-stack{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:calc(var(--space)*2) 0 0;padding:0}
+.w-stack li{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.02em;line-height:1.2;color:var(--text-secondary);
+  border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 11px}
 @media (max-width:760px){.wproject{grid-template-columns:1fr;gap:calc(var(--space)*4);margin-bottom:calc(var(--space)*9)}
   .wproject .project-media-wrap{order:-1}}
 .project-media-wrap{display:flex;justify-content:center}
@@ -1764,20 +1780,58 @@ function makeJS() {
     navW.addEventListener('focusin',()=>navW.classList.remove('nav-hidden'));
   }
 
-  /* the client logos roll in (see .gs-roll). GSAP is fetched only when the wall nears view;
-     if it never arrives, the marks are simply shown. */
+  /* the client logos arrive as wisps of dots (see .brands-wisp). window.__wisp holds every dial so the
+     local tweaker (studies/tweaker-logos/) can drive it; a 'tweak' event updates it and replays. */
   const brandRow=document.querySelector('.brands-row');
   if(brandRow&&!rmActive()&&'IntersectionObserver' in window){
+    const W=window.__wisp=Object.assign({step:3,dot:1.6,scatter:170,curl:36,dur:1.7,stagger:.11,spread:.45,lift:.6},${JSON.stringify(TWEAKS['logo-wisps'] || {})},window.__wisp||{});
+    const marks=[...brandRow.querySelectorAll('.brand')],PAD=220;
+    const hide=()=>marks.forEach(b=>{b.style.transition='opacity .6s ease';b.style.opacity='0'});
     brandRow.classList.add('gs-roll');
-    const show=()=>brandRow.classList.remove('gs-roll');
+    let cv=null,tl=null,data=null;
+    /* every dot of a mark: its mask drawn "contain" into the mark's own box, read back on a grid */
+    const sample=b=>new Promise(res=>{
+      const m=getComputedStyle(b).getPropertyValue('--logo').match(/url\\(["']?([^"')]+)/);if(!m)return res(null);
+      const img=new Image();img.onerror=()=>res(null);img.onload=()=>{
+        const r=b.getBoundingClientRect(),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height)),c=document.createElement('canvas');c.width=w;c.height=h;
+        const x=c.getContext('2d'),k=Math.min(w/img.naturalWidth,h/img.naturalHeight),dw=img.naturalWidth*k,dh=img.naturalHeight*k;
+        x.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);const D=x.getImageData(0,0,w,h).data,pts=[];
+        for(let yy=0;yy<h;yy+=W.step)for(let xx=0;xx<w;xx+=W.step)if(D[(yy*w+xx)*4+3]>110)pts.push(xx,yy);
+        res({b,pts,col:getComputedStyle(b).backgroundColor,rnd:pts.map(()=>Math.random())});};img.src=m[1];});
+    const run=()=>{
+      if(tl)tl.kill();if(cv)cv.remove();hide();brandRow.classList.remove('gs-roll');
+      const rr=brandRow.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
+      cv=document.createElement('canvas');cv.className='brands-wisp';cv.setAttribute('aria-hidden','true');
+      Object.assign(cv.style,{left:-PAD+'px',top:-PAD+'px',width:rr.width+PAD*2+'px',height:rr.height+PAD*2+'px'});
+      cv.width=(rr.width+PAD*2)*dpr;cv.height=(rr.height+PAD*2)*dpr;brandRow.appendChild(cv);
+      const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+      const ms=data.filter(Boolean).map(d=>{const r=d.b.getBoundingClientRect();return Object.assign({},d,{ox:r.left-rr.left+PAD,oy:r.top-rr.top+PAD,p:0,f:1})});
+      const draw=()=>{ctx.clearRect(0,0,cv.width,cv.height);
+        for(const m of ms){if(!m.f||!m.p)continue;ctx.fillStyle=m.col;
+          for(let i=0,n=m.pts.length;i<n;i+=2){const r=m.rnd[i>>1],d=r*W.spread,q=Math.min(1,Math.max(0,(m.p-d)/(1-W.spread)));if(!q)continue;
+            const e=1-Math.pow(1-q,3),tx=m.ox+m.pts[i],ty=m.oy+m.pts[i+1],ph=r*6.283,
+              sx=tx-W.scatter*(.35+.65*((r*7.31)%1)),sy=ty+(((r*3.17)%1)-.5)*W.scatter*W.lift,wob=Math.sin(q*Math.PI)*W.curl*(1-e*.6);
+            const x=sx+(tx-sx)*e+Math.cos(ph)*wob*.5,y=sy+(ty-sy)*e+Math.sin(ph+q*4)*wob,s=W.dot*(1+(1-e)*.7);
+            ctx.globalAlpha=Math.min(1,q*2.2)*(.5+.5*e)*m.f;ctx.fillRect(x-s/2,y-s/2,s,s);}}
+        ctx.globalAlpha=1;};
+      tl=gsap.timeline({onUpdate:draw,onComplete:()=>{cv&&cv.remove();cv=null}});
+      ms.forEach((m,i)=>{
+        tl.to(m,{p:1,duration:W.dur,ease:'none'},i*W.stagger);
+        /* hand-over: the crisp logo fades up as its dots fade out */
+        tl.add(()=>{m.b.style.opacity=''},i*W.stagger+W.dur-.15);
+        tl.to(m,{f:0,duration:.5,ease:'power1.out'},i*W.stagger+W.dur-.1);
+      });
+    };
+    const go=()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()});
     const bio=new IntersectionObserver(es=>{
       if(!es.some(e=>e.isIntersecting))return;bio.disconnect();
+      if(window.gsap)return go();
       const sc=document.createElement('script');sc.src='vendor/gsap.min.js?v=${BUILD_V}';
-      sc.onload=()=>{gsap.fromTo(brandRow.querySelectorAll('.brand'),{x:-140,rotation:-360,opacity:0},
-        {x:0,rotation:0,opacity:1,duration:1.15,ease:'back.out(1.5)',stagger:.09,clearProps:'transform,opacity'});show();};
-      sc.onerror=show;document.head.appendChild(sc);
+      sc.onload=go;sc.onerror=()=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='')};document.head.appendChild(sc);
     },{rootMargin:'0px 0px -12% 0px'});
     bio.observe(brandRow);
+    addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
+    addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
   }
 
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
@@ -2169,8 +2223,8 @@ function svgFilters() {
 function navBar(kind) {
   const home = kind === 'home';
   const links = home
-    ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
-    : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
+    ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
+    : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="edge-fade top" aria-hidden="true"></div><div class="edge-fade bottom" aria-hidden="true"></div>
 <div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
@@ -2385,6 +2439,7 @@ function renderHome(deck = false) {
     <div class="w-copy">
       <h3 class="w-outcome">${typo(p.outcome)}</h3>
       <p class="w-chiprow"><span class="w-chip glass">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
+      ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
     <div class="project-media-wrap">${projectMedia(p)}</div>
   </a>`).join('\n')}
@@ -2408,6 +2463,7 @@ function renderHome(deck = false) {
         <h3 class="dcard-title">${esc(p.name)}</h3>
         <p class="dcard-outcome">${typo(p.outcome)}</p>
         <p class="w-tags">${esc(p.tags)}</p>
+        ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
       </div>
     </a>`).join('')}
   </div>
@@ -2500,7 +2556,7 @@ function renderHome(deck = false) {
         data-more="${esc(site.about.moreLabel)}" data-less="${esc(site.about.lessLabel)}"
         data-hand="${esc(site.about.moreLabel.replace(/[^ '!,.A-Za-z’]/g, '').trim().toUpperCase())}">${esc(site.about.moreLabel)}</button>
       ${eduHTML}
-      <a class="btn outline" href="assets/resume.pdf" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
+      <a class="btn outline" href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
 </section>`;
@@ -2776,7 +2832,9 @@ function lintIcons(html, page) {
   if (bad.length) throw new Error(`${page}: icon characters inside buttons — draw them as SVG (see ICONS in walkthrough.js):\n  ` + bad.join('\n  '));
   return html;
 }
-fs.writeFileSync(path.join(DIST, 'index.html'), lintIcons(renderHome(), 'index.html'));
+/* locally the home page carries the tweaker receiver for the logo wisps (studies/tweaker-logos/); never on Vercel */
+const homePage = lintIcons(renderHome(), 'index.html');
+fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* preview only: the home page with the work list as a sideways deck (see deckHTML) */
 /* locally deck.html also carries the tweaker receiver; never on Vercel (process.env.VERCEL is set in its
    builds): the receiver trusts any window that posts to it */

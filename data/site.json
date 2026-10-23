@@ -75,33 +75,6 @@
     "title": "Selected Projects",
     "projects": [
       {
-        "slug": "vantage",
-        "name": "Vantage",
-        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them.",
-        "tags": "In research · Web · Open source",
-        "media": {
-          "type": "landscape-video",
-          "src": "assets/projects/vantage.mp4",
-          "poster": "assets/projects/vantage-poster.jpg",
-          "ar": "1064/672",
-          "alt": "The Vantage console — creating a private share and reading usability results"
-        }
-      },
-      {
-        "slug": "driftwood",
-        "name": "Driftwood",
-        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
-        "tags": "Shipped · Web · Strategy + code",
-        "media": {
-          "type": "browser",
-          "src": "assets/case-studies/driftwood/home.mp4",
-          "poster": "assets/case-studies/driftwood-home-poster.jpg",
-          "url": "driftwood.sh",
-          "tab": "driftwood · ship a custom demo",
-          "alt": "The new driftwood.sh homepage in motion"
-        }
-      },
-      {
         "slug": "driftwood-retention",
         "name": "Driftwood onboarding",
         "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks.",
@@ -115,7 +88,61 @@
           "poster": "assets/case-studies/driftwood-retention/home-thumb-poster.jpg",
           "autoplay": true,
           "ar": "1280/800"
-        }
+        },
+        "stack": [
+          "React",
+          "TypeScript",
+          "Vite",
+          "Tailwind CSS",
+          "Vercel",
+          "GitHub",
+          "Claude Code"
+        ]
+      },
+      {
+        "slug": "vantage",
+        "name": "Vantage",
+        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them.",
+        "tags": "In research · Web · Open source",
+        "media": {
+          "type": "landscape-video",
+          "src": "assets/projects/vantage.mp4",
+          "poster": "assets/projects/vantage-poster.jpg",
+          "ar": "1064/672",
+          "alt": "The Vantage console — creating a private share and reading usability results"
+        },
+        "stack": [
+          "JavaScript",
+          "Node.js",
+          "HTML",
+          "CSS",
+          "Docker",
+          "GitHub",
+          "Claude Code"
+        ]
+      },
+      {
+        "slug": "driftwood",
+        "name": "Driftwood",
+        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
+        "tags": "Shipped · Web · Strategy + code",
+        "media": {
+          "type": "browser",
+          "src": "assets/case-studies/driftwood/home.mp4",
+          "poster": "assets/case-studies/driftwood-home-poster.jpg",
+          "url": "driftwood.sh",
+          "tab": "driftwood · ship a custom demo",
+          "alt": "The new driftwood.sh homepage in motion"
+        },
+        "stack": [
+          "React",
+          "TypeScript",
+          "Vite",
+          "Tailwind CSS",
+          "Vercel",
+          "GitHub",
+          "Claude Code"
+        ]
       },
       {
         "slug": "spotify-mix",
@@ -128,7 +155,11 @@
           "poster": "assets/projects/spotify-screen-poster.jpg",
           "autoplay": true,
           "alt": "The redesigned Spotify Mix screen, animating through a transition edit"
-        }
+        },
+        "stack": [
+          "Figma",
+          "Miro"
+        ]
       },
       {
         "slug": "stack",
@@ -139,7 +170,13 @@
           "type": "phone-image",
           "src": "assets/case-studies/stack/raw/01-home-top.png",
           "alt": "Stack home screen — ask before you spend, with quick insights"
-        }
+        },
+        "stack": [
+          "Figma",
+          "Claude Code",
+          "Claude Design",
+          "Miro"
+        ]
       },
       {
         "slug": "message-testing",
@@ -151,7 +188,10 @@
           "src": "assets/projects/atlantic.mp4",
           "poster": "assets/projects/atlantic-poster.jpg",
           "alt": "Atlantic Health proton therapy campaign"
-        }
+        },
+        "stack": [
+          "Adobe Creative Suite"
+        ]
       }
     ]
   },
