@@ -972,7 +972,10 @@ ${deckTweaks()}
   @keyframes deck-ride{0%{transform:translateY(var(--stagger)) scale(var(--side))}50%{transform:none}100%{transform:translateY(calc(var(--stagger) * -1)) scale(var(--side))}}
 }
 @media (prefers-reduced-motion:reduce){.dcard{animation:none}}
-@media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}}   /* narrow enough that both neighbours peek in */
+@media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}   /* narrow enough that both neighbours peek in */
+  /* a phone-width square can't hold the screen, the copy AND the stack, so the card grows to fit
+     and the screen gets a fixed slot */
+  .dcard{aspect-ratio:auto;grid-template-rows:56vw auto;align-self:flex-start}}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -1780,6 +1783,10 @@ function makeJS() {
     navW.addEventListener('focusin',()=>navW.classList.remove('nav-hidden'));
   }
 
+  /* one shared loader for the vendored GSAP files: the logo wisps and the phone work-list focus both
+     ask for GSAP, and whichever asks first fetches it; the other waits on the same promise */
+  const vendorJS=f=>(window.__vjs=window.__vjs||{})[f]||(window.__vjs[f]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='vendor/'+f+'?v=${BUILD_V}';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)}));
+
   /* the client logos arrive as wisps of dots (see .brands-wisp). window.__wisp holds every dial so the
      local tweaker (studies/tweaker-logos/) can drive it; a 'tweak' event updates it and replays. */
   const brandRow=document.querySelector('.brands-row');
@@ -1825,13 +1832,32 @@ function makeJS() {
     const go=()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()});
     const bio=new IntersectionObserver(es=>{
       if(!es.some(e=>e.isIntersecting))return;bio.disconnect();
-      if(window.gsap)return go();
-      const sc=document.createElement('script');sc.src='vendor/gsap.min.js?v=${BUILD_V}';
-      sc.onload=go;sc.onerror=()=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='')};document.head.appendChild(sc);
+      vendorJS('gsap.min.js').then(go,()=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='')});
     },{rootMargin:'0px 0px -12% 0px'});
     bio.observe(brandRow);
     addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
+  }
+
+  /* PHONES: the work list focuses on one project at a time (her ask 2026-10-23: "make the scroll
+     between each selected project more focused, use gsap to make it more fluid"). ScrollTrigger RIDES
+     the scroll, it never steers it (her no-scroll-jacking rule): each card is full size and bright as
+     it crosses the middle of the screen, and eases back, smaller and dimmer, on the way in and out.
+     scrub smooths it so the hand-off between projects glides. The card's own .fade entrance is dropped
+     here, since GSAP owns its opacity and transform. */
+  const phoneList=matchMedia('(max-width:760px)');
+  const cardsM=[...document.querySelectorAll('.wproject')];
+  if(phoneList.matches&&cardsM.length&&!rmActive()){
+    vendorJS('gsap.min.js').then(()=>vendorJS('ScrollTrigger.min.js')).then(()=>{
+      gsap.registerPlugin(ScrollTrigger);
+      cardsM.forEach(c=>{
+        c.classList.remove('fade');c.style.transition='background var(--motion-base) var(--ease-standard)';
+        gsap.timeline({scrollTrigger:{trigger:c,start:'top bottom',end:'bottom top',scrub:.7}})
+          .fromTo(c,{opacity:.28,scale:.9,y:48},{opacity:1,scale:1,y:0,ease:'power2.out',duration:.45})
+          .to(c,{opacity:1,scale:1,y:0,duration:.1})
+          .to(c,{opacity:.28,scale:.9,y:-48,ease:'power2.in',duration:.45});
+      });
+    }).catch(()=>{});
   }
 
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
@@ -2812,9 +2838,9 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    rather than CDN'd so the site stays a folder of files with no third origin; nobody
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
-for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js']) {
+for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']) {
   const src = path.join(ROOT, 'vendor', f);
-  if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing (three for fish.js, gsap for the logo roll)`);
+  if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing (three for fish.js, gsap + ScrollTrigger for the logo wisps and the phone work list)`);
   fs.mkdirSync(path.join(DIST, 'vendor'), { recursive: true });
   fs.copyFileSync(src, path.join(DIST, 'vendor', f));
 }
