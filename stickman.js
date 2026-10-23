@@ -835,27 +835,31 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
-  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: 113 };
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: 113, sk: 0, want: 0, skT: 0 };
   function loadClay() {
     if (!CLAY.on) return;
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
     var dir = base.replace(/stick\.js.*$/, '') + 'assets/clay/';
     var ver = (base.match(/\?v=[^&#]*/) || [''])[0];   // the build's cache-buster, so a re-rendered frame isn't served stale
-    fetch(dir + 'clay.json').then(function (r) { return r.json(); }).then(function (m) {
+    fetch(dir + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (m) {
       CLAY.man = m; var n = 0, total = 0;
       Object.keys(m).forEach(function (k) { if (k[0] === '_') return; m[k].forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
         im.onload = function () { if (++n === total) { CLAY.ready = true; draw(performance.now()); start(); } }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
       /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
-      if (m._smile) { var sm = new Image(); sm.src = dir + m._smile + ver; CLAY.img.smile = sm; }   // same box as idle-wave-sign-0, only the face differs
+      if (m._smile) CLAY.img.smile = [].concat(m._smile).map(function (n) { var sm = new Image(); sm.src = dir + n + ver; return sm; });   // same box as idle-wave-sign-0, only the face differs
     }).catch(function () { CLAY.on = false; });
   }
   function onClay(p) { return Math.abs(p.x - fig.x) < 34 && p.y > fig.y - CLAY.H - 6 && p.y < fig.y + 6; }
   (window.requestIdleCallback || function (f) { setTimeout(f, 600); })(loadClay);
-  var WAVE_T = [[2, .24], [3, .26], [4, .5], [5, .5], [4, .5], [5, .5], [3, .28], [2, .22]];   /* slower, pauses between waves */
+  /* her ask (2026-10-23, "the wave is spazzy. smile and only wave one hand"): frames 2/5 and 3/4 are
+     DIFFERENT hands with the body turned opposite ways, so mixing them flipped her back and forth.
+     Only 3↔4 now: one hand, one stance, both smiling, unhurried. */
+  var WAVE_T = [[3, .5], [4, .7], [3, .5], [4, 1.3]];
   var CART = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [6, 1], [5, 1], [11], [3, 1], [2, 1], [1, 1], [14]];   /* [frame, mirror] — a full roll */
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
   /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
      lifted; rot in radians about the anchor; flip mirrors on top of dir */
+  var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
@@ -865,11 +869,11 @@
     switch (st) {
       case 'move':
         if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
-        if (sp > 230) return { s: 'run3', k: Math.floor(CLAY.dist / 9) % 16 };
+        if (sp > 230) return { s: 'run3', k: Math.floor(CLAY.dist / 9) % 16, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
         return { s: 'walk2', k: Math.floor(CLAY.dist / 5.5) % 16 };
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide', k: 3, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
-        return { s: 'jump-land-slide', k: vy < -380 ? 1 : vy < -90 ? 2 : vy < 120 ? 3 : 4 }; }
+        return { s: 'jump-land-slide', k: vy < -380 ? 1 : vy < -90 ? 2 : vy < 120 ? 3 : 4, mid: true }; }
       case 'hang': {
         var h = fig.hang, hs = o.hands || [], hx = 0, hy = 0, n = 0;
         hs.forEach(function (q) { if (q) { hx += q.x; hy += q.y; n++; } });
@@ -900,13 +904,26 @@
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
     if (!f) return false;
     var im = CLAY.img[f.f]; if (!im || !im.complete) return false;
-    /* re-tested per draw, not just per mousemove, so she also smiles when SHE walks under a still cursor */
-    if (!touchMode && !CLAY.away && onClay(mouse) && f.f === 'idle-wave-sign-0.png' && CLAY.img.smile && CLAY.img.smile.naturalWidth) im = CLAY.img.smile;   // naturalWidth, not complete: a missing file is "complete" too, and drawImage would throw
+    /* hover smile, stepped like clay on the 12fps clock: neutral → soft smile → eyes-closed grin,
+       and back down on leave. Standing frame only; re-tested per draw, so she also smiles when SHE
+       walks under a still cursor. naturalWidth, not complete: a missing file is "complete" too. */
+    var sl = CLAY.img.smile;
+    if (sl && f.f === 'idle-wave-sign-0.png') {
+      CLAY.want = !touchMode && !CLAY.away && onClay(mouse) ? sl.length : 0;
+      if (CLAY.want !== CLAY.sk && !CLAY.skT) CLAY.skT = setTimeout(function () {
+        CLAY.skT = 0; CLAY.sk += CLAY.want > CLAY.sk ? 1 : CLAY.want < CLAY.sk ? -1 : 0;
+        if (!raf) draw(performance.now());
+      }, 83);
+      var si = sl[CLAY.sk - 1]; if (si && si.naturalWidth) im = si;
+    } else CLAY.sk = 0;
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
     if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, 0); }
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
-    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }
+    /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
+       feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
+    else if (pk.mid) { ctx.translate(px, groundY - CLAY.H * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5); }
+    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
   }
