@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clay Me Motion Reel</title>
+<!-- PREVIEW ONLY. Clay Madhu (Flora, from her photo) performing every motion the stick figure
+     has, as stop-motion frames cut from nine Flora pose sheets. The site's stick figure is
+     untouched until she approves this. render(t) is a pure function of time so it scrubs and
+     records frame-exact. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+  :root { --bg: #07080b; --ink: #f3f4f6; --muted: #9aa0ad; --accent: #ffd166; --font: 'Plus Jakarta Sans', system-ui, sans-serif }
+  * { box-sizing: border-box }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--font) }
+  main { max-width: 1320px; margin: 0 auto; padding: 18px max(16px, 2vw) 40px; display: grid; gap: 16px }
+  h1 { margin: 0; font-size: 20px } p.sub { margin: 0; color: var(--muted) }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+  .b { font: 600 13px var(--font); color: #e9ebf1; background: #171a22; border: 1px solid #2a2f3b; border-radius: 8px; padding: 7px 11px; cursor: pointer }
+  .b[aria-pressed="true"] { background: #e9ebf1; color: #0d0e12 }
+  canvas { display: block; width: 100%; height: auto; border-radius: 12px; background: #0a1736 }
+  .scrub { width: 100%; accent-color: var(--accent) }
+  .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px }
+  .tile { display: grid; gap: 6px } .tile span { font: 600 13px var(--font); color: var(--ink); text-align: center } .tile small { display: block; color: var(--muted); font-weight: 400 }
+  @media (max-width: 800px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)) } }
+  body.rec main { padding-top: 0 } body.rec .hide-rec { display: none } body.rec .grid { grid-template-columns: repeat(4, minmax(0, 1fr)) }
+</style>
+<main>
+  <div class="hide-rec"><h1>Clay you, every motion</h1><p class="sub">All 15 things the stick figure does, as stop-motion clay frames. Preview only: the site's stick figure hasn't been replaced yet.</p></div>
+  <div class="bar hide-rec"><button class="b" id="play">Pause</button><button class="b" id="restart">Restart</button><button class="b" id="slow" aria-pressed="false">½ speed</button></div>
+  <canvas id="seq" width="1280" height="720" aria-label="Clay Madhu performing every motion in sequence"></canvas>
+  <input class="scrub hide-rec" id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub the reel">
+  <div class="grid" id="grid"></div>
+</main>
+<script>
+(function () {
+'use strict';
+var Q = new URLSearchParams(location.search), REC = Q.has('rec'), MODE = Q.get('mode') || 'all';
+if (REC) document.body.classList.add('rec');
+var POSES = null, IMG = {}, BOARD = {}, plate = new Image(); plate.src = 'plate.jpg';
+
+/* ------------------------------------------------------------ helpers */
+function frameAt(list, fps, t, mode) {   // stepped: stop-motion holds each frame 1/fps s
+  var n = list.length, i = Math.floor(t * fps);
+  if (mode === 'pingpong' && n > 1) { var p = i % (2 * n - 2); i = p < n ? p : 2 * n - 2 - p; } else if (mode === 'once') i = Math.min(i, n - 1); else i = i % n;
+  return list[i];
+}
+/* timed holds: [[frame, seconds], …] — lets a beat breathe (a pause between waves, a hang at
+   the top of a jump) instead of every frame getting the same 1/fps */
+/* climb2 frames: look up, crouch, jump, grab, hang, pull up, then knee and feet onto the top */
+var CLIMB = [[0, .25], [1, .2], [2, .2], [3, .2], [4, .22], [5, .3], [6, .24], [7, .2], [8, .2], [9, .22], [10, .2], [11, .27]];
+function timed(list, t, loop) {
+  var total = list.reduce(function (a, f) { return a + f[1]; }, 0), x = loop ? t % total : Math.min(t, total - 1e-6);
+  for (var i = 0; i < list.length; i++) { if (x < list[i][1]) return { k: list[i][0], i: i, lt: x }; x -= list[i][1]; }
+  return { k: list[list.length - 1][0], i: list.length - 1, lt: 0 };
+}
+/* her note: the wave was jittery — slower, with a pause at each side of the wave */
+var WAVE = [[2, .24], [3, .26], [4, .5], [5, .5], [4, .5], [5, .5], [3, .28], [2, .22]];
+/* her note: a slightly longer pause at the top of the star jump */
+var STAR = [[0, .32], [1, .7], [2, .3]];
+function starLift(st) { if (st.k !== 1) return 0; var p = st.lt; return 110 * (p < .2 ? Math.sin(p / .2 * Math.PI / 2) : p < .5 ? 1 - (p - .2) * .08 : Math.cos((p - .5) / .2 * Math.PI / 2) * .976); }
+function cartwheel(g, lt, x0, x1) {
+  var p = clamp(lt / 1.15), th = Math.floor(ease(p) * 360 / 22.5) * 22.5, r = th * Math.PI / 180, R = FH * .5;   // stepped like clay: 16 positions
+  var x = lerp(x0, x1, th / 360), y = GROUND - R;
+  if (th < 70) drawPose(g, 'cartwheel', 0, x, y, K, { anchor: 'center', rot: r });
+  else if (th > 290) drawPose(g, 'cartwheel', 6, x, y, K, { anchor: 'center', rot: r - 2 * Math.PI });
+  else drawPose(g, 'cartwheel2', 6, x, y, K, { anchor: 'center', rot: r - Math.PI });
+}
+function ease(p) { return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+function lerp(a, b, p) { return a + (b - a) * p; }
+function clamp(v) { return Math.max(0, Math.min(1, v)); }
+/* draw one pose: anchor 'feet' puts the feet baseline at (x,y); 'hands' puts the top centre
+   (where the hands grip) at (x,y); rot rotates about the anchor; dir -1 mirrors */
+function drawPose(g, sheet, k, x, y, s, o) {
+  o = o || {}; var f = POSES[sheet][k], im = IMG[sheet + '-' + k]; if (!im || !im.complete) return;
+  var ax = f.cx, ay = o.anchor === 'hands' ? 0 : o.anchor === 'center' ? f.h / 2 : f.base;
+  g.save(); g.translate(x, y); if (o.rot) g.rotate(o.rot); g.scale(s * (o.dir || 1), s);
+  g.drawImage(im, -ax, -ay);
+  var bd = BOARD[sheet + '-' + k];
+  if (bd) {   // the say-hey board: her sign, lettered in the site's type
+    g.fillStyle = '#20263a'; var fz = bd.h * .42; g.font = '800 ' + fz + 'px "Plus Jakarta Sans", sans-serif'; fz *= Math.min(1, bd.w * .82 / g.measureText('say hey!').width); g.font = '800 ' + fz.toFixed(1) + 'px "Plus Jakarta Sans", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.save(); g.translate(bd.x + bd.w / 2 - ax, bd.y + bd.h / 2 - ay); if ((o.dir || 1) < 0) g.scale(-1, 1); g.fillText('say hey!', 0, 0); g.restore();
+  }
+  g.restore();
+}
+function findBoard(key, im) {   // cream board pixels in the top of the frame → where to letter it
+  var c = document.createElement('canvas'); c.width = im.width; c.height = im.height; var g = c.getContext('2d'); g.drawImage(im, 0, 0);
+  var d = g.getImageData(0, 0, im.width, Math.round(im.height * .3)).data, x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (var y = 0; y < Math.round(im.height * .3); y++) for (var x = 0; x < im.width; x++) { var i = (y * im.width + x) * 4; if (d[i + 3] > 200 && d[i] > 205 && d[i + 1] > 195 && d[i + 2] > 160 && d[i] - d[i + 2] > 12 && d[i] - d[i + 2] < 60) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } }
+  if (x1 - x0 > 40 && y1 - y0 > 20) BOARD[key] = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+/* ------------------------------------------------------------ the stage + props */
+var W = 1280, H = 720, GROUND = 650, K = .6, FH = 420 * K;   // K: the 420px standing pose → ~250px tall, big enough to see the clay
+var BAR = { x: 760, y: 300 }, LEDGE = { x0: 905, x1: 1255, top: GROUND - 296 };
+function stage(g) {
+  g.fillStyle = '#0a1736'; g.fillRect(0, 0, W, H);
+  if (plate.complete) { g.save(); g.globalAlpha = .55; g.filter = 'blur(6px)'; g.drawImage(plate, -40, -40, W + 80, (W + 80) * 768 / 1376); g.restore(); }
+  var gr = g.createLinearGradient(0, GROUND - 30, 0, H); gr.addColorStop(0, 'rgba(10,15,30,0)'); gr.addColorStop(.25, 'rgba(12,18,36,.85)'); gr.addColorStop(1, '#0b0f1a'); g.fillStyle = gr; g.fillRect(0, GROUND - 30, W, H);
+  g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(0, GROUND, W, 2);
+  // a clay stem to hang from
+  g.save(); g.lineCap = 'round'; g.strokeStyle = '#4f6b2e'; g.lineWidth = 16; g.beginPath(); g.moveTo(BAR.x - 150, BAR.y - 4); g.quadraticCurveTo(BAR.x, BAR.y + 8, BAR.x + 150, BAR.y - 6); g.stroke();
+  g.strokeStyle = 'rgba(190,220,140,.35)'; g.lineWidth = 4; g.beginPath(); g.moveTo(BAR.x - 140, BAR.y - 9); g.quadraticCurveTo(BAR.x, BAR.y + 2, BAR.x + 140, BAR.y - 11); g.stroke(); g.restore();
+  // a big letter to climb onto, like the glyphs of her name
+  g.save(); g.fillStyle = '#e9e2d4'; g.font = '800 412px "Plus Jakarta Sans", sans-serif'; g.textBaseline = 'alphabetic'; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 18; g.shadowOffsetY = 8;
+  g.fillText('M', LEDGE.x0, GROUND + 4); g.restore();
+}
+function label(g, t1, t2) {
+  g.save(); g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect(24, 24, 360, 64, 12); g.fill();
+  g.fillStyle = '#ffd166'; g.font = '600 13px "Plus Jakarta Sans", sans-serif'; g.fillText(t2, 42, 50);
+  g.fillStyle = '#f3f4f6'; g.font = '800 24px "Plus Jakarta Sans", sans-serif'; g.fillText(t1, 42, 76); g.restore();
+}
+
+/* ------------------------------------------------------------ the sequence: every motion, in order */
+var SEQ = [
+  // [start, end, name, step(t, local p) → draw]
+  [0, 1.2, 'Idle', '1 of 15', function (g, lt) { drawPose(g, 'idle-wave-sign', frameAt([0, 1], 1.6, lt), 170, GROUND, K); }],
+  [1.2, 2.6, 'Wave hello', '2 of 15', function (g, lt) { drawPose(g, 'idle-wave-sign', timed(WAVE, lt).k, 170, GROUND, K); }],
+  [2.6, 4.0, 'Hold up the say-hey sign', '3 of 15', function (g, lt) { drawPose(g, 'idle-wave-sign', lt < .8 ? 6 : 7, 170, GROUND, K); }],
+  [4.0, 6.0, 'Walk', '4 of 15', function (g, lt) { drawPose(g, 'walk2', frameAt([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 14, lt), lerp(170, 430, lt / 2), GROUND, K); }],
+  [6.0, 7.4, 'Run', '5 of 15', function (g, lt) { drawPose(g, 'run2', frameAt([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 20, lt), lerp(440, 650, lt / 1.4), GROUND, K); }],
+  [7.4, 8.2, 'Jump', '6 of 15', function (g, lt) {
+    if (lt < .14) return drawPose(g, 'jump-land-slide', 0, 650, GROUND, K);
+    var p = (lt - .14) / .66, k = p < .35 ? 1 : p < .7 ? 2 : 3;
+    var x = lerp(650, BAR.x, ease(p)), yTop = lerp(GROUND - FH, BAR.y, ease(p)) - Math.sin(p * Math.PI) * 40;
+    drawPose(g, 'jump-land-slide', k, x, yTop + FH, K);
+  }],
+  [8.2, 8.8, 'Hang from a stem', '7 of 15', function (g, lt) { drawPose(g, 'hang-swing-climb', 0, BAR.x, BAR.y - 6, K, { anchor: 'hands' }); }],
+  [8.8, 10.4, 'Swing and pump', '8 of 15', function (g, lt) {
+    var th = .42 * Math.exp(-lt / 1.6) * Math.sin(2 * Math.PI * .85 * lt), om = Math.cos(2 * Math.PI * .85 * lt);
+    var s = Math.floor(lt * 8) / 8, ths = .42 * Math.exp(-s / 1.6) * Math.sin(2 * Math.PI * .85 * s);   // stepped like the clay
+    drawPose(g, 'hang-swing-climb', Math.abs(ths) < .08 ? 0 : (om > 0 ? 1 : 2), BAR.x, BAR.y - 6, K, { anchor: 'hands', rot: -ths });
+  }],
+  [10.4, 11.0, 'Let go and fly', '9 of 15', function (g, lt) {
+    var p = lt / .6; if (p < .8) { var q = p / .8; drawPose(g, 'hang-swing-climb', 4, lerp(BAR.x, 830, q), lerp(BAR.y + FH * .55, GROUND - FH * .45, q * q) - Math.sin(q * Math.PI) * 60, K, { anchor: 'center' }); }
+    else drawPose(g, 'jump-land-slide', 5, 830, GROUND, K);
+  }],
+  [11.0, 11.7, 'Land', '10 of 15', function (g, lt) { drawPose(g, 'jump-land-slide', lt < .3 ? 5 : 7, lerp(830, 850, clamp((lt - .3) / .4)), GROUND, K); }],
+  [11.7, 14.4, 'Climb: grab and pull up', '11 of 15', function (g, lt) {
+    var st = timed(CLIMB, lt), k = st.k, p = st.lt / CLIMB[st.i][1], gx = LEDGE.x0 + 12;
+    if (k <= 1) return drawPose(g, 'climb2', k, 860, GROUND, K);
+    if (k === 2) return drawPose(g, 'climb2', 2, lerp(860, gx - 30, p), GROUND - Math.sin(p * Math.PI * .5) * 60, K);
+    if (k <= 5) { var up = k === 5 ? 40 : k === 4 ? 14 : 0; return drawPose(g, 'climb2', k, gx - 26, LEDGE.top - up, K, { anchor: 'hands' }); }
+    drawPose(g, 'climb2', k, gx + (k - 6) * 18, LEDGE.top, K);
+  }],
+  [13.0, 13.8, 'Slide down', '12 of 15', function (g, lt) {
+    var p = clamp(lt / .55); if (p < 1) drawPose(g, 'jump-land-slide', 6, lerp(1085, 1215, p), lerp(LEDGE.top, GROUND, p), K);
+    else drawPose(g, 'jump-land-slide', 5, 1215, GROUND, K);
+  }],
+  [13.8, 15.2, 'Run back', '', function (g, lt) { drawPose(g, 'run2', frameAt([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 20, lt), lerp(1215, 560, lt / 1.4), GROUND, K, { dir: -1 }); }],
+  [15.2, 16.2, 'Celebrate: star jump', '13 of 15', function (g, lt) { var st = timed(STAR, lt); drawPose(g, 'star-bow', st.k, 560, GROUND - starLift(st), K); }],
+  [16.2, 17.4, 'Celebrate: backflip', '13 of 15', function (g, lt) { var k = frameAt([0, 1, 2, 3, 4, 5, 6, 7], 7.5, lt, 'once'), air = k >= 1 && k <= 5 ? Math.sin(clamp((lt - .13) / .7) * Math.PI) * 130 : 0; drawPose(g, 'backflip', k, 560, GROUND - air - (k >= 2 && k <= 5 ? FH * .5 : 0), K, k >= 2 && k <= 5 ? { anchor: 'center' } : null); }],
+  [17.4, 19.0, 'Celebrate: dance', '13 of 15', function (g, lt) { drawPose(g, 'dance2', frameAt([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 10, lt), 560, GROUND, K); }],
+  [19.0, 20.3, 'Celebrate: cartwheel', '13 of 15', function (g, lt) { cartwheel(g, lt, 560, 760); }],
+  [20.3, 21.8, 'Celebrate: bow', '13 of 15', function (g, lt) { drawPose(g, 'star-bow', frameAt([3, 4, 5, 5, 4, 6], 4, lt, 'once'), 760, GROUND, K); }],
+  [21.8, 23.0, 'Back to idle', '', function (g, lt) { drawPose(g, 'idle-wave-sign', frameAt([0, 1], 1.6, lt), 760, GROUND, K); }]
+];
+/* segment lengths follow the content: the wave and star jump now take longer */
+var OVR = { 'Wave hello': 3.0, 'Celebrate: star jump': 1.45, 'Climb: grab and pull up': 2.75 }, acc = 0;
+SEQ.forEach(function (s) { var d = OVR[s[2]] || (s[1] - s[0]); s[0] = acc; s[1] = acc + d; acc += d; });
+var DUR = acc;
+var seqC = document.getElementById('seq'), sg = seqC.getContext('2d');
+function render(t) {
+  if (!POSES) return;
+  stage(sg);
+  for (var i = 0; i < SEQ.length; i++) { var s = SEQ[i]; if (t >= s[0] && (t < s[1] || i === SEQ.length - 1)) { s[4](sg, Math.min(t, s[1]) - s[0]); label(sg, s[2], s[3] || 'between motions'); break; } }
+  sg.fillStyle = 'rgba(255,255,255,.5)'; sg.font = '600 12px ui-monospace, Menlo, monospace'; sg.fillText(t.toFixed(1) + ' s · stop-motion frames from 9 Flora pose sheets', 24, H - 22);
+}
+
+/* ------------------------------------------------------------ the grid: each motion on its own */
+var TILES = [
+  ['Idle', 'breathing', 'idle-wave-sign', [0, 1], 1.6, 'loop'], ['Wave hello', 'slower, pauses', 'idle-wave-sign', WAVE, 0, 'timed'], ['Say-hey sign', '', 'idle-wave-sign', [6, 6, 7, 7], 2, 'loop'],
+  ['Walk', 'new · arms swing', 'walk2', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 14, 'loop'], ['Run', 'new', 'run2', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 20, 'loop'], ['Slide', '', 'jump-land-slide', [6], 1, 'loop'],
+  ['Jump', 'crouch → apex → fall', 'jump-land-slide', [0, 1, 2, 3, 4], 6, 'loop'], ['Land', 'squat, recover', 'jump-land-slide', [4, 5, 5, 7, 7], 5, 'loop'], ['Hang + swing', 'pivots at the hands', 'hang-swing-climb', [0, 1, 0, 2], 4, 'loop'],
+  ['Let go', '', 'hang-swing-climb', [3, 4], 3, 'loop'], ['Climb', 'new · grab and pull', 'climb2', CLIMB, 0, 'timed'], ['Star jump', 'holds at the top', 'star-bow', STAR, 0, 'timed'],
+  ['Backflip', '', 'backflip', [0, 1, 2, 3, 4, 5, 6, 7], 7.5, 'loop'], ['Cartwheel', 'new · full roll', 'cartwheel-roll', [0], 1, 'loop'], ['Dance', 'new · step-touch', 'dance2', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 10, 'loop'], ['Bow', '', 'star-bow', [3, 4, 5, 4, 6], 3, 'loop']
+];
+var gridEl = document.getElementById('grid'), tiles = [];
+TILES.forEach(function (d) {
+  var w = document.createElement('div'); w.className = 'tile';
+  var c = document.createElement('canvas'); c.width = 240; c.height = 250; w.appendChild(c);
+  var l = document.createElement('span'); l.innerHTML = d[0] + (d[1] ? '<small>' + d[1] + '</small>' : ''); w.appendChild(l); gridEl.appendChild(w);
+  tiles.push({ d: d, g: c.getContext('2d') });
+});
+function renderGrid(t) {
+  if (!POSES) return;
+  tiles.forEach(function (tl) {
+    var g = tl.g, d = tl.d; g.fillStyle = '#0d1630'; g.fillRect(0, 0, 240, 250);
+    var gr = g.createLinearGradient(0, 200, 0, 250); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.35)'); g.fillStyle = gr; g.fillRect(0, 200, 240, 50);
+    if (d[2] === 'cartwheel-roll') { g.save(); g.translate(120, 228); g.scale(.36 / K, .36 / K); g.translate(-560, -GROUND); cartwheel(g, (t % 1.6), 470, 650); g.restore(); return; }
+    var tm = d[5] === 'timed' ? timed(d[3], t, true) : null, k = tm ? tm.k : frameAt(d[3], d[4], t, d[5]), f = POSES[d[2]][k], s = Math.min(.42, 200 / Math.max(f.h, 420) , 210 / f.w);
+    var hang = d[2] === 'hang-swing-climb' && k <= 4;
+    if (hang) { g.strokeStyle = '#4f6b2e'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(40, 22); g.lineTo(200, 22); g.stroke(); drawPose(g, d[2], k, 120, 22, s, { anchor: 'hands', rot: k === 1 ? -.25 : k === 2 ? .2 : 0 }); }
+    else if (d[2] === 'backflip' && k >= 2 && k <= 5) drawPose(g, d[2], k, 120, 125, s, { anchor: 'center' });
+    else drawPose(g, d[2], k, 120, 228 - (tm && d[2] === 'star-bow' ? starLift(tm) * .45 : 0), s);
+  });
+}
+
+/* ------------------------------------------------------------ playback */
+var T = 0, playing = !REC, speed = 1, last = performance.now();
+function tick(now) {
+  var dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (playing && POSES) { T += dt * speed; if (T > DUR + .8) T = 0; render(Math.min(T, DUR)); renderGrid(T); document.getElementById('scrub').value = Math.round(Math.min(T, DUR) / DUR * 1000); }
+  requestAnimationFrame(tick);
+}
+var playB = document.getElementById('play');
+playB.addEventListener('click', function () { playing = !playing; playB.textContent = playing ? 'Pause' : 'Play'; });
+document.getElementById('restart').addEventListener('click', function () { T = 0; playing = true; playB.textContent = 'Pause'; });
+document.getElementById('slow').addEventListener('click', function () { speed = speed === 1 ? .5 : 1; this.setAttribute('aria-pressed', speed !== 1); });
+document.getElementById('scrub').addEventListener('input', function () { playing = false; playB.textContent = 'Play'; T = this.value / 1000 * DUR; render(T); renderGrid(T); });
+window.__reel = { dur: DUR, ready: function () { return !!POSES && Object.keys(IMG).every(function (k) { return IMG[k].complete; }) && plate.complete; },
+  seek: function (t) { T = t; render(Math.min(t, DUR)); renderGrid(t); return new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); }); } };
+if (MODE === 'seq') document.getElementById('grid').style.display = 'none';
+if (MODE === 'grid') { seqC.style.display = 'none'; }
+fetch('poses.json').then(function (r) { return r.json(); }).then(function (p) {
+  POSES = p;
+  Object.keys(p).forEach(function (sheet) { p[sheet].forEach(function (f, k) { var im = new Image(); im.onload = function () { if (sheet === 'idle-wave-sign' && k >= 6) findBoard(sheet + '-' + k, im); }; im.src = 'poses/' + f.f; IMG[sheet + '-' + k] = im; }); });
+  requestAnimationFrame(tick);
+});
+})();
+</script>
+</html>

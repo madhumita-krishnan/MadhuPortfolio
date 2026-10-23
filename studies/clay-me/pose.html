@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clay Pose Director</title>
+<!-- PREVIEW ONLY. Pick a motion, add in-between slots, and pose a skeleton over each frame with
+     sliders so Madhu can show exactly where the arms, legs and joints should be. Clay frames can
+     also be nudged into line. "Copy values" gives a block to paste back; in-between frames are
+     then generated in Flora from her skeletons (quoted first). Saved in this browser only. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+  :root { --bg: #0d0e12; --panel: #13151b; --line: #262a35; --ink: #e9ebf1; --muted: #8b909b; --accent: #ffd166; --near: #ff9f5a; --far: #6fb6ff; --font: 'Plus Jakarta Sans', system-ui, sans-serif }
+  * { box-sizing: border-box }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 13px/1.4 var(--font) }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 340px; height: 100vh }
+  .left { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; border-right: 1px solid var(--line) }
+  .top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line) }
+  .top b { font-size: 14px; margin-right: 8px }
+  .b { font: 600 12.5px var(--font); color: var(--ink); background: #1a1d25; border: 1px solid #2b2f3a; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap }
+  .b[aria-pressed="true"] { background: var(--ink); color: #0d0e12; border-color: var(--ink) } .b:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+  select { font: 600 12.5px var(--font); color: var(--ink); background: #1a1d25; border: 1px solid #2b2f3a; border-radius: 8px; padding: 6px 8px }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px; border-bottom: 1px solid var(--line) }
+  .slot { flex: 0 0 auto; width: 64px; height: 92px; border-radius: 8px; border: 1px solid var(--line); background: #10121a center / contain no-repeat; position: relative; cursor: pointer }
+  .slot.between { border-style: dashed; background: #0f1118; display: grid; place-items: center; color: var(--muted); font-weight: 600 }
+  .slot.on { outline: 2px solid var(--accent); outline-offset: 1px } .slot.set::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent) }
+  .slot i { position: absolute; left: 4px; bottom: 3px; font: 600 10px ui-monospace, Menlo, monospace; color: var(--muted); font-style: normal }
+  .view { display: grid; place-items: center; min-height: 0; padding: 10px; background: repeating-conic-gradient(#14161d 0 25%, #111319 0 50%) 0 0 / 24px 24px }
+  canvas { max-width: 100%; max-height: 100%; height: auto; border-radius: 10px; background: #0a1736 }
+  .foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); color: var(--muted) }
+  .foot input[type=range] { width: 140px; accent-color: var(--accent) }
+  .panel { overflow: auto; min-height: 0; background: var(--panel) }
+  .acts { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1 }
+  .grp { padding: 10px 12px 12px; border-bottom: 1px solid var(--line) }
+  .grp h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px }
+  .grp h3 .sw { width: 10px; height: 10px; border-radius: 50% }
+  .row { display: grid; grid-template-columns: 1fr 52px; gap: 2px 8px; align-items: center; margin-bottom: 8px }
+  .row label { color: #c4c8d2 } .row input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent) }
+  .row output { font: 12px ui-monospace, Menlo, monospace; text-align: right; color: var(--ink) }
+  .row.changed label { color: #fff } .row.changed label::after { content: " •"; color: var(--accent) }
+  .disabled { opacity: .35; pointer-events: none }
+  .hint { color: var(--muted); font-size: 12px; margin: 0 0 6px }
+  textarea { width: 100%; height: 160px; font: 11.5px ui-monospace, Menlo, monospace; color: var(--ink); background: #0f1118; border: 1px solid var(--line); border-radius: 8px; padding: 8px }
+  .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #0d0e12; border-radius: 999px; padding: 8px 14px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none }
+  .toast.on { opacity: 1 }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr } .left { border-right: 0 } canvas { max-height: 56vh } }
+</style>
+<div class="app">
+  <section class="left">
+    <div class="top">
+      <b>Clay pose director</b>
+      <select id="motion" aria-label="Motion"></select>
+      <span style="color:var(--muted)">In-betweens per gap</span>
+      <button class="b" data-ib="0">0</button><button class="b" data-ib="1">1</button><button class="b" data-ib="2">2</button><button class="b" data-ib="3">3</button>
+    </div>
+    <div class="strip" id="strip" aria-label="Frames"></div>
+    <div class="view"><canvas id="cv" width="560" height="680" aria-label="Selected frame with its skeleton"></canvas></div>
+    <div class="foot">
+      <button class="b" id="play">Play</button>
+      <label>Speed <input type="range" id="fps" min="4" max="24" step="1" value="12"> <span id="fpsv">12</span> fps</label>
+      <button class="b" id="skel" aria-pressed="true">Skeleton</button>
+      <button class="b" id="onion" aria-pressed="true">Onion skin</button>
+      <button class="b" id="clay" aria-pressed="true">Clay</button>
+      <span id="info"></span>
+    </div>
+  </section>
+  <aside class="panel" aria-label="Pose controls">
+    <div class="acts">
+      <button class="b" id="copy">Copy values</button>
+      <button class="b" id="prevPose">Copy previous pose</button>
+      <button class="b" id="resetFrame">Reset this frame</button>
+    </div>
+    <div class="grp" id="gAlign"><h3>Clay frame position</h3><p class="hint">Line a clay frame up with its neighbours. Only for real clay frames.</p></div>
+    <div class="grp" id="gBody"><h3>Body</h3></div>
+    <div class="grp"><p class="hint" style="margin:0">Orange is always your LEFT side, blue your RIGHT. Facing right (side view) your left is nearest the viewer; facing the viewer (cartwheel, dance) your left is on the screen's right.</p></div>
+    <div class="grp" id="gArmN"><h3><span class="sw" style="background:var(--near)"></span>Your left arm</h3></div>
+    <div class="grp" id="gArmF"><h3><span class="sw" style="background:var(--far)"></span>Your right arm</h3></div>
+    <div class="grp" id="gLegN"><h3><span class="sw" style="background:var(--near)"></span>Your left leg</h3></div>
+    <div class="grp" id="gLegF"><h3><span class="sw" style="background:var(--far)"></span>Your right leg</h3></div>
+    <div class="grp"><h3>Send back</h3><p class="hint">Press Copy values and paste it into the chat. I'll fix the clay frames and generate the in-betweens from your skeletons.</p><textarea id="out" readonly aria-label="Values to send back"></textarea></div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function () {
+'use strict';
+/* ------------------------------------------------------------ the motions (same frames as the reel) */
+var MOTIONS = [
+  ['idle', 'Idle', 'idle-wave-sign', [0, 1], true], ['wave', 'Wave hello', 'idle-wave-sign', [2, 3, 4, 5], false], ['sign', 'Say-hey sign', 'idle-wave-sign', [6, 7], false],
+  ['walk', 'Walk', 'walk', [0, 1, 2, 3, 4, 5, 6, 7], true], ['run', 'Run', 'run', [0, 1, 2, 3, 4, 5, 6, 7], true], ['slide', 'Slide', 'jump-land-slide', [6], false],
+  ['jump', 'Jump', 'jump-land-slide', [0, 1, 2, 3, 4], false], ['land', 'Land', 'jump-land-slide', [4, 5, 7], false], ['swing', 'Hang + swing', 'hang-swing-climb', [1, 0, 2], true],
+  ['letgo', 'Let go', 'hang-swing-climb', [3, 4], false], ['climb', 'Climb a letter', 'hang-swing-climb', [5, 6, 7], false], ['star', 'Star jump', 'star-bow', [0, 1, 2], false],
+  ['backflip', 'Backflip', 'backflip', [0, 1, 2, 3, 4, 5, 6, 7], false], ['cartwheel', 'Cartwheel', 'cartwheel', [0, 1, 2, 3, 4, 5, 6], false], ['dance', 'Dance', 'dance', [0, 1, 2, 3, 4, 5, 6, 7], true], ['bow', 'Bow', 'star-bow', [3, 4, 5, 6], false],
+  /* new motions from her notes: skeletons only until she approves generating the clay frames */
+  ['g-walk', 'NEW Walk · shoulder leads (16)', null, 'walk', true, .9], ['g-run', 'NEW Run · arms opposite legs (16)', null, 'run', true, .9], ['g-climb', 'NEW Climb · grab and pull (12)', null, 'climb', false, .52],
+  ['g-cartwheel', 'NEW Cartwheel · full roll (16)', null, 'cartwheel', false, .78], ['g-dance', 'NEW Dance · step-touch groove (16)', null, 'dance', true, .9]
+];
+var GUIDES = null;
+/* skeleton: hip at the frame's anchor; angles in degrees, 0 = straight down (limbs) / straight up (torso);
+   positive swings toward the way she faces. Knees fold back, elbows fold forward, like the stick figure. */
+var L = { torso: 138, neck: 36, head: 30, thigh: 98, shin: 100, upper: 66, fore: 70, hipH: 196 };
+var JOINTS = [
+  ['gBody', 'x', 'Move body across', -260, 260, 'px'], ['gBody', 'y', 'Move body up / down', -700, 160, 'px'], ['gBody', 'lean', 'Lean', -360, 360, '°'], ['gBody', 'head', 'Head tilt', -60, 60, '°'],
+  ['gArmN', 'soN', 'Shoulder forward / back', -40, 40, 'px'], ['gArmN', 'shN', 'Upper arm', -360, 360, '°'], ['gArmN', 'elN', 'Elbow bend', -20, 160, '°'],
+  ['gArmF', 'soF', 'Shoulder forward / back', -40, 40, 'px'], ['gArmF', 'shF', 'Upper arm', -360, 360, '°'], ['gArmF', 'elF', 'Elbow bend', -20, 160, '°'],
+  ['gLegN', 'hipN', 'Hip', -360, 360, '°'], ['gLegN', 'knN', 'Knee bend', -10, 160, '°'],
+  ['gLegF', 'hipF', 'Hip', -360, 360, '°'], ['gLegF', 'knF', 'Knee bend', -10, 160, '°']
+];
+var ALIGN = [['dx', 'Nudge across', -80, 80, 'px'], ['dy', 'Nudge up / down', -80, 80, 'px'], ['rot', 'Rotate', -30, 30, '°'], ['s', 'Scale', 80, 120, '%']];
+var NEUTRAL = { x: 0, y: 0, lean: 0, head: 0, soN: 0, soF: 0, shN: 8, elN: 12, shF: -8, elF: 12, hipN: 4, knN: 4, hipF: -4, knF: 4 };
+function cycleSkel(kind, p) {   // rough starting skeletons for the cycles; she refines them
+  var s = Math.sin(2 * Math.PI * p), c = Math.cos(2 * Math.PI * p), o = Object.assign({}, NEUTRAL);
+  if (kind === 'walk') { o.hipN = 24 * s; o.hipF = -24 * s; o.knN = 6 + 22 * Math.max(0, -c); o.knF = 6 + 22 * Math.max(0, c); o.shN = -20 * s; o.shF = 20 * s; o.elN = o.elF = 18; o.lean = 4; o.y = -4 * Math.abs(c); }
+  if (kind === 'run') { o.hipN = 42 * s; o.hipF = -42 * s; o.knN = 20 + 70 * Math.max(0, -c); o.knF = 20 + 70 * Math.max(0, c); o.shN = -45 * s; o.shF = 45 * s; o.elN = o.elF = 88; o.lean = 12; o.y = -16 * Math.max(0, Math.abs(s) - .4); }
+  if (kind === 'idle') { o.y = -2 * p; }
+  return o;
+}
+
+/* ------------------------------------------------------------ state (saved in this browser) */
+var KEY = 'clay-pose-director-v1', POSES = null, IMG = {};
+var S = load() || { motion: 'walk', ib: {}, data: {} };   // data[motionId][slotId] = { align, skel }
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+var cur = 0, playing = false, playT = 0;
+function M() { return MOTIONS.filter(function (m) { return m[0] === S.motion; })[0]; }
+function slots() {   // clay frames with in-between slots: ids "c3" (clay frame 3) or "b3.1" (1st between after the 3rd slot)
+  var m = M(), ib = S.ib[m[0]] || 0, out = [];
+  if (!m[2]) { (GUIDES ? GUIDES[m[3]] : []).forEach(function (sk, i) { out.push({ id: 'g' + i, type: 'guide', i: i, sk: sk }); }); return out; }
+  m[3].forEach(function (k, i) {
+    out.push({ id: 'c' + i, type: 'clay', key: m[2] + '-' + k, k: k, i: i });
+    var last = i === m[3].length - 1; if (last && !m[4]) return;
+    for (var j = 1; j <= ib; j++) out.push({ id: 'b' + i + '.' + j, type: 'between', i: i, j: j, n: ib });
+  });
+  return out;
+}
+function rec(id) { var d = S.data[S.motion] = S.data[S.motion] || {}; return d[id] = d[id] || {}; }
+function clayDefault(slot) { var m = M(); if (m[0] === 'walk' || m[0] === 'run' || m[0] === 'idle') return cycleSkel(m[0], slot.i / m[3].length); return Object.assign({}, NEUTRAL); }
+function skelOf(list, idx) {
+  var sl = list[idx], r = (S.data[S.motion] || {})[sl.id];
+  if (r && r.skel) return r.skel;
+  if (sl.type === 'clay') return clayDefault(sl);
+  if (sl.type === 'guide') return Object.assign({}, NEUTRAL, sl.sk);
+  // an untouched in-between sits between its neighbours
+  var a = idx - sl.j, b = (idx + (sl.n - sl.j) + 1) % list.length, A = skelOf(list, a), B = skelOf(list, b), t = sl.j / (sl.n + 1), o = {};
+  for (var k in NEUTRAL) o[k] = A[k] + (B[k] - A[k]) * t;
+  return o;
+}
+function alignOf(sl) { var r = (S.data[S.motion] || {})[sl.id]; return Object.assign({ dx: 0, dy: 0, rot: 0, s: 100 }, r && r.align); }
+
+/* ------------------------------------------------------------ controls */
+function makeRow(parent, key, label, min, max, unit, get, set) {
+  var row = document.createElement('div'); row.className = 'row';
+  var id = 'r-' + key; row.innerHTML = '<label for="' + id + '">' + label + ' (' + unit + ')</label><output></output><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="1">';
+  var inp = row.querySelector('input'), out = row.querySelector('output');
+  inp.addEventListener('input', function () { set(+inp.value); out.textContent = inp.value; row.classList.add('changed'); draw(); save(); refreshStrip(false); });
+  row.querySelector('label').addEventListener('dblclick', function () { set(null); sync(); draw(); save(); });
+  parent.appendChild(row);
+  return function () { var v = get(); inp.value = Math.round(v); out.textContent = Math.round(v); };
+}
+var syncers = [];
+JOINTS.forEach(function (j) {
+  syncers.push(makeRow(document.getElementById(j[0]), j[1], j[2], j[3], j[4], j[5],
+    function () { return skelOf(slots(), cur)[j[1]]; },
+    function (v) { var list = slots(), r = rec(list[cur].id); if (!r.skel) r.skel = Object.assign({}, skelOf(list, cur)); if (v === null) { delete r.skel; return; } r.skel[j[1]] = v; }));
+});
+ALIGN.forEach(function (a) {
+  syncers.push(makeRow(document.getElementById('gAlign'), a[0], a[1], a[2], a[3], a[4],
+    function () { return alignOf(slots()[cur])[a[0]]; },
+    function (v) { var r = rec(slots()[cur].id); r.align = r.align || {}; if (v === null) delete r.align[a[0]]; else r.align[a[0]] = v; }));
+});
+function sync() {
+  syncers.forEach(function (f) { f(); });
+  var list = slots(), sl = list[cur], r = (S.data[S.motion] || {})[sl.id] || {};
+  document.getElementById('gAlign').classList.toggle('disabled', sl.type !== 'clay');
+  document.querySelectorAll('.row').forEach(function (row) { var k = row.querySelector('input').id.slice(2), isA = ['dx', 'dy', 'rot', 's'].indexOf(k) >= 0; row.classList.toggle('changed', isA ? !!(r.align && k in r.align) : !!(r.skel)); });
+  document.getElementById('info').textContent = (sl.type === 'clay' ? 'Clay frame ' + (sl.i + 1) + ' (' + sl.key + ')' : sl.type === 'guide' ? 'New frame ' + (sl.i + 1) : 'In-between ' + sl.j + ' of ' + sl.n + ' after frame ' + (sl.i + 1)) + ' · ' + (cur + 1) + ' / ' + list.length;
+  document.querySelectorAll('[data-ib]').forEach(function (b) { b.disabled = !M()[2]; });
+}
+
+/* ------------------------------------------------------------ drawing */
+var cv = document.getElementById('cv'), g = cv.getContext('2d'), AX = 280, AY = 640;
+var show = { skel: true, onion: true, clay: true };
+function drawClay(sl, alpha) {
+  var f = POSES[M()[2]][sl.k], im = IMG[sl.key]; if (!im || !im.complete) return;
+  var a = alignOf(sl); g.save(); g.globalAlpha = alpha; g.translate(AX + a.dx, AY + a.dy); g.rotate(a.rot * Math.PI / 180); g.scale(a.s / 100, a.s / 100); g.drawImage(im, -f.cx, -f.base); g.restore();
+}
+function pt(o, len, deg) { var r = deg * Math.PI / 180; return [o[0] + Math.sin(r) * len, o[1] + Math.cos(r) * len]; }
+function drawSkel(s, strong) {
+  var hip = [AX + s.x, AY - L.hipH + s.y], lean = s.lean * Math.PI / 180, neck = [hip[0] + Math.sin(lean) * L.torso, hip[1] - Math.cos(lean) * L.torso];
+  var hr = (s.lean + s.head) * Math.PI / 180, head = [neck[0] + Math.sin(hr) * L.neck, neck[1] - Math.cos(hr) * L.neck];
+  function shoulder(so) { return [neck[0] + Math.cos(lean) * (so || 0), neck[1] + Math.sin(lean) * (so || 0)]; }
+  function limb(o, a1, l1, a2, l2, col) { var j = pt(o, l1, a1), e = pt(j, l2, a2); g.strokeStyle = col; g.lineWidth = strong ? 7 : 4; g.beginPath(); g.moveTo(o[0], o[1]); g.lineTo(j[0], j[1]); g.lineTo(e[0], e[1]); g.stroke(); dotAt(j); dotAt(e); }
+  function dotAt(p) { g.fillStyle = '#fff'; g.beginPath(); g.arc(p[0], p[1], strong ? 6 : 4, 0, 7); g.fill(); }
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.globalAlpha = strong ? .95 : .55;
+  limb(shoulder(s.soF), s.shF, L.upper, s.shF + s.elF, L.fore, '#6fb6ff');
+  limb(hip, s.hipF, L.thigh, s.hipF - s.knF, L.shin, '#6fb6ff');
+  g.strokeStyle = '#ffd166'; g.lineWidth = strong ? 8 : 5; g.beginPath(); g.moveTo(hip[0], hip[1]); g.lineTo(neck[0], neck[1]); g.lineTo(head[0], head[1]); g.stroke();
+  g.beginPath(); g.arc(head[0], head[1] - L.head * .4, L.head, 0, 7); g.stroke();
+  limb(hip, s.hipN, L.thigh, s.hipN - s.knN, L.shin, '#ff9f5a');
+  limb(shoulder(s.soN), s.shN, L.upper, s.shN + s.elN, L.fore, '#ff9f5a');
+  dotAt(hip); dotAt(neck);
+  g.restore();
+}
+function draw() {
+  if (!POSES) return;
+  var list = slots(), idx = playing ? Math.floor(playT) % list.length : cur, sl = list[idx];
+  g.fillStyle = '#0a1736'; g.fillRect(0, 0, cv.width, cv.height);
+  g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(0, AY, cv.width, 2);
+  var prev = list[(idx - 1 + list.length) % list.length], next = list[(idx + 1) % list.length];
+  if (sl.type === 'guide') {
+    var m = M(), sc = m[5] || 1;
+    g.save(); g.translate(AX, AY); g.scale(sc, sc); g.translate(-AX, -AY);
+    if (m[3] === 'climb' && GUIDES) { var lg = GUIDES.meta.ledge; g.fillStyle = 'rgba(200,200,210,.28)'; g.fillRect(AX + lg.x - 4, AY + lg.y, 200, -lg.y); }
+    if (show.onion && !playing) { g.globalAlpha = .35; drawSkel(skelOf(list, (idx - 1 + list.length) % list.length), false); drawSkel(skelOf(list, (idx + 1) % list.length), false); g.globalAlpha = 1; }
+    drawSkel(skelOf(list, idx), true);
+    g.restore();
+    g.save(); g.fillStyle = 'rgba(255,209,102,.9)'; g.font = '600 13px "Plus Jakarta Sans", sans-serif'; g.fillText('New motion from your notes: skeleton only until we generate the clay frames', 16, 26); g.restore();
+    return;
+  }
+  if (sl.type === 'clay') {
+    if (show.onion && !playing) { prevNextClay(list, idx, -1, .22); prevNextClay(list, idx, 1, .22); }
+    if (show.clay) drawClay(sl, 1);
+  } else {
+    // an in-between has no clay yet: show both neighbours faintly so the pose reads in context
+    prevNextClay(list, idx, -1, .35); prevNextClay(list, idx, 1, .35);
+    g.save(); g.fillStyle = 'rgba(255,209,102,.9)'; g.font = '600 13px "Plus Jakarta Sans", sans-serif'; g.fillText('In-between: pose the skeleton; I generate the clay frame from it', 16, 26); g.restore();
+  }
+  if (show.skel || sl.type === 'between') drawSkel(skelOf(list, idx), true);
+}
+function prevNextClay(list, idx, dir, a) { for (var s = 1; s < list.length; s++) { var o = list[(idx + dir * s + list.length) % list.length]; if (o.type === 'clay') { drawClay(o, a); return; } } }
+var stripEl = document.getElementById('strip');
+function refreshStrip(rebuild) {
+  var list = slots();
+  if (rebuild || stripEl.children.length !== list.length) {
+    stripEl.innerHTML = '';
+    list.forEach(function (sl, i) {
+      var d = document.createElement('button'); d.type = 'button'; d.className = 'slot ' + sl.type; d.setAttribute('aria-label', sl.type === 'clay' ? 'Clay frame ' + (sl.i + 1) : 'In-between');
+      if (sl.type === 'clay') d.style.backgroundImage = 'url(poses/' + sl.key + '.png)'; else d.textContent = sl.type === 'guide' ? '◇' : '+';
+      d.innerHTML += '<i>' + (i + 1) + '</i>';
+      d.addEventListener('click', function () { cur = i; playing = false; document.getElementById('play').textContent = 'Play'; sync(); draw(); refreshStrip(false); });
+      stripEl.appendChild(d);
+    });
+  }
+  var data = S.data[S.motion] || {};
+  [].forEach.call(stripEl.children, function (d, i) { d.classList.toggle('on', i === cur); var r = data[list[i].id]; d.classList.toggle('set', !!(r && (r.skel || (r.align && Object.keys(r.align).length)))); });
+}
+
+/* ------------------------------------------------------------ wiring */
+var sel = document.getElementById('motion');
+MOTIONS.forEach(function (m) { var o = document.createElement('option'); o.value = m[0]; o.textContent = m[2] ? m[1] + ' (' + m[3].length + ' clay frames)' : m[1]; sel.appendChild(o); });
+sel.value = S.motion;
+sel.addEventListener('change', function () { S.motion = sel.value; cur = 0; save(); setIb(); refreshStrip(true); sync(); draw(); });
+function setIb() { var n = S.ib[S.motion] || 0; document.querySelectorAll('[data-ib]').forEach(function (b) { b.setAttribute('aria-pressed', +b.dataset.ib === n); }); }
+document.querySelectorAll('[data-ib]').forEach(function (b) { b.addEventListener('click', function () { S.ib[S.motion] = +b.dataset.ib; cur = 0; save(); setIb(); refreshStrip(true); sync(); draw(); }); });
+['skel', 'onion', 'clay'].forEach(function (k) { var b = document.getElementById(k); b.addEventListener('click', function () { show[k] = !show[k]; b.setAttribute('aria-pressed', show[k]); draw(); }); });
+var fps = 12, fpsIn = document.getElementById('fps');
+fpsIn.addEventListener('input', function () { fps = +fpsIn.value; document.getElementById('fpsv').textContent = fps; });
+document.getElementById('play').addEventListener('click', function () { playing = !playing; this.textContent = playing ? 'Pause' : 'Play'; playT = cur; last = performance.now(); });
+document.getElementById('prevPose').addEventListener('click', function () { var list = slots(); if (cur === 0) return; rec(list[cur].id).skel = Object.assign({}, skelOf(list, cur - 1)); save(); sync(); draw(); refreshStrip(false); toast('Pose copied from the previous frame'); });
+document.getElementById('resetFrame').addEventListener('click', function () { var d = S.data[S.motion]; if (d) delete d[slots()[cur].id]; save(); sync(); draw(); refreshStrip(false); toast('Frame reset'); });
+document.getElementById('copy').addEventListener('click', function () {
+  var out = { motions: {} };
+  MOTIONS.forEach(function (m) { var d = S.data[m[0]], ib = S.ib[m[0]] || 0; if (!ib && !(d && Object.keys(d).length)) return; out.motions[m[0]] = { inBetweensPerGap: ib, frames: d || {} }; });
+  var text = 'clay poses:\n' + JSON.stringify(out, null, 1);
+  var ta = document.getElementById('out'); ta.value = text; ta.select();
+  try { navigator.clipboard.writeText(text).then(function () { toast('Copied. Paste it into the chat'); }, function () { toast('Select the text below and copy it'); }); } catch (e) { toast('Select the text below and copy it'); }
+});
+addEventListener('keydown', function (e) { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; var n = slots().length; if (e.key === 'ArrowRight') { cur = (cur + 1) % n; sync(); draw(); refreshStrip(false); } if (e.key === 'ArrowLeft') { cur = (cur - 1 + n) % n; sync(); draw(); refreshStrip(false); } if (e.key === ' ') { e.preventDefault(); document.getElementById('play').click(); } });
+function toast(t) { var e = document.getElementById('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove('on'); }, 2200); }
+var last = performance.now();
+function loop(now) { var dt = (now - last) / 1000; last = now; if (playing) { playT += dt * fps; draw(); } requestAnimationFrame(loop); }
+window.__pose = { select: function (m, i, ib) { S.motion = m; if (ib != null) S.ib[m] = ib; sel.value = m; setIb(); cur = i || 0; refreshStrip(true); sync(); draw(); } };
+Promise.all([fetch('poses.json').then(function (r) { return r.json(); }), fetch('guides.json').then(function (r) { return r.json(); })]).then(function (res) {
+  var p = res[0]; GUIDES = res[1];
+  POSES = p;
+  MOTIONS.forEach(function (m) { if (!m[2]) return; m[3].forEach(function (k) { var key = m[2] + '-' + k; if (!IMG[key]) { var im = new Image(); im.onload = draw; im.src = 'poses/' + key + '.png'; IMG[key] = im; } }); });
+  setIb(); refreshStrip(true); sync(); draw(); requestAnimationFrame(loop);
+});
+})();
+</script>
+</html>

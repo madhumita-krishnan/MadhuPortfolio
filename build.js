@@ -469,6 +469,12 @@ nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
 
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
+/* STANDING RULE (her ask 2026-10-23): scrolling down, the nav steps out of the way; scrolling
+   up, it plops back. Leaving is a quick ease-in; arriving overshoots and settles (the 1.56
+   in the curve is the plop). app.js toggles .nav-hidden. */
+.nav-wrap{transition:transform 460ms cubic-bezier(.34,1.56,.64,1)}
+.nav-wrap.nav-hidden{transform:translateY(calc(-100% - 24px));transition:transform 240ms cubic-bezier(.4,0,1,1)}
+@media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
    Every element carrying backdrop-filter:url() costs a full backdrop snapshot + turbulence +
@@ -895,35 +901,20 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   transition:background var(--motion-base) var(--ease-standard)}
 .brand:hover{background:var(--ink-blue)}
 
-/* THE WALL INTRODUCES ITSELF. Nine marks that are simply present when you arrive at them
-   read as wallpaper; the same nine arriving one after another read as a list of people who
-   hired her, which is what they are.
-
-   Each logo sits in a slot with a hard bottom edge and starts BELOW it, so what you see is
-   not a logo fading in — it is a logo coming up from behind a line that is not drawn. The
-   slot is exactly the height of the mark, so overflow:hidden IS the line: there is nothing to
-   draw and nothing to keep in register.
-
-   The cascade is 65ms a step, left to right, set from --i on the slot. That is slow enough to
-   read as one-after-another and quick enough that the ninth is up within six tenths of a
-   second — a longer step turns a credential list into a performance. The rise is a fraction
-   over its own height so the mark clears the edge before it starts easing, and the fade
-   finishes early, so it is the movement you notice rather than the opacity. */
-.brand-slot{overflow:hidden;display:block;line-height:0}
-/* display:block, and it is load-bearing rather than tidy: .brand used to be a grid item,
-   which blockifies it, and putting it inside a slot made it an inline span again — where
-   height:38px does not apply, the box collapses to nothing, and translateY(118%) of nothing
-   is 0. The logos simply faded, with no movement at all. */
-.brand-slot .brand{display:block;transform:translateY(118%);opacity:0;
-  transition:background var(--motion-base) var(--ease-standard),
-             transform 620ms var(--ease-enter) calc(var(--i) * 65ms),
-             opacity 380ms var(--ease-standard) calc(var(--i) * 65ms)}
-.brands-row.visible .brand{transform:none;opacity:1}
-/* The row itself carries the observer but not the movement — the logos do that, and a row
-   that also slid up would set every mark going before its own delay had run. */
+/* THE WALL ROLLS IN (her ask 2026-10-23; it used to rise from behind an undrawn line).
+   Each mark rolls in from the left like a coin: rotation is matched to distance travelled
+   (360deg over 140px, about a 44px wheel) so it rolls rather than slides, and back.out lets
+   it roll a hair past its spot and rock back. GSAP drives it (vendor/gsap.min.js, which
+   app.js loads only when the wall nears view). .gs-roll holds the marks hidden until GSAP
+   takes over, and app.js adds it only when motion is allowed, so no-JS and reduced motion
+   simply show the wall. The slot no longer clips: a clipped slot would hide the roll. */
+.brand-slot{display:block;line-height:0}
+/* display:block is load-bearing: inside a slot .brand is an inline span, where height:38px
+   does not apply and the mark collapses to nothing */
+.brand-slot .brand{display:block}
+.brands-row.gs-roll .brand{opacity:0}
+/* the row carries the observer, not the movement — the logos do that */
 .brands-row.fade{opacity:1;transform:none;transition:none}
-.settled .brand,.rm-mode .brand{transform:none;opacity:1}
-@media (prefers-reduced-motion:reduce){.brand{transform:none !important;opacity:1 !important;transition:background var(--motion-base) var(--ease-standard) !important}}
 @media (max-width:600px){.brands-row{gap:calc(var(--space)*4)}.brand{height:28px}}
 
 /* ------------------------------------------------ work cards (outcome statements) */
@@ -934,6 +925,33 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    read as a cold sheet laid over the warm cream */
 .wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
+/* ------------------------------------------------ the deck (deck.html preview, see deckHTML) */
+.deck-sec{max-width:none;padding-left:0;padding-right:0}
+.deck-sec .section-title{max-width:1240px;margin-left:auto;margin-right:auto;padding:0 calc(var(--space)*6)}
+/* every dial reads a --deck-* override first, which the tweaker (studies/tweaker-deck/) sets on :root */
+.deck{--card:var(--deck-card,min(44vw,560px));--gap:var(--deck-gap,clamp(18px,3vw,44px));--stagger:var(--deck-stagger,16%);--side:var(--deck-side,.66);
+  display:flex;gap:var(--gap);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
+  padding:8vh calc(50vw - var(--card) / 2) 12vh;scrollbar-width:none;outline:none}
+.deck::-webkit-scrollbar{display:none}
+.dcard{flex:0 0 var(--card);aspect-ratio:1;scroll-snap-align:center;border-radius:var(--deck-radius,clamp(22px,2.6vw,36px));
+  background:var(--deck-bg,var(--bg-raised));border:1px solid var(--line);color:inherit;text-decoration:none;
+  display:grid;grid-template-rows:minmax(0,1fr) auto;gap:calc(var(--space)*3);padding:clamp(20px,2.4vw,36px);overflow:hidden}
+.dcard-media{min-height:0;display:grid;place-items:center}
+.dcard-media>*{max-height:100%;max-width:100%}
+/* the bezel keeps its own proportions (.phone aspect-ratio); in a card it is sized by the slot's height */
+.dcard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
+.dcard-title{font-family:var(--font-display);font-weight:500;font-size:var(--deck-title,clamp(1.6rem,3vw,2.6rem));line-height:1.05;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dcard-outcome{margin-top:.6em;font-size:.95rem;line-height:1.5;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dcard .w-tags{margin-top:.8em}
+/* the stagger rides the deck's own scroll position (a scroll-driven animation, not a listener):
+   a card coming in from the right sits lower and smaller, centred it is full size, leaving to the
+   left it rises. Browsers without view timelines just show the row level. */
+@supports (animation-timeline:view()){
+  .dcard{animation:deck-ride linear both;animation-timeline:view(inline);animation-range:cover}
+  @keyframes deck-ride{0%{transform:translateY(var(--stagger)) scale(var(--side))}50%{transform:none}100%{transform:translateY(calc(var(--stagger) * -1)) scale(var(--side))}}
+}
+@media (prefers-reduced-motion:reduce){.dcard{animation:none}}
+@media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}}   /* narrow enough that both neighbours peek in */
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -1709,6 +1727,32 @@ function makeJS() {
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
+  /* the nav hides on the way down and plops back on the way up (see .nav-hidden). Never
+     near the top, and never while it holds keyboard focus. Small scrolls add up until
+     they pass 6px, so a slow trackpad drift still counts. */
+  const navW=document.querySelector('.nav-wrap');
+  if(navW){
+    let lastY=scrollY;
+    addEventListener('scroll',()=>{const y=scrollY,dy=y-lastY;if(Math.abs(dy)<6)return;lastY=y;
+      navW.classList.toggle('nav-hidden',dy>0&&y>120&&!navW.contains(document.activeElement));},{passive:true});
+  }
+
+  /* the client logos roll in (see .gs-roll). GSAP is fetched only when the wall nears view;
+     if it never arrives, the marks are simply shown. */
+  const brandRow=document.querySelector('.brands-row');
+  if(brandRow&&!rmActive()&&'IntersectionObserver' in window){
+    brandRow.classList.add('gs-roll');
+    const show=()=>brandRow.classList.remove('gs-roll');
+    const bio=new IntersectionObserver(es=>{
+      if(!es.some(e=>e.isIntersecting))return;bio.disconnect();
+      const sc=document.createElement('script');sc.src='vendor/gsap.min.js?v=${BUILD_V}';
+      sc.onload=()=>{gsap.fromTo(brandRow.querySelectorAll('.brand'),{x:-140,rotation:-360,opacity:0},
+        {x:0,rotation:0,opacity:1,duration:1.15,ease:'back.out(1.5)',stagger:.09,clearProps:'transform,opacity'});show();};
+      sc.onerror=show;document.head.appendChild(sc);
+    },{rootMargin:'0px 0px -12% 0px'});
+    bio.observe(brandRow);
+  }
+
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
      revealed and every lazy image eagerly loaded (headless Chrome can't screenshot
      a scrolled page, and lazy images below the fold never fire otherwise). */
@@ -1972,6 +2016,13 @@ function makeJS() {
        overlapping flights — hammering the pot queues nothing, one fish at a time. */
     potEl.addEventListener('click',leap);
     potEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();leap()}});
+    /* (2026-09-06 her ask) a WOBBLE launches the fish too — the same user gestures that
+       nudge the pot's spring (hover, touch, keyboard focus). Deliberately NOT mk-pot-kick:
+       that kick is the fish's own splashdown, and leaping on it would chain flights
+       forever. fish.js's live flag still holds it to one fish in the air. */
+    potEl.addEventListener('mouseenter',leap);
+    potEl.addEventListener('touchstart',leap,{passive:true});
+    potEl.addEventListener('focus',leap);
   }
 })();`;
 }
@@ -2221,7 +2272,7 @@ function macFrame(m, { eager = false } = {}) {
 }
 
 /* ---------------------------------------------------------------- home page */
-function renderHome() {
+function renderHome(deck = false) {
   const h = site.hero;
 
   /* Her sentences, set in her own hand — one span each so they break where the thought
@@ -2310,6 +2361,29 @@ function renderHome() {
     </div>
     <div class="project-media-wrap">${projectMedia(p)}</div>
   </a>`).join('\n')}
+</section>`;
+
+  /* PREVIEW (2026-10-23, her ask: "what my case studies would look like in this format for people
+     to scroll through, but I don't want to scroll jack"): the same projects as a sideways DECK, one big
+     rounded card centred with its neighbours peeking in, left one higher and right one lower (her
+     reference recording). It is plain overflow-x scrolling with snap: trackpad, swipe and keyboard
+     move it, the page's vertical scroll is never taken over. Card titles are the project names
+     (one line, poster-size); the long outcome lines sit under them as body copy, which keeps the
+     two-line heading rule. Built only into deck.html. */
+  const deckHTML = `
+<section id="work" class="deck-sec">
+  <h2 class="section-title fade">${typo(site.work.title)}</h2>
+  <div class="deck" tabindex="0" role="region" aria-label="${esc(site.work.title)}, scroll sideways">
+    ${site.work.projects.map(p => `
+    <a class="dcard" href="${esc(p.slug)}.html" data-curious>
+      <div class="dcard-media">${projectMedia(p)}</div>
+      <div class="dcard-copy">
+        <h3 class="dcard-title">${esc(p.name)}</h3>
+        <p class="dcard-outcome">${typo(p.outcome)}</p>
+        <p class="w-tags">${esc(p.tags)}</p>
+      </div>
+    </a>`).join('')}
+  </div>
 </section>`;
 
   const panels = site.disciplines.panels;
@@ -2409,7 +2483,7 @@ ${navBar('home')}
 <main>
 ${heroHTML}
 ${brandsHTML}
-${workHTML}
+${deck ? deckHTML : workHTML}
 ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
@@ -2655,9 +2729,9 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    rather than CDN'd so the site stays a folder of files with no third origin; nobody
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
-for (const f of ['three.module.min.js', 'three.core.min.js']) {
+for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js']) {
   const src = path.join(ROOT, 'vendor', f);
-  if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing — fish.js cannot import three`);
+  if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing (three for fish.js, gsap for the logo roll)`);
   fs.mkdirSync(path.join(DIST, 'vendor'), { recursive: true });
   fs.copyFileSync(src, path.join(DIST, 'vendor', f));
 }
@@ -2676,6 +2750,11 @@ function lintIcons(html, page) {
   return html;
 }
 fs.writeFileSync(path.join(DIST, 'index.html'), lintIcons(renderHome(), 'index.html'));
+/* preview only: the home page with the work list as a sideways deck (see deckHTML) */
+/* locally deck.html also carries the tweaker receiver; never on Vercel (process.env.VERCEL is set in its
+   builds): the receiver trusts any window that posts to it */
+const deckPage = lintIcons(renderHome(true), 'deck.html');
+fs.writeFileSync(path.join(DIST, 'deck.html'), process.env.VERCEL ? deckPage : deckPage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
@@ -2688,6 +2767,8 @@ copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
    design-systems/index.html mirrors the workshop hub (landing → rules → system),
    and the rules doc IS this README — one file, never two copies to drift. */
 copyDir(path.join(ROOT, 'design-systems'), path.join(DIST, 'design-systems'));
+/* design studies (preview only): standalone playable studies served at /studies/<name>/ */
+if (!process.env.VERCEL && fs.existsSync(path.join(ROOT, 'studies'))) copyDir(path.join(ROOT, 'studies'), path.join(DIST, 'studies'));
 fs.copyFileSync(path.join(ROOT, 'README.md'), path.join(DIST, 'design-systems', 'README.md'));
 
 /* The custom domain has to be written INTO dist/, not just set in Settings > Pages.

@@ -859,6 +859,10 @@
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
   /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
      lifted; rot in radians about the anchor; flip mirrors on top of dir */
+  /* monkey-bars frames in hand-over-hand order. In profile the two hands read alike, so one cycle is
+     free arm hanging (2) → swinging forward (5) → reaching (4) → full reach (7), then the reaching hand
+     takes the grip and the other drops: 6 → 1 → 0 → 3. Two hand-swaps per stick-figure reach cycle. */
+  var MONKEY_SEQ = [2, 5, 4, 7, 6, 1, 0, 3];
   var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
@@ -881,6 +885,10 @@
         /* only the dead-hang frame keeps both hands on the grip, so the swing is that frame
            pivoting from the hands like a pendulum (stepped to 12 positions a turn of the swing) */
         var th = Math.max(-1.1, Math.min(1.1, h.th || 0));
+        /* travelling along the line: hand over hand, like the stick figure (her ask 2026-10-23,
+           "monkey bars and alternating hands"). The 8 clay frames follow the same reach phase that
+           alternates the stick figure's grips; each frame's top is its gripping hand. */
+        if (h.reach && CLAY.man.monkey) return { s: 'monkey', k: MONKEY_SEQ[Math.floor(h.reach / (Math.PI * 2) * 8) % 8], anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir };
         return { s: 'hang-swing-climb', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
@@ -918,7 +926,7 @@
     } else CLAY.sk = 0;
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
-    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, 0); }
+    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d, sc); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
@@ -1295,7 +1303,10 @@
        ±150 of the pelvis; puffs stretch the box; the union with last frame's box
        erases the old drawing even on a fast drag. */
     var R = CLAY.ready ? 230 : 150;
-    var b = { x1: fig.x - R, y1: fig.y - LEG - R, x2: fig.x + R, y2: fig.y + 40 };
+    /* clay hangs well BELOW fig.y (the hang frames are ~131px from grip to toe; the grip sits only
+       67px above fig.y), so the box reaches R down too — at +40 her shins and feet were never erased
+       and smeared behind her along the monkey bars (her "leaves body parts behind") */
+    var b = { x1: fig.x - R, y1: fig.y - LEG - R, x2: fig.x + R, y2: fig.y + (CLAY.ready ? R : 40) };
     for (var pi = 0; pi < puffs.length; pi++) {
       var pf = puffs[pi];
       if (pf.x - 10 < b.x1) b.x1 = pf.x - 10; if (pf.x + 10 > b.x2) b.x2 = pf.x + 10;

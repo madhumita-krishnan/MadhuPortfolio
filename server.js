@@ -35,6 +35,7 @@ function latestSourceMtime() {
   };
   walk(path.join(ROOT, 'data'));
   max = Math.max(max, fs.statSync(path.join(ROOT, 'build.js')).mtimeMs);
+  max = Math.max(max, fs.statSync(path.join(ROOT, 'walkthrough.js')).mtimeMs);
   return max;
 }
 
@@ -47,7 +48,100 @@ function rebuildIfStale() {
   }
 }
 
+/* POST /__edit — in-place text editing on walkthrough pages (localhost only). Sets one
+   EXISTING string in data/case-studies/<slug>.json; it can't add keys or change types, so a
+   stray edit can only ever reword copy. The next page load rebuilds from the new JSON. */
+function handleEdit(req, res) {
+  const loop = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  if (!loop) { res.writeHead(403); return res.end('localhost only'); }
+  let body = '';
+  req.on('data', c => { body += c; if (body.length > 1e5) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const { slug, path: keyPath, value } = JSON.parse(body);
+      if (!/^[a-z0-9-]+$/.test(slug) || typeof keyPath !== 'string' || !['string', 'number'].includes(typeof value)) throw new Error('bad request');
+      if (typeof value === 'number' && !(Number.isFinite(value) && Math.abs(value) <= 200)) throw new Error('number out of range');
+      /* viewer captions live beside the screens: "iter:<group>.<i>.<field>" edits the
+         iterations file, "clip:<name>.description" the clips file; plain paths edit the case */
+      const caseFile = path.join(ROOT, 'data/case-studies', slug + '.json');
+      const side = /^(iter|clip):(.+)$/.exec(keyPath);
+      const file = side ? path.join(ROOT, JSON.parse(fs.readFileSync(caseFile, 'utf8')).dir, side[1] === 'iter' ? 'iter/iterations.json' : 'clips/clips.json') : caseFile;
+      const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const keys = side ? side[2].split('.') : keyPath.split('.');
+      if (side && side[1] === 'clip') { const i = doc.findIndex(c => c.name === keys[0]); if (i < 0) throw new Error('no such clip: ' + keys[0]); keys[0] = String(i); }
+      let o = doc;
+      for (const k of keys.slice(0, -1)) { o = o[k]; if (o === null || typeof o !== 'object') throw new Error('no such path: ' + keyPath); }
+      const last = keys[keys.length - 1];
+      /* text stays text and a number (a callout's position) stays a number */
+      if (typeof o[last] !== typeof value) throw new Error('not a ' + typeof value + ' field: ' + keyPath);
+      const before = o[last];
+      o[last] = value;
+      fs.writeFileSync(file, JSON.stringify(doc, null, side ? (side[1] === 'clip' ? 2 : 1) : 1) + '\n');
+      if (side) { const now = new Date(); fs.utimesSync(caseFile, now, now); } // the dev rebuild watches data/
+      /* every edit is also appended to edit-log.jsonl (repo root, outside data/ and dist/),
+         old and new side by side, so whoever works on the page next can see exactly what
+         she changed by hand and never write over it */
+      fs.appendFileSync(path.join(ROOT, 'edit-log.jsonl'), JSON.stringify({ at: new Date().toISOString(), slug, path: keyPath, before, after: value }) + '\n');
+      console.log(`[edit] ${slug} ${keyPath}`);
+      res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok');
+    } catch (err) { res.writeHead(400, { 'Content-Type': 'text/plain' }); res.end(err.message); }
+  });
+}
+
+/* POST /__cursor — sets (or with x:null removes) where the drawn mouse pointer sits on one
+   screen image, in cs.cursors keyed by the image's path. Localhost only, logged like edits. */
+function handleCursor(req, res) {
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) { res.writeHead(403); return res.end('localhost only'); }
+  let body = '';
+  req.on('data', c => { body += c; if (body.length > 1e4) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const { slug, src, x, y } = JSON.parse(body);
+      if (!/^[a-z0-9-]+$/.test(slug) || typeof src !== 'string' || !/^[\w./-]+$/.test(src) || src.includes('..')) throw new Error('bad request');
+      const ok = v => typeof v === 'number' && v >= 0 && v <= 100;
+      if (x !== null && !(ok(x) && ok(y))) throw new Error('x and y must be 0–100');
+      const file = path.join(ROOT, 'data/case-studies', slug + '.json');
+      const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+      doc.cursors = doc.cursors || {};
+      const before = doc.cursors[src] || null;
+      if (x === null) delete doc.cursors[src]; else doc.cursors[src] = [x, y];
+      fs.writeFileSync(file, JSON.stringify(doc, null, 1) + '\n');
+      fs.appendFileSync(path.join(ROOT, 'edit-log.jsonl'), JSON.stringify({ at: new Date().toISOString(), slug, path: 'cursors[' + src + ']', before, after: x === null ? null : [x, y] }) + '\n');
+      res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ok');
+    } catch (err) { res.writeHead(400, { 'Content-Type': 'text/plain' }); res.end(err.message); }
+  });
+}
+
+/* POST /__note — adds a new callout to one screen: {slug, base, x, y, dx, dy, text}, where base
+   is the JSON path of the screen (the object that holds its src). Appends to its notes list
+   (creating it) and answers with the new index, so the page can keep editing it in place. */
+function handleNote(req, res) {
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) { res.writeHead(403); return res.end('localhost only'); }
+  let body = '';
+  req.on('data', c => { body += c; if (body.length > 1e4) req.destroy(); });
+  req.on('end', () => {
+    try {
+      const { slug, base, x, y, dx, dy, text } = JSON.parse(body);
+      const num = v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 200;
+      if (!/^[a-z0-9-]+$/.test(slug) || typeof base !== 'string' || !/^[\w.]+$/.test(base) || typeof text !== 'string' || text.length > 300 || ![x, y, dx, dy].every(num)) throw new Error('bad request');
+      const file = path.join(ROOT, 'data/case-studies', slug + '.json');
+      const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+      let o = doc;
+      for (const k of base.split('.')) { o = o[k]; if (o === null || typeof o !== 'object') throw new Error('no such screen: ' + base); }
+      o.notes = o.notes || [];
+      const note = { x, y, text, dx, dy };
+      o.notes.push(note);
+      fs.writeFileSync(file, JSON.stringify(doc, null, 1) + '\n');
+      fs.appendFileSync(path.join(ROOT, 'edit-log.jsonl'), JSON.stringify({ at: new Date().toISOString(), slug, path: base + '.notes[+]', before: null, after: note }) + '\n');
+      res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ i: o.notes.length - 1 }));
+    } catch (err) { res.writeHead(400, { 'Content-Type': 'text/plain' }); res.end(err.message); }
+  });
+}
+
 http.createServer((req, res) => {
+  if (req.method === 'POST' && req.url === '/__edit') return handleEdit(req, res);
+  if (req.method === 'POST' && req.url === '/__cursor') return handleCursor(req, res);
+  if (req.method === 'POST' && req.url === '/__note') return handleNote(req, res);
   try {
     let urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (urlPath.endsWith('/')) urlPath += 'index.html';
