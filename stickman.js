@@ -1425,8 +1425,16 @@
   /* 2400ms, up from 350: the load sequence owns the first ~2.3s (buttons settle at
      ~2.27s including the .revealed trigger delay), and he spawns standing on the
      headline, which must be AT REST when his world is read */
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { setTimeout(boot, 2400); });
-  else addEventListener('load', function () { setTimeout(boot, 2600); });
+  /* 2026-10-23: the headline now waves, then SHRINKS while the bio grows (her ask), so she waits for
+     that hand-off (app.js fires mk-hero-settled, and sets __mkHeroSettled in case it already did) and
+     spawns on the d at the headline's final size. 4.2s is the fail-safe if it never comes. */
+  function bootWhenSettled() {
+    if (window.__mkHeroSettled) return boot();
+    addEventListener('mk-hero-settled', boot, { once: true });
+    setTimeout(boot, 4200);
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(bootWhenSettled);
+  else addEventListener('load', bootWhenSettled);
 
   /* QA hook — the world plus a synchronous stepper for headless checks (the browser pane
      pauses rAF while hidden, so tests drive time by hand); not a public API */

@@ -469,11 +469,12 @@ nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
 
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
-/* STANDING RULE (her ask 2026-10-23): scrolling down, the nav steps out of the way; scrolling
-   up, it plops back. Leaving is a quick ease-in; arriving overshoots and settles (the 1.56
-   in the curve is the plop). app.js toggles .nav-hidden. */
-.nav-wrap{transition:transform 460ms cubic-bezier(.34,1.56,.64,1)}
-.nav-wrap.nav-hidden{transform:translateY(calc(-100% - 24px));transition:transform 240ms cubic-bezier(.4,0,1,1)}
+/* STANDING RULE (her ask 2026-10-23, then "all across my page, not just the driftwood retention
+   page"): the nav behaves EXACTLY like the walkthrough pages' pill (walkthrough.js .nav-away) —
+   slides up and fades while reading down, drops back after a real scroll up or when the pointer
+   comes near the top. Same curve and timing as the pill. app.js toggles .nav-hidden. */
+.nav-wrap{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease}
+.nav-wrap.nav-hidden{transform:translateY(-160%);opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
@@ -841,6 +842,14 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .hero.revealed .hero-flora{opacity:1}
 .hero h1{opacity:0;transform:translateY(16px);transition:opacity 950ms var(--ease-enter) 450ms,transform 950ms var(--ease-enter) 450ms}
 .hero.revealed h1{opacity:1;transform:none}
+/* THE HAND-OFF (her ask 2026-10-23: "once hi I'm Madhu loads in and rises with the blue and falls, it
+   should shrink and my bio words would become the big focal"). app.js plays one wave after the
+   headline lands, then adds .handoff: the name steps back to a smaller size and the bio grows into
+   the lead. Reduced motion lands on the hand-off state with no movement. */
+.hero.revealed.handoff h1{font-size:clamp(1.9rem,3.6vw,3rem);transition:font-size 900ms var(--ease-standard)}
+.hero.handoff .hero-line{width:min(100%,1040px);font-size:clamp(1.55rem,2.9vw,2.55rem);line-height:1.38;
+  transition:font-size 900ms var(--ease-standard),line-height 900ms var(--ease-standard)}
+.rm-mode .hero.handoff h1,.rm-mode .hero.handoff .hero-line{transition:none}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
@@ -874,7 +883,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 }
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
-.lively.waving .ch{transform:translateY(-7px)}
+.lively.waving .ch{transform:translateY(-7px);color:var(--accent)}   /* rises in the accent, on hover and in the load hand-off */
 @media (max-width:760px){.hero{padding-top:calc(var(--space)*20);min-height:0}
   /* phone measure wraps her sentences onto more lines, so descender collisions that
      desktop never sees show up here — the g of "strategy" landing in "study"
@@ -1606,6 +1615,20 @@ function makeJS() {
       el.addEventListener('mouseleave',()=>{if(!rmActive()){const chs=[...el.querySelectorAll('.ch')];chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*stagger)+'ms')}el.classList.remove('waving')});
     });
     requestAnimationFrame(()=>setTimeout(()=>hero.classList.add('revealed'),120));
+    /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
+       back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
+       its final size, so she spawns on the d where it will stay. */
+    const settleHero=()=>{window.__mkHeroSettled=true;dispatchEvent(new Event('mk-hero-settled'))};
+    const nameEl=hero.querySelector('h1 .lively');
+    if(rmActive()||!nameEl){hero.classList.add('handoff');settleHero()}
+    else setTimeout(()=>{
+      const chs=[...nameEl.querySelectorAll('.ch')],run=chs.length*26;
+      chs.forEach((c,i)=>c.style.transitionDelay=(i*26)+'ms');nameEl.classList.add('waving');
+      setTimeout(()=>{
+        chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*26)+'ms');nameEl.classList.remove('waving');
+        setTimeout(()=>{hero.classList.add('handoff');setTimeout(settleHero,950)},run+350);
+      },run+450);
+    },1600);
   }
 
   /* ---- the damped spring the pot rocks on -----------------------------------------------
@@ -1727,14 +1750,17 @@ function makeJS() {
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
-  /* the nav hides on the way down and plops back on the way up (see .nav-hidden). Never
-     near the top, and never while it holds keyboard focus. Small scrolls add up until
-     they pass 6px, so a slow trackpad drift still counts. */
+  /* the nav hides on the way down and comes back on the way up — the same rules as the walkthrough
+     pill (walkthrough.js): hidden past 140px going down, back after 40px of scrolling up, at the top,
+     or whenever the pointer comes within 90px of the top. Never hidden while it holds keyboard focus. */
   const navW=document.querySelector('.nav-wrap');
   if(navW){
-    let lastY=scrollY;
-    addEventListener('scroll',()=>{const y=scrollY,dy=y-lastY;if(Math.abs(dy)<6)return;lastY=y;
-      navW.classList.toggle('nav-hidden',dy>0&&y>120&&!navW.contains(document.activeElement));},{passive:true});
+    let navY=scrollY,navUp=0,navHover=false;
+    addEventListener('scroll',()=>{const y=scrollY,d=y-navY;navY=y;
+      if(d>0){navUp=0;if(y>140&&!navHover&&!navW.contains(document.activeElement))navW.classList.add('nav-hidden')}
+      else{navUp-=d;if(navUp>40||y<140)navW.classList.remove('nav-hidden')}},{passive:true});
+    addEventListener('mousemove',e=>{const near=e.clientY<90;if(near===navHover)return;navHover=near;if(near)navW.classList.remove('nav-hidden')},{passive:true});
+    navW.addEventListener('focusin',()=>navW.classList.remove('nav-hidden'));
   }
 
   /* the client logos roll in (see .gs-roll). GSAP is fetched only when the wall nears view;
