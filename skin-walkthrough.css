@@ -1,0 +1,51 @@
+
+/* ---- PREVIEW: the Driftwood walkthrough's look on the whole site (2026-10-22).
+   Colours/fonts come from data/theme.json; this layer only does what tokens can't:
+   the walkthrough's dark nav pill, white CTA, type weights, and the hero bio in type
+   instead of her handwriting. */
+body{font-weight:300;line-height:1.65}
+body::after,.atmosphere,.hero-flora{display:none}
+.theme-toggle{display:none}
+
+/* nav: the walkthrough's dark pill, not liquid glass */
+nav.bar.glass{background:rgba(22,27,40,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #232a3a;box-shadow:none}
+nav.bar.glass::before,nav.bar.glass::after{display:none}
+.wordmark{font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink-blue)}
+.nav-links a{font-size:1rem;letter-spacing:0;text-transform:none;color:#9aa0ad}
+.nav-links a:hover{color:var(--ink-blue)}
+
+/* buttons: white solid pill, blue-soft outline, sentence case */
+.btn{text-transform:none;letter-spacing:0;font-size:1rem;font-weight:500}
+.btn.sm,nav.bar .btn.sm{font-size:1rem;letter-spacing:0}
+.btn.solid{background:#fff;color:#111}
+.btn.solid:hover,.btn.solid:active{background:#dfe3ea}
+.btn.outline,.btn.teal{border:1px solid rgba(169,196,245,.55);color:var(--accent-deep)}
+.btn.outline:hover,.btn.teal:hover{background:var(--accent-deep);border-color:var(--accent-deep);color:#111}
+
+/* type: the walkthrough's bold, tight headings */
+.hero h1,.section-title,.w-outcome,.about-title,.p-title,.cs-title{font-weight:600;letter-spacing:-.02em}
+.hero h1{letter-spacing:-.03em;line-height:1.04}
+.eyebrow{font-weight:500;letter-spacing:.12em}
+
+/* the hero bio: set in type, not her hand */
+.hero-line{font-family:var(--font-body);font-weight:300;color:var(--ink-blue);
+  font-size:clamp(1.15rem,1.7vw,1.4rem);line-height:1.6;letter-spacing:0}
+.hero-line span.hs + span.hs{margin-top:.35em}
+
+/* company chips: quiet outline, no glass */
+.w-chip.glass{background:transparent;border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--ink-blue)}
+.w-chip.glass::before,.w-chip.glass::after{display:none}
+.w-outcome{color:var(--ink-blue)}
+/* Plus Jakarta runs wider than Cormorant, so the outcome measure widens to keep 2–3 lines */
+.w-outcome{max-width:30ch;font-size:clamp(1.35rem,2.3vw,1.9rem);line-height:1.25}
+
+/* every remaining .glass surface (stat cards, play buttons) goes to the walkthrough's dark
+   panel instead of the light liquid glass */
+:root,[data-theme="night"]{--glass-grad-a:rgba(255,255,255,.05);--glass-bg:rgba(22,27,40,.82);--glass-grad-b:rgba(255,255,255,.02);
+  --glass-border:#262a33;--glass-cres-top:rgba(255,255,255,.08);--glass-cres-bottom:rgba(255,255,255,.03);
+  --glass-cres-side:rgba(255,255,255,.03);--glass-glow:transparent;--glass-prism-o:0;color-scheme:dark}
+.stat-card.glass{background:var(--bg-raised);border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.stat-value{font-weight:600;letter-spacing:-.02em}
+.cs-title,.cs-heading{color:var(--ink-blue);font-weight:600;letter-spacing:-.02em}
+.footer .wordmark,footer .wordmark{font-family:'Cormorant Garamond',Georgia,serif}
+@media (max-width:520px){nav.bar .btn.sm{font-size:.9rem;padding:0 16px;min-height:38px}.nav-links a{font-size:.9rem;padding-left:10px;padding-right:10px}.wordmark{margin-right:0}}

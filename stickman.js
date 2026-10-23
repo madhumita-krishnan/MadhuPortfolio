@@ -281,16 +281,13 @@
        headline line for a glyph top with real headroom; the CTA sign-hold remains
        the fallback if the headline isn't there to stand on.
 
-       On phones he boots on the hero FLOOR instead (2026-08-19 "when you load the stick
-       figure on the phone can you load it at the bottom of the hero"). Not the sign-hold:
-       on a phone the say-hey button lives in the same bottom-left corner as the fixed
-       day/night pill, and the two stacked read as a collision — so he stands at 60% of
-       the width, right of both, facing the buttons. touchMode rather than a width test,
-       because it is the same judgement every other input decision in this file uses. */
-    if (touchMode) {
-      fig.x = Math.round(W * 0.6); fig.y = floorY; fig.dir = -1; fig.state = 'idle';
-      return;
-    }
+       Phones used to boot him on the hero FLOOR (2026-08-19), and that is where the
+       "can't see the stickman on mobile" reports came from: the hero is 100vh, phone
+       browsers show less than that behind their toolbars, so the floor — and him on
+       it — sat below the first screen. 2026-09-06 her ask: same place as desktop, on
+       the d. The say-hey/night-pill corner collision that motivated the floor only
+       applies to the CTA sign-hold FALLBACK, which phones now share with desktop and
+       reach just as rarely. */
     var h1 = hero.querySelector('h1');
     if (h1) {
       var r = localRect(h1, cv.getBoundingClientRect());
@@ -381,7 +378,10 @@
     /* the listener is document-wide (the run-to-the-edge fix), so bail while the hero
        is scrolled away — no rect reads on every mousemove over the rest of the page */
     if (!visible && !down) return;
-    var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y;
+    var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y; CLAY.away = false;
+    /* her ask: hover over clay-her and she smiles (the standing frame swaps to its smile twin) */
+    var sm = !touchMode && CLAY.ready && onClay(p);
+    if (sm !== CLAY.smile) { CLAY.smile = sm; if (!raf) draw(performance.now()); }
     /* drag never arms on touch — a moving finger on the hero is the page scrolling */
     if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
     if (down && down.moved && !rmActive()) {
@@ -392,6 +392,8 @@
       start();
     }
   }, { passive: true });
+  /* cursor left the window: forget where it was, or she keeps smiling at nobody */
+  document.addEventListener('pointerout', function (e) { if (!e.relatedTarget) { CLAY.away = true; CLAY.smile = false; if (!raf && CLAY.ready) draw(performance.now()); } });
   document.addEventListener('pointerdown', function (e) {
     if (e.button !== 0 || rmActive()) return;
     if (e.target.closest && e.target.closest('a,button,nav')) return;
@@ -421,7 +423,9 @@
     var p = stagePoint(e);
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
     var pelY = fig.y - LEG * (1 - fig.crawl * 0.6);
-    if (Math.hypot(p.x - fig.x, p.y - (pelY - TO / 2)) < 46) {
+    /* the clay figure is bigger than the stick one, so tapping anywhere on her body counts */
+    var onHer = CLAY.ready ? onClay(p) : Math.hypot(p.x - fig.x, p.y - (pelY - TO / 2)) < 46;
+    if (onHer) {
       if (fig.state === 'hang') release(0);
       celebrate();
       return;
@@ -768,6 +772,7 @@
     advance(dt);
     draw(now);
     if (needsLoop()) raf = requestAnimationFrame(frame);
+    else if (CLAY.ready) requestAnimationFrame(function (t) { draw(t); });   // settle on the resting clay frame, not the last moving one
   }
   function start() {
     if (!raf && !rmActive()) { cv.style.display = ''; last = performance.now(); raf = requestAnimationFrame(frame); }
@@ -824,7 +829,90 @@
   /* o: lean, hip:[], knee:[], sh:[], el:[], dy, rot, smile, grin, wavingHand, hands:[{x,y}],
      snap (plant the lowest foot/knee exactly on the surface), tiptoe (px of toe drop),
      headFollow (how much of the lean the head takes — default 0.5, it rights itself) */
+  /* ------------------------------------------------------------------ clay Madhu
+     (2026-10-23, her ask: "push the claymation to the main page instead of the stick man").
+     Every state still runs through the same physics; only the drawing changes. Frames are
+     Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
+     state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
+     as the fallback until the frames load, and under ?stick. */
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: 113 };
+  function loadClay() {
+    if (!CLAY.on) return;
+    var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
+    var dir = base.replace(/stick\.js.*$/, '') + 'assets/clay/';
+    var ver = (base.match(/\?v=[^&#]*/) || [''])[0];   // the build's cache-buster, so a re-rendered frame isn't served stale
+    fetch(dir + 'clay.json').then(function (r) { return r.json(); }).then(function (m) {
+      CLAY.man = m; var n = 0, total = 0;
+      Object.keys(m).forEach(function (k) { if (k[0] === '_') return; m[k].forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
+        im.onload = function () { if (++n === total) { CLAY.ready = true; draw(performance.now()); start(); } }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
+      /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
+      if (m._smile) { var sm = new Image(); sm.src = dir + m._smile + ver; CLAY.img.smile = sm; }   // same box as idle-wave-sign-0, only the face differs
+    }).catch(function () { CLAY.on = false; });
+  }
+  function onClay(p) { return Math.abs(p.x - fig.x) < 34 && p.y > fig.y - CLAY.H - 6 && p.y < fig.y + 6; }
+  (window.requestIdleCallback || function (f) { setTimeout(f, 600); })(loadClay);
+  var WAVE_T = [[2, .24], [3, .26], [4, .5], [5, .5], [4, .5], [5, .5], [3, .28], [2, .22]];   /* slower, pauses between waves */
+  var CART = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [6, 1], [5, 1], [11], [3, 1], [2, 1], [1, 1], [14]];   /* [frame, mirror] — a full roll */
+  function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
+  /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
+     lifted; rot in radians about the anchor; flip mirrors on top of dir */
+  function clayPick(o, groundY) {
+    var st = fig.state, sp = Math.abs(fig.vx || 0);
+    if (CLAY.lastX == null) CLAY.lastX = fig.x;
+    CLAY.dist += Math.abs(fig.x - CLAY.lastX); CLAY.lastX = fig.x;
+    if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide', k: 5 };
+    if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide', k: 6 };
+    switch (st) {
+      case 'move':
+        if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
+        if (sp > 230) return { s: 'run3', k: Math.floor(CLAY.dist / 9) % 16 };
+        return { s: 'walk2', k: Math.floor(CLAY.dist / 5.5) % 16 };
+      case 'air': { var vy = fig.vy || 0;
+        if (fig.flip) return { s: 'jump-land-slide', k: 3, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
+        return { s: 'jump-land-slide', k: vy < -380 ? 1 : vy < -90 ? 2 : vy < 120 ? 3 : 4 }; }
+      case 'hang': {
+        var h = fig.hang, hs = o.hands || [], hx = 0, hy = 0, n = 0;
+        hs.forEach(function (q) { if (q) { hx += q.x; hy += q.y; n++; } });
+        if (!n) { hx = fig.x; hy = fig.y - LEG - HANG_L; n = 1; }
+        /* only the dead-hang frame keeps both hands on the grip, so the swing is that frame
+           pivoting from the hands like a pendulum (stepped to 12 positions a turn of the swing) */
+        var th = Math.max(-1.1, Math.min(1.1, h.th || 0));
+        return { s: 'hang-swing-climb', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
+      }
+      case 'mantle': { var m = fig.mantle, t = m.t;
+        if (t < .45) return { s: 'climb2', k: t < .2 ? 3 : 4, anchor: 'hands', ax: m.x1, ay: m.y1 };
+        return { s: 'climb2', k: 6 + Math.min(4, Math.floor((t - .45) / .55 * 5)) }; }
+      case 'wave': return { s: 'idle-wave-sign', k: timedAt(WAVE_T, fig.wave * 3) };
+      case 'sign': return { s: 'star-bow', k: 2 };
+      case 'celeb': { var c = fig.celeb, ct = c.t;
+        switch (c.name) {
+          case 'star': return { s: 'star-bow', k: ct < .22 ? 0 : ct < .78 ? 1 : 2, lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
+          case 'backflip': return { s: 'backflip', k: Math.min(7, Math.floor(ct * 8)), lift: Math.sin(Math.PI * ct) * .5 };
+          case 'dance': return { s: 'dance2', k: Math.min(15, Math.floor(ct * 16)) };
+          case 'cartwheel': { var e = CART[Math.min(15, Math.floor(ct * 16))]; return { s: 'cartwheel3', k: e[0], flip: !!e[1] }; }
+          case 'bow': return { s: 'star-bow', k: [3, 4, 5, 5, 4, 6][Math.min(5, Math.floor(ct * 6))] };
+        }
+        return { s: 'idle-wave-sign', k: 0 }; }
+    }
+    return { s: 'idle-wave-sign', k: 0 };
+  }
+  function clayFigure(px, py, dir, o) {
+    var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
+    if (!f) return false;
+    var im = CLAY.img[f.f]; if (!im || !im.complete) return false;
+    /* re-tested per draw, not just per mousemove, so she also smiles when SHE walks under a still cursor */
+    if (!touchMode && !CLAY.away && onClay(mouse) && f.f === 'idle-wave-sign-0.png' && CLAY.img.smile && CLAY.img.smile.naturalWidth) im = CLAY.img.smile;   // naturalWidth, not complete: a missing file is "complete" too, and drawImage would throw
+    var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
+    ctx.save();
+    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, 0); }
+    else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
+    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }
+    ctx.restore();
+    return true;
+  }
+
   function figure(px, py, dir, o) {
+    if (CLAY.on && CLAY.ready && clayFigure(px, py, dir, o)) return;
     /* grounded poses NEVER float: whatever the gait is doing, the lowest contact —
        foot, or knee when the legs are folded — is planted exactly on the surface */
     if (o.snap) {
@@ -1189,7 +1277,7 @@
        60px figure. His wildest pose (flip apex, sign-cheer arms, hang reach) fits in
        ±150 of the pelvis; puffs stretch the box; the union with last frame's box
        erases the old drawing even on a fast drag. */
-    var R = 150;
+    var R = CLAY.ready ? 230 : 150;
     var b = { x1: fig.x - R, y1: fig.y - LEG - R, x2: fig.x + R, y2: fig.y + 40 };
     for (var pi = 0; pi < puffs.length; pi++) {
       var pf = puffs[pi];

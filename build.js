@@ -2641,7 +2641,7 @@ function checkComments(css) {
 }
 
 fs.mkdirSync(DIST, { recursive: true });
-fs.writeFileSync(path.join(DIST, 'styles.css'), checkComments(makeCSS()));
+fs.writeFileSync(path.join(DIST, 'styles.css'), checkComments(makeCSS() + fs.readFileSync(path.join(ROOT, 'skin-walkthrough.css'), 'utf8')));
 fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
 /* the stick figure ships as-is — it is hand-written client JS, not generated */
 fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
