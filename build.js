@@ -750,8 +750,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard)}
   .hero-line span.hs + span.hs{margin-top:0;padding-top:.5em}
   .hero-line::before{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
-    background:color-mix(in srgb,var(--bg-base) 82%,transparent);transition:opacity 500ms var(--ease-standard) 120ms}
-  .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 320ms var(--ease-standard)}
+    background:color-mix(in srgb,var(--bg-base) 40%,transparent);transition:opacity 700ms var(--ease-standard) 120ms}   /* 40%, not 82%: the deep dim was too much ("watching everything dim is giving me a seizure") */
+  .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 600ms var(--ease-standard)}
   .hero-line span.hs:hover{z-index:60}
   /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
      "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
@@ -760,8 +760,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
     background-image:linear-gradient(100deg,var(--hs-dim) 40%,var(--ink-blue-hover) 50%,var(--hs-dim) 60%);background-size:250% 100%;
     --hs-dim:color-mix(in srgb,var(--ink-blue-hover) 55%,var(--bg-base));animation:hs-glimmer 2s linear infinite}
   /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
-  body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.2}
-  body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 320ms var(--ease-standard)}
+  body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.65}
+  body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 600ms var(--ease-standard)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
