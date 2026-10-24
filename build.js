@@ -465,6 +465,11 @@ html,body{overflow-x:clip}
    comes near the top. Same curve and timing as the pill. app.js toggles .nav-hidden. */
 .nav-wrap{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease}
 .nav-wrap.nav-hidden{transform:translateY(-160%);opacity:0;pointer-events:none}
+/* never two say hey!s on screen (her ask 2026-10-23): the nav's steps aside while the hero's is in view. It keeps its
+   space, so the nav doesn't reflow */
+.nav-wrap .bar>.btn.sm{transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear 0s}
+body.hero-cta-on .nav-wrap .bar>.btn.sm{opacity:0;transform:scale(.9);visibility:hidden;pointer-events:none;
+  transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear .3s}
 @media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
@@ -1907,6 +1912,9 @@ function makeJS() {
 
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
+
+  const heroSay=document.querySelector('.hero-cta-row .btn.solid');
+  if(heroSay)new IntersectionObserver(es=>es.forEach(e=>document.body.classList.toggle('hero-cta-on',e.isIntersecting))).observe(heroSay);
 
   /* the nav hides on the way down and comes back on the way up — the same rules as the walkthrough
      pill (walkthrough.js): hidden past 140px going down, back after 40px of scrolling up, at the top,
