@@ -175,12 +175,6 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
 /* the tweakers' saved values (data/tweaks.json, written by the dev server's /__tweak when she presses
    Save) become each visual's defaults. Missing file = the hand-set defaults. */
 const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'tweaks.json'), 'utf8')); } catch (e) { return {}; } })();
-function deckTweaks() {
-  const t = TWEAKS['case-deck']; if (!t) return '';
-  const u = { card: ['--deck-card', 'px'], gap: ['--deck-gap', 'px'], title: ['--deck-title', 'px'], stagger: ['--deck-stagger', '%'], side: ['--deck-side', ''], radius: ['--deck-radius', 'px'], bg: ['--deck-bg', ''] };
-  const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k][0] + ':' + v + u[k][1]).join(';');
-  return decl ? '.deck-sec{' + decl + '}' : '';
-}
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
   const u = { cardW: '--sd-card-w', cardH: '--sd-card-h', gap: '--sd-gap', radius: '--sd-radius', side: '--sd-side', settle: '--sd-settle', bg: '--sd-bg' };
@@ -951,35 +945,6 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    read as a cold sheet laid over the warm cream */
 .wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
-/* ------------------------------------------------ the deck (deck.html preview, see deckHTML) */
-${deckTweaks()}
-.deck-sec{max-width:none;padding-left:0;padding-right:0}
-.deck-sec .section-title{max-width:1240px;margin-left:auto;margin-right:auto;padding:0 calc(var(--space)*6)}
-/* every dial reads a --deck-* override first, which the tweaker (studies/tweaker-deck/) sets on :root */
-.deck{--card:var(--deck-card,min(44vw,560px));--gap:var(--deck-gap,clamp(18px,3vw,44px));--stagger:var(--deck-stagger,16%);--side:var(--deck-side,.66);
-  display:flex;gap:var(--gap);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
-  padding:8vh calc(50vw - var(--card) / 2) 12vh;scrollbar-width:none;outline:none}
-.deck::-webkit-scrollbar{display:none}
-.dcard{flex:0 0 var(--card);aspect-ratio:1;scroll-snap-align:center;border-radius:var(--deck-radius,clamp(22px,2.6vw,36px));
-  background:var(--deck-bg,var(--bg-raised));border:1px solid var(--line);color:inherit;text-decoration:none;
-  display:grid;grid-template-rows:minmax(0,1fr) auto;gap:calc(var(--space)*3);padding:clamp(20px,2.4vw,36px);overflow:hidden}
-.dcard-media{min-height:0;display:grid;place-items:center}
-.dcard-media>*{max-height:100%;max-width:100%}
-/* the bezel keeps its own proportions (.phone aspect-ratio); in a card it is sized by the slot's height */
-.dcard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
-.dcard-title{font-family:var(--font-display);font-weight:500;font-size:var(--deck-title,clamp(1.6rem,3vw,2.6rem));line-height:1.05;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dcard-outcome{margin-top:.6em;font-size:.95rem;line-height:1.5;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.dcard .w-tags{margin-top:.8em}
-/* the stagger rides the deck's own scroll position (a scroll-driven animation, not a listener):
-   a card coming in from the right sits lower and smaller, centred it is full size, leaving to the
-   left it rises. Browsers without view timelines just show the row level. */
-@supports (animation-timeline:view()){
-  .dcard{animation:deck-ride linear both;animation-timeline:view(inline);animation-range:cover}
-  @keyframes deck-ride{0%{transform:translateY(var(--stagger)) scale(var(--side))}50%{transform:none}100%{transform:translateY(calc(var(--stagger) * -1)) scale(var(--side))}}
-}
-@media (prefers-reduced-motion:reduce){.dcard{animation:none}}
-/* once GSAP drives the ride (app.js adds .deck-js) the CSS version stands down */
-.deck-js .dcard{animation:none}
 /* ------------------------------------------------ the swipe deck (review copy, see sdeckHTML)
    Video-derived ratios from her spec: background #101010; active card 68% of the viewport's width (capped
    by height so card + title never clip); corners 8% of the card's width; gap 6% of the viewport's width;
@@ -1006,10 +971,6 @@ ${swipeTweaks()}
 .sdeck-title span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
 .sdeck-title.swap span{opacity:0;transform:translateY(10px)}
 @media (prefers-reduced-motion:reduce){.sdeck-title span{transition:none}}
-@media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}   /* narrow enough that both neighbours peek in */
-  /* a phone-width square can't hold the screen, the copy AND the stack, so the card grows to fit
-     and the screen gets a fixed slot */
-  .dcard{aspect-ratio:auto;grid-template-rows:56vw auto;align-self:flex-start}}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -1883,24 +1844,6 @@ function makeJS() {
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
   }
 
-  /* the deck's ride, like her reference video: the card moving into the middle grows to full size, its
-     neighbours shrink, left one higher and right one lower. GSAP drives it from the deck's own sideways
-     scroll (each change is an eased tween, so a swipe glides), which also covers Safari, where the CSS
-     view-timeline version never ran. Reads the same --stagger/--side dials as the CSS. */
-  const deckEl=document.querySelector('.deck');
-  if(deckEl&&!rmActive()){
-    vendorJS('gsap.min.js').then(()=>{
-      document.documentElement.classList.add('deck-js');
-      const cs=getComputedStyle(deckEl),cards=[...deckEl.querySelectorAll('.dcard')];
-      let queued=false;
-      const ride=()=>{queued=false;
-        const st=parseFloat(cs.getPropertyValue('--stagger'))||16,side=parseFloat(cs.getPropertyValue('--side'))||.66,gap=parseFloat(cs.columnGap)||0,mid=deckEl.scrollLeft+deckEl.clientWidth/2;
-        cards.forEach(c=>{const t=Math.max(-1,Math.min(1,(c.offsetLeft+c.offsetWidth/2-mid)/(c.offsetWidth+gap)));gsap.to(c,{yPercent:t*st,scale:1-(1-side)*Math.abs(t),duration:.45,ease:'power3.out',overwrite:'auto'});});};
-      deckEl.addEventListener('scroll',()=>{if(!queued){queued=true;requestAnimationFrame(ride)}},{passive:true});
-      addEventListener('resize',ride);ride();
-    }).catch(()=>{});
-  }
-
   /* THE SWIPE DECK (see .sdeck). The track's x is the one source of truth: every card's scale is computed
      from its distance to the centre on every move (1 - (1 - side) x clamp(|offset| / pitch, 0, 1)), so the
      incoming card grows and the outgoing one shrinks throughout the drag, not only after release. Release
@@ -2617,30 +2560,6 @@ function renderHome(mode = 'list') {
   </a>`).join('\n')}
 </section>`;
 
-  /* PREVIEW (2026-10-23, her ask: "what my case studies would look like in this format for people
-     to scroll through, but I don't want to scroll jack"): the same projects as a sideways DECK, one big
-     rounded card centred with its neighbours peeking in, left one higher and right one lower (her
-     reference recording). It is plain overflow-x scrolling with snap: trackpad, swipe and keyboard
-     move it, the page's vertical scroll is never taken over. Card titles are the project names
-     (one line, poster-size); the long outcome lines sit under them as body copy, which keeps the
-     two-line heading rule. Built only into deck.html. */
-  const deckHTML = `
-<section id="work" class="deck-sec">
-  <h2 class="section-title fade">${typo(site.work.title)}</h2>
-  <div class="deck" tabindex="0" role="region" aria-label="${esc(site.work.title)}, scroll sideways">
-    ${site.work.projects.map(p => `
-    <a class="dcard" href="${esc(p.slug)}.html" data-curious>
-      <div class="dcard-media">${projectMedia(p)}</div>
-      <div class="dcard-copy">
-        <h3 class="dcard-title">${esc(p.name)}</h3>
-        <p class="dcard-outcome">${typo(p.outcome)}</p>
-        <p class="w-tags">${esc(p.tags)}</p>
-        ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
-      </div>
-    </a>`).join('')}
-  </div>
-</section>`;
-
   /* THE SWIPE DECK (review copy, branch review/swipe-deck; her spec claude-case-study-swipe-deck.md and her
      reference-swipe-deck.mov): one large centred case-study card, smaller neighbours peeking in from both
      sides, dragged or swiped sideways; only the centred project's title shows, UNDER the card (her change
@@ -2753,7 +2672,7 @@ ${navBar('home')}
 <main>
 ${heroHTML}
 ${brandsHTML}
-${mode === 'c' ? sdeckHTML : mode === 'b' ? deckHTML : workHTML}
+${mode === 'c' ? sdeckHTML : workHTML}
 ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
@@ -3026,8 +2945,6 @@ fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : 
 /* locally deck.html also carries the tweaker receiver; never on Vercel (process.env.VERCEL is set in its
    builds): the receiver trusts any window that posts to it */
 const deckPage = lintIcons(renderHome('c'), 'deck.html');
-/* option B, the first deck, kept viewable on its own page so she can compare it with C (unlinked) */
-fs.writeFileSync(path.join(DIST, 'deck-b.html'), lintIcons(renderHome('b'), 'deck-b.html'));
 fs.writeFileSync(path.join(DIST, 'deck.html'), process.env.VERCEL ? deckPage : deckPage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
