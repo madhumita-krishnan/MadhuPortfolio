@@ -758,7 +758,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
   .hero-line:hover span.hs:hover{color:transparent;-webkit-background-clip:text;background-clip:text;
     background-image:linear-gradient(100deg,var(--ink-blue-hover) 40%,var(--accent) 50%,var(--ink-blue-hover) 60%);background-size:250% 100%;
-    animation:hs-glimmer 2s linear infinite}   /* white line, BLUE glimmer (her follow-up: the dimmed base was hard to read) */
+    animation:hs-glimmer 1.6s var(--ease-standard) 1 both}   /* white line, BLUE glimmer, ONE pass per hover (her follow-ups: base hard to read; "only ripple through once") */
   /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
   body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.65}
   body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 600ms var(--ease-standard)}
