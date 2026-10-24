@@ -181,6 +181,12 @@ function deckTweaks() {
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k][0] + ':' + v + u[k][1]).join(';');
   return decl ? '.deck-sec{' + decl + '}' : '';
 }
+function swipeTweaks() {
+  const t = TWEAKS['swipe-deck']; if (!t) return '';
+  const u = { cardW: '--sd-card-w', cardH: '--sd-card-h', gap: '--sd-gap', radius: '--sd-radius', side: '--sd-side', settle: '--sd-settle', bg: '--sd-bg' };
+  const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
+  return decl ? '.sdeck-sec{' + decl + '}' : '';
+}
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -974,6 +980,32 @@ ${deckTweaks()}
 @media (prefers-reduced-motion:reduce){.dcard{animation:none}}
 /* once GSAP drives the ride (app.js adds .deck-js) the CSS version stands down */
 .deck-js .dcard{animation:none}
+/* ------------------------------------------------ the swipe deck (review copy, see sdeckHTML)
+   Video-derived ratios from her spec: background #101010; active card 68% of the viewport's width (capped
+   by height so card + title never clip); corners 8% of the card's width; gap 6% of the viewport's width;
+   neighbours scale toward 0.65; settle about 0.6s. Every dial reads a --sd-* override first (tweaker). */
+${swipeTweaks()}
+.sdeck-sec{max-width:none;padding:calc(var(--space)*10) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
+.sdeck-sec .section-title{max-width:1240px;margin:0 auto;padding:0 calc(var(--space)*6)}
+.sdeck{--card-w:var(--sd-card-w,68);--card-h:var(--sd-card-h,62);--card:min(calc(var(--card-w) * 1vw),calc(var(--card-h) * 1svh));
+  --gap:calc(var(--sd-gap,6) * 1vw);--radius:var(--sd-radius,.08);--side:var(--sd-side,.65);--settle:var(--sd-settle,.6);
+  position:relative;height:calc(var(--card) + 7.5rem);margin-top:calc(var(--space)*5);overflow:hidden;
+  touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
+.sdeck:focus-visible{box-shadow:inset 0 0 0 2px var(--ink-blue)}
+.sdeck.dragging{cursor:grabbing}
+.sdeck-track{position:absolute;left:0;top:0;height:var(--card);display:flex;gap:var(--gap);will-change:transform}
+.scard{flex:0 0 var(--card);height:var(--card);border-radius:calc(var(--card) * var(--radius));background:var(--bg-raised);
+  display:grid;place-items:center;padding:calc(var(--card) * .08);overflow:hidden;transform-origin:50% 50%;
+  color:inherit;text-decoration:none;-webkit-user-drag:none;will-change:transform}
+.scard-media{width:100%;height:100%;display:grid;place-items:center;pointer-events:none}
+.scard-media>*{max-width:100%;max-height:100%}
+.scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
+/* only the centred project's title, directly under the card, swapping with a quiet fade and 10px slide */
+.sdeck-title{position:absolute;left:0;right:0;top:calc(var(--card) + 1.25rem);margin:0;padding:0 16px;text-align:center;
+  font-family:var(--font-display);font-weight:500;font-size:clamp(1.3rem,2.6vw,2.2rem);line-height:1.15;letter-spacing:-.02em;color:var(--text-primary)}
+.sdeck-title span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
+.sdeck-title.swap span{opacity:0;transform:translateY(10px)}
+@media (prefers-reduced-motion:reduce){.sdeck-title span{transition:none}}
 @media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}   /* narrow enough that both neighbours peek in */
   /* a phone-width square can't hold the screen, the copy AND the stack, so the card grows to fit
      and the screen gets a fixed slot */
@@ -1869,6 +1901,62 @@ function makeJS() {
     }).catch(()=>{});
   }
 
+  /* THE SWIPE DECK (see .sdeck). The track's x is the one source of truth: every card's scale is computed
+     from its distance to the centre on every move (1 - (1 - side) x clamp(|offset| / pitch, 0, 1)), so the
+     incoming card grows and the outgoing one shrinks throughout the drag, not only after release. Release
+     projects the flick's velocity, picks the nearest card and settles there with a decelerating ease
+     (power3.out over --settle seconds: no overshoot, no rotation, no fading). Stops at both ends. Vertical
+     swipes and wheel stay with the page (touch-action:pan-y; only a mostly-horizontal wheel is taken). */
+  const sd=document.querySelector('.sdeck');
+  if(sd){
+    const track=sd.querySelector('.sdeck-track'),cards=[...track.children],titleEl=sd.querySelector('.sdeck-title'),span=titleEl.querySelector('span');
+    const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
+    let x=0,pitch=1,idx=0,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
+    const setTitle=i=>{
+      active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
+      const n=cards[i].dataset.title;if(rm||span.textContent===n){span.textContent=n;return}
+      titleEl.classList.add('swap');clearTimeout(setTitle.t);
+      setTitle.t=setTimeout(()=>{span.textContent=cards[active].dataset.title;titleEl.classList.remove('swap')},130);
+    };
+    const setX=v=>{
+      x=v;track.style.transform='translate3d('+v+'px,0,0)';const side=num('--side')||.65;
+      cards.forEach((c,i)=>{const d=Math.min(1,Math.abs(i*pitch+v)/pitch);c.style.transform='scale('+(1-(1-side)*d)+')'});
+      const near=Math.max(0,Math.min(cards.length-1,Math.round(-v/pitch)));if(near!==active)setTitle(near);
+    };
+    const layout=()=>{const cw=cards[0].offsetWidth;pitch=cw+(parseFloat(getComputedStyle(track).columnGap)||0);track.style.left=(sd.clientWidth-cw)/2+'px';setX(-idx*pitch)};
+    const edge=v=>Math.max(-(cards.length-1)*pitch-pitch*.18,Math.min(pitch*.18,v));   // a little give past the ends
+    const settle=(i,instant)=>{
+      idx=Math.max(0,Math.min(cards.length-1,i));const to=-idx*pitch;if(tween)tween.kill();
+      if(instant||rm||!window.gsap)return setX(to);
+      const o={v:x};tween=gsap.to(o,{v:to,duration:num('--settle')||.6,ease:'power3.out',onUpdate:()=>setX(o.v)});
+    };
+    sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,x0:x,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
+    sd.addEventListener('pointermove',e=>{
+      if(!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+      if(!drag.axis){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;drag.axis=Math.abs(dx)>Math.abs(dy)?'x':'y';if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging')}}
+      if(drag.axis!=='x')return;drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>6)drag.pts.shift();setX(edge(drag.x0+dx));
+    });
+    const end=()=>{
+      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');
+      if(d.axis!=='x'){if(d.axis===null)return;settle(Math.round(-x/pitch));return}
+      const a=d.pts[0],b=d.pts[d.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);   // px per ms
+      const near=Math.round(-x/pitch),pick=Math.round(-(x+v*110)/pitch);   // the nearest card; a real flick may carry one further
+      settle(Math.max(near-1,Math.min(near+1,pick)));suppress=true;setTimeout(()=>{suppress=false},0);
+    };
+    sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
+    /* the centred card opens its case study; a neighbour comes to the centre instead; a drag never clicks */
+    track.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
+    track.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(c&&+c.dataset.i!==active)settle(+c.dataset.i)});
+    sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
+    sd.addEventListener('wheel',e=>{
+      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
+      setX(edge(x-e.deltaX));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(-x/pitch)),120);
+    },{passive:false});
+    addEventListener('resize',layout);layout();settle(0,true);
+    addEventListener('tweak',()=>{layout()});
+    if(!rm)vendorJS('gsap.min.js').catch(()=>{});
+  }
+
   /* PHONES: the work list focuses on one project at a time (her ask 2026-10-23: "make the scroll
      between each selected project more focused, use gsap to make it more fluid"). ScrollTrigger RIDES
      the scroll, it never steers it (her no-scroll-jacking rule): each card is full size and bright as
@@ -2525,6 +2613,21 @@ function renderHome(deck = false) {
   </div>
 </section>`;
 
+  /* THE SWIPE DECK (review copy, branch review/swipe-deck; her spec claude-case-study-swipe-deck.md and her
+     reference-swipe-deck.mov): one large centred case-study card, smaller neighbours peeking in from both
+     sides, dragged or swiped sideways; only the centred project's title shows, UNDER the card (her change
+     from the reference, where text sits on the cards). Cards use the same media and links as the list. */
+  const sdeckHTML = `
+<section id="work" class="sdeck-sec">
+  <h2 class="section-title fade">${typo(site.work.title)}</h2>
+  <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
+    <div class="sdeck-track">
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-title="${esc(p.name)}" aria-label="${esc(p.name)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
+    </div>
+    <p class="sdeck-title" aria-live="polite"><span>${esc(site.work.projects[0].name)}</span></p>
+  </div>
+</section>`;
+
   const panels = site.disciplines.panels;
   const panelsHTML = `
 <section id="disciplines" class="below-fold">
@@ -2622,7 +2725,7 @@ ${navBar('home')}
 <main>
 ${heroHTML}
 ${brandsHTML}
-${deck ? deckHTML : workHTML}
+${deck ? deckHTML : sdeckHTML}
 ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
