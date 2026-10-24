@@ -1007,10 +1007,17 @@ ${swipeTweaks()}
    it there once the finger is off and the scroll has stopped; nothing moves during the gesture). The GSAP focus still eases each
    project in and out on top. */
 @media (max-width:760px){
-  /* no CSS scroll-snap: it pulled a short swipe back to the same project before the settle in app.js could
-     move on to the next one (the "auto click to center the next reel" fix does the settling instead) */
-  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;
+  /* ONE SWIPE = ONE PROJECT (her: "the reels are not clicking into place with one swipe"). The browser's own
+     mandatory snapping with snap-stop:always: it stops on every project and never skips one, however hard the
+     flick, which a script can't promise on iPhone (momentum keeps gliding after the finger lifts). app.js turns
+     it on (html.reels-on) only while the work list holds the middle of the screen, and the sections either
+     side carry snap points so a swipe past the first or last project leaves the list; elsewhere the page
+     scrolls free. */
+  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;scroll-snap-align:center;scroll-snap-stop:always;
     padding-top:calc(var(--space)*9);padding-bottom:calc(var(--space)*6)}
+  html.reels-on{scroll-snap-type:y mandatory}
+  .reels-on #brands{scroll-snap-align:end}
+  .reels-on #disciplines{scroll-snap-align:start}
 }
 .project-media-wrap{display:flex;justify-content:center}
 
@@ -1924,29 +1931,11 @@ function makeJS() {
     }).catch(()=>{});
   }
 
-  /* REELS SETTLE (her ask 2026-10-23: the reels list "needs to auto click to center the next reel"). CSS
-     snapping alone doesn't always engage on iPhone, so once the finger is off AND the scroll has come to
-     rest inside the work list, the nearest project eases to the centre. A swipe of more than ~12% of the
-     screen from the last centred project always moves on to the next one (or back), like Reels, instead of
-     sliding home again. Nothing moves while a finger is down. */
-  if(phoneList.matches&&cardsM.length&&!rmActive()){
-    const work=document.getElementById('work');let touching=false,auto=false,last=-1,restT=0;
-    /* layout position, not getBoundingClientRect: the GSAP focus scales and shifts each card as it scrolls, so a
-       measured rect drifts mid-animation; offsetTop is where the card really sits */
-    const centreOf=c=>{let t=0,e=c;while(e){t+=e.offsetTop;e=e.offsetParent}return t+c.offsetHeight/2-scrollY};
-    const settleReel=()=>{
-      if(touching)return;if(auto){clearTimeout(restT);restT=setTimeout(settleReel,200);return}   // mid-settle: try again once it lands
-      const mid=innerHeight/2,wr=work.getBoundingClientRect();
-      if(wr.top>mid||wr.bottom<mid)return;   // only while the list holds the middle of the screen
-      let near=0,bd=1e9;cardsM.forEach((c,i)=>{const d=Math.abs(centreOf(c)-mid);if(d<bd){bd=d;near=i}});
-      let go=near;
-      if(last>=0&&near===last){const off=centreOf(cardsM[last])-mid;if(Math.abs(off)>innerHeight*.12)go=Math.max(0,Math.min(cardsM.length-1,last+(off<0?1:-1)))}
-      const target=centreOf(cardsM[go])-mid;last=go;if(Math.abs(target)<3)return;
-      auto=true;window.scrollTo({top:scrollY+target,behavior:'smooth'});setTimeout(()=>{auto=false},750);
-    };
-    addEventListener('touchstart',()=>{touching=true;auto=false;clearTimeout(restT)},{passive:true});   // a new swipe always wins
-    addEventListener('touchend',()=>{touching=false;clearTimeout(restT);restT=setTimeout(settleReel,140)},{passive:true});
-    addEventListener('scroll',()=>{clearTimeout(restT);restT=setTimeout(settleReel,140)},{passive:true});
+  /* REELS (see html.reels-on): mandatory one-project-per-swipe snapping, switched on only while the work list
+     covers the middle line of the screen, so the rest of the page keeps free scrolling */
+  if(phoneList.matches&&cardsM.length){
+    const workSec=document.getElementById('work');
+    new IntersectionObserver(es=>es.forEach(e=>document.documentElement.classList.toggle('reels-on',e.isIntersecting)),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
   }
 
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
