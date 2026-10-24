@@ -95,7 +95,8 @@
           "Vercel",
           "GitHub",
           "Claude Code"
-        ]
+        ],
+        "icon": "assets/case-studies/driftwood-retention/logo.svg"
       },
       {
         "slug": "vantage",
@@ -165,7 +166,8 @@
           "Vercel",
           "GitHub",
           "Claude Code"
-        ]
+        ],
+        "icon": "assets/case-studies/driftwood-retention/logo.svg"
       },
       {
         "slug": "spotify-mix",
@@ -182,7 +184,8 @@
         "stack": [
           "Figma",
           "Miro"
-        ]
+        ],
+        "icon": "assets/case-studies/spotify/mix-glyph.svg"
       },
       {
         "slug": "stack",
@@ -199,7 +202,9 @@
           "Claude Code",
           "Claude Design",
           "Miro"
-        ]
+        ],
+        "mark": "S",
+        "markBg": "#D50000"
       },
       {
         "slug": "message-testing",
@@ -235,7 +240,8 @@
           "CSS",
           "Node.js",
           "Claude Code"
-        ]
+        ],
+        "mark": "AI"
       }
     ]
   },

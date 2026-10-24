@@ -1090,6 +1090,22 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
 .sdeck-progress button.done::before{background:var(--text-secondary)}
 .sdeck-progress button.on::before{background:var(--text-primary)}
 .sdeck-progress button:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
+/* the company icons (her ask 2026-10-24: "if I hover over the dash line … can the icons for the companies pop up so
+   people can tap on the company logo to navigate faster?"): an app-icon tile over each dash, springing up in a quick
+   left-to-right ripple while the line is hovered, focused or being scrubbed (a finger down on a phone). A tap on a tile
+   is a tap on its dash, so the bar's own pointer handling takes it there. The pad above the line keeps the hover alive
+   across the gaps between tiles. Real marks where she has them, else the initial on a quiet tile (site.json icon / mark). */
+.sdeck-progress{position:relative}
+.sdeck-progress button{position:relative;z-index:1}
+.sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;bottom:100%;height:52px}
+.sd-ico{position:absolute;left:50%;bottom:calc(100% - 2px);width:min(34px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
+  display:grid;place-items:center;background:#262931;color:#f3f4f6;font:400 1.15rem/1 'Cormorant Garamond',Georgia,serif;
+  box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;
+  transform:translate(-50%,10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}
+.sd-ico img{width:100%;height:100%;display:block;-webkit-user-drag:none}
+.sdeck-progress:hover .sd-ico,.sdeck-progress:focus-within .sd-ico,.sdeck-progress.scrub .sd-ico{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+.sdeck-progress button.on .sd-ico{box-shadow:0 0 0 2px var(--text-primary),0 6px 16px rgba(0,0,0,.4)}
+.sdeck-progress .sd-ico:hover{transform:translate(-50%,-3px) scale(1.12);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -2197,9 +2213,9 @@ function makeJS() {
     if(bar){
       const segAt=x=>{const r=bar.getBoundingClientRect();return Math.max(0,Math.min(cards.length-1,Math.floor((x-r.left)/r.width*cards.length)))};
       let scrub=false;
-      bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;settle(segAt(e.clientX));try{bar.setPointerCapture(e.pointerId)}catch(err){}});
+      bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;clearTimeout(bar._t);bar.classList.add('scrub');settle(segAt(e.clientX));try{bar.setPointerCapture(e.pointerId)}catch(err){}});
       bar.addEventListener('pointermove',e=>{if(!scrub)return;const i=segAt(e.clientX);if(i!==Math.round(pos))settle(i)});
-      const stop=()=>{scrub=false};bar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
+      const stop=()=>{scrub=false;bar._t=setTimeout(()=>bar.classList.remove('scrub'),1200)};   // the icons linger a beat after a finger liftsbar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
       bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
@@ -3058,7 +3074,7 @@ function renderHome() {
       ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
-    <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"></button>`).join('')}</div>
+    <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"><span class="sd-ico" aria-hidden="true" style="--k:${i}${p.markBg ? `;background:${esc(p.markBg)}` : ''}">${p.icon ? `<img src="${esc(p.icon)}" alt="" draggable="false">` : esc(p.mark || p.name[0])}</span></button>`).join('')}</div>
   </div>`;
 
   /* THE WORK SECTION (her ask 2026-10-23: the swipe deck on the main screen, "with a toggle that lets you go
