@@ -1006,6 +1006,15 @@ ${swipeTweaks()}
 .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.72rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .sdeck-line{display:block}
 @media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
+/* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
+   the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
+   to jump straight there. Each segment's hit area is taller than its 3px line. */
+.sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
+.sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
+.sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
+.sdeck-progress button.done::before{background:var(--text-secondary)}
+.sdeck-progress button.on::before{background:var(--text-primary)}
+.sdeck-progress button:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -1930,7 +1939,7 @@ function makeJS() {
      swipes and wheel stay with the page. */
   const sd=document.querySelector('.sdeck');
   if(sd){
-    const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line');
+    const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line'),bar=sd.querySelector('.sdeck-progress'),segs=bar?[...bar.children]:[];
     const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
@@ -1947,7 +1956,7 @@ function makeJS() {
         const x=Math.sign(t)*(a<=1?a*R:R+(a-1)*R2),y=lane+p*(cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
       });
-      const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active)setTitle(near);
+      const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
     };
     const layout=()=>{
       W=sd.clientWidth;const side=num('--side')||.5,gap=(num('--gap')||6)/100*W,peek=(num('--peek')||7)/100*W;
@@ -1992,6 +2001,15 @@ function makeJS() {
     const unhold=()=>{clearTimeout(holdT);if(held){held.classList.remove('held');held=null;suppress=true;setTimeout(()=>{suppress=false},0)}};
     addEventListener('pointerup',unhold);addEventListener('pointercancel',unhold);
     stage.addEventListener('contextmenu',e=>{if(e.target.closest('.scard'))e.preventDefault()});
+    /* the progress bar: tap a segment to go there, or drag along it to scrub straight to the end (or back) */
+    if(bar){
+      const segAt=x=>{const r=bar.getBoundingClientRect();return Math.max(0,Math.min(cards.length-1,Math.floor((x-r.left)/r.width*cards.length)))};
+      let scrub=false;
+      bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;settle(segAt(e.clientX));try{bar.setPointerCapture(e.pointerId)}catch(err){}});
+      bar.addEventListener('pointermove',e=>{if(!scrub)return;const i=segAt(e.clientX);if(i!==Math.round(pos))settle(i)});
+      const stop=()=>{scrub=false};bar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
+      bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
+    }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     sd.addEventListener('wheel',e=>{
       if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
@@ -2677,6 +2695,7 @@ function renderHome() {
       ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
+    <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"></button>`).join('')}</div>
   </div>`;
 
   /* THE WORK SECTION (her ask 2026-10-23: the swipe deck on the main screen, "with a toggle that lets you go
