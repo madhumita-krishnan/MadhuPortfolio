@@ -177,7 +177,8 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
 const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'tweaks.json'), 'utf8')); } catch (e) { return {}; } })();
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
-  const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg' };
+  const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg',
+    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
@@ -1030,7 +1031,7 @@ ${swipeTweaks()}
   .scard-media{display:block;height:auto}
   .scard-media>*,.scard-media .phone-media{width:100%;height:auto;max-width:none;max-height:none}
   .scard-stack{border-radius:0 0 var(--r-media) var(--r-media);padding:24px;padding-top:64px}
-  .sdeck-title{width:min(100% - 32px,56vw);margin-top:28px;font-size:clamp(1.2rem,1.9vw,1.75rem)}
+  .sdeck-title{width:min(100% - 32px,calc(var(--sd-tw,56) * 1vw));margin-top:calc(var(--sd-tgap,28) * 1px);font-size:clamp(1.2rem,1.9vw,1.75rem)}
 }
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
@@ -2011,13 +2012,17 @@ function makeJS() {
       if(desk.matches){
         /* the demo's height: ~58% of the screen, less if the stage (1.18 x it: room above for the top lane), the 28px
            gap, the headline, the progress bar and the floating toggle (~100px with its margin) wouldn't all fit */
-        const Ht=Math.max(200,Math.min(innerHeight*.58,(innerHeight-th-28-bar.offsetHeight-100)/1.18)),cyB=.68*Ht;
+        /* dials (studies/tweaker-swipe/): demo height dh% of the screen, max width dw%, lanes ±lane x the demo height
+           from its centre, headline tgap px under it */
+        const dh=(num('--sd-dh')||58)/100,dw=(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?.28:ln,tgap=num('--sd-tgap'),tg=isNaN(tgap)?28:tgap;
+        const above=Math.max(.18,lane+side/2-.5),room=above+1;   // stage = room above the demo (the top lane's card must fit) + the demo
+        const cyF=above+.5,Ht=Math.max(200,Math.min(innerHeight*dh,(innerHeight-th-tg-bar.offsetHeight-100)/room)),cyB=cyF*Ht;
         let wMax=0;
         dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
-          let w=Ht*ar,h=Ht;if(w>.8*W){w=.8*W;h=w/ar}wMax=Math.max(wMax,w);
+          let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
           c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:cyB+(Ht-h)/2}});   // bottoms aligned: the gap to the headline never changes
         dims.forEach(d=>{d.R=Math.max(wMax/2+side*d.w/2+gap,W/2-peek+side*d.w/2)});
-        R=dims[0].R;R2=side*wMax+gap;H=1.18*Ht;top=cyB-.28*Ht;bot=cyB+.28*Ht;
+        R=dims[0].R;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
       }else cards.forEach(c=>{c.style.removeProperty('--w');c.style.removeProperty('--h')});
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       titleEl.style.minHeight=th+'px';place(pos);
@@ -2026,7 +2031,7 @@ function makeJS() {
     const settle=(i,instant)=>{
       const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
       if(instant||rm||!window.gsap)return place(to);
-      const o={v:pos};tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:'power3.out',onUpdate:()=>place(o.v)});
+      const o={v:pos};tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out',onUpdate:()=>place(o.v)});
     };
     sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{

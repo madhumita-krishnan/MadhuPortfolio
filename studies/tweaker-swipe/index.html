@@ -13,8 +13,16 @@ Tweaker({
   title: 'Swipe deck',
   url: '../../index.html#work',
   params: [
-    { key: 'aw', label: 'Active card width', group: 'Scale', type: 'range', min: 40, max: 95, step: 1, value: 73, unit: '%', cssUnit: '', css: '--sd-aw', hint: 'Share of the screen width (the reference: 73%)' },
-    { key: 'ah', label: 'Active card height', group: 'Scale', type: 'range', min: 40, max: 95, step: 1, value: 75, unit: '%', cssUnit: '', css: '--sd-ah', hint: 'Share of the room left after the headline (the reference: 75%)' },
+    /* LAPTOP (wider than 760px): the demo is the card */
+    { key: 'dh', label: 'Laptop: demo height', group: 'Laptop', type: 'range', min: 35, max: 80, step: 1, value: 58, unit: '%', cssUnit: '', css: '--sd-dh', hint: 'Share of the screen height (shrinks if the headline and controls would not fit)' },
+    { key: 'dw', label: 'Laptop: demo max width', group: 'Laptop', type: 'range', min: 40, max: 95, step: 1, value: 80, unit: '%', cssUnit: '', css: '--sd-dw', hint: 'Caps wide demos' },
+    { key: 'lane', label: 'Laptop: corner lanes', group: 'Laptop', type: 'range', min: 0, max: .6, step: .01, value: .28, unit: '×', css: '--sd-lane', hint: 'How far above/below centre the waiting cards sit (× demo height). 0 = all in one row' },
+    { key: 'tgap', label: 'Laptop: headline gap', group: 'Laptop', type: 'range', min: 8, max: 64, step: 1, value: 28, unit: 'px', cssUnit: '', css: '--sd-tgap' },
+    { key: 'tw', label: 'Laptop: headline width', group: 'Laptop', type: 'range', min: 30, max: 80, step: 1, value: 56, unit: '%', cssUnit: '', css: '--sd-tw', hint: 'Share of the screen width' },
+    { key: 'ease', label: 'Settle curve', group: 'Motion', type: 'select', options: ['power2.out', 'power3.out', 'power4.out', 'expo.out', 'sine.out', 'circ.out'], value: 'power3.out', css: '--sd-ease', hint: 'How the deck eases into place after you let go' },
+    /* PHONES: the square cards */
+    { key: 'aw', label: 'Phone: active card width', group: 'Phone', type: 'range', min: 40, max: 95, step: 1, value: 73, unit: '%', cssUnit: '', css: '--sd-aw', hint: 'Share of the screen width (the reference: 73%)' },
+    { key: 'ah', label: 'Phone: active card height', group: 'Phone', type: 'range', min: 40, max: 95, step: 1, value: 75, unit: '%', cssUnit: '', css: '--sd-ah', hint: 'Share of the room left after the headline (the reference: 75%)' },
     { key: 'side', label: 'Neighbour size', group: 'Layout', type: 'range', min: .25, max: 1, step: .01, value: .5, unit: '×', css: '--sd-side', hint: 'The reference: 0.5' },
     { key: 'gap', label: 'Gap to the active card', group: 'Layout', type: 'range', min: 0, max: 15, step: .5, value: 6, unit: '%', cssUnit: '', css: '--sd-gap', hint: 'Share of the screen width; stays constant through the drag' },
     { key: 'peek', label: 'Neighbour peek', group: 'Layout', type: 'range', min: 2, max: 25, step: .5, value: 7, unit: '%', cssUnit: '', css: '--sd-peek', hint: 'How much of a neighbour shows at the screen edge' },

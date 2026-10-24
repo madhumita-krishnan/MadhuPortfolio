@@ -58,6 +58,8 @@
 .tw-out textarea{width:100%;height:150px;font:12px ui-monospace,Menlo,monospace;color:#e9ebf1;background:#14161c;border:1px solid #2b2f3a;border-radius:8px;padding:8px}\
 .tw-toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#e9ebf1;color:#0d0e12;border-radius:999px;padding:8px 14px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:2147483001}\
 .tw-toast.on{opacity:1}\
+.tw-save{position:fixed;right:20px;bottom:20px;z-index:2147483000;padding:14px 30px;border:0;border-radius:999px;background:#ffd23f;color:#0d0e12;font-size:15px;font-weight:700;letter-spacing:.04em;box-shadow:0 8px 24px rgba(0,0,0,.45)}\
+.tw-save:hover{background:#ffe07a;border:0}\
 @media (max-width:760px){.tw{grid-template-columns:1fr;grid-template-rows:minmax(42vh,1fr) minmax(0,48vh)}.tw-panel{border-left:0;border-top:1px solid #23262f}}\
 ';
   var SIZES = [['Phone', 390, 760], ['Tablet', 820, 1000], ['Laptop', 1280, 800], ['Fill', 0, 0]];
@@ -128,11 +130,11 @@
     out.appendChild(outText);
     /* Save (her ask 2026-10-23: "I made changes on the sliders. I need a save button"): only when the
        page passes save(values) — e.g. a POST to the local dev server that writes them into the source */
-    var saveBtn = cfg.save ? el('button', { class: 'tw-btn', type: 'button', text: 'Save', title: 'Write these values into the site', onclick: function () {
+    var saveBtn = cfg.save ? el('button', { class: 'tw-btn tw-save', type: 'button', text: 'SAVE', title: 'Write these values into the site', onclick: function () {
       Promise.resolve().then(function () { return cfg.save(JSON.parse(JSON.stringify(v))); }).then(function () { toast('Saved into the site'); }, function () { toast('Could not save. Is the dev server running?'); });
     } }) : null;
+    /* Save floats big and yellow in the bottom-right corner of the screen (her ask: "more obvious") */
     var acts = el('div', { class: 'tw-acts' }, [
-      saveBtn,
       el('button', { class: 'tw-btn', type: 'button', text: 'Copy values', title: 'Paste these back into the chat to bake them in', onclick: copy }),
       el('button', { class: 'tw-btn', type: 'button', text: 'Paste values', onclick: function () { out.classList.toggle('on'); outText.value = ''; outText.placeholder = 'Paste a values block here'; outText.focus(); } }),
       abBtn,
@@ -156,7 +158,7 @@
     var panel = el('aside', { class: 'tw-panel', 'aria-label': 'Controls' }, panelKids);
     var toastEl = el('div', { class: 'tw-toast', role: 'status' });
     var root = el('div', { class: 'tw' }, [el('section', { class: 'tw-view' }, [bar, wrap]), panel]);
-    document.body.appendChild(root); document.body.appendChild(toastEl);
+    document.body.appendChild(root); document.body.appendChild(toastEl); if (saveBtn) document.body.appendChild(saveBtn);
 
     function control(p) {
       var id = 'tw-' + p.key, input, num = null;
