@@ -960,13 +960,13 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* display:block is load-bearing: inside a slot .brand is an inline span, where height:38px
    does not apply and the mark collapses to nothing */
 .brand-slot .brand{display:block}
-/* the logos that LINK somewhere glow blue (her ask 2026-10-23), so you can tell which ones open a proof link.
-   The glow sits on the link, not the mark: a filter on the masked .brand would be masked away with it.
-   Steady, never pulsing. The wisp dots read this colour too, so they arrive blue. */
-a.brand-slot .brand{background:var(--accent)}
-a.brand-slot{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 55%,transparent));transition:filter var(--motion-base) var(--ease-standard)}
-a.brand-slot:hover{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 80%,transparent))}
-a.brand-slot:hover .brand{background:var(--ink-blue-hover)}
+/* the logos that LINK somewhere glow blue ON HOVER (her ask 2026-10-23, then "only when hovering"): at rest they
+   match the wall; hovering one turns it blue with a soft glow, so you learn it opens a proof link. Logos without a
+   link keep the plain .brand:hover. The glow sits on the link, not the mark: a filter on the masked .brand would be
+   masked away with it. */
+a.brand-slot{transition:filter var(--motion-base) var(--ease-standard)}
+a.brand-slot:hover,a.brand-slot:focus-visible{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 75%,transparent))}
+a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--accent)}
 .brands-row.gs-roll .brand{opacity:0}
 /* the row carries the observer, not the movement — the logos do that */
 .brands-row.fade{opacity:1;transform:none;transition:none}
