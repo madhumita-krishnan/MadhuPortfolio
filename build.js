@@ -733,7 +733,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    then x and twitter blocks show up. Like it's a claymation animation"). The tiles wait inside the button and squash-
    and-stretch out one after another, stepped like stop-motion (7 steps ≈ 12fps): Zoom books the call (Calendly),
    then LinkedIn, then X. Laptops: say hey! goes straight to Calendly and the cloud carries the socials. */
-.cta-socials{display:none;align-items:center;gap:10px}
+.cta-socials{display:none;align-items:center;gap:18px}
 .cta-socials a{display:block;width:48px;height:48px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .15s ease}
 /* (her follow-up: "say hey doesn't need to be big. Can it horizontally poof into itself to the left and the icons pop
    out as a result?") on phones the button is smaller, and a tap squashes it sideways into its own left edge in clay
@@ -746,10 +746,19 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 }
 @keyframes say-poof{0%{transform:none;max-width:200px}40%{transform:scale(.62,1.14)}75%{transform:scale(.22,.82);opacity:1}
   100%{transform:scale(0,.6);opacity:0;max-width:0;padding-left:0;padding-right:0;margin-right:0}}
-.hero-cta-row.socials-open .cta-socials{gap:10px}
+.hero-cta-row.socials-open .cta-socials{gap:18px}   /* room between the tiles (her: "a little too close together") */
 .hero-cta-row.socials-open .cta-socials a{opacity:1;pointer-events:auto;animation:clay-pop .56s steps(7,end) .2s both}
 .hero-cta-row.socials-open .cta-socials a:nth-child(2){animation-delay:.29s}
 .hero-cta-row.socials-open .cta-socials a:nth-child(3){animation-delay:.38s}
+/* the way back (her: "how do I close the stuff when I click say hey … tuck it back in"): a small ✕ after the tiles; the
+   tiles shrink back to the left in clay steps, then say hey! pops out again. Only the ✕: taps elsewhere steer clay-her */
+.say-close{display:grid;place-items:center;width:34px;height:34px;margin-left:2px;padding:0;border-radius:50%;border:1px solid rgba(169,196,245,.45);
+  background:none;color:#e9eaee;opacity:0;pointer-events:none;cursor:pointer}
+.say-close svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.say-close:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
+.hero-cta-row.socials-open .say-close{opacity:1;pointer-events:auto;animation:clay-pop .4s steps(5,end) .5s both}
+.hero-cta-row.socials-open.socials-tucking .cta-socials a,.hero-cta-row.socials-open.socials-tucking .say-close{animation:clay-tuck .3s steps(4,end) both;pointer-events:none}
+@keyframes clay-tuck{0%{opacity:1;transform:none}40%{transform:scale(1.12,.86)}100%{opacity:0;transform:translateX(-80px) scale(.15)}}
 @keyframes clay-pop{0%{opacity:0;transform:translateX(-70px) scale(.2)}35%{opacity:1;transform:translateX(6px) scale(1.25,.8)}
   60%{transform:translateX(-2px) scale(.88,1.15)}80%{transform:scale(1.06,.95)}100%{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.hero-cta-row.socials-open .cta-socials a,.hero-cta-row.socials-back .btn.solid{animation:none}.hero-cta-row.socials-open .btn.solid{animation:none;display:none}}
@@ -1988,12 +1997,19 @@ function makeJS() {
      inside it books the call. A tap anywhere else closes it. */
   const sayRow=document.querySelector('.hero-cta-row'),sayPop=sayRow&&sayRow.querySelector('.cta-socials'),sayBtn=sayRow&&sayRow.querySelector('.btn.solid');
   if(sayPop&&sayBtn){
-    const phone=matchMedia('(max-width:760px)'),setOpen=on=>{const was=sayRow.classList.contains('socials-open');sayRow.classList.toggle('socials-open',on);sayBtn.setAttribute('aria-expanded',String(on));
-      if(was&&!on){sayRow.classList.add('socials-back');setTimeout(()=>sayRow.classList.remove('socials-back'),500)}   // say hey! pops back
+    const phone=matchMedia('(max-width:760px)'),setOpen=on=>{const was=sayRow.classList.contains('socials-open');
+      if(was&&!on){   // tuck the tiles back in, THEN say hey! pops back out
+        if(sayRow.classList.contains('socials-tucking'))return;
+        sayRow.classList.add('socials-tucking');sayBtn.setAttribute('aria-expanded','false');
+        setTimeout(()=>{sayRow.classList.remove('socials-open','socials-tucking');sayRow.classList.add('socials-back');setTimeout(()=>sayRow.classList.remove('socials-back'),500);dispatchEvent(new Event('mk-terrain'))},rmActive()?0:300);
+        return}
+      sayRow.classList.toggle('socials-open',on);sayBtn.setAttribute('aria-expanded',String(on));
       setTimeout(()=>dispatchEvent(new Event('mk-terrain')),on?800:0)};   // the tiles are ground for clay-her once they've popped out (and gone when closed)
     sayBtn.setAttribute('aria-controls','say-pop');
     sayBtn.addEventListener('click',e=>{if(!phone.matches)return;e.preventDefault();setOpen(!sayRow.classList.contains('socials-open'))});
-    document.addEventListener('click',e=>{if(sayRow.classList.contains('socials-open')&&!sayRow.contains(e.target))setOpen(false)});
+    sayRow.querySelector('.say-close').addEventListener('click',()=>setOpen(false));
+    /* (no close on a tap elsewhere: a tap is how you send clay-her somewhere, and the tiles are platforms she can jump
+       onto — her: "the current thing doesn't let me jump on the clay icons". The ✕ tucks them away) */
   }
   const heroSay=document.querySelector('.hero-cta-row .btn.solid');
   if(heroSay){
@@ -3066,7 +3082,7 @@ function renderHome() {
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
-    <span class="cta-socials" id="say-pop"><a href="${esc(site.calendly)}" target="_blank" rel="noopener" aria-label="Book a Zoom call"><img src="${asset('assets/clay/props/zoom.png')}" alt="" width="48" height="48" draggable="false"></a>${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => `<a href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png')}" alt="" width="48" height="48" draggable="false"></a>`).join('')}</span>
+    <span class="cta-socials" id="say-pop"><a href="${esc(site.calendly)}" target="_blank" rel="noopener" aria-label="Book a Zoom call"><img src="${asset('assets/clay/props/zoom.png')}" alt="" width="48" height="48" draggable="false"></a>${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => `<a href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png')}" alt="" width="48" height="48" draggable="false"></a>`).join('')}<button class="say-close" type="button" aria-label="Tuck these back into say hey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button></span>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
