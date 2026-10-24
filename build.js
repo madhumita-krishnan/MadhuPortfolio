@@ -712,7 +712,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    the three still read as one paragraph, so the space between them is smaller than the space
    between the paragraph and anything else. */
 .hero-line span.hs{display:block}
-.hero-line span.hs + span.hs{margin-top:.5em}
+.hero-line span.hs + span.hs{margin-top:.75em}   /* .5em -> .75em: "a liiiittle spacing in the bio copy" */
 /* hovering a bio line: hover devices only (a phone tap shouldn't set anything moving) */
 @media (hover:hover){
   /* the bio no longer dims anything when a line is hovered (her call 2026-10-23: "we don't need to do the dimming thing
@@ -887,7 +887,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      desktop never sees show up here — the g of "strategy" landing in "study"
      (2026-08-19 "the g in the hero text gets cut off"). More leading, not less type. */
   .hero-line{max-width:none;line-height:1.95}
-  .hero-line span.hs + span.hs{margin-top:.7em}}
+  .hero-line span.hs + span.hs{margin-top:.95em}}
 
 /* ------------------------------------------------ brands strip */
 .brands{padding-top:0;padding-bottom:calc(var(--space)*6)}
