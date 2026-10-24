@@ -371,31 +371,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
              border-color var(--motion-fast) var(--ease-standard),
              color var(--motion-fast) var(--ease-standard)}
 
-/* ---- buttons swap into her hand on hover, same move as the nav links (2026-08-19:
-   "do the handwriting thing for all my buttons"). Overlay is absolute so the pill never
-   changes width; the sans label goes transparent under it. The hand ink colour rides a
-   per-variant custom property because the label's own color is the thing being hidden.
-   Button labels are uppercase, so the hand overlay is too — data-hand carries the label
-   already capitalised, bang included ('!' has been in Madhu Hand since 2026-08-19,
-   composed from her l and her full stop). Same -.52em baseline constant as the nav: it
-   folds both fonts' metrics and scales with the type size. */
-.btn[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
-  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
-  font-family:var(--font-hand);font-size:1.05em;letter-spacing:0;text-transform:none;font-weight:400;
-  color:var(--hand-ink,var(--ink-blue));
-  opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);pointer-events:none;white-space:nowrap}
-@media (hover:hover){
-  /* .btn.btn out-guns the variant hover rules below: .btn.outline:hover sets a cream
-     label at EQUAL specificity later in the sheet, which kept the sans visible under
-     the handwriting on the resume buttons (2026-08-19 "the old text doesn't disappear") */
-  .btn.btn[data-hand]:hover,.btn.btn[data-hand]:focus-visible{color:transparent}
-  .btn[data-hand]:hover::after,.btn[data-hand]:focus-visible::after{opacity:1}
-}
-.btn.solid{--hand-ink:var(--text-on-accent)}
-.btn.outline{--hand-ink:var(--accent-deep)}
-/* an outline button FILLS with accent-press on hover, and the resting hand ink is
-   accent-deep — dark orange on dark rust, invisible. The ink flips to cream with the fill. */
-.btn.outline:hover,.btn.outline:focus-visible{--hand-ink:var(--text-on-accent)}
+/* buttons used to swap into her handwriting on hover (2026-08-19); she turned it off 2026-10-23 ("I don't like the
+   hover handwriting feature on my buttons"). The nav links keep theirs. */
 
 /* PRIMARY. The hover and pressed steps are the accent walked down in value, not the accent
    plus a shadow — on a flat control the only honest way to show depression is that the
@@ -1324,17 +1301,6 @@ ${PHONE_CSS}
 .about-toggle{margin-bottom:calc(var(--space)*4);position:relative;
   border:0;border-bottom:1.5px solid var(--teal-baby);padding:0 0 7px;background:none}
 .about-toggle:hover{border-color:var(--ink-blue)}
-/* the toggle takes the same hand-swap as every other control (her rule): the sans label
-   goes quiet under her handwriting. The btn-link underline stays put, so on hover the
-   handwritten words sit ON the drawn line — same baseline constant as the nav. */
-.about-toggle[data-hand]::after{content:attr(data-hand);content:attr(data-hand) / "";
-  position:absolute;left:0;right:0;top:50%;transform:translateY(-.52em);text-align:center;
-  font-family:var(--font-hand);font-size:1.15em;letter-spacing:0;text-transform:none;font-weight:400;
-  color:var(--ink-blue);opacity:0;transition:opacity var(--motion-fast) var(--ease-standard);
-  pointer-events:none;white-space:nowrap}
-@media (hover:hover){
-  .about-toggle[data-hand]:hover,.about-toggle[data-hand]:focus-visible{color:transparent}
-  .about-toggle[data-hand]:hover::after,.about-toggle[data-hand]:focus-visible::after{opacity:1}
 }
 /* ---- education (2026-08-25 her ask): the Block M and the Google G, official marks at
    full colour — credentials, so they sit small beside their words above a hairline,
@@ -1445,6 +1411,15 @@ footer a:hover{color:var(--accent)}
    the case cards use for "I'm curious", reading "View design system" — data-curious
    carries the label, the cursor code does the rest. Hairline border, matching the
    theme-toggle ring, is what "delicate" means on this site. */
+/* the case-study corner arrows (see edgeArrows): the walkthrough pages' round arrow buttons, hiding with the nav */
+.cs-edge{position:fixed;top:22px;z-index:60;width:48px;height:48px;border-radius:50%;border:1px solid #2a2f3a;display:grid;place-items:center;
+  background:rgba(15,16,19,.75);color:#e9eaee;transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease,border-color .2s}
+.cs-edge svg{width:20px;height:20px}
+.cs-edge.prev{left:24px}.cs-edge.next{right:24px}
+.cs-edge:hover{border-color:#5a6070}
+.cs-edge:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;pointer-events:none}
+@media (max-width:700px){.cs-edge{display:none}}
 .ds-link{position:absolute;top:clamp(28px,4.5vw,56px);right:clamp(28px,4.5vw,56px);z-index:3;
   width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   border:1px solid currentColor;color:var(--text-on-deep);
@@ -3237,8 +3212,21 @@ fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : 
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
+/* back-and-forth arrows at the top corners of EVERY case study (2026-10-23 her ask: "only the driftwood page has the back
+   and forth arrows. they should all have back and forth arrows"; this overrides the old no-UI-arrows rule). The
+   walkthrough pages draw their own; the others get the same pair here. Order = the home page's project order,
+   wrapping round, except where a study names its own next. */
+const ORDER = site.work.projects.map(p => p.slug).filter(sl => cases.some(c => c.slug === sl));
+const ARROW = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const edgeArrows = cs => {
+  const i = ORDER.indexOf(cs.slug), n = ORDER.length; if (i < 0 || n < 2) return '';
+  const prev = cs.prev || ORDER[(i - 1 + n) % n], next = cs.next || ORDER[(i + 1) % n];
+  return `<a class="cs-edge prev" href="${esc(prev)}.html" aria-label="Previous project">${ARROW('M19 12 L5 12 M11 6 L5 12 L11 18')}</a>`
+    + `<a class="cs-edge next" href="${esc(next)}.html" aria-label="Next project">${ARROW('M5 12 L19 12 M13 6 L19 12 L13 18')}</a>`;
+};
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
-  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS }) : renderCase(cs), `${cs.slug}.html`));
+  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS })
+    : renderCase(cs).replace(/(<body[^>]*>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the design-system showcase pages are standalone HTML (their own tokens, their own
