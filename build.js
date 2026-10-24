@@ -710,43 +710,16 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    between the paragraph and anything else. */
 .hero-line span.hs{display:block}
 .hero-line span.hs + span.hs{margin-top:.5em}
-/* sentence focus (2026-08-19, her ask): hovering one handwritten sentence quiets the
-   others, so the eye can hold a single thought. Opacity only — nothing moves, the
-   stickman's terrain is untouched (his rebuild listener allowlists load-sequence
-   elements precisely so this hover never re-reads the world). Hover devices only:
-   a phone tap should never dim two-thirds of the hero. */
-.hero-line span.hs{transition:color 240ms var(--ease-standard)}
+/* hovering a bio line: hover devices only (a phone tap shouldn't set anything moving) */
 @media (hover:hover){
-  /* 2026-08-19: colour, not opacity — the sentences step back into a light teal and
-     the one under the cursor deepens slightly past resting ink. The step-back ink is
-     its OWN token (2026-08-20 "make the light blue a tad lighter"): it used to borrow
-     --teal-baby, but that hex belongs to the button system's 3:1-on-cream invariant,
-     and a hover-dim state is allowed to sit lighter than a control outline is. */
-  .hero-line:hover span.hs{color:var(--hero-hush)}
-  .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
-  /* 2026-10-23 "make everything else dimmer so it's the only thing with the highest contrast on the page". ONE dim
-     layer (the bio's ::before, fixed over the screen) comes up when the cursor reaches a line and STAYS up while it
-     moves between lines; only the line under the cursor sits above it. The first version gave every line its own
-     page-sized shadow, so crossing between lines dropped the dim for a moment and the white buttons blinked
-     ("feels like a seizure warning"). The lines touch now (padding, not margin), so there is no gap to fall through,
-     and the dim fades out slowly, a beat after the cursor leaves. */
-  .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard),transform 320ms var(--ease-standard),filter 320ms var(--ease-standard)}
-  .hero-line span.hs + span.hs{margin-top:0;padding-top:.5em}
-  .hero-line::before{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
-    background:color-mix(in srgb,var(--bg-base) 40%,transparent);transition:opacity 700ms var(--ease-standard) 120ms}   /* 40%, not 82%: the deep dim was too much ("watching everything dim is giving me a seizure") */
-  .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 600ms var(--ease-standard)}
-  /* every bio line stays ABOVE the dim (her: "the text isn't that readable, I need more contrast"): the others keep
-     their quieter grey at full strength (~8.5:1), the hovered one is white. The hovered line also ELEVATES: up 4px on
-     a soft shadow (a filter, not text-shadow, which would paint over the glimmer's clipped fill) */
-  .hero-line:has(span.hs:hover) span.hs{z-index:60}
+  /* the bio no longer dims anything when a line is hovered (her call 2026-10-23: "we don't need to do the dimming thing
+     anymore"): no page dim, no other line stepping back. The hovered line still lifts and waves. */
+  .hero-line span.hs{position:relative;transition:transform 320ms var(--ease-standard),filter 320ms var(--ease-standard)}
   .hero-line span.hs:hover{transform:translateY(-4px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
   /* the hovered line WAVES like "Hi, I'm Madhu" (her ask 2026-10-23, replacing the blue glimmer): app.js splits each
      word into letters, and they rise 7px in the accent one after another, falling back in reverse on leave */
   .hero-line .hs .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
   .hero-line .hs.waving .ch{transform:translateY(-7px);color:var(--accent)}
-  /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
-  body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.65}
-  body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 600ms var(--ease-standard)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
