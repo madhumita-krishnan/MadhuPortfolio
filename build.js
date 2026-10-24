@@ -2886,6 +2886,7 @@ function footerHTML(extra = '') {
   <span class="foot-note">${esc(site.footer.note)}</span>
 </footer>
 <script src="app.js?v=${BUILD_V}" defer></script>
+<script src="resume-plane.js?v=${BUILD_V}" defer></script>
 </body>
 </html>`;
 }
@@ -3488,6 +3489,7 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    rather than CDN'd so the site stays a folder of files with no third origin; nobody
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
+fs.copyFileSync(path.join(ROOT, 'resume-plane.js'), path.join(DIST, 'resume-plane.js'));   // the paper-airplane resume, on every page
 for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']) {
   const src = path.join(ROOT, 'vendor', f);
   if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing (three for fish.js, gsap + ScrollTrigger for the logo wisps and the phone work list)`);

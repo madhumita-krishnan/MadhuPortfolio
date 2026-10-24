@@ -351,6 +351,7 @@ ${cs.sections.map(section).join('\n')}
 <script>window.__IC=${JSON.stringify(ICONS)};window.__CURSORS=${JSON.stringify(Object.fromEntries(Object.entries(cs.cursors || {}).map(([k, v]) => [`${cs.dir}/${k}`, v])))};window.__MOUSE='${MOUSE}'</script>
 <script>window.__VIEWS=${JSON.stringify(views).replace(/</g, '\\u003c')}</script>
 <script>${JS}</script>
+<script src="${asset('resume-plane.js')}" defer></script>
 </body>
 </html>`;
 };
