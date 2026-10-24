@@ -2387,6 +2387,18 @@ function makeJS() {
     potEl.addEventListener('mouseenter',leap);
     potEl.addEventListener('touchstart',leap,{passive:true});
     potEl.addEventListener('focus',leap);
+    /* the disappear-line dial (studies/tweaker-fish/, local only): moves the front-lip line, can draw it on the
+       pot, slows the flight down, and re-launches the fish after each change */
+    window.__fishLip=${JSON.stringify((TWEAKS['fish-lip'] || {}).lip ?? 10.5)}/100;
+    let guide=null,again=0;
+    addEventListener('tweak',e=>{const v=e.detail.values||{};if(v.lip==null)return;
+      window.__fishLip=v.lip/100;window.__fishSlow=v.slow||1;
+      if(v.showLine){potEl.style.position='relative';   // the line rides on the pot, rocking and all
+        guide=guide||potEl.appendChild(Object.assign(document.createElement('i'),{style:'position:absolute;left:-24px;right:-24px;height:1px;background:#ff3b6b;pointer-events:none'}));
+        guide.style.top=v.lip+'%'}
+      else if(guide){guide.remove();guide=null}
+      clearTimeout(again);again=setTimeout(leap,250)});
+    addEventListener('tweak-replay',leap);
   }
 })();`;
 }

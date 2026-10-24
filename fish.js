@@ -89,7 +89,8 @@ export function run(opts = {}) {
      painted over the front lip's face — reading as in FRONT of the pot, not inside
      the mouth. The clip now sits at the opening's near edge: everything from the
      front lip forward occludes the fish, everything back to the back rim is behind it. */
-  const lipY = P.top + P.h * 0.105;               // the FRONT LIP line (see header)
+  /* window.__fishLip: her dial for this line (studies/tweaker-fish/, saved in data/tweaks.json 'fish-lip') */
+  const lipY = P.top + P.h * (window.__fishLip ?? 0.105);   // the FRONT LIP line (see header)
   /* 0.95 pot-widths read as a fish too big to have lived in the pot (2026-08-25);
      0.78 still crowded its own leap, so it slimmed to 0.62 (2026-08-26: "make the
      fish smaller so it has more space to jump higher") — same air now reads taller
@@ -360,11 +361,13 @@ export function run(opts = {}) {
   let phase = 0, lastTs = 0;
   const kick = dx => dispatchEvent(new CustomEvent('mk-pot-kick',
     { detail: { x: pot.getBoundingClientRect().left + P.w / 2 + dx } }));
+  let clock = 0;
   function frame(ts) {
     raf = 0;
     if (!t0) t0 = ts;
     now = ts;
     const dt = lastTs ? (ts - lastTs) / 1000 : 0; lastTs = ts;
+    clock += dt * (window.__fishSlow || 1);        // the tweaker's slow motion; 1 everywhere else
     /* QA hook, same spirit as app.js's ?shot=: setting window.__fishFreeze to a 0..1
        value in the console holds the flight at that fraction of the airtime. A frozen
        flight is a POSE, not an event: while it holds, no splash fires, no kick lands
@@ -373,7 +376,7 @@ export function run(opts = {}) {
        fired the entry splash and tore the flight down mid-look). */
     const frozen = window.__fishFreeze != null;
     const t = frozen ? window.__fishFreeze * T
-                     : Math.min((ts - t0) / 1000, T + 0.001);
+                     : Math.min(clock, T + 0.001);
 
     /* THE APEX STRETCH: the air runs on a bent clock. taR is the real seconds spent
        airborne; tau is the ballistic time the projectile equations see. Outside a

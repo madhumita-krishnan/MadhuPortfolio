@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fish lip line tweaker</title><style>body{margin:0;background:#0d0e12}</style></head>
+<body>
+<script src="../tweaker-deck/tweaker.js"></script>
+<script>
+/* the line on the pot where the koi disappears going in (and appears coming out). Every change re-launches the
+   fish; Replay (R) launches it again. Save writes the line into the site (data/tweaks.json 'fish-lip'). */
+fetch('/__tweak').then(r => r.json()).catch(() => ({})).then(all => {
+const saved = all['fish-lip'] || {};
+Tweaker({
+  save: values => fetch('/__tweak', { method: 'POST', body: JSON.stringify({ name: 'fish-lip', values: { lip: values.lip } }) }).then(r => { if (!r.ok) throw new Error(r.status); }),
+  title: 'Where the fish disappears',
+  url: '../../index.html#about',
+  params: [
+    { key: 'lip', label: 'Disappear line, down from the pot’s top', group: 'Layout', type: 'range', min: 3, max: 25, step: .5, value: 10.5, unit: '%', hint: 'Lower = the fish stays visible further into the pot, over more of the front lip' },
+    { key: 'showLine', label: 'Show the line on the pot', group: 'Layout', type: 'toggle', value: true },
+    { key: 'slow', label: 'Flight speed', group: 'Motion', type: 'range', min: .1, max: 1, step: .05, value: .35, unit: '×', hint: 'For judging only — the site always plays at 1×' }
+  ].map(p => (p.key in saved ? Object.assign(p, { value: saved[p.key] }) : p))
+});
+});
+</script>
+</body></html>
