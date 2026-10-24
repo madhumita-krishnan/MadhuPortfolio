@@ -2552,7 +2552,12 @@ function makeJS() {
   if(jb&&matchMedia('(min-width:761px)').matches){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
-      const x=Math.min(t.right-hr.left+80,hr.width-jb.offsetWidth-24),y=t.top-hr.top+t.height/2-jb.offsetHeight/2;
+      /* halfway between the name and the say-hey row, past the end of the bio (her: lower "so the person can properly tuck
+         jump slam", then "higher, it doesn't feel visually balanced"): from the d she still gets a real arc down onto it,
+         and the icons it drops land on the say-hey line */
+      const cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect(),bio=heroEl.querySelector('.hero-line').getBoundingClientRect();
+      const x=Math.min(Math.max(t.right-hr.left+80,bio.right-hr.left+48),hr.width-jb.offsetWidth-24),
+        y=((t.top+t.height/2)+(cta.top+cta.height/2))/2-hr.top-jb.offsetHeight/2;
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
     placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
@@ -2566,7 +2571,7 @@ function makeJS() {
     let state='idle',fallback=0;
     const tumble=still=>{
       const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
-      const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+110);
+      const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+60);   // in line with say hey! (her ask)
       /* EVENLY SPACED where they land (her ask): each icon owns a slot, 76px apart, centred under the cloud (kept on
          screen); it's thrown toward its slot, tumbles and bounces, and once on the line steers into the slot and stops */
       const gapX=S+24,c0=Math.max(S/2+8+(n-1)/2*gapX,Math.min(hr.width-S/2-8-(n-1)/2*gapX,x0));

@@ -673,7 +673,20 @@
       var landAt = groundTop(nx, ny + 1, H);
       var ly = landAt == null ? floorY : landAt;
       var remain = ly - ny;
-      if (ly - fig.fallFrom > FLIP_DROP && remain > 40) {
+      /* headed for the CLOUD, however she took off (a hop, a drag-jump, a climb toward a click): always the tuck flip, timed
+         to finish as her feet arrive, and the slam (her: "I want it to do a tuck jump flip slam onto the cloud") */
+      var cl = hero.querySelector('.jump-box:not(.gone)'), toCloud = false;
+      if (cl && !fig.boxJump) {
+        var cr = localRect(cl, cv.getBoundingClientRect()), ctop = cr.y1 + cr.h * .12, gT = fig.waypoint || fig.target;
+        toCloud = nx >= cr.x1 && nx <= cr.x2 && Math.abs(ly - ctop) < 10;   // straight down is the cloud
+        /* …or the cloud is where she's going (a click on/above it): she drifts onto it, so aim the flip at its top */
+        if (!toCloud && gT && gT.x >= cr.x1 && gT.x <= cr.x2 && Math.abs(gT.y - ctop) < 14 && ctop > ny) { toCloud = true; ly = ctop; remain = ly - ny; }
+      }
+      if (toCloud && remain > 12) {
+        var tc = (Math.sqrt(fig.vy * fig.vy + 2 * G * remain) - fig.vy) / G;
+        startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (Math.max(tc, .12) * 0.9);
+        fig.boxJump = { at: performance.now() };
+      } else if (ly - fig.fallFrom > FLIP_DROP && remain > 40) {
         var tl = (Math.sqrt(fig.vy * fig.vy + 2 * G * remain) - fig.vy) / G;
         if (tl > 0.42) {
           startFlip(fig.dir);
