@@ -167,7 +167,11 @@
 
     /* the JUMP! box is a solid block she can land on (its art bobs inside; this outer box stays still) */
     hero.querySelectorAll('.jump-box:not(.gone)').forEach(function (b) {
-      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 4, r.y1, r.w - 8, r.h);
+      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 6, r.y1 + r.h * .12, r.w - 12, r.h * .88);
+    });
+    /* the clay icons that tumbled out of it are blocks to stand on too */
+    hero.querySelectorAll('.jb-logo.out').forEach(function (b) {
+      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
     });
 
     md = g.getImageData(0, 0, W2, H2).data;
