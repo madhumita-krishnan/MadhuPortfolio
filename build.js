@@ -855,11 +855,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    should shrink and my bio words would become the big focal"). app.js plays one wave after the
    headline lands, then adds .handoff: the name steps back to a smaller size and the bio grows into
    the lead. Reduced motion lands on the hand-off state with no movement. */
-/* the name STAYS big (her follow-up: "keep Madhu big"); only the bio grows into the lead */
-.hero.handoff .hero-line{width:min(100%,1040px);font-size:clamp(1.02rem,min(2.3vw,2.9vh),2.2rem);line-height:1.36;   /* height-aware, so say hey! and Resume stay on the first screen */
-  transition:font-size 900ms var(--ease-standard),line-height 900ms var(--ease-standard)}
-.rm-mode .hero.handoff h1,.rm-mode .hero.handoff .hero-line{transition:none}
-@media (max-width:600px){.hero.handoff .hero-line{line-height:1.3}}
+/* the name STAYS big (her follow-up: "keep Madhu big"). The bio is set at its big, focal size FROM THE
+   START: growing it after load re-wrapped every sentence mid-animation ("why does the text in the bio
+   readjust when it loads in?"). Height-aware, so say hey! and Resume stay on the first screen. */
+.hero .hero-line{width:min(100%,1040px);font-size:clamp(1.02rem,min(2.3vw,2.9vh),2.2rem);line-height:1.36}
+@media (max-width:600px){.hero .hero-line{line-height:1.3}}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out

@@ -835,7 +835,7 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
-  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: 113, sk: 0, want: 0, skT: 0 };
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 0, want: 0, skT: 0 };   // a little smaller on phones (her ask)
   function loadClay() {
     if (!CLAY.on) return;
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
