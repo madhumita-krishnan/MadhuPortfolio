@@ -845,16 +845,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    readjust when it loads in?"). Height-aware, so say hey! and Resume stay on the first screen. */
 .hero .hero-line{width:min(100%,1040px);font-size:clamp(1.02rem,min(2.3vw,2.9vh),2.2rem);line-height:1.36}
 @media (max-width:600px){.hero .hero-line{line-height:1.3}}
-/* ROOM TO HANG under every line (her ask 2026-10-23: "I want the person to be able to hang under all the words with lots
-   of space under them"). Clay-her hangs ~130px from fists to feet (113px tall at a 252px reference, the hang frame is
-   287), so on laptops every line keeps --hang of air beneath it: eyebrow, headline, each bio line, then the button.
-   Phones keep their own spacing for now. */
-@media (min-width:761px){
-  .hero{--hang:136px;padding-top:104px}
-  .hero .eyebrow{margin-bottom:calc(var(--hang) - 64px)}   /* the headline's line box carries ~70px of its own air above the caps */
-  .hero .hero-line{margin-top:var(--hang);width:auto;max-width:min(100%,var(--copy-max))}   /* each sentence on ONE line where the column allows, so no row is left without room under it */
-  .hero .hero-line span.hs + span.hs{margin-top:var(--hang)}
-  .hero .hero-cta-row{margin-top:var(--hang)}
+/* (2026-10-23) a --hang of 136px under every line was tried so clay-her could hang without her legs crossing the next
+   line; she called the spacing "insane", so the hero keeps its own rhythm and her legs simply dangle in front */
 }
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
