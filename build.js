@@ -2728,7 +2728,7 @@ ${navBar('home')}
 <main>
 ${heroHTML}
 ${brandsHTML}
-${deck ? deckHTML : sdeckHTML}
+${deck ? sdeckHTML : workHTML}
 ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
@@ -2997,7 +2997,7 @@ function lintIcons(html, page) {
 /* locally the home page carries the tweaker receiver for the logo wisps (studies/tweaker-logos/); never on Vercel */
 const homePage = lintIcons(renderHome(), 'index.html');
 fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
-/* preview only: the home page with the work list as a sideways deck (see deckHTML) */
+/* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* locally deck.html also carries the tweaker receiver; never on Vercel (process.env.VERCEL is set in its
    builds): the receiver trusts any window that posts to it */
 const deckPage = lintIcons(renderHome(true), 'deck.html');
