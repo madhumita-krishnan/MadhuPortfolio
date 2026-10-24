@@ -189,11 +189,11 @@
       if (row) { row.x1 = Math.min(row.x1, r.x1); row.x2 = Math.max(row.x2, r.x2); row.y2 = Math.max(row.y2, r.y2); }
       else rows.push({ x1: r.x1, x2: r.x2, y1: r.y1, y2: r.y2 });
     });
-    rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2 }); });
+    rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2, top: q.y1 }); });   // top: the line box's, for the muscle-up
     var eb = hero.querySelector('.eyebrow');
-    if (eb) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2 }); }
+    if (eb) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2, top: er.y1 }); }
     var h1 = hero.querySelector('h1');
-    if (h1) { var hb = localRect(h1, hr); bars.push({ x1: hb.x1, x2: hb.x2, y: hb.y2 - 6 }); }
+    if (h1) { var hb = localRect(h1, hr); bars.push({ x1: hb.x1, x2: hb.x2, y: hb.y2 - 6, top: hb.y1 }); }
 
     var btn = hero.querySelector('.hero-cta-row .btn.solid');
     sign = null;
@@ -500,7 +500,16 @@
       celebrate();
       return;
     }
-    if (fig.state === 'hang') { release(Math.sign(p.x - fig.x)); return; }
+    if (fig.state === 'hang') {
+      /* a click on or above the line she's holding: she MUSCLES UP onto it (her ask 2026-10-24) and then goes on to
+         where you clicked; anywhere else she lets go toward it */
+      if (p.y < fig.hang.bar.y && muscleUp()) {
+        var gy = groundTop(p.x, p.y - 2, H);
+        if (gy != null && gy <= fig.mantle.y1 + 4) fig.target = { x: p.x, y: gy, tries: 0 };
+        return;
+      }
+      release(Math.sign(p.x - fig.x)); return;
+    }
     if (e.target.closest && e.target.closest('a,button')) return;
     /* the click means: the first ink at or below where you clicked */
     var ty = groundTop(p.x, p.y - 2, H);
@@ -524,6 +533,30 @@
     fig.fallFrom = fig.y;
     fig.hang = null; fig.hangCool = 0.6; fig.flipQueued = false;
     start();
+  }
+
+  /* THE MUSCLE-UP (her ask 2026-10-24: "my person needs to be able to muscle up and jump to the top of madhu from
+     hanging"): from the hang, a pull and a press up over the very letter in her hands, ending stood on its top. It is
+     the ledge mantle's motion run slower, its hands walking up the face of the glyph from her grip to its top. */
+  function muscleUp() {
+    var h = fig.hang;
+    if (!h) return false;
+    /* the top of the ink of the line she holds, nearest her hands: scanned down from the line box's top (the stroke
+       right above a hand can be a broken fragment of a small letter, so "the top of that stroke" isn't the top) */
+    var b = h.bar, hy = Math.min(h.hands[0].y, h.hands[1].y), cx = (h.hands[0].x + h.hands[1].x) / 2, hx = null, top = null;
+    if (b.top == null) return false;
+    for (var k = 0; k <= 24 && hx == null; k++) {
+      var x = cx + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 2, t = groundTop(x, b.top, Math.max(1, hy - b.top));
+      if (t != null && t < hy - 8 && clearance(x, t) >= MIN_CLR) { hx = x; top = t; }
+    }
+    if (hx == null) return false;
+    fig.state = 'mantle';
+    fig.mantle = { t: 0, x0: fig.x, y0: fig.y, x1: hx, y1: top, dur: 0.85, hy0: hy };
+    fig.hang = null; fig.hangCool = 0.6; fig.vx = 0; fig.vy = 0; fig.flip = null;
+    fig.target = null; fig.waypoint = null; fig.celeb = null;
+    sfx('jump', 0.3, 1.05);
+    start();
+    return true;
   }
 
   /* ------------------------------------------------------------------ physics */
@@ -819,7 +852,7 @@
 
   function tickMantle(dt) {
     var m = fig.mantle;
-    m.t += dt / 0.3;
+    m.t += dt / (m.dur || 0.3);
     if (m.t >= 1) {
       fig.x = m.x1; fig.y = m.y1;
       fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
@@ -1048,7 +1081,8 @@
         return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
-        if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1, ay: m.y1 };
+        if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1,
+          ay: m.hy0 == null ? m.y1 : m.hy0 + (m.y1 - m.hy0) * Math.min(1, t / .4) };   // a muscle-up's hands climb the glyph
         return { s: 'climb-x3', k: 18 + Math.min(12, Math.floor((t - .45) / .55 * 13)) }; }
       case 'wave': return { s: 'idle-wave-sign-x3', k: timedAt(WAVE_T, fig.wave * 3) };
       case 'sign': return { s: 'star-bow-x3', k: 8 };
