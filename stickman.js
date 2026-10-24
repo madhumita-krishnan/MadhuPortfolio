@@ -377,10 +377,12 @@
     var apex = Math.min(fig.y, ty) - 110, up = fig.y - apex, dn = ty - apex;
     var T = Math.sqrt(2 * up / G) + Math.sqrt(2 * dn / G);
     fig.vy = -Math.sqrt(2 * G * up); fig.vx = (tx - fig.x) / T;
-    fig.dir = tx >= fig.x ? 1 : -1;
-    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true;
-    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.88);
-    fig.boxJump = { at: performance.now() };
+    /* a real BACK tuck (her: "the jump on the cloud looks so weird" — it was one frozen tuck frame spun like a wheel):
+       she turns her back to the cloud and travels backwards onto it, playing her clay backflip frames across the
+       flight, the way a back tuck actually moves */
+    fig.dir = tx >= fig.x ? -1 : 1;
+    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true; fig.flip = null;
+    fig.boxJump = { at: performance.now(), T: T };
     start();
   });
   addEventListener('mk-terrain', queueRebuild, { passive: true });
@@ -670,7 +672,7 @@
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && fig.vy < 160 && !fig.hangCool && !fig.target) {
+    if (!fig.flip && !fig.boxJump && fig.vy < 160 && !fig.hangCool && !fig.target) {   // never grabs a bar mid box-jump
       var handY = ny - LEG - HANDUP;
       for (var i = 0; i < bars.length; i++) {
         var b = bars[i];
@@ -694,7 +696,7 @@
        when the goal is BELOW us — mantling up is the opposite of a descent, and it can
        intercept the very landing the route is falling toward. */
     var gA = fig.waypoint || fig.target;
-    if (fig.vx && !(gA && gA.y > ny - 10)) {
+    if (fig.vx && !fig.boxJump && !(gA && gA.y > ny - 10)) {
       var dirx = fig.vx > 0 ? 1 : -1;
       var py = ny - LEG;
       if (solid(nx + dirx * 5, py)) {
@@ -722,10 +724,9 @@
         }
         fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
         if (fig.vy > 620 || drop > 130) { fig.landT = 0.18; puff(fig.x, fig.y, 4); }
-        if (fig.boxJump) {   /* the SLAM: a long crouch, a bigger puff, and the box hears it */
-          fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7);
-          dispatchEvent(new CustomEvent('mk-box-slam'));
-        }
+        /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
+           jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
+        if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7); }
         fig.vy = 0;
         if (!fig.target && !fig.drag) fig.vx = 0;
         return;
@@ -794,7 +795,19 @@
   function needsLoop() {
     return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0;
   }
+  /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
+     across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
+  function cloudCheck() {
+    var jbEl = hero.querySelector('.jump-box:not(.gone)'), on = false;
+    if (jbEl && (fig.state === 'idle' || fig.state === 'move')) {
+      var jr = localRect(jbEl, cv.getBoundingClientRect());
+      on = fig.x >= jr.x1 + 4 && fig.x <= jr.x2 - 4 && Math.abs(fig.y - (jr.y1 + jr.h * .12)) < 6;
+    }
+    if (on && !fig.onCloud) { if (!fig.landT) { fig.landT = 0.32; puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
+    fig.onCloud = on;
+  }
   function advance(dt) {
+    cloudCheck();
     rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
     fig.slideT = Math.max(0, fig.slideT - dt);
@@ -932,6 +945,8 @@
         if (sp > 230) return { s: 'run-x3', k: Math.floor(CLAY.dist / 3) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
         return { s: 'walk-x3', k: Math.floor(CLAY.dist / 1.83) % 48 };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
+        if (fig.boxJump && fig.boxJump.T) { var bp = Math.min(1, (performance.now() - fig.boxJump.at) / 1000 / fig.boxJump.T);
+          return { s: 'backflip-x3', k: Math.min(17, Math.floor(bp * 18)), mid: true }; }   // the box jump: her backflip, start to finish over the arc
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
       case 'hang': {

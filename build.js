@@ -182,6 +182,8 @@ function swipeTweaks() {
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
+/* the JUMP! cloud's morph: a WebP grid of keyed video frames (Flora clay video, see clay-character/) + its numbers */
+const CLOUD = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/clay/props/cloud-sprite.json'), 'utf8')); } catch (e) { return null; } })();
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -822,10 +824,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    the Flora blue cloud re-inked white by its own shading). "jump!" is type laid over it, never painted into the art */
 .jb-art{position:relative;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
 .jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none;transition:opacity 1.1s ease-in-out}
-/* the cloud MORPHS (her ask: "morph around in shape and have light hit it differently as it morphs"): six Flora clay
-   frames of the same cloud, each reshaped and lit from another side, cross-faded slowly in a loop by app.js */
-.jb-img.jb-f{position:absolute;left:0;top:0;opacity:0}
-.jb-img.jb-f.on{opacity:1}
+/* the cloud MORPHS (her ask: "morph around in shape and have light hit it differently as it morphs", then "make a better
+   morphing gif with Flora"): a Flora clay VIDEO of the cloud reshaping as the light travels round it, keyed off its
+   green and packed into one WebP grid that app.js steps through at the video's frame rate, a seamless loop */
+.jb-morph{display:block;width:100%;background-repeat:no-repeat;background-position:0 0}
 .jb-word{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:600;font-size:19px;color:#151a2b;letter-spacing:.01em;pointer-events:none}   /* "jump!" set like the say hey! button (not her handwriting) */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
@@ -2493,16 +2495,15 @@ function makeJS() {
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
       const x=Math.min(t.right-hr.left+80,hr.width-jb.offsetWidth-24),y=t.top-hr.top+t.height/2-jb.offsetHeight/2;
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
-    const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});
+    const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
     placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
-    /* the morph loop: one frame at a time fades up over the last, every 1.1s; paused off screen, stopped once jumped on */
-    const frames=[...jb.querySelectorAll('.jb-img')];let fk=0,morphT=0,seen=false;
-    const morph=()=>{clearTimeout(morphT);if(!seen||state!=='idle'||rmActive()||frames.length<2)return;
-      const nk=(fk+1)%frames.length;frames[nk].classList.add('on');const prev=fk;fk=nk;
-      if(prev)setTimeout(()=>frames[prev].classList.remove('on'),1100);   // frame 0 is the base underneath, always on
-      if(!nk)frames.slice(1).forEach(f=>setTimeout(()=>f.classList.remove('on'),1100));
-      morphT=setTimeout(morph,1100)};
-    new IntersectionObserver(es=>{seen=es.some(e=>e.isIntersecting);if(seen)morph();else clearTimeout(morphT)}).observe(jb);
+    /* the morph loop: step the sprite grid at its frame rate while the cloud is on screen; stops once it's jumped on */
+    const mo=jb.querySelector('.jb-morph');let mk=0,moT=0,seen=false;
+    const morph=()=>{clearInterval(moT);if(!mo||!seen||state!=='idle'||rmActive())return;
+      const n=+mo.dataset.n,cols=+mo.dataset.cols,rows=Math.ceil(n/cols);
+      moT=setInterval(()=>{if(state!=='idle')return clearInterval(moT);mk=(mk+1)%n;
+        mo.style.backgroundPosition=((mk%cols)/(cols-1)*100)+'% '+(rows>1?(Math.floor(mk/cols)/(rows-1)*100):0)+'%'},1000/(+mo.dataset.fps))};
+    new IntersectionObserver(es=>{seen=es.some(e=>e.isIntersecting);if(seen)morph();else clearInterval(moT)}).observe(jb);
     let state='idle',fallback=0;
     const tumble=still=>{
       const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
@@ -2552,7 +2553,8 @@ function makeJS() {
       dispatchEvent(new CustomEvent('mk-box-jump',{detail:{el:jb}}));
       fallback=setTimeout(()=>open(false),2200);
     });
-    addEventListener('mk-box-slam',()=>{if(state==='jumping')open(false)});
+    addEventListener('mk-box-slam',()=>{if(state==='jumping')return open(false);
+      if(state==='idle'){state='jumping';const cur=getComputedStyle(art).transform;art.style.transform=cur==='none'?'':cur;art.classList.add('still');requestAnimationFrame(()=>{art.style.transform=''});open(false)}});   // she landed on it on her own
   }
 
   const potEl=document.querySelector('.pot');
@@ -2873,7 +2875,7 @@ function renderHome() {
        tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
        LinkedIn / Twitter / X links, so adding one there adds it here. -->
   <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
-    <span class="jb-art" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map(k => `<img class="jb-img${k ? ' jb-f' : ' on'}" src="assets/clay/props/cloud-${k}.png?v=${BUILD_V}" alt="" draggable="false"${k ? ' loading="lazy"' : ''}>`).join('')}<span class="jb-word">jump!</span></span>
+    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<span class="jb-word">jump!</span></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
