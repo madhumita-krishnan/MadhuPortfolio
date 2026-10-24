@@ -828,7 +828,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    morphing gif with Flora"): a Flora clay VIDEO of the cloud reshaping as the light travels round it, keyed off its
    green and packed into one WebP grid that app.js steps through at the video's frame rate, a seamless loop */
 .jb-morph{display:block;width:100%;background-repeat:no-repeat;background-position:0 0}
-.jb-word{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:600;font-size:19px;color:#151a2b;letter-spacing:.01em;pointer-events:none}   /* "jump!" set like the say hey! button (not her handwriting) */
+.jb-word{position:absolute;left:50%;top:56%;width:60%;height:auto;transform:translate(-50%,-50%);pointer-events:none;-webkit-user-drag:none}   /* "jump!" in navy clay (Flora), pressed onto the cloud */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
 .jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
@@ -841,8 +841,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .jb-logo.out{opacity:1;pointer-events:auto}
 .jb-logo:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
 .hero>.jump-box.gone{visibility:hidden;pointer-events:none}
-.hero>.jb-dust{position:absolute;margin:0;max-width:none;z-index:2;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 35% 30%,#f6d08a,#d39a45 60%,#a8732c)}
+.hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
 @media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
 @media (prefers-reduced-motion:reduce){.jb-art{animation:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
@@ -2530,16 +2529,16 @@ function makeJS() {
     /* then the box is DONE (her ask: "when the box opens it dissolves in a puff of dust and the person falls down"):
        it bulges, shrinks to nothing inside a burst of clay dust, stops being ground, and she drops */
     const dissolve=still=>{
-      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cx=br.left-hr.left+br.width/2,cy=br.top-hr.top+br.height/2;
-      if(!still)for(let i=0;i<34;i++){const d=document.createElement("i"),z=7+Math.random()*13,a=Math.random()*Math.PI*2,r=34+Math.random()*80;
-        d.className='jb-dust';Object.assign(d.style,{left:cx-z/2+(Math.random()-.5)*br.width*.7+'px',top:cy-z/2+(Math.random()-.5)*br.height*.7+'px',width:z+'px',height:z+'px'});
-        heroEl.appendChild(d);
-        d.animate([{transform:'translate(0,0) scale(1)',opacity:.95},{transform:'translate('+(Math.cos(a)*r*1.3).toFixed(1)+'px,'+(Math.sin(a)*r-46).toFixed(1)+'px) scale(.15)',opacity:0}],
-          {duration:650+Math.random()*450,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>d.remove()}
       const gone=()=>{const f=document.activeElement===jb;jb.classList.add('gone');if(f&&logos[0])logos[0].focus();dispatchEvent(new Event('mk-box-gone'))};
       if(still)return gone();
-      art.animate([{transform:'none',opacity:1},{transform:'scale(1.12,.9)',opacity:.9,offset:.3},{transform:'scale(.35)',opacity:0}],{duration:300,easing:'ease-in',fill:'forwards'});
-      setTimeout(gone,150);
+      /* the CLAY burst (her ask: "have the puff when the cloud explodes also be claymation"): 8 Flora stop-motion frames —
+         squash, crack, burst into clay balls, scatter, specks — stepped on the clay clock in the cloud's place.
+         Sized so frame 1's squashed cloud matches the cloud on the page (it spans 374 of the frame's 420px). */
+      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),pw=br.width*420/374;
+      const pf=document.createElement('i');pf.className='jb-puff';
+      Object.assign(pf.style,{width:pw+'px',left:(br.left-hr.left+br.width/2-pw*.4686)+'px',top:(br.top-hr.top+br.height/2-pw*341/420/2)+'px'});
+      heroEl.appendChild(pf);art.style.opacity='0';gone();
+      let k=0;const tick=setInterval(()=>{k++;if(k>=8){clearInterval(tick);pf.remove();return}pf.style.backgroundPosition=(k/7*100)+'% 0'},70);
     };
     const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
       if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
@@ -2875,7 +2874,7 @@ function renderHome() {
        tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
        LinkedIn / Twitter / X links, so adding one there adds it here. -->
   <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
-    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<span class="jb-word">jump!</span></span>
+    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<img class="jb-word" src="assets/clay/props/jump-word-navy.png?v=${BUILD_V}" alt="" draggable="false"></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
