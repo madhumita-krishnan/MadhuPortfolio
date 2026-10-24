@@ -1129,7 +1129,7 @@
   }
 
   function figure(px, py, dir, o) {
-    if (CLAY.on && CLAY.ready && clayFigure(px, py, dir, o)) return;
+    if (CLAY.on) { if (CLAY.ready) clayFigure(px, py, dir, o); return; }   // NEVER the stick figure (her call 2026-10-24: "no more stick man"); until her clay frames are in, nothing
     /* grounded poses NEVER float: whatever the gait is doing, the lowest contact —
        foot, or knee when the legs are folded — is planted exactly on the surface */
     if (o.snap) {
