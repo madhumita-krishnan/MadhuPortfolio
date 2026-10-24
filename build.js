@@ -2065,14 +2065,18 @@ function makeJS() {
       if(t0.own===null){if(Math.abs(dy)<6&&Math.abs(dx)<6)return;
         const out=(t0.i===0&&dy>0)||(t0.i===cardsM.length-1&&dy<0);   // past either end: ordinary scrolling
         t0.own=Math.abs(dy)>Math.abs(dx)&&!out;if(!t0.own){t0=null;return}}
-      e.preventDefault();jump(t0.s-dy);t0.pts.push([e.timeStamp,y]);if(t0.pts.length>6)t0.pts.shift();
+      e.preventDefault();if(t0.done)return;   // already clicked to the next one: the rest of this drag is ignored
+      /* a slow drag CLICKS into place (her ask: "when I slow scroll I want it to click into place, not slowly
+         scroll and overshoot"): past ~70px it commits to the next/previous project at once */
+      if(Math.abs(dy)>70){t0.done=true;glideTo(t0.i+(dy<0?1:-1));return}
+      jump(t0.s-dy);t0.pts.push([e.timeStamp,y]);if(t0.pts.length>6)t0.pts.shift();
     },{passive:false});
+    /* the click: a short, decisive ease onto the project (power2.out, ~0.32s), never past it */
+    const glideTo=i=>{const go=Math.max(0,Math.min(cardsM.length-1,i)),o={y:scrollY},to=aim(go);if(glide)glide.kill();
+      if(rmActive()||!window.gsap)return jump(to);glide=gsap.to(o,{y:to,duration:.32,ease:'power2.out',onUpdate:()=>jump(o.y)})};
     const release=()=>{
-      if(!t0||!t0.own){t0=null;return}const a=t0.pts[0],b=t0.pts[t0.pts.length-1],dy=b[1]-t0.y,v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);
-      let go=t0.i;if(dy<-48||v<-.35)go=t0.i+1;else if(dy>48||v>.35)go=t0.i-1;go=Math.max(0,Math.min(cardsM.length-1,go));t0=null;
-      const o={y:scrollY},to=aim(go);
-      if(rmActive()||!window.gsap)return jump(to);
-      glide=gsap.to(o,{y:to,duration:.45,ease:'power3.out',onUpdate:()=>jump(o.y)});
+      if(!t0||!t0.own||t0.done){t0=null;return}const a=t0.pts[0],b=t0.pts[t0.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);
+      const go=v<-.35?t0.i+1:v>.35?t0.i-1:t0.i;t0=null;glideTo(go);   // a quick flick moves one; a small nudge clicks back
     };
     addEventListener('touchend',release,{passive:true});addEventListener('touchcancel',release,{passive:true});
   }
