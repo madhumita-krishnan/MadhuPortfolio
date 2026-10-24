@@ -30,7 +30,7 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 /* the hero bio: set in type, not her hand */
 .hero-line{font-family:var(--font-body);font-weight:300;color:var(--ink-blue);
   font-size:clamp(1.15rem,1.7vw,1.4rem);line-height:1.6;letter-spacing:0}
-.hero-line span.hs + span.hs{margin-top:.35em}
+.hero-line span.hs + span.hs{margin-top:.6em}   /* .35em -> .6em: "a liiiittle spacing in the bio copy" (2026-10-24) */
 
 /* company chips: quiet outline, no glass */
 .w-chip.glass{background:transparent;border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--ink-blue)}
