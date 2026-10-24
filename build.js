@@ -821,7 +821,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* the clay piece: a WHITE clay cloud that bobs (her call 2026-10-23, after a blue box, blue shapes and a blue cloud;
    the Flora blue cloud re-inked white by its own shading). "jump!" is type laid over it, never painted into the art */
 .jb-art{position:relative;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
-.jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+.jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none;transition:opacity 1.1s ease-in-out}
+/* the cloud MORPHS (her ask: "morph around in shape and have light hit it differently as it morphs"): six Flora clay
+   frames of the same cloud, each reshaped and lit from another side, cross-faded slowly in a loop by app.js */
+.jb-img.jb-f{position:absolute;left:0;top:0;opacity:0}
+.jb-img.jb-f.on{opacity:1}
 .jb-word{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:600;font-size:19px;color:#151a2b;letter-spacing:.01em;pointer-events:none}   /* "jump!" set like the say hey! button (not her handwriting) */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
@@ -2491,6 +2495,14 @@ function makeJS() {
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});
     placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
+    /* the morph loop: one frame at a time fades up over the last, every 1.1s; paused off screen, stopped once jumped on */
+    const frames=[...jb.querySelectorAll('.jb-img')];let fk=0,morphT=0,seen=false;
+    const morph=()=>{clearTimeout(morphT);if(!seen||state!=='idle'||rmActive()||frames.length<2)return;
+      const nk=(fk+1)%frames.length;frames[nk].classList.add('on');const prev=fk;fk=nk;
+      if(prev)setTimeout(()=>frames[prev].classList.remove('on'),1100);   // frame 0 is the base underneath, always on
+      if(!nk)frames.slice(1).forEach(f=>setTimeout(()=>f.classList.remove('on'),1100));
+      morphT=setTimeout(morph,1100)};
+    new IntersectionObserver(es=>{seen=es.some(e=>e.isIntersecting);if(seen)morph();else clearTimeout(morphT)}).observe(jb);
     let state='idle',fallback=0;
     const tumble=still=>{
       const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
@@ -2861,7 +2873,7 @@ function renderHome() {
        tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
        LinkedIn / Twitter / X links, so adding one there adds it here. -->
   <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
-    <span class="jb-art" aria-hidden="true"><img class="jb-img" src="assets/clay/props/jump.png?v=${BUILD_V}" alt="" draggable="false"><span class="jb-word">jump!</span></span>
+    <span class="jb-art" aria-hidden="true">${[0, 1, 2, 3, 4, 5].map(k => `<img class="jb-img${k ? ' jb-f' : ' on'}" src="assets/clay/props/cloud-${k}.png?v=${BUILD_V}" alt="" draggable="false"${k ? ' loading="lazy"' : ''}>`).join('')}<span class="jb-word">jump!</span></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
