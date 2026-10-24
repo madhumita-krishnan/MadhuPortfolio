@@ -2582,7 +2582,7 @@ function makeJS() {
           p.vy+=1900*dt;p.x=Math.max(S/2,Math.min(hr.width-S/2,p.x+p.vx*dt));p.y+=p.vy*dt;
           const up=Math.round(p.r/360)*360;
           if(p.y>=floor){p.y=floor;
-            if(p.vy>160){p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time
+            if(p.vy>160){window.__jbClonk&&window.__jbClonk(ps.indexOf(p),p.vy);p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time (and a clonk)
             else{p.vy=0;p.vx=0;p.x+=(p.tx-p.x)*Math.min(1,dt*9);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: settle into its slot, stand upright
               if(Math.abs(p.tx-p.x)<.5&&Math.abs(up-p.r)<.6){p.x=p.tx;p.r=up;p.rest=true}}}
           else p.r+=p.vr*dt;}
@@ -2628,8 +2628,11 @@ function makeJS() {
     });
     /* sounds (Flora / ElevenLabs SFX, 2026-10-24): a clay SQUISH when an icon is clicked, a POP when she lands on the
        cloud. Only ever after a click (browsers allow sound then), at a gentle volume. */
-    const sfx={};['squish','pop'].forEach(n=>{try{const a=new Audio('assets/sfx/'+n+'.mp3?v=${BUILD_V}');a.preload='auto';a.volume=.5;sfx[n]=a}catch(e){}});
+    const sfx={};['squish','pop','clonk'].forEach(n=>{try{const a=new Audio('assets/sfx/'+n+'.mp3?v=${BUILD_V}');a.preload='auto';a.volume=.5;sfx[n]=a}catch(e){}});
     const play=n=>{const a=sfx[n];if(!a)return;try{a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
+    /* the icons' landing CLONK (her: "a hollow dense clay sound"): every bounce, louder for a harder hit, each icon pitched
+       a touch differently; a fresh copy per hit so bounces can overlap */
+    window.__jbClonk=(i,speed)=>{const a=sfx.clonk;if(!a)return;try{const c=a.cloneNode();c.volume=Math.min(.6,.12+speed/1600);c.playbackRate=[1,.9,1.1][i%3];c.preservesPitch=false;const p=c.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
     logos.forEach(a=>a.addEventListener('click',()=>play('squish')));
     addEventListener('mk-box-slam',()=>play('pop'));
     addEventListener('mk-box-slam',()=>{if(state==='jumping')return open(false);

@@ -400,7 +400,7 @@
     rebuild();
     if (fig.state === 'idle' || fig.state === 'move' || fig.state === 'sign' || fig.state === 'wave' || fig.state === 'celeb') {
       fig.celeb = null; fig.target = null; fig.waypoint = null;
-      fig.state = 'air'; fig.vy = 0; fig.vx = 0; fig.fallFrom = fig.y; fig.flipQueued = true;
+      fig.state = 'air'; fig.vy = 0; fig.vx = 0; fig.fallFrom = fig.y; fig.flipQueued = true; fig.dropping = true;   // all the way to the floor
       start();
     }
   });
@@ -683,7 +683,7 @@
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && !fig.boxJump && fig.vy < 160 && !fig.hangCool && !fig.target) {   // never grabs a bar mid box-jump
+    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
       var handY = ny - LEG - HANDUP;
       /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
          her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
@@ -740,13 +740,14 @@
         /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
            jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
         if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7); }
+        fig.dropping = false;
         fig.vy = 0;
         if (!fig.target && !fig.drag) fig.vx = 0;
         return;
       }
     }
     fig.x = nx; fig.y = Math.min(ny, floorY);
-    if (fig.y >= floorY) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; }
+    if (fig.y >= floorY) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; }
   }
 
   function tickHang(dt) {
