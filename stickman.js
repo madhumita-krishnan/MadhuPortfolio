@@ -1271,9 +1271,9 @@
        walks under a still cursor. naturalWidth, not complete: a missing file is "complete" too. */
     var sl = CLAY.img.smile;
     if (sl && f.f === 'idle-wave-sign-0.png') {
-      /* her RESTING face is the soft smile (her: "my claymation resting face looks so rbf and uninviting"); a hover
-         lifts it to the full grin */
-      CLAY.want = !touchMode && !CLAY.away && onClay(mouse) ? sl.length : 1;
+      /* her face is the soft smile, resting AND on hover (her: "my claymation resting face looks so rbf and uninviting",
+         then "I don't need super big smile with teeth": the eyes-closed grin, smile-2, is never shown) */
+      CLAY.want = 1;
       if (CLAY.want !== CLAY.sk && !CLAY.skT) CLAY.skT = setTimeout(function () {
         CLAY.skT = 0; CLAY.sk += CLAY.want > CLAY.sk ? 1 : CLAY.want < CLAY.sk ? -1 : 0;
         if (!raf) draw(performance.now());
