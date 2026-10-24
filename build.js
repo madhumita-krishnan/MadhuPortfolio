@@ -735,12 +735,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      a soft shadow (a filter, not text-shadow, which would paint over the glimmer's clipped fill) */
   .hero-line:has(span.hs:hover) span.hs{z-index:60}
   .hero-line span.hs:hover{transform:translateY(-4px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
-  /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
-     "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
-     (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
-  .hero-line:hover span.hs:hover{color:transparent;-webkit-background-clip:text;background-clip:text;
-    background-image:linear-gradient(100deg,var(--ink-blue-hover) 40%,var(--accent) 50%,var(--ink-blue-hover) 60%);background-size:250% 100%;
-    animation:hs-glimmer 2.6s ease-in-out 1 both}   /* 2.6s, not 1.6s: "the blue flash over text is a little too fast" */   /* white line, BLUE glimmer, ONE pass per hover (her follow-ups: base hard to read; "only ripple through once") */
+  /* the hovered line WAVES like "Hi, I'm Madhu" (her ask 2026-10-23, replacing the blue glimmer): app.js splits each
+     word into letters, and they rise 7px in the accent one after another, falling back in reverse on leave */
+  .hero-line .hs .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
+  .hero-line .hs.waving .ch{transform:translateY(-7px);color:var(--accent)}
   /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
   body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.65}
   body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 600ms var(--ease-standard)}
@@ -1632,9 +1630,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
-@keyframes hs-glimmer{from{background-position:100% 0}to{background-position:0 0}}
-@media (prefers-reduced-motion:reduce){.hero-line:hover span.hs:hover{animation:none;background-position:50% 0;transform:none}}
-.rm-mode .hero-line:hover span.hs:hover{animation:none;background:none;-webkit-background-clip:border-box;background-clip:border-box}
+@media (prefers-reduced-motion:reduce){.hero-line span.hs:hover,.hero-line .hs.waving .ch{transform:none}}
+.rm-mode .hero-line span.hs:hover,.rm-mode .hero-line .hs.waving .ch{transform:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
@@ -1737,6 +1734,14 @@ function makeJS() {
       };
       walk(el);
       el.dataset.seqEnd=seq;
+    });
+    /* the bio lines wave like the headline (see .hero-line .hs .ch). Letters go INSIDE the reveal's word spans, so the
+       words still arrive the same way and the clay figure still reads each word as one block of ground */
+    if(matchMedia('(hover:hover)').matches)hero.querySelectorAll('.hero-line .hs').forEach(hs=>{
+      hs.querySelectorAll('.w').forEach(w=>{const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
+      const chs=[...hs.querySelectorAll('.ch')],st=Math.min(26,700/Math.max(1,chs.length));   // the whole line rises in ~0.7s, however long it is
+      hs.addEventListener('mouseenter',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=(i*st)+'ms');hs.classList.add('waving')});
+      hs.addEventListener('mouseleave',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*st)+'ms');hs.classList.remove('waving')});
     });
     document.querySelectorAll('.lively').forEach(el=>{
       const txt=el.textContent;el.textContent='';
