@@ -849,7 +849,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 @media (prefers-reduced-motion:reduce){.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:none}}
 .hero>.jump-box.gone{visibility:hidden;pointer-events:none}
 .hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
-@media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
+@media (max-width:760px){.hero>.jump-box{width:96px}}   /* on phones too (her ask 2026-10-24: "the cloud isn't on mobile"), sized to her smaller phone figure */
 @media (prefers-reduced-motion:reduce){.jb-art{animation:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
    handwriting wrote itself in word by word while the blooms, the headline and the two
@@ -2581,7 +2581,7 @@ function makeJS() {
      they come to rest standing upright on the line of the buttons, as ordinary links. If she can't jump (reduced
      motion, or she isn't there) the box simply opens. */
   const jb=document.querySelector('.hero>.jump-box');
-  if(jb&&matchMedia('(min-width:761px)').matches){
+  if(jb){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
     if(!rmActive()){heroEl.classList.add('cta-wait');window.__ctaSync&&__ctaSync()}   // say hey! waits for the pop (see .cta-wait)
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
@@ -2590,9 +2590,12 @@ function makeJS() {
          "Hi, I'm Madhu" (her ask 2026-10-24: its middle on the name's middle). The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
          the icons it drops have a long fall to the say-hey line */
       /* (her ask 2026-10-24: "right after Madhu") tucked just past the end of the name, not out in the open sky */
-      const x=Math.min(t.right-hr.left+100,hr.width-jb.offsetWidth-24),   // 100: "a little more to the right" (her asks: 28 → 60 → 100)
+      let x=Math.min(t.right-hr.left+100,hr.width-jb.offsetWidth-24),   // 100: "a little more to the right" (her asks: 28 → 60 → 100)
         
         y=t.top-hr.top-new DOMMatrix(getComputedStyle(heroEl.querySelector('h1')).transform).m42+t.height/2-jb.offsetHeight/2;   // minus the headline's rise, so it's measured where it lands
+      /* a phone: the name fills the line, so it floats in the open top-right instead, above the eyebrow */
+      if(t.right-hr.left+40+jb.offsetWidth>hr.width-12){const eb=heroEl.querySelector('.eyebrow').getBoundingClientRect();
+        x=hr.width-jb.offsetWidth-14;y=Math.max(72,eb.top-hr.top-jb.offsetHeight-14)}
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
     placeBox();addEventListener('resize',placeBox,{passive:true});
