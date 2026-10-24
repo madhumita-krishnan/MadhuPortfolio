@@ -741,12 +741,18 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      and a hover-dim state is allowed to sit lighter than a control outline is. */
   .hero-line:hover span.hs{color:var(--hero-hush)}
   .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
-  /* 2026-10-23 "make everything else dimmer so it's the only thing with the highest contrast on the page": the
-     line under the cursor lifts above the page and throws a page-sized shadow in the page's own colour, which
-     dims everything else at once without touching anyone's opacity or transitions */
-  .hero-line span.hs{position:relative;z-index:0;border-radius:12px;box-shadow:0 0 0 100vmax transparent;
-    transition:color 240ms var(--ease-standard),box-shadow 240ms var(--ease-standard)}
-  .hero-line span.hs:hover{z-index:60;box-shadow:0 0 0 100vmax color-mix(in srgb,var(--bg-base) 82%,transparent)}
+  /* 2026-10-23 "make everything else dimmer so it's the only thing with the highest contrast on the page". ONE dim
+     layer (the bio's ::before, fixed over the screen) comes up when the cursor reaches a line and STAYS up while it
+     moves between lines; only the line under the cursor sits above it. The first version gave every line its own
+     page-sized shadow, so crossing between lines dropped the dim for a moment and the white buttons blinked
+     ("feels like a seizure warning"). The lines touch now (padding, not margin), so there is no gap to fall through,
+     and the dim fades out slowly, a beat after the cursor leaves. */
+  .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard)}
+  .hero-line span.hs + span.hs{margin-top:0;padding-top:.5em}
+  .hero-line::before{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
+    background:color-mix(in srgb,var(--bg-base) 82%,transparent);transition:opacity 500ms var(--ease-standard) 120ms}
+  .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 320ms var(--ease-standard)}
+  .hero-line span.hs:hover{z-index:60}
   /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
      "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
      (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
@@ -755,6 +761,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
     --hs-dim:color-mix(in srgb,var(--ink-blue-hover) 55%,var(--bg-base));animation:hs-glimmer 2s linear infinite}
   /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
   body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.2}
+  body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 320ms var(--ease-standard)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
