@@ -362,7 +362,7 @@
   }
 
   /* ------------------------------------------------------------------ celebrations */
-  var CELEBS = ['star', 'backflip', 'dance', 'cartwheel', 'bow'];
+  var CELEBS = ['star', 'backflip', 'cartwheel', 'bow'];   // the dance is out of the rotation (her call 2026-10-24: she didn't like how it looks)
   function celebrate() {
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
     fig.target = null; fig.waypoint = null; fig.vx = 0;
@@ -852,7 +852,38 @@
     if (on && !fig.onCloud) { if (!fig.landT) { fig.landT = 0.32; puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
     fig.onCloud = on;
   }
+  /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a sneaker SQUEAK on every
+     footfall (one per half walk cycle — 24 clay frames of distance — wider apart when she runs), a springy HOP whenever
+     she launches upward, a GRAB when her hands catch a bar. Browsers keep them silent until the visitor's first click. */
+  var SFX = (function () {
+    var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
+    var dir = base.replace(/stick\.js.*$/, '') + 'assets/sfx/', ver = (base.match(/\?v=[^&#]*/) || [''])[0], a = {};
+    ['squeak', 'hop', 'grab'].forEach(function (n) { try { a[n] = new Audio(dir + n + '.mp3' + ver); a[n].preload = 'auto'; } catch (e) {} });
+    return a;
+  })();
+  function sfx(n, vol, rate) {
+    if (!SFX[n] || rmActive()) return;
+    try { var c = SFX[n].cloneNode(); c.volume = vol; c.playbackRate = rate || 1; c.preservesPitch = false;
+      var p = c.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+  }
+  var sfxWas = null, stepD = 0;
+  function sfxTick(dt) {
+    var st = fig.state, sp = Math.abs(fig.vx || 0);
+    if (st !== sfxWas) {
+      if (st === 'air' && fig.vy < -300) sfx('hop', 0.35, 0.95 + Math.random() * 0.1);   // a launch, not a fall off an edge
+      if (st === 'hang') sfx('grab', 0.4);
+      if (st === 'move') stepD = 0;
+      sfxWas = st;
+    }
+    if (st === 'move' && sp >= 12) {
+      stepD += sp * dt;
+      var run = sp > 230, stride = run ? 72 : 44;
+      if (stepD >= stride) { stepD -= stride; sfx('squeak', run ? 0.22 : 0.14, 0.88 + Math.random() * 0.27); }
+    }
+  }
+
   function advance(dt) {
+    sfxTick(dt);   // first: a launch set by a click or last frame's hop still has its full upward speed
     cloudMagnet();
     cloudCheck();
     rideT = Math.max(0, rideT - dt);
