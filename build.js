@@ -729,6 +729,14 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
 .hero-cta-row{margin-top:calc(var(--space)*7);display:flex;gap:14px;flex-wrap:wrap}
+/* on phones, where there's no cloud to drop them, her clay LinkedIn and X sit beside say hey! (her ask 2026-10-24:
+   "my screen feels visually pretty [empty] … can I have my LinkedIn and twitter on there?"); laptops get them from the cloud */
+.cta-socials{display:none;align-items:center;gap:10px}
+.cta-socials a{display:block;width:48px;height:48px;border-radius:12px;transition:transform .2s var(--ease-standard)}
+.cta-socials a:active{transform:scale(.92)}
+.cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+.cta-socials a:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
+@media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}}
 
 /* florals. The composition is her reference's: one bloom hanging from the top and running
    off the LEFT edge, one rising from the bottom and running off the RIGHT, with the copy in
@@ -3025,6 +3033,7 @@ function renderHome() {
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
+    <span class="cta-socials">${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => `<a href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png')}" alt="" width="48" height="48" draggable="false"></a>`).join('')}</span>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
