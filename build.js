@@ -966,6 +966,10 @@ ${swipeTweaks()}
 .view-btn:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
 .work-sec[data-view="deck"] .view-list,.work-sec[data-view="list"] .view-deck{display:none}
 .work-sec[data-view="list"] .view-list{margin-top:calc(var(--space)*6)}
+/* the toggle's dock: sticky to the bottom of the screen while the work section is on screen, so it is always
+   in reach; it comes to rest at the end of the section */
+.view-dock{position:sticky;bottom:16px;z-index:20;display:flex;justify-content:center;margin-top:calc(var(--space)*4);pointer-events:none}
+.view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
 .sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
@@ -978,6 +982,17 @@ ${swipeTweaks()}
   border-radius:calc(var(--S,50vw) * var(--radius));background:var(--bg-raised);display:grid;place-items:center;padding:calc(var(--S,50vw) * .08);
   overflow:hidden;transform-origin:50% 50%;color:inherit;text-decoration:none;-webkit-user-drag:none;will-change:transform}
 .scard-media{width:100%;height:100%;display:grid;place-items:center;pointer-events:none}
+/* PRESS AND HOLD a card (her ask): its tech stack rises over the card while held; a tap still opens it.
+   No long-press link menu on phones. */
+.scard{-webkit-touch-callout:none}
+.scard-stack{position:absolute;left:0;right:0;bottom:0;padding:calc(var(--S,50vw) * .07);padding-top:calc(var(--S,50vw) * .2);text-align:left;
+  background:linear-gradient(to top,rgba(10,10,12,.94) 55%,rgba(10,10,12,0));opacity:0;transform:translateY(10px);
+  transition:opacity 220ms var(--ease-standard),transform 220ms var(--ease-standard);pointer-events:none}
+.scard.held .scard-stack{opacity:1;transform:none}
+.scard-stack-label{display:block;margin-bottom:.7em;font-family:var(--font-utility);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+.scard-stack ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.scard-stack li{font-family:var(--font-utility);font-size:.74rem;line-height:1.2;color:var(--text-primary);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-pill);padding:5px 11px}
+@media (prefers-reduced-motion:reduce){.scard-stack{transition:none}}
 .scard-media>*{max-width:100%;max-height:100%}
 .scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
 /* the centred project's full-sentence headline, directly under the card; wraps freely, and its box is held
@@ -1027,17 +1042,22 @@ ${swipeTweaks()}
    it there once the finger is off and the scroll has stopped; nothing moves during the gesture). The GSAP focus still eases each
    project in and out on top. */
 @media (max-width:760px){
-  /* ONE SWIPE = ONE PROJECT (her: "the reels are not clicking into place with one swipe"). The browser's own
-     mandatory snapping with snap-stop:always: it stops on every project and never skips one, however hard the
-     flick, which a script can't promise on iPhone (momentum keeps gliding after the finger lifts). app.js turns
-     it on (html.reels-on) only while the work list holds the middle of the screen, and the sections either
-     side carry snap points so a swipe past the first or last project leaves the list; elsewhere the page
-     scrolls free. */
-  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;scroll-snap-align:center;scroll-snap-stop:always;
-    padding-top:calc(var(--space)*9);padding-bottom:calc(var(--space)*6)}
-  html.reels-on{scroll-snap-type:y mandatory}
-  .reels-on #brands{scroll-snap-align:end}
-  .reels-on #disciplines{scroll-snap-align:start}
+  /* ONE SWIPE = ONE PROJECT, NEVER OVERSHOT (her: "I swipe and it stays over shot for too long and then snaps
+     in. I just don't want the swipe to ever be over shot"). iPhone's native snapping on the page glides past and
+     snaps back, so app.js pages the list itself (REELS PAGING): the page follows the finger 1:1, and on release
+     GSAP eases to the next project (or back) with a decelerating curve that never passes it. */
+  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;gap:calc(var(--space)*3);
+    padding-top:calc(var(--space)*5);padding-bottom:calc(var(--space)*5)}
+  /* the WHOLE phone always shows (her: "the phone should never get cut off"): every screen is capped by the
+     screen's height, and the card carries only the name and its headline, smaller; the tags and stack stay
+     on desktop, in the swipe deck (press and hold) and on the case study */
+  #work .wproject .project-media-wrap{max-height:50svh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center}   /* a full-width column: an auto one sized the shots to nothing */
+  #work .wproject .project-media-wrap>*{width:100%}   /* browser and laptop shots keep full width; phones size by height below */
+  #work .wproject .phone-media{height:min(50svh,380px);width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
+  #work .wproject .project-media,#work .wproject .browser-media,#work .wproject .mac-media{max-height:50svh}
+  #work .wproject .w-outcome{font-size:clamp(1.15rem,5vw,1.4rem);line-height:1.3}
+  #work .wproject .w-tags,#work .wproject .w-stack{display:none}
+  #work .wproject .w-chiprow{margin-top:calc(var(--space)*1.5)}
 }
 .project-media-wrap{display:flex;justify-content:center}
 
@@ -1819,8 +1839,9 @@ function makeJS() {
     let navY=scrollY,navUp=0,navHover=false;
     addEventListener('scroll',()=>{const y=scrollY,d=y-navY;navY=y;
       if(d>0){navUp=0;if(y>140&&!navHover&&!navW.contains(document.activeElement))navW.classList.add('nav-hidden')}
-      else{navUp-=d;if(navUp>40||y<140)navW.classList.remove('nav-hidden')}},{passive:true});
-    addEventListener('mousemove',e=>{const near=e.clientY<90;if(near===navHover)return;navHover=near;if(near)navW.classList.remove('nav-hidden')},{passive:true});
+      else{navUp-=d;if((navUp>40&&!document.documentElement.classList.contains('reels-on'))||y<140)navW.classList.remove('nav-hidden')}},{passive:true});   // paging the phone Reels never calls the nav back
+    /* only a real mouse near the top reveals it: phones send a mousemove with every tap, which kept popping it up */
+    if(matchMedia('(hover:hover) and (pointer:fine)').matches)addEventListener('mousemove',e=>{const near=e.clientY<90;if(near===navHover)return;navHover=near;if(near)navW.classList.remove('nav-hidden')},{passive:true});
     navW.addEventListener('focusin',()=>navW.classList.remove('nav-hidden'));
   }
 
@@ -1962,6 +1983,15 @@ function makeJS() {
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
     stage.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(c&&+c.dataset.i!==active)settle(+c.dataset.i)});
+    /* press and hold (~0.45s, without dragging) shows that card's tech stack while held; letting go hides it and
+       swallows the click, so only a quick tap opens the case study */
+    let holdT=0,held=null;
+    stage.addEventListener('pointerdown',e=>{const c=e.target.closest('.scard');if(!c||e.button!==0)return;clearTimeout(holdT);
+      holdT=setTimeout(()=>{held=c;c.classList.add('held');drag=null;sd.classList.remove('dragging')},450)});
+    sd.addEventListener('pointermove',()=>{if(drag&&drag.axis)clearTimeout(holdT)});
+    const unhold=()=>{clearTimeout(holdT);if(held){held.classList.remove('held');held=null;suppress=true;setTimeout(()=>{suppress=false},0)}};
+    addEventListener('pointerup',unhold);addEventListener('pointercancel',unhold);
+    stage.addEventListener('contextmenu',e=>{if(e.target.closest('.scard'))e.preventDefault()});
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     sd.addEventListener('wheel',e=>{
       if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
@@ -1993,13 +2023,40 @@ function makeJS() {
     }).catch(()=>{});
   }
 
-  /* REELS (see html.reels-on): mandatory one-project-per-swipe snapping, switched on only while the work list
-     covers the middle line of the screen, so the rest of the page keeps free scrolling */
+  /* REELS PAGING (phones, SCROLL view). While the list holds the middle of the screen (html.reels-on), a vertical
+     swipe on it is taken over: the page tracks the finger exactly, and on release eases to the next or previous
+     project, or back to the same one for a small nudge, with power3.out (no overshoot, no spring). Swiping above
+     the first project or below the last hands back to ordinary scrolling, so the list never traps you. Measures
+     layout positions (offsetTop), which the GSAP focus effect doesn't shift. */
   if(phoneList.matches&&cardsM.length){
-    const workSec=document.getElementById('work');
-    let inMid=false;const sync=()=>document.documentElement.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');   // SCROLL view only
+    const workSec=document.getElementById('work'),root=document.documentElement;let inMid=false;
+    const sync=()=>root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');
     new IntersectionObserver(es=>es.forEach(e=>{inMid=e.isIntersecting;sync()}),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
     addEventListener('mk-work-view',sync);
+    const docTop=e=>{let t=0;while(e){t+=e.offsetTop;e=e.offsetParent}return t};
+    const aim=i=>docTop(cardsM[i])+cardsM[i].offsetHeight/2-innerHeight/2;
+    const nearest=()=>{let n=0,bd=1e9;cardsM.forEach((c,i)=>{const d=Math.abs(aim(i)-scrollY);if(d<bd){bd=d;n=i}});return n};
+    const jump=y=>window.scrollTo({top:y,behavior:'instant'});
+    let t0=null,glide=null;
+    addEventListener('touchstart',e=>{
+      if(!root.classList.contains('reels-on')||e.touches.length!==1||!workSec.contains(e.target)){t0=null;return}
+      if(glide)glide.kill();const y=e.touches[0].clientY;t0={y,x:e.touches[0].clientX,s:scrollY,i:nearest(),pts:[[e.timeStamp,y]],own:null};
+    },{passive:true});
+    addEventListener('touchmove',e=>{
+      if(!t0)return;const y=e.touches[0].clientY,dy=y-t0.y,dx=e.touches[0].clientX-t0.x;
+      if(t0.own===null){if(Math.abs(dy)<6&&Math.abs(dx)<6)return;
+        const out=(t0.i===0&&dy>0)||(t0.i===cardsM.length-1&&dy<0);   // past either end: ordinary scrolling
+        t0.own=Math.abs(dy)>Math.abs(dx)&&!out;if(!t0.own){t0=null;return}}
+      e.preventDefault();jump(t0.s-dy);t0.pts.push([e.timeStamp,y]);if(t0.pts.length>6)t0.pts.shift();
+    },{passive:false});
+    const release=()=>{
+      if(!t0||!t0.own){t0=null;return}const a=t0.pts[0],b=t0.pts[t0.pts.length-1],dy=b[1]-t0.y,v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);
+      let go=t0.i;if(dy<-48||v<-.35)go=t0.i+1;else if(dy>48||v>.35)go=t0.i-1;go=Math.max(0,Math.min(cardsM.length-1,go));t0=null;
+      const o={y:scrollY},to=aim(go);
+      if(rmActive()||!window.gsap)return jump(to);
+      glide=gsap.to(o,{y:to,duration:.45,ease:'power3.out',onUpdate:()=>jump(o.y)});
+    };
+    addEventListener('touchend',release,{passive:true});addEventListener('touchcancel',release,{passive:true});
   }
 
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
@@ -2617,7 +2674,7 @@ function renderHome() {
   const sdeckHTML = `
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
     <div class="sdeck-stage">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
   </div>`;
@@ -2629,13 +2686,16 @@ function renderHome() {
 <section id="work" class="work-sec" data-view="deck">
   <div class="work-head">
     <h2 class="section-title fade">${typo(site.work.title)}</h2>
+  </div>
+  <div class="view-deck">${sdeckHTML}</div>
+  <div class="view-list">${listHTML}</div>
+  <!-- the toggle floats at the bottom of the screen the whole time the projects are on screen (her ask: "should always be visible") -->
+  <div class="view-dock">
     <div class="view-toggle" role="group" aria-label="How to browse the projects">
       <button type="button" class="view-btn" data-view="deck" aria-pressed="true" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
       <button type="button" class="view-btn" data-view="list" aria-pressed="false" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
     </div>
   </div>
-  <div class="view-deck">${sdeckHTML}</div>
-  <div class="view-list">${listHTML}</div>
 </section>`;
 
   const panels = site.disciplines.panels;
