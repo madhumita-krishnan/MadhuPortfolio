@@ -735,12 +735,24 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    then LinkedIn, then X. Laptops: say hey! goes straight to Calendly and the cloud carries the socials. */
 .cta-socials{display:none;align-items:center;gap:10px}
 .cta-socials a{display:block;width:48px;height:48px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .15s ease}
-.hero-cta-row.socials-open .cta-socials a{opacity:1;pointer-events:auto;animation:clay-pop .56s steps(7,end) both}
-.hero-cta-row.socials-open .cta-socials a:nth-child(2){animation-delay:.09s}
-.hero-cta-row.socials-open .cta-socials a:nth-child(3){animation-delay:.18s}
+/* (her follow-up: "say hey doesn't need to be big. Can it horizontally poof into itself to the left and the icons pop
+   out as a result?") on phones the button is smaller, and a tap squashes it sideways into its own left edge in clay
+   steps (the poof); the tiles pop out of that spot as it goes. Closing pops it back. */
+@media (max-width:760px){
+  .hero-cta-row .btn.solid{min-height:42px;padding:0 20px 3px;font-size:.95rem;transform-origin:0 50%}
+  .hero-cta-row.socials-open{gap:0}
+  .hero-cta-row.socials-open .btn.solid{animation:say-poof .3s steps(5,end) forwards;pointer-events:none;min-width:0;overflow:hidden;white-space:nowrap}
+  .hero-cta-row.socials-back .btn.solid{animation:clay-pop .42s steps(6,end) both}
+}
+@keyframes say-poof{0%{transform:none;max-width:200px}40%{transform:scale(.62,1.14)}75%{transform:scale(.22,.82);opacity:1}
+  100%{transform:scale(0,.6);opacity:0;max-width:0;padding-left:0;padding-right:0;margin-right:0}}
+.hero-cta-row.socials-open .cta-socials{gap:10px}
+.hero-cta-row.socials-open .cta-socials a{opacity:1;pointer-events:auto;animation:clay-pop .56s steps(7,end) .2s both}
+.hero-cta-row.socials-open .cta-socials a:nth-child(2){animation-delay:.29s}
+.hero-cta-row.socials-open .cta-socials a:nth-child(3){animation-delay:.38s}
 @keyframes clay-pop{0%{opacity:0;transform:translateX(-70px) scale(.2)}35%{opacity:1;transform:translateX(6px) scale(1.25,.8)}
   60%{transform:translateX(-2px) scale(.88,1.15)}80%{transform:scale(1.06,.95)}100%{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.hero-cta-row.socials-open .cta-socials a{animation:none}}
+@media (prefers-reduced-motion:reduce){.hero-cta-row.socials-open .cta-socials a,.hero-cta-row.socials-back .btn.solid{animation:none}.hero-cta-row.socials-open .btn.solid{animation:none;display:none}}
 .cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
 .cta-socials a:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
 @media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}}
@@ -1973,7 +1985,8 @@ function makeJS() {
      inside it books the call. A tap anywhere else closes it. */
   const sayRow=document.querySelector('.hero-cta-row'),sayPop=sayRow&&sayRow.querySelector('.cta-socials'),sayBtn=sayRow&&sayRow.querySelector('.btn.solid');
   if(sayPop&&sayBtn){
-    const phone=matchMedia('(max-width:760px)'),setOpen=on=>{sayRow.classList.toggle('socials-open',on);sayBtn.setAttribute('aria-expanded',String(on));
+    const phone=matchMedia('(max-width:760px)'),setOpen=on=>{const was=sayRow.classList.contains('socials-open');sayRow.classList.toggle('socials-open',on);sayBtn.setAttribute('aria-expanded',String(on));
+      if(was&&!on){sayRow.classList.add('socials-back');setTimeout(()=>sayRow.classList.remove('socials-back'),500)}   // say hey! pops back
       setTimeout(()=>dispatchEvent(new Event('mk-terrain')),on?800:0)};   // the tiles are ground for clay-her once they've popped out (and gone when closed)
     sayBtn.setAttribute('aria-controls','say-pop');
     sayBtn.addEventListener('click',e=>{if(!phone.matches)return;e.preventDefault();setOpen(!sayRow.classList.contains('socials-open'))});
