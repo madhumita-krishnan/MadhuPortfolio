@@ -326,7 +326,7 @@ ${cs.sections.map(section).join('\n')}
 
 <footer class="foot">
   <a class="foot-next" href="${caseHref(cs.next)}"><span class="eyebrow">Next project</span><span class="foot-name">${esc((cases.find(c => c.slug === cs.next) || {}).name || 'All work')}<span class="arrow-btn" aria-hidden="true">${ic('arrow')}</span></span></a>
-  <p><a href="mailto:${esc(site.email)}">${esc(site.email)}</a></p>
+  <p><a href="mailto:${esc(site.email)}">${esc(site.email)}</a>${(site.footer.links || []).map(l => ` · <a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</p>   <!-- the main footer's LinkedIn / Twitter too (her: "linkedin is not linked") -->
 </footer>
 
 <dialog class="viewer" aria-label="Explore this screen" tabindex="-1">
