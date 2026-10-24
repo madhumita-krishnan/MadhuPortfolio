@@ -6,9 +6,11 @@
   "tagline": "End-to-end brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand, launching in 2026.",
   "heroTone": "deep",
   "heroMedia": {
-    "type": "image",
-    "src": "assets/case-studies/pratus-kitchen/home-desktop.jpg",
-    "alt": "The Pratus Kitchen home page: the PRATUS wordmark and ‘Culture that performs’ over a photo of the founder holding a cooler and meal pouches",
+    "type": "video",
+    "src": "assets/case-studies/pratus-kitchen/demo.mp4",
+    "poster": "assets/case-studies/pratus-kitchen/demo-poster.jpg",
+    "autoplay": true,
+    "alt": "A walkthrough of the Pratus Kitchen storefront: the home page, the meal lineup, the paneer paratha page, adding two to the cart, and checkout",
     "frame": "mac",
     "url": "pratuskitchen.com",
     "tab": "Pratus Kitchen · Culture that performs"

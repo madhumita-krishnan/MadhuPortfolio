@@ -2401,7 +2401,7 @@ function macFrame(m, { eager = false } = {}) {
         <div class="mac-screen">
           ${MAC_MENUBAR}
           ${chromeHTML(m)}
-          <div class="mac-page"${isVideo ? ' data-video' : ''}>${body}</div>
+          <div class="mac-page"${isVideo ? ` data-video${m.autoplay ? ' data-autoplay' : ''}` : ''}>${body}</div>
         </div>
         <div class="mac-base" aria-hidden="true"></div>
       </div>
