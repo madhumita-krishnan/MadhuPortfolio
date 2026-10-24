@@ -27,6 +27,9 @@
       '.rz-sheet{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;opacity:0;visibility:hidden;background:#0f1013;' +
         'padding:84px 16px 48px;-webkit-overflow-scrolling:touch}' +
       '.rz-sheet.on{visibility:visible}' +
+      /* closed means GONE: a child set visible outlives its hidden parent, so the closed page kept catching clicks
+         (her: "when I esc … the resume would keep showing up where I clicked") */
+      '.rz:not(.on),.rz:not(.on) *{visibility:hidden!important;pointer-events:none!important}' +
       '.rz-sheet img{display:block;width:min(880px,100%);height:auto;margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}' +
       '.rz-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:20px clamp(16px,4vw,56px);' +
         'background:linear-gradient(#0f1013 55%,rgba(15,16,19,0))}' +
@@ -87,6 +90,7 @@
 
   function close() {
     el.classList.remove('on');
+    setTimeout(function () { if (!el.classList.contains('on')) { sheet.classList.remove('on'); sheet.style.opacity = '0'; } }, 400);
     document.documentElement.style.overflow = '';
     vid.pause();
     if (opener && opener.focus) opener.focus({ preventScroll: true });
