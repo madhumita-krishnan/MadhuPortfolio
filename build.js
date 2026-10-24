@@ -956,6 +956,13 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* display:block is load-bearing: inside a slot .brand is an inline span, where height:38px
    does not apply and the mark collapses to nothing */
 .brand-slot .brand{display:block}
+/* the logos that LINK somewhere glow blue (her ask 2026-10-23), so you can tell which ones open a proof link.
+   The glow sits on the link, not the mark: a filter on the masked .brand would be masked away with it.
+   Steady, never pulsing. The wisp dots read this colour too, so they arrive blue. */
+a.brand-slot .brand{background:var(--accent)}
+a.brand-slot{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 55%,transparent));transition:filter var(--motion-base) var(--ease-standard)}
+a.brand-slot:hover{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 80%,transparent))}
+a.brand-slot:hover .brand{background:var(--ink-blue-hover)}
 .brands-row.gs-roll .brand{opacity:0}
 /* the row carries the observer, not the movement — the logos do that */
 .brands-row.fade{opacity:1;transform:none;transition:none}
