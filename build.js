@@ -1993,7 +1993,14 @@ function makeJS() {
     };
     let saved=null;try{saved=localStorage.getItem('mk-work-view')}catch(e){}
     if(saved==='list'||saved==='deck')setView(saved,false);
-    btns.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view,true)));
+    /* switching view takes you TO it (her ask: "when I toggle to the horizontal swipe I want to be taken back to where I can
+       see it, not staring at the wrong place if I toggle after scrolling down"): SWIPE brings the deck to the middle of the
+       screen, SCROLL brings the first project under the section title. Only when it isn't already in view. */
+    const bring=v=>{const el=v==='deck'?workEl.querySelector('.sdeck'):workEl.querySelector('.view-list .wproject');if(!el)return;
+      const r=el.getBoundingClientRect();if(r.top>=60&&r.bottom<=innerHeight)return;
+      const y=v==='deck'?r.top+scrollY-Math.max(70,(innerHeight-r.height)/2):workEl.querySelector('.work-head').getBoundingClientRect().top+scrollY-90;
+      scrollTo({top:Math.max(0,y),behavior:rmActive()?'auto':'smooth'})};
+    btns.forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view,true);requestAnimationFrame(()=>bring(b.dataset.view))}));
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
