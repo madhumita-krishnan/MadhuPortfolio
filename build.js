@@ -884,7 +884,6 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 @media (max-width:600px){.hero .hero-line{line-height:1.3}}
 /* (2026-10-23) a --hang of 136px under every line was tried so clay-her could hang without her legs crossing the next
    line; she called the spacing "insane", so the hero keeps its own rhythm and her legs simply dangle in front */
-}
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
@@ -1344,7 +1343,6 @@ ${PHONE_CSS}
 .about-toggle{margin-bottom:calc(var(--space)*4);position:relative;
   border:0;border-bottom:1.5px solid var(--teal-baby);padding:0 0 7px;background:none}
 .about-toggle:hover{border-color:var(--ink-blue)}
-}
 /* ---- education (2026-08-25 her ask): the Block M and the Google G, official marks at
    full colour — credentials, so they sit small beside their words above a hairline,
    the same quiet register as the client wall. The marks are height-locked so the two
@@ -2105,7 +2103,7 @@ function makeJS() {
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
        Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
-    let dims=[],top=0,bot=0,shift=0,nudging=false,touched=false;
+    let dims=[],top=0,bot=0,shift=0,nudging=false,touched=false,nudgeTl=null;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
@@ -2164,6 +2162,7 @@ function makeJS() {
        card. Without speed (keys, the progress bar) it eases in as before. */
     const settle=(i,instant,speed)=>{
       const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
+      if(nudgeTl){nudgeTl.kill();nudgeTl=null;nudging=false}   // a real move always beats the swipe-hint nudge (it was undoing swipes made during it)
       if(instant||rm||!window.gsap)return place(to);
       const o={v:pos};
       if(speed){const px=Math.abs(to-pos)*R,sp=Math.min(8,Math.max(num('--sd-speed')||1.6,speed));
@@ -2207,25 +2206,35 @@ function makeJS() {
     /* trackpad: the deck follows the fingers 1:1 until the push reaches 40px, then COMMITS to the next card and glides
        there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
        the wheel goes quiet, so it never drags the glide down. */
-    let wAcc=0,wFrom=0,wLock=false;
-    /* on the WINDOW, not the deck (her: "depending on where my mouse is, I find it hard to horizontally scroll"):
-       a sideways swipe works anywhere while the deck holds the middle of the screen */
+    let wAcc=0,wFrom=0,wLock=false,wLast=0,wDir=0;
+    /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
+       where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
+       screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
+       swipe committed, everything was swallowed until the trackpad went fully quiet, so a quick second swipe during the
+       first one's momentum died — a fresh push (the wheel suddenly stronger again) now counts as a new swipe; (3) a slightly
+       diagonal swipe read as vertical — mostly-sideways (dx > 0.7 dy) now counts. */
     addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)||!sd.offsetParent)return;
-      const r=sd.getBoundingClientRect();if(r.top>innerHeight*.5||r.bottom<innerHeight*.5)return;
+      const ax=Math.abs(e.deltaX),ay=Math.abs(e.deltaY);
+      if(ax<=ay*.7||ax<1||!sd.offsetParent)return;
+      const r=sd.getBoundingClientRect(),over=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+      const onScreen=Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>Math.min(r.height,innerHeight)*.45;
+      if(!over&&!onScreen)return;
       e.preventDefault();touched=true;
-      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0},180);
+      const dir=Math.sign(e.deltaX);
+      if(wLock&&(ax>wLast*1.8&&ax>6||dir!==wDir&&ax>6)){wLock=false;wAcc=0}   // a fresh push mid-momentum: a new swipe
+      wLast=ax;
+      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0;wLast=0},180);
       if(wLock)return;
       if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
       wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
-      if(Math.abs(wAcc)>=40){wLock=true;settle(wFrom+Math.sign(wAcc),false,Math.abs(e.deltaX)/16)}
+      if(Math.abs(wAcc)>=40){wLock=true;wDir=dir;settle(Math.round(pos)+(Math.round(pos)===wFrom?dir:0),false,ax/16)}
     },{passive:false});
     /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
        and back, once, unless you've already touched it. The headline stays put for the nudge. */
     sd.addEventListener('pointerdown',()=>{touched=true});
     new IntersectionObserver((es,io)=>{if(!es.some(e=>e.intersectionRatio>=.6))return;io.disconnect();
       setTimeout(()=>{if(touched||rm||!window.gsap||pos!==0||cards.length<2)return;nudging=true;const o={v:0};
-        gsap.timeline({onComplete:()=>{nudging=false;place(0)}}).to(o,{v:.22,duration:.45,ease:'power2.out',onUpdate:()=>place(o.v)}).to(o,{v:0,duration:.55,ease:'power2.inOut',onUpdate:()=>place(o.v)},'+=.08')},700)},{threshold:.6}).observe(sd);
+        nudgeTl=gsap.timeline({onComplete:()=>{nudging=false;nudgeTl=null;place(0)}}).to(o,{v:.22,duration:.45,ease:'power2.out',onUpdate:()=>place(o.v)}).to(o,{v:0,duration:.55,ease:'power2.inOut',onUpdate:()=>place(o.v)},'+=.08')},700)},{threshold:.6}).observe(sd);
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
     addEventListener('mk-deck-go',e=>{touched=true;settle(e.detail.i,true)});   // the view toggle opens the deck on the project you were reading
@@ -3426,7 +3435,16 @@ function checkComments(css) {
 }
 
 fs.mkdirSync(DIST, { recursive: true });
-fs.writeFileSync(path.join(DIST, 'styles.css'), checkComments(makeCSS() + fs.readFileSync(path.join(ROOT, 'skin-walkthrough.css'), 'utf8')));
+/* checkBraces: a stray '}' at the top level makes the browser silently drop the NEXT rule (2026-10-24: it took the About
+   section's credentials row and the hero button's fade-in) — so the build refuses to ship unbalanced CSS */
+function checkBraces(css) {
+  const t = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+  let d = 0, line = 1;
+  for (const c of t) { if (c === '\n') line++; if (c === '{') d++; if (c === '}' && --d < 0) throw new Error('styles.css: a stray "}" at line ' + line + ' would silently drop the rule after it'); }
+  if (d) throw new Error('styles.css: ' + d + ' unclosed "{"');
+  return css;
+}
+fs.writeFileSync(path.join(DIST, 'styles.css'), checkBraces(checkComments(makeCSS() + fs.readFileSync(path.join(ROOT, 'skin-walkthrough.css'), 'utf8'))));
 fs.writeFileSync(path.join(DIST, 'app.js'), makeJS());
 /* the stick figure ships as-is — it is hand-written client JS, not generated */
 fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
