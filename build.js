@@ -2406,7 +2406,7 @@ function makeJS() {
         guide=guide||potEl.appendChild(Object.assign(document.createElement('i'),{style:'position:absolute;left:-24px;right:-24px;height:1px;background:#ff3b6b;pointer-events:none'}));
         guide.style.top=v.lip+'%'}
       else if(guide){guide.remove();guide=null}
-      clearTimeout(again);again=setTimeout(leap,250)});
+      clearTimeout(again);again=setTimeout(()=>fetchIt().then(m=>{m.stop();leap()}),250)});
     addEventListener('tweak-replay',leap);
   }
 })();`;

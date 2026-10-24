@@ -54,6 +54,9 @@ import * as THREE from './vendor/three.module.min.js';
    leap) — the flag holds while a flight is live and clears in teardown, so run() is
    re-entrant between flights and inert during one */
 let live = false;
+let end = null;                                    // the live flight's teardown, for stop()
+/* the tweaker cuts the flight in the air so a moved lip line shows on the very next fish */
+export function stop() { if (end) end(); }
 
 export function run(opts = {}) {
   if (live) return;
@@ -545,6 +548,7 @@ export function run(opts = {}) {
   }
 
   function teardown() {
+    end = null;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
     bursts.forEach(b => { b.g.dispose(); b.m.dispose(); });
@@ -554,5 +558,6 @@ export function run(opts = {}) {
     live = false;                                  // the pot can launch the next flight
   }
 
+  end = teardown;
   raf = requestAnimationFrame(frame);
 }
