@@ -20,6 +20,8 @@
     css.textContent =
       '.rz{position:fixed;inset:0;z-index:2147483000;background:#0f1013;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s linear .35s}' +
       '.rz.on{opacity:1;visibility:visible;transition:opacity .35s ease}' +
+      /* the site hides the system cursor for its own, which sits UNDER this layer (her: "I can't find my cursor") */
+      '.rz,.rz *{cursor:auto!important}.rz a,.rz button{cursor:pointer!important}' +
       '.rz-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0f1013}' +
       '.rz-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}' +
       '.rz-sheet{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;opacity:0;visibility:hidden;background:#0f1013;' +
