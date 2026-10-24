@@ -18,7 +18,7 @@
   var PAGE = base + 'assets/resume-page.jpg' + ver, PDF = base + 'assets/resume.pdf' + ver;
   /* the throw sheet (clay-character keying, half size): cells, her feet and centre in a cell, where the plane is at
      the release frame, her height in a cell */
-  var SP = { n: 62, cols: 8, fw: 119, fh: 175, fps: 12, feet: 170, cx: 50.5, figH: 154, release: 44, plane: [64, 28.5] };
+  var SP = { n: 62, cols: 8, fw: 119, fh: 175, fps: 18, feet: 170, cx: 50.5, figH: 154, release: 44, plane: [64, 28.5] };   // 18fps: the fold no longer drags (her: "super disjointed")
   var NOSE = 25 * Math.PI / 180;   // the plane picture's nose points right and ~25° down
   var rm = function () { return matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('rm-mode'); };
   var el, flash, sheet, opener, busy = false;
@@ -36,11 +36,12 @@
       '.rz-sheet{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;opacity:0;visibility:hidden;background:#0f1013;padding:84px 16px 48px;-webkit-overflow-scrolling:touch}' +
       '.rz-sheet.on{visibility:visible}' +
       '.rz-sheet img{display:block;width:min(880px,100%);height:auto;margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}' +
-      '.rz-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:20px clamp(16px,4vw,56px);background:linear-gradient(#0f1013 55%,rgba(15,16,19,0))}' +
-      '.rz-bar a,.rz-bar button{font:500 15px/1 "Plus Jakarta Sans",system-ui,sans-serif;display:inline-flex;align-items:center;min-height:40px;padding:0 18px 2px;border-radius:999px;border:1px solid rgba(169,196,245,.55);background:none;color:#e9eaee;text-decoration:none}' +
-      '.rz-bar a.rz-dl{background:#fff;border-color:#fff;color:#111}' +
-      '.rz-bar :focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}' +
-      '.rz-bar .rz-title{margin-right:auto;color:#9aa0ad;font:300 15px/1 "Plus Jakarta Sans",system-ui,sans-serif}' +
+      '.rz-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px clamp(16px,4vw,56px);background:linear-gradient(#0f1013 55%,rgba(15,16,19,0))}' +
+      '.rz-x{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid rgba(169,196,245,.45);background:rgba(15,16,19,.6);color:#e9eaee}' +
+      '.rz-x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}' +
+      '.rz-dl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font:500 14px/1 "Plus Jakarta Sans",system-ui,sans-serif;height:36px;padding:0 14px 1px 12px;border-radius:999px;background:#fff;color:#111;text-decoration:none}' +
+      '.rz-dl svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.rz-bar :focus{outline:none}.rz-bar :focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}' +
       /* her throw, standing in for her, and the flying plane: above the page, below the resume layer */
       '.rz-her{position:fixed;z-index:2147482990;pointer-events:none;background-repeat:no-repeat}' +
       '.rz-plane{position:fixed;left:0;top:0;z-index:2147482995;pointer-events:none;will-change:transform;transform-origin:50% 50%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35))}';
@@ -50,9 +51,10 @@
     css();
     el = document.createElement('div');
     el.className = 'rz'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Resume');
-    el.innerHTML = '<div class="rz-flash"></div><div class="rz-sheet"><div class="rz-bar"><span class="rz-title">Resume</span>' +
-      '<a class="rz-dl" href="' + PDF + '" download="Madhumita-Krishnan-Resume.pdf">Download PDF</a>' +
-      '<a href="' + PDF + '" target="_blank" rel="noopener">Open</a><button class="rz-x" type="button">Close</button></div>' +
+    /* one quiet bar (her: "this ui is super clunky"): a small ✕ on the left, one compact download pill on the right */
+    el.innerHTML = '<div class="rz-flash"></div><div class="rz-sheet"><div class="rz-bar">' +
+      '<button class="rz-x" type="button" aria-label="Close the resume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button>' +
+      '<a class="rz-dl" href="' + PDF + '" download="Madhumita-Krishnan-Resume.pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 V15 M7 10 L12 15 L17 10 M5 20 H19"/></svg>PDF</a></div>' +
       '<img alt="Madhumita Krishnan, resume" src="' + PAGE + '"></div>';
     document.body.appendChild(el);
     flash = el.querySelector('.rz-flash'); sheet = el.querySelector('.rz-sheet');
@@ -81,7 +83,7 @@
         .to(flash, { opacity: 0, duration: .6, ease: 'power2.out' }, '<')
         .fromTo(sheet.querySelector('.rz-bar'), { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: .4, ease: 'power2.out', clearProps: 'all' }, '-=.45');
     } else { flash.style.opacity = '0'; sheet.style.opacity = '1'; }
-    var x = el.querySelector('.rz-x'); x && x.focus({ preventScroll: true });
+    if (matchMedia('(hover: hover)').matches) { var x = el.querySelector('.rz-x'); x && x.focus({ preventScroll: true }); }   // keyboard/desktop only: no ring on a phone
   }
 
   /* where clay-her stands on screen, if she's there to do it herself */
@@ -101,7 +103,7 @@
       'background-image:url("' + THROW + '");background-size:' + (SP.cols * w) + 'px auto';
     document.body.appendChild(d);
     window.__stick.hide(true);
-    var i = 0, show = function () { d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
+    var i = 8, show = function () {   // from frame 8: the clip opens with her just holding the page d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
     show();
     var iv = setInterval(function () {
       i++;
@@ -118,8 +120,8 @@
     p.className = 'rz-plane'; p.src = PLANE; p.alt = '';
     document.body.appendChild(p);
     /* the glide: a Catmull-Rom path through these points (viewport fractions), with the plane's width (fraction of W) */
-    var pts = [[x0 / W, y0 / H, w0 / W], [x0 / W + .12, y0 / H - .3, .07], [.82, .14, .1], [.9, .42, .13], [.6, .62, .16],
-               [.28, .5, .19], [.12, .28, .22], [-.05, .4, .3]];
+    /* ONE swoop: up off her hand, a wide arc across the top and round, then in from the left for the pass */
+    var pts = [[x0 / W, y0 / H, w0 / W], [Math.min(.85, x0 / W + .2), .18, .09], [.55, .12, .13], [.2, .3, .18], [-.04, .42, .28]];
     var seg = function (t) {
       var n = pts.length - 1, f = Math.min(n - 1e-6, t * n), i = Math.floor(f), u = f - i;
       var P = function (j) { return pts[Math.max(0, Math.min(n, j))]; }, a = P(i - 1), b = P(i), c = P(i + 1), e = P(i + 2);
@@ -137,11 +139,11 @@
     place(x0, y0, w0);
     gsap.timeline({ onComplete: function () { p.remove(); busy = false; } })
       /* the glide: unhurried, eased in and out, banking as it turns */
-      .to(o, { t: 1, duration: 2.6, ease: 'sine.inOut', onUpdate: function () { var q = seg(o.t); place(q[0], q[1], q[2], 1 - .25 * Math.abs(Math.sin(o.t * Math.PI * 3))); } })
+      .to(o, { t: 1, duration: 1.7, ease: 'power1.inOut', onUpdate: function () { var q = seg(o.t); place(q[0], q[1], q[2], 1 - .2 * Math.abs(Math.sin(o.t * Math.PI * 2))); } })
       /* the pass: in from the left edge, right up against the glass, tearing across sideways, huge */
-      .to(o, { s: 1, duration: .55, ease: 'power3.in', onUpdate: function () {
+      .to(o, { s: 1, duration: .5, ease: 'power2.in', onUpdate: function () {
         var s = o.s, x = (-.05 + 1.75 * s) * W, y = (.4 + .12 * Math.sin(s * Math.PI)) * H, w = (.3 + 3.2 * s * s) * W;
-        place(x, y, w); p.style.filter = 'drop-shadow(0 18px 24px rgba(0,0,0,.35)) blur(' + (s * 3).toFixed(1) + 'px)';
+        place(x, y, w);
         if (s > .55 && !o.white) { o.white = true; showSheet(true); }
       } });
   }
