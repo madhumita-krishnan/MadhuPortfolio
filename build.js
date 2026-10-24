@@ -3406,7 +3406,7 @@ ${navBar('case')}
 <header class="cs-hero">
   <div class="cs-hero-band ${tone}">
     ${dsLink}
-    <p class="cs-kicker">${esc(cs.name)}</p>
+    <p class="cs-kicker">${(p => p && p.icon ? `<img src="${asset(p.icon)}" alt="" width="34" height="34">` : '')((site.work.projects || []).find(p => p.slug === cs.slug))}${esc(cs.name)}</p>
     <h1 class="cs-title${cs.title.length > 72 ? ' long' : ''}"${twoLine(cs.title, CORMORANT, cs.title.length > 72 ? 32 : 22)}>${typo(cs.title)}</h1>
     <p class="cs-tagline"${twoLine(cs.tagline, DMSANS, 58)}>${typo(cs.tagline)}</p>
     <div class="cs-tags">${cs.tags.map(t => `<span class="chip${tagTone}">${esc(t)}</span>`).join('')}</div>

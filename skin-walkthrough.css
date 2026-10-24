@@ -65,3 +65,34 @@ body.scrolled .nav-wrap::before{opacity:1}
 nav.bar .btn.sm{padding-bottom:4px}
 /* the narrowest phones (≤360px): the bar tightens so say hey! never runs off the edge (walkthrough.js mirrors this) */
 @media (max-width:360px){nav.bar,nav.bar.glass,body.hero-cta-on nav.bar{gap:6px;padding-left:14px;padding-right:14px}.nav-links a{padding-left:7px;padding-right:7px}nav.bar .btn.sm{padding:0 12px 3px}}
+
+/* ONE DESIGN SYSTEM ON EVERY CASE STUDY (her ask 2026-10-24: "the design system is still not consistent on all the case
+   studies"). The build.js case-study template takes the walkthrough case studies' exact values (walkthrough.js: .hero,
+   .brand, .hero h1, .hero .sub, .eyebrow, .sec, .h2, body, .meta, figcaption): an open, centred hero with the
+   project's logo and name, the 74px title and 30px subtitle; then ONE 772px column where every section is a blue
+   eyebrow over a white 44px heading over 18px body copy. */
+.cs-hero{padding:118px 24px 0}
+.cs-hero-band,.cs-hero-band.light{max-width:1240px;background:none;border-radius:0;padding:0;text-align:center;color:#f3f4f6;box-shadow:none}
+.cs-hero-band::before,.cs-hero-band.light::before{display:none}
+.cs-kicker,.cs-hero-band.light .cs-kicker{display:inline-flex;align-items:center;gap:10px;font:600 24px/1.2 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-.01em;text-transform:none;color:#f3f4f6;margin:0}
+.cs-kicker img{width:34px;height:34px;border-radius:24%}
+.cs-title,.cs-title.long{font-size:clamp(38px,6.2vw,74px);line-height:1.04;font-weight:600;letter-spacing:-.025em;color:#f3f4f6;margin:46px auto 0;max-width:1080px}
+.cs-tagline,.cs-hero-band.light .cs-tagline{font-weight:300;font-size:clamp(19px,2.4vw,30px);line-height:1.5;color:#f3f4f6;margin:14px auto 0;max-width:1000px}
+.cs-tags{justify-content:center}
+.cs-meta{max-width:820px;padding-left:24px;padding-right:24px}
+.cs-meta dt{font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:#6b6f7a;margin-bottom:0}
+.cs-meta dd{font-size:16px;line-height:1.5;color:#c3c7cf;margin-top:6px}
+.cs-meta a{color:#a9c4f5}
+.cs-row{max-width:820px;padding:120px 24px 0;display:block}
+.cs-label{font:500 13px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8fb2f2;position:static;padding:0;margin-bottom:14px}
+.cs-title,.cs-heading{color:#f3f4f6}
+.cs-heading{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;letter-spacing:-.01em;margin-bottom:34px}
+.cs-body p,.cs-body li{font-size:18px;font-weight:300;line-height:1.65;color:#a9adb7}
+.cs-body li{font-size:17px}
+.cs-body h3{font-size:24px;font-weight:500;color:#f3f4f6}
+.cs-section figcaption,.cs-media figcaption,.cs-row figcaption{font-size:12px;color:#5f636d}
+/* the simple-layout page (My AI tools) on the same scale */
+.tp-title{font-size:clamp(38px,6.2vw,74px);line-height:1.04;font-weight:600;letter-spacing:-.025em;color:#f3f4f6}
+.tp-lead{font-weight:300;font-size:clamp(19px,2.4vw,30px);line-height:1.5;color:#f3f4f6}
+.tp-h{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;letter-spacing:-.01em;color:#f3f4f6}
+.tp-p{font-size:18px;font-weight:300;line-height:1.65;color:#a9adb7;max-width:772px}
