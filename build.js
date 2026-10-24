@@ -2570,28 +2570,35 @@ function makeJS() {
         mo.style.backgroundPosition=((mk%cols)/(cols-1)*100)+'% '+(rows>1?(Math.floor(mk/cols)/(rows-1)*100):0)+'%'},1000/(+mo.dataset.fps))};
     new IntersectionObserver(es=>{seen=es.some(e=>e.isIntersecting);if(seen)morph();else clearInterval(moT)}).observe(jb);
     let state='idle',fallback=0;
+    /* THE ICONS' ROUTE (her ask 2026-10-24: "can all the icons bounce on the floor, and then bounce from the floor into place
+       in line with the say hey?"): flung up out of the burst, they fall all the way to the hero's FLOOR (the line clay-her
+       lands on) and bounce there, then one after another each springs back up with a single flip, in an arc that lands it
+       upright in its own slot on the say-hey line, 76px apart. A clonk on every hit. */
     const tumble=still=>{
       const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
-      const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+60);   // in line with say hey! (her ask)
-      /* EVENLY SPACED where they land (her ask): each icon owns a slot, 76px apart, centred under the cloud (kept on
-         screen); it's thrown toward its slot, tumbles and bounces, and once on the line steers into the slot and stops */
+      const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,G=1900;
+      const line=cta.bottom-hr.top,floor=Math.max(line+60,hr.height-14);   // the say-hey line, and the floor below it
       const gapX=S+24,c0=Math.max(S/2+8+(n-1)/2*gapX,Math.min(hr.width-S/2-8-(n-1)/2*gapX,x0));
-      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,x:x0,y:y0-br.height*.4,tx,vx:(tx-x0)/.8,vy:-420-i*45,r:0,vr:(i%2?-1:1)*(520+i*120),rest:false}});   // flung UP out of the burst
-      if(still)ps.forEach(p=>{p.x=p.tx;p.y=floor;p.rest=true});
+      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,i,x:x0,y:y0-br.height*.4,tx,vx:(tx-x0)/1.1,vy:-420-i*45,r:0,vr:(i%2?-1:1)*(520+i*120),phase:'fall',hits:0,rest:false}});
+      if(still)ps.forEach(p=>{p.x=p.tx;p.y=line;p.rest=true});
       const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
       paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
       /* her ask: "I want to be able to jump on top of the linkedin and the x logos": once they rest they are ground */
       if(still){logos.forEach(a=>a.classList.add('rest'));return dispatchEvent(new Event('mk-terrain'))}
+      /* the hop from the floor to the slot: a ballistic arc whose apex clears the line by 46px, one full flip on the way */
+      const hop=p=>{const up=p.y-(line-46),tu=Math.sqrt(2*up/G),td=Math.sqrt(2*46/G);p.vy=-Math.sqrt(2*G*up);p.vx=(p.tx-p.x)/(tu+td);
+        p.r=Math.round(p.r/360)*360;p.vr=(p.i%2?-1:1)*360/(tu+td);p.phase='hop'};
       let last=performance.now();
       const step=t=>{const dt=Math.min(.033,(t-last)/1000);last=t;let moving=false;
         for(const p of ps){if(p.rest)continue;moving=true;
-          p.vy+=1900*dt;p.x=Math.max(S/2,Math.min(hr.width-S/2,p.x+p.vx*dt));p.y+=p.vy*dt;
-          const up=Math.round(p.r/360)*360;
-          if(p.y>=floor){p.y=floor;
-            if(p.vy>160){window.__jbClonk&&window.__jbClonk(ps.indexOf(p),p.vy);p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time (and a clonk)
-            else{p.vy=0;p.vx=0;p.x+=(p.tx-p.x)*Math.min(1,dt*9);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: settle into its slot, stand upright
-              if(Math.abs(p.tx-p.x)<.5&&Math.abs(up-p.r)<.6){p.x=p.tx;p.r=up;p.rest=true}}}
-          else p.r+=p.vr*dt;}
+          if(p.phase==='wait'){p.waitT-=dt;p.r+=(Math.round(p.r/360)*360-p.r)*Math.min(1,dt*10);if(p.waitT<=0)hop(p);continue}
+          p.vy+=G*dt;p.x=Math.max(S/2,Math.min(hr.width-S/2,p.x+p.vx*dt));p.y+=p.vy*dt;p.r+=p.vr*dt;
+          if(p.phase==='fall'&&p.y>=floor){p.y=floor;window.__jbClonk&&window.__jbClonk(p.i,p.vy);
+            if(++p.hits<2){p.vy*=-.42;p.vx*=.5;p.vr*=.5}             // one bounce on the floor…
+            else{p.vy=0;p.vx=0;p.phase='wait';p.waitT=.12+p.i*.16}}   // …then a beat, staggered, and up to its slot
+          else if(p.phase==='hop'&&p.vy>0&&p.y>=line){p.y=line;window.__jbClonk&&window.__jbClonk(p.i,p.vy*.7);
+            p.x=p.tx;p.r=Math.round(p.r/360)*360;p.phase='settle';p.vy=-p.vy*.22;p.vx=0;p.vr=0}   // lands upright, a tiny settle bounce
+          else if(p.phase==='settle'&&p.vy>0&&p.y>=line){p.y=line;p.vy=0;p.rest=true}}
         paint();if(moving)requestAnimationFrame(step);else{logos.forEach(a=>a.classList.add('rest'));dispatchEvent(new Event('mk-terrain'))}};
       requestAnimationFrame(step);
     };
