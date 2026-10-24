@@ -1920,7 +1920,10 @@ function makeJS() {
     };
     const setX=v=>{
       x=v;track.style.transform='translate3d('+v+'px,0,0)';const side=num('--side')||.65;
-      cards.forEach((c,i)=>{const d=Math.min(1,Math.abs(i*pitch+v)/pitch);c.style.transform='scale('+(1-(1-side)*d)+')'});
+      /* each card shrinks from the side FACING the centre, so a neighbour's inner edge holds its place and it
+         keeps peeking in (shrinking around its own middle pushed it off a phone screen); at the centre scale is 1,
+         so the origin flip as a card crosses over is invisible */
+      cards.forEach((c,i)=>{const off=i*pitch+v,d=Math.min(1,Math.abs(off)/pitch);c.style.transformOrigin=(off<0?'100%':'0%')+' 50%';c.style.transform='scale('+(1-(1-side)*d)+')'});
       const near=Math.max(0,Math.min(cards.length-1,Math.round(-v/pitch)));if(near!==active)setTitle(near);
     };
     const layout=()=>{const cw=cards[0].offsetWidth;pitch=cw+(parseFloat(getComputedStyle(track).columnGap)||0);track.style.left=(sd.clientWidth-cw)/2+'px';setX(-idx*pitch)};
