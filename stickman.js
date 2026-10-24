@@ -634,7 +634,11 @@
       var handY = ny - LEG - HANDUP;
       for (var i = 0; i < bars.length; i++) {
         var b = bars[i];
-        if (nx >= b.x1 - 4 && nx <= b.x2 + 4 && Math.abs(handY - b.y) < 15) {
+        /* hands within 15px below the bar, OR up to 40px above it: the clay figure is taller than the gap between
+           the eyebrow and the headline, so standing on "Hi" her hands already start ABOVE the eyebrow's underside
+           and a hop never crossed it (2026-10-23 "my claymation isn't hanging on the top text"); now the hop grabs */
+        var dh = handY - b.y;
+        if (nx >= b.x1 - 4 && nx <= b.x2 + 4 && dh < 15 && dh > -40) {
           /* only grab where there is actual ink to hold — a word gap is not a bar */
           var gp = grip(nx, b.y, 14);
           if (!gp) continue;
