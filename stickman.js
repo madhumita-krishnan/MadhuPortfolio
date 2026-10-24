@@ -171,7 +171,9 @@
     });
     /* the clay icons that tumbled out of it are blocks to stand on too — once they have come to REST, so the fall
        out of the dissolving piece goes all the way to the floor (her ask) instead of catching on a mid-air icon */
-    hero.querySelectorAll('.jb-logo.rest').forEach(function (b) {
+    /* …and on phones the clay tiles that pop out of say hey! (her ask 2026-10-24: "I want to be able to jump on top of
+       the claymation icons too"), while they're out */
+    hero.querySelectorAll('.jb-logo.rest, .hero-cta-row.socials-open .cta-socials a').forEach(function (b) {
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
     });
 
@@ -525,7 +527,7 @@
     if (e.target.closest && e.target.closest('a,button')) return;
     /* the click means: the first ink at or below where you clicked */
     var ty = groundTop(p.x, p.y - 2, H);
-    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0 };
+    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0, reach: { x: p.x, y: p.y } };   // reach: the exact spot tapped
     fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -658,6 +660,18 @@
     /* keep only the points where the way of moving changes, plus the end: a walk is one stretch */
     return path.filter(function (q, i) { return i === path.length - 1 || q.how !== 'walk' || path[i + 1].how !== 'walk'; });
   }
+  /* WHERE YOU TAP IS WHERE SHE TRIES TO GO (her ask 2026-10-24: "if I double tap or single tap above the person can you
+     make them jump"): a tap remembers the exact spot; once she's as close as walking and climbing get her and the spot
+     is still above her, she jumps up at it, and with no target left she can catch any text up there and hang */
+  function arrived() {
+    var r = fig.target && fig.target.reach;
+    fig.target = null; fig.waypoint = null; fig.vx = 0;
+    if (!r || r.y > fig.y - 30) return;
+    var up = Math.min(fig.y - r.y, JUMP_MAX + 40);
+    fig.vy = -Math.sqrt(2 * G * (up + 10)); fig.vx = Math.max(-240, Math.min(240, (r.x - fig.x) * 2.5));
+    fig.dir = r.x >= fig.x ? 1 : -1; fig.fallFrom = fig.y; fig.state = 'air';
+    puff(fig.x, fig.y, 2); start();
+  }
   function routeJump(b) {
     var rise = fig.y - b.y, dx = b.x - fig.x;
     var up = Math.min(Math.max(rise, 0) + 34 + Math.min(40, Math.abs(dx) * .15), 330);   // ~the old 1210px/s cap
@@ -673,7 +687,7 @@
     /* a walk point counts within a step's height (she walks the surface between them); a jump/drop must land on it */
     if (Math.abs(wp.x - fig.x) < 7 && Math.abs(fig.y - wp.y) <= (wp.how === 'walk' ? STEP_UP + 6 : 14)) {
       tg.route.shift(); tg.best = Infinity; tg.stuck = 0;
-      if (!tg.route.length) { fig.target = null; fig.waypoint = null; fig.vx = 0; return null; }
+      if (!tg.route.length) { arrived(); return null; }
       wp = tg.route[0];
       if (wp.how === 'jump') { routeJump(wp); return null; }
     }
@@ -702,7 +716,7 @@
         if ((tg.plans = (tg.plans || 0) + 1) > 4) { fig.target = null; fig.waypoint = null; fig.vx = 0; return; }   // she tried; she stops
         var r = planRoute(tg.x, tg.y);
         if (r == null) tg.manual = true;   // can't place her on the map (mid-step): the old greedy way, this once
-        else if (!r.length) { fig.target = null; fig.waypoint = null; fig.vx = 0; return; }   // already as close as she can get
+        else if (!r.length) { arrived(); return; }   // already as close as she can get
         else { tg.route = r; tg.best = Infinity; tg.stuck = 0; if (r[0].how === 'jump' && Math.abs(r[0].x - fig.x) > 0) { routeJump(r[0]); return; } }
       }
       if (tg.route) { var rw = followRoute(dt); if (rw === null) return; want = rw; }
@@ -712,9 +726,7 @@
       var far = Math.min(Math.abs(dx) / 120, 1);
       want = Math.sign(dx) * (WALK + (RUN - WALK) * far);
       /* near enough on the same bump of ink counts as arrived — waypoint or not */
-      if (Math.abs(fig.target.x - fig.x) < 40 && Math.abs(fig.y - fig.target.y) < 26) {
-        fig.target = null; fig.waypoint = null; fig.vx = 0; return;
-      }
+      if (Math.abs(fig.target.x - fig.x) < 40 && Math.abs(fig.y - fig.target.y) < 26) { arrived(); return; }
       if (Math.abs(dx) < 8) {
         var dyP = fig.y - g.y;
         if (Math.abs(dyP) <= 12) {
