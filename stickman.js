@@ -1141,13 +1141,16 @@
          the celebrations, climb and monkey bars stream in behind; a frame that hasn't arrived yet is
          covered by her last drawn clay frame (clayFigure), never by the stick figure */
       var CORE = ['idle-wave-sign', 'walk-x3', 'run-x3', 'jump-land-slide-x3', 'hang-swing-climb-x3'];
+      /* the hover wave's three frames come in WITH her (108KB): streamed later, an early hover froze her on her last
+         frame instead of waving and smiling (her: "when I hover … the smile … plus the wave") */
+      var CORE_FRAMES = (m['idle-wave-sign-x3'] || []).slice(3, 6);
       function loadSet(keys, done) {
         var n = 0, total = 0;
-        keys.forEach(function (k) { (m[k] || []).forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
+        keys.forEach(function (k) { (Array.isArray(k) ? k : m[k] || []).forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
           im.onload = im.onerror = function () { if (++n === total) done(); }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
         if (!total) done();
       }
-      loadSet(CORE, function () {
+      loadSet(CORE.concat([CORE_FRAMES]), function () {
         CLAY.ready = true; draw(performance.now()); start();
         loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0; }), function () {});
       });
