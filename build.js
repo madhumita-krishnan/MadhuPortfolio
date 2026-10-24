@@ -465,11 +465,14 @@ html,body{overflow-x:clip}
    comes near the top. Same curve and timing as the pill. app.js toggles .nav-hidden. */
 .nav-wrap{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease}
 .nav-wrap.nav-hidden{transform:translateY(-160%);opacity:0;pointer-events:none}
-/* never two say hey!s on screen (her ask 2026-10-23): the nav's steps aside while the hero's is in view. It keeps its
-   space, so the nav doesn't reflow */
-.nav-wrap .bar>.btn.sm{transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear 0s}
-body.hero-cta-on .nav-wrap .bar>.btn.sm{opacity:0;transform:scale(.9);visibility:hidden;pointer-events:none;
-  transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear .3s}
+/* never two say hey!s on screen (her ask 2026-10-23): the nav's steps aside while the hero's is in view, and the pill
+   CLOSES UP around the wordmark and links instead of keeping an empty stretch ("the nav bar looks empty without the
+   say hey"). app.js measures that compact width into --nav-compact; scrolling past the hero opens it back out. */
+nav.bar{transition:max-width .5s cubic-bezier(.22,1,.36,1)}
+.nav-wrap .bar>.btn.sm{max-width:140px;transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),max-width .5s cubic-bezier(.22,1,.36,1),padding .5s cubic-bezier(.22,1,.36,1),visibility 0s linear 0s}
+body.hero-cta-on nav.bar{max-width:var(--nav-compact,820px)}
+body.hero-cta-on .nav-wrap .bar>.btn.sm{opacity:0;transform:scale(.9);visibility:hidden;pointer-events:none;max-width:0;padding-left:0;padding-right:0;border-width:0;overflow:hidden;
+  transition:opacity .25s var(--ease-standard),transform .25s var(--ease-standard),max-width .5s cubic-bezier(.22,1,.36,1),padding .5s cubic-bezier(.22,1,.36,1),visibility 0s linear .5s}
 @media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
@@ -972,7 +975,7 @@ ${swipeTweaks()}
 .view-dock{display:flex;justify-content:center;margin-top:calc(var(--space)*4)}
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
-.view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:translateY(8px);
+.view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:none;   /* no slide up: it materializes in place */
   transition:opacity 200ms var(--ease-standard),transform 200ms var(--ease-standard)}
 .view-dock.floating.on{opacity:1;transform:none}
 .view-dock.floating.on .view-toggle{pointer-events:auto}
@@ -987,7 +990,9 @@ ${swipeTweaks()}
 body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}   /* never two toggles on screen */
 .view-toggle.materialize{animation:vt-grow 700ms cubic-bezier(.22,1,.36,1) 150ms both}   /* the pill shows for a beat, then widens */
 .view-toggle.materialize .view-btn{animation:vt-icons 260ms ease-out 820ms both}   /* icons once the bar is whole: ~1.1s in all */
-@keyframes vt-grow{from{clip-path:inset(0 calc(50% - 22px) round 999px)}to{clip-path:inset(0 0 round 999px)}}
+/* her brief: begin as ONE small dark pill ~12% of the bar's width at its centre (here also ~half its height, so it reads
+   as a pill, not a sliver), then widen into the bar */
+@keyframes vt-grow{0%{clip-path:inset(24% 44% round 999px)}100%{clip-path:inset(0 0 round 999px)}}
 @keyframes vt-icons{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.view-toggle.materialize,.view-toggle.materialize .view-btn{animation:none}}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
@@ -1898,7 +1903,12 @@ function makeJS() {
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
   const heroSay=document.querySelector('.hero-cta-row .btn.solid');
-  if(heroSay)new IntersectionObserver(es=>es.forEach(e=>document.body.classList.toggle('hero-cta-on',e.isIntersecting))).observe(heroSay);
+  if(heroSay){
+    const bar=document.querySelector('nav.bar'),wm=bar&&bar.querySelector('.wordmark'),lk=bar&&bar.querySelector('.nav-links');
+    const fit=()=>{if(bar&&wm&&lk)bar.style.setProperty('--nav-compact',Math.ceil(wm.offsetWidth+lk.scrollWidth+20+6+44)+'px')};   // padding + gap + air
+    fit();addEventListener('resize',fit,{passive:true});document.fonts&&document.fonts.ready.then(fit);
+    new IntersectionObserver(es=>es.forEach(e=>document.body.classList.toggle('hero-cta-on',e.isIntersecting))).observe(heroSay);
+  }
 
   /* the nav hides on the way down and comes back on the way up — the same rules as the walkthrough
      pill (walkthrough.js): hidden past 140px going down, back after 40px of scrolling up, at the top,
@@ -1996,9 +2006,13 @@ function makeJS() {
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
       let inWork=false,headGone=false,grown=false;
+      /* the entrance waits until the bar can actually be SEEN: on laptops it steps aside while the nav is showing
+         (nav and toggle take turns), and an entrance played behind that would be wasted */
+      const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
       const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
-        if(on&&!grown){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
+        if(on&&!grown&&(!fineP||!navW||navW.classList.contains('nav-hidden'))){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
       new IntersectionObserver(es=>es.forEach(e=>{inWork=e.isIntersecting;sync()}),{rootMargin:'-20% 0px -20% 0px'}).observe(workEl);
+      if(navW)new MutationObserver(()=>{if(!grown)sync()}).observe(navW,{attributes:true,attributeFilter:['class']});
       /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
       new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
   }
