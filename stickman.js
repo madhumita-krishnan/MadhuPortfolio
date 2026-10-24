@@ -170,8 +170,16 @@
     /* monkey bars: the undersides of the copy blocks (reachable from the floor with one
        hop, so the hang is discoverable) and the headline baseline */
     bars = [];
-    var line = hero.querySelector('.hero-line');
-    if (line) { var lr = localRect(line, hr); bars.push({ x1: lr.x1 + 10, x2: lr.x2 - 10, y: lr.y2 - 2 }); }
+    /* a bar under EVERY line of the bio, not just under the block (her ask 2026-10-23: hang under all the words):
+       the words are grouped into visual lines by where they sit, so a wrapped sentence gives two bars */
+    var rows = [];
+    hero.querySelectorAll('.hero-line .w').forEach(function (w) {
+      var r = localRect(w, hr); if (!r.w || !w.textContent.trim()) return;
+      var row = rows.filter(function (q) { return Math.abs(q.y1 - r.y1) < r.h * .5; })[0];
+      if (row) { row.x1 = Math.min(row.x1, r.x1); row.x2 = Math.max(row.x2, r.x2); row.y2 = Math.max(row.y2, r.y2); }
+      else rows.push({ x1: r.x1, x2: r.x2, y1: r.y1, y2: r.y2 });
+    });
+    rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2 }); });
     var eb = hero.querySelector('.eyebrow');
     if (eb) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2 }); }
     var h1 = hero.querySelector('h1');
