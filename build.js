@@ -2562,15 +2562,15 @@ function makeJS() {
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
       /* IN THE SKY to the right of the name (her: lower to jump onto, then higher for balance, then "a better place
-         visually"): centred in the open space between the end of the copy and the hero's right edge, level with the top
-         of the headline. The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
+         visually"): centred in the open space between the end of the copy and the hero's right edge, in line with
+         "Hi, I'm Madhu" (her ask 2026-10-24: its middle on the name's middle). The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
          the icons it drops have a long fall to the say-hey line */
       const bio=heroEl.querySelector('.hero-line').getBoundingClientRect(),copyR=Math.max(t.right,bio.right)-hr.left;
       const x=Math.min(Math.max(copyR+40,(copyR+hr.width)/2-jb.offsetWidth/2),hr.width-jb.offsetWidth-24),
-        y=t.top-hr.top+t.height*.18-jb.offsetHeight/2;
+        y=t.top-hr.top-new DOMMatrix(getComputedStyle(heroEl.querySelector('h1')).transform).m42+t.height/2-jb.offsetHeight/2;   // minus the headline's rise, so it's measured where it lands
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
-    placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
+    placeBox();addEventListener('resize',placeBox,{passive:true});
     /* the morph loop: step the sprite grid at its frame rate while the cloud is on screen; stops once it's jumped on */
     const mo=jb.querySelector('.jb-morph');let mk=0,moT=0,seen=false;
     const morph=()=>{clearInterval(moT);if(!mo||!seen||state!=='idle'||rmActive())return;
