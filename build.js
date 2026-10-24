@@ -1193,6 +1193,10 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   /* scrolls away with the page like every other heading (her 2026-10-24: "I don't like the way that selected project
      stays like weird banner when I scroll"); it used to stick under the nav over the cards */
   .work-sec[data-view="list"] .work-head{padding:10px 0 16px;margin:0}
+  /* the first project sits right under the heading (her: "this is way too much space it looks weird"); every card is a
+     full-screen panel with its content centred, which left ~300px of nothing between the heading and the first demo */
+  .work-sec[data-view="list"] .view-list{margin-top:8px}
+  #work .view-list .wproject:first-child{align-content:start;padding-top:12px}   /* #work: outranks the card rule below */
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
 }
 .project-media-wrap{display:flex;justify-content:center}
@@ -3083,7 +3087,7 @@ function renderHome() {
       /* a logo with an href (the same proof link her resume carries for that brand)
          becomes the anchor itself — the slot doubles as the link so the whole mark
          is the target; the rest stay plain spans, not dead links */
-      const mark = `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')"></span>`;
+      const mark = `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')${l.h ? `;height:${+l.h}px` : ''}"></span>`;   // h: a mark that needs more room than the row's 38px
       return l.href
         ? `<a class="brand-slot" style="--i:${i}" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.alt)}">${mark}</a>`
         : `<span class="brand-slot" style="--i:${i}">${mark}</span>`;

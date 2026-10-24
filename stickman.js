@@ -527,7 +527,10 @@
     if (e.target.closest && e.target.closest('a,button')) return;
     /* the click means: the first ink at or below where you clicked */
     var ty = groundTop(p.x, p.y - 2, H);
-    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0, reach: { x: p.x, y: p.y } };   // reach: the exact spot tapped
+    /* reach: only a tap RIGHT ABOVE her asks for a hop; tapping somewhere to walk or run to is just that, a walk (her:
+       "why does it always jump when I tap to make it walk or run in a direction") */
+    var overHead = Math.abs(p.x - fig.x) < 50 && p.y < fig.y - CLAY.H * .6;
+    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0, reach: overHead ? { x: p.x, y: p.y } : null };
     fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -667,19 +670,18 @@
     var r = fig.target && fig.target.reach;
     fig.target = null; fig.waypoint = null; fig.vx = 0;
     if (!r || r.y > fig.y - 30) return;
-    var up = Math.min(fig.y - r.y, JUMP_MAX + 40);
-    fig.vy = -Math.sqrt(2 * G * (up + 10)); fig.vx = Math.max(-240, Math.min(240, (r.x - fig.x) * 2.5));
-    fig.dir = r.x >= fig.x ? 1 : -1; fig.fallFrom = fig.y; fig.state = 'air';
-    puff(fig.x, fig.y, 2); start();
+    /* a calm hop toward the finger, not a grab-and-swing (her: "the person is too too much when I tap") */
+    var up = Math.min(fig.y - r.y, 90);
+    fig.vy = -Math.sqrt(2 * G * (up + 10)); fig.vx = Math.max(-120, Math.min(120, (r.x - fig.x) * 2));
+    fig.dir = r.x >= fig.x ? 1 : -1; fig.fallFrom = fig.y; fig.state = 'air'; fig.hangCool = 1.2; fig.flipQueued = true;
+    start();
   }
   function routeJump(b) {
     var rise = fig.y - b.y, dx = b.x - fig.x;
     var up = Math.min(Math.max(rise, 0) + 34 + Math.min(40, Math.abs(dx) * .15), 330);   // ~the old 1210px/s cap
     var vy0 = Math.sqrt(2 * G * up), T = vy0 / G + Math.sqrt(2 * (up - rise) / G);
     fig.vy = -vy0; fig.vx = dx / T; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
-    fig.dir = dx >= 0 ? 1 : -1;
-    if (Math.abs(dx) > FLIP_DX) startFlip(fig.dir);
-    puff(fig.x, fig.y, 2);
+    fig.dir = dx >= 0 ? 1 : -1; fig.flipQueued = true;   // a plain jump on the way somewhere: no flip (only the cloud gets one)
   }
   /* one tick of following the route; returns the speed she wants, or null when this tick is spent */
   function followRoute(dt) {
@@ -707,6 +709,7 @@
 
   function tickGround(dt) {
     fig.flipQueued = false;
+    if (fig.landT > 0 && !fig.drag) { fig.vx = 0; return; }   // the landing crouch holds still, then she sets off
     var want = 0;
     var g = fig.waypoint || fig.target;
     if (fig.drag) { want = fig.drag.vx; }
@@ -791,7 +794,6 @@
     /* follow the ink's surface: a step either way is walked, not fallen */
     var s = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
     if (s != null && s >= fig.y - STEP_UP - 0.5 && s <= fig.y + STEP_DOWN + 0.5 && clearance(nx, s) >= MIN_CLR) {
-      if (s - fig.y > 8) fig.slideT = 0.3;
       fig.x = nx; fig.y = s;
       fig.phase += Math.abs(fig.vx) * dt * 0.05;
       advGait(dt);
@@ -844,7 +846,7 @@
     if (fig.flip) {
       fig.flip.rot += fig.flip.w * dt;
       if (fig.flip.rot >= Math.PI * 2) fig.flip = null;
-    } else if (fig.vy >= 0 && !fig.flipQueued) {
+    } else if (fig.vy >= 0 && !fig.flipQueued && !fig.target) {   // no showy flips on the way to a tap
       /* a big fall earns a full tuck flip — but the LANDING decides, not the fall so
          far. The old rule measured distance already fallen and demanded 60px of floor
          clearance, so most real drops (off a petal, off the headline, onto the floor)
@@ -941,7 +943,7 @@
         if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.36; puff(fig.x, fig.y, 11); }   // the SLAM: deep crouch, big puff
         fig.dropping = false;
         fig.vy = 0;
-        if (!fig.target && !fig.drag) fig.vx = 0;
+        fig.vx = 0;   // she LANDS: no skid on into the next spot (her: "when it lands it keeps moving … it slides")
         return;
       }
     }

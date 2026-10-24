@@ -29,7 +29,8 @@
       {
         "src": "assets/logos/clean/white-house.png",
         "alt": "The White House",
-        "href": "https://www.whitehouse.gov/gallery/president-donald-trump-and-first-lady-melania-trump-participate-in-a-halloween-event-on-the-south-lawn-of-the-white-house/"
+        "href": "https://www.whitehouse.gov/gallery/president-donald-trump-and-first-lady-melania-trump-participate-in-a-halloween-event-on-the-south-lawn-of-the-white-house/",
+        "h": 50
       },
       {
         "src": "assets/logos/clean/red-bull.png",
