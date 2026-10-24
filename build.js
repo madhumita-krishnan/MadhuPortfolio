@@ -182,6 +182,11 @@ function swipeTweaks() {
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
+/* the socials that tumble out of the JUMP! box — flat placeholders until the clay ones are made */
+const SOCIAL_SVG = {
+  linkedin: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path fill="#fff" d="M6.9 9.6H4.3V18h2.6V9.6zM5.6 5.4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM18.5 12.9c0-2.3-1.2-3.5-3.1-3.5-1.4 0-2 .8-2.4 1.3V9.6h-2.6V18H13v-4.5c0-1.2.4-2 1.5-2s1.4 1 1.4 2.1V18h2.6v-5.1z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#fff"/><path fill="#000" d="M13.6 10.7l5.5-6.3h-1.3l-4.8 5.5-3.8-5.5H4.8l5.8 8.4-5.8 6.7h1.3l5.1-5.8 4 5.8h4.4l-6-8.8zm-1.8 2.1l-.6-.8-4.6-6.6h2l3.7 5.4.6.8 4.9 7h-2l-4-5.8z"/></svg>'
+};
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -858,6 +863,40 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   opacity:0;transition:opacity 600ms var(--ease-standard)}
 .hero.stick-on>.stick-cv{opacity:1}
 .hero.stick-dragging{user-select:none;-webkit-user-select:none}
+/* THE JUMP! BOX (placeholder clay, drawn in CSS). app.js places it beside the name; stickman.js treats the
+   (still) button as ground, while .jb-art bobs gently inside it. Under the figure's canvas (z 3) so she
+   stands ON it; the socials sit under the box (z 1) so they come OUT of its opening. Laptop only for now. */
+.hero>.jump-box{position:absolute;margin:0;max-width:none;z-index:2;width:104px;height:92px;padding:0;border:0;background:none;cursor:pointer;
+  opacity:0;transition:opacity 700ms var(--ease-standard) 1700ms;--clay:#e9b45a;--clay-dk:#b9822f;--clay-ink:#5a3712}
+.hero.revealed>.jump-box{opacity:1}
+.jump-box:focus-visible{outline:2px solid var(--accent);outline-offset:6px;border-radius:16px}
+.jb-art{position:absolute;inset:0;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
+@keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
+.jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
+.jb-lid{position:absolute;left:-4px;right:-4px;top:0;height:20px;border-radius:9px;background:linear-gradient(#f6cd7f,var(--clay));
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 0 rgba(0,0,0,.14),0 3px 0 rgba(0,0,0,.18)}
+.jb-body{position:absolute;left:0;right:0;top:14px;bottom:14px;display:grid;place-items:center;border-radius:6px 6px 0 0;
+  background:radial-gradient(120% 90% at 35% 25%,#f4c977,var(--clay) 55%,var(--clay-dk));color:var(--clay-ink);
+  font-family:var(--font-hand);font-size:22px;letter-spacing:.02em;padding-top:4px;
+  box-shadow:inset 3px 0 0 rgba(255,255,255,.18),inset -4px 0 0 rgba(0,0,0,.12)}
+.jb-hole{position:absolute;left:3px;right:3px;bottom:0;height:16px;border-radius:0 0 10px 10px;background:#1a1206}
+.jb-flap{position:absolute;bottom:0;width:50%;height:15px;background:linear-gradient(var(--clay),var(--clay-dk));
+  transition:transform 380ms cubic-bezier(.3,1.6,.5,1)}
+.jb-flap.l{left:0;border-radius:0 0 0 10px;transform-origin:0 0}
+.jb-flap.r{right:0;border-radius:0 0 10px 0;transform-origin:100% 0}
+.jb-art.open .jb-flap.l{transform:rotate(78deg)}
+.jb-art.open .jb-flap.r{transform:rotate(-78deg)}
+.jb-art.slam{animation:jb-slam 420ms cubic-bezier(.3,1.5,.5,1)}
+@keyframes jb-slam{0%{transform:none}25%{transform:scale(1.07,.84)}100%{transform:none}}
+.hero>.jb-socials{position:absolute;inset:0;margin:0;max-width:none;z-index:1;pointer-events:none}
+.jb-logo{position:absolute;left:0;top:0;width:44px;height:44px;opacity:0;pointer-events:none;will-change:transform;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));transition:opacity 120ms linear}
+.jb-logo svg{display:block;width:100%;height:100%}
+.jb-logo.out{opacity:1;pointer-events:auto}
+.jb-logo:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+@media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
+@media (prefers-reduced-motion:reduce){.jb-art{animation:none}.jb-flap{transition:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
    handwriting wrote itself in word by word while the blooms, the headline and the two
    buttons just APPEARED at first paint — which is the harshness she named (2026-08-19,
@@ -2435,6 +2474,54 @@ function makeJS() {
      deliberately heavy module, which is exactly why it is NOT in this bundle: the code
      is FETCHED when the reader is within a screen or two of the pot and RUN when the
      pot is properly on screen (60% visible), once per visit. */
+  /* THE JUMP! BOX (see .jump-box). Placed beside the name; a click sends clay-her (stickman.js 'mk-box-jump'), and
+     her slam ('mk-box-slam') drops the bottom open and tumbles the socials out: real gravity, a couple of bounces,
+     they come to rest standing upright on the line of the buttons, as ordinary links. If she can't jump (reduced
+     motion, or she isn't there) the box simply opens. */
+  const jb=document.querySelector('.hero>.jump-box');
+  if(jb&&matchMedia('(min-width:761px)').matches){
+    const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
+    const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
+      const x=Math.min(t.right-hr.left+80,hr.width-jb.offsetWidth-24),y=t.top-hr.top+t.height/2-jb.offsetHeight/2;
+      jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
+    placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
+    let state='idle',fallback=0;
+    const tumble=still=>{
+      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
+      const S=44,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+110);
+      const ps=logos.map((a,i)=>({a,x:x0,y:y0,vx:(i-(n-1)/2)*150+(Math.random()-.5)*50,vy:40+Math.random()*80,r:0,vr:(Math.random()<.5?-1:1)*(300+Math.random()*320),rest:false}));
+      if(still)ps.forEach((p,i)=>{p.x=x0+(i-(n-1)/2)*64;p.y=floor;p.rest=true});
+      const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
+      paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
+      if(still)return;
+      let last=performance.now();
+      const step=t=>{const dt=Math.min(.033,(t-last)/1000);last=t;let moving=false;
+        for(const p of ps){if(p.rest)continue;moving=true;
+          p.vy+=1900*dt;p.x=Math.max(S/2,Math.min(hr.width-S/2,p.x+p.vx*dt));p.y+=p.vy*dt;
+          const up=Math.round(p.r/360)*360;
+          if(p.y>=floor){p.y=floor;
+            if(p.vy>160){p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time
+            else{p.vy=0;p.vx*=Math.pow(.004,dt);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: slide to a stop, stand upright
+              if(Math.abs(p.vx)<6&&Math.abs(up-p.r)<.6){p.r=up;p.rest=true}}}
+          else p.r+=p.vr*dt;}
+        paint();if(moving)requestAnimationFrame(step)};
+      requestAnimationFrame(step);
+    };
+    const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
+      art.classList.add('open');if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
+      setTimeout(()=>tumble(still),still?0:120)};
+    jb.addEventListener('click',()=>{
+      if(state!=='idle')return;state='jumping';
+      /* stop the bob where it is and ease it level, so the lid is exactly where she will land */
+      const cur=getComputedStyle(art).transform;art.style.transform=cur==='none'?'':cur;art.classList.add('still');
+      requestAnimationFrame(()=>{art.style.transform=''});
+      if(rmActive())return open(true);
+      dispatchEvent(new CustomEvent('mk-box-jump',{detail:{el:jb}}));
+      fallback=setTimeout(()=>open(false),2200);
+    });
+    addEventListener('mk-box-slam',()=>{if(state==='jumping')open(false)});
+  }
+
   const potEl=document.querySelector('.pot');
   if(potEl){
     /* QA hook in the ?shot= family: ?fishfreeze=0.5 holds the flight at that fraction
@@ -2749,6 +2836,13 @@ function renderHome() {
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
   <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}</p>
+  <!-- THE JUMP! BOX (2026-10-23 her ask). A placeholder drawn in CSS until the clay art is made. Click it: clay-her
+       tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
+       LinkedIn / Twitter / X links, so adding one there adds it here. -->
+  <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
+    <span class="jb-art" aria-hidden="true"><span class="jb-hole"></span><span class="jb-flap l"></span><span class="jb-flap r"></span><span class="jb-body">JUMP !</span><span class="jb-lid"></span></span>
+  </button>
+  <div class="jb-socials" aria-label="Socials">${(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1">${/linkedin/i.test(l.href) ? SOCIAL_SVG.linkedin : SOCIAL_SVG.x}</a>`).join('')}</div>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
     <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaSecondary.label)}</a>

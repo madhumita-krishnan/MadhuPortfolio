@@ -165,6 +165,11 @@
       else g.fillRect(r.x1, r.y1, r.w, r.h);
     });
 
+    /* the JUMP! box is a solid block she can land on (its art bobs inside; this outer box stays still) */
+    hero.querySelectorAll('.jump-box').forEach(function (b) {
+      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 4, r.y1, r.w - 8, r.h);
+    });
+
     md = g.getImageData(0, 0, W2, H2).data;
 
     /* monkey bars: the undersides of the copy blocks (reachable from the floor with one
@@ -354,6 +359,26 @@
     fig.state = 'celeb';
     start();
   }
+  /* THE JUMP! BOX (2026-10-23 her ask: "the claymation madhu does a tuck flip slam jump on it"). app.js sends
+     'mk-box-jump' with the box; she leaves on a true projectile whose apex clears both her and the lid by 110px,
+     throws ONE tuck flip timed to finish just before her feet arrive, and lands hard (see the landing hook). No
+     steering in the air (no target), so the arc is exactly the one solved here. */
+  addEventListener('mk-box-jump', function (e) {
+    if (!booted || rmActive() || !e.detail || !e.detail.el) return;
+    var r = localRect(e.detail.el, cv.getBoundingClientRect());
+    var tx = (r.x1 + r.x2) / 2, ty = r.y1;
+    if (fig.state === 'hang') release(0);
+    fig.celeb = null; fig.target = null; fig.waypoint = null; fig.drag = null; fig.wave = 0;
+    var apex = Math.min(fig.y, ty) - 110, up = fig.y - apex, dn = ty - apex;
+    var T = Math.sqrt(2 * up / G) + Math.sqrt(2 * dn / G);
+    fig.vy = -Math.sqrt(2 * G * up); fig.vx = (tx - fig.x) / T;
+    fig.dir = tx >= fig.x ? 1 : -1;
+    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true;
+    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.88);
+    fig.boxJump = { at: performance.now() };
+    start();
+  });
+  addEventListener('mk-terrain', queueRebuild, { passive: true });
   function waveHello() {
     if (rmActive()) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {
@@ -678,6 +703,10 @@
         }
         fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
         if (fig.vy > 620 || drop > 130) { fig.landT = 0.18; puff(fig.x, fig.y, 4); }
+        if (fig.boxJump) {   /* the SLAM: a long crouch, a bigger puff, and the box hears it */
+          fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7);
+          dispatchEvent(new CustomEvent('mk-box-slam'));
+        }
         fig.vy = 0;
         if (!fig.target && !fig.drag) fig.vx = 0;
         return;
