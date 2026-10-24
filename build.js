@@ -972,6 +972,8 @@ ${deckTweaks()}
   @keyframes deck-ride{0%{transform:translateY(var(--stagger)) scale(var(--side))}50%{transform:none}100%{transform:translateY(calc(var(--stagger) * -1)) scale(var(--side))}}
 }
 @media (prefers-reduced-motion:reduce){.dcard{animation:none}}
+/* once GSAP drives the ride (app.js adds .deck-js) the CSS version stands down */
+.deck-js .dcard{animation:none}
 @media (max-width:760px){.deck{--card:74vw;--gap:12px;--stagger:8%;--side:.86}   /* narrow enough that both neighbours peek in */
   /* a phone-width square can't hold the screen, the copy AND the stack, so the card grows to fit
      and the screen gets a fixed slot */
@@ -1007,6 +1009,16 @@ ${deckTweaks()}
   border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 11px}
 @media (max-width:760px){.wproject{grid-template-columns:1fr;gap:calc(var(--space)*4);margin-bottom:calc(var(--space)*9)}
   .wproject .project-media-wrap{order:-1}}
+/* PHONES, LIKE REELS (her ask 2026-10-23: A "doesn't feel like I'm scrolling on reels or tik tok"): each
+   project fills the screen and a swipe settles on the next one, one at a time. This is the browser's own
+   scroll snapping (proximity, so only the work list has snap points; the rest of the page scrolls free),
+   never a scripted scroll, so it keeps her no-scroll-jacking rule. The GSAP focus still eases each
+   project in and out on top. */
+@media (max-width:760px){
+  html{scroll-snap-type:y proximity}
+  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;scroll-snap-align:center;scroll-snap-stop:always;
+    padding-top:calc(var(--space)*9);padding-bottom:calc(var(--space)*6)}
+}
 .project-media-wrap{display:flex;justify-content:center}
 
 ${PHONE_CSS}
@@ -1837,6 +1849,24 @@ function makeJS() {
     bio.observe(brandRow);
     addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
+  }
+
+  /* the deck's ride, like her reference video: the card moving into the middle grows to full size, its
+     neighbours shrink, left one higher and right one lower. GSAP drives it from the deck's own sideways
+     scroll (each change is an eased tween, so a swipe glides), which also covers Safari, where the CSS
+     view-timeline version never ran. Reads the same --stagger/--side dials as the CSS. */
+  const deckEl=document.querySelector('.deck');
+  if(deckEl&&!rmActive()){
+    vendorJS('gsap.min.js').then(()=>{
+      document.documentElement.classList.add('deck-js');
+      const cs=getComputedStyle(deckEl),cards=[...deckEl.querySelectorAll('.dcard')];
+      let queued=false;
+      const ride=()=>{queued=false;
+        const st=parseFloat(cs.getPropertyValue('--stagger'))||16,side=parseFloat(cs.getPropertyValue('--side'))||.66,gap=parseFloat(cs.columnGap)||0,mid=deckEl.scrollLeft+deckEl.clientWidth/2;
+        cards.forEach(c=>{const t=Math.max(-1,Math.min(1,(c.offsetLeft+c.offsetWidth/2-mid)/(c.offsetWidth+gap)));gsap.to(c,{yPercent:t*st,scale:1-(1-side)*Math.abs(t),duration:.45,ease:'power3.out',overwrite:'auto'});});};
+      deckEl.addEventListener('scroll',()=>{if(!queued){queued=true;requestAnimationFrame(ride)}},{passive:true});
+      addEventListener('resize',ride);ride();
+    }).catch(()=>{});
   }
 
   /* PHONES: the work list focuses on one project at a time (her ask 2026-10-23: "make the scroll
