@@ -852,12 +852,14 @@
     if (on && !fig.onCloud) { if (!fig.landT) { fig.landT = 0.32; puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
     fig.onCloud = on;
   }
-  /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a springy HOP whenever she
-     launches upward, a GRAB when her hands catch a bar (the sneaker-squeak footsteps were tried and cut, her call). Browsers keep them silent until the visitor's first click. */
+  /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a soft FOOTSTEP on the very
+     clay frames where a foot lands (her ask: "the running sound echoes the footsteps"), a push-off WHOOSH whenever she
+     launches upward, a GRIP when her hands catch a bar. Tried and cut, her calls: sneaker squeaks, a boing jump
+     ("makes me think something is bouncing"), a creaky-bar grab. Browsers keep them silent until the visitor's first click. */
   var SFX = (function () {
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
     var dir = base.replace(/stick\.js.*$/, '') + 'assets/sfx/', ver = (base.match(/\?v=[^&#]*/) || [''])[0], a = {};
-    ['hop', 'grab'].forEach(function (n) { try { a[n] = new Audio(dir + n + '.mp3' + ver); a[n].preload = 'auto'; } catch (e) {} });
+    ['step', 'jump', 'grip'].forEach(function (n) { try { a[n] = new Audio(dir + n + '.mp3' + ver); a[n].preload = 'auto'; } catch (e) {} });
     return a;
   })();
   function sfx(n, vol, rate) {
@@ -865,14 +867,24 @@
     try { var c = SFX[n].cloneNode(); c.volume = vol; c.playbackRate = rate || 1; c.preservesPitch = false;
       var p = c.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
   }
-  var sfxWas = null;
+  /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
+     where the foot drops lowest after the flight */
+  var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
+  var sfxWas = null, stepS = null, stepK = 0;
   function sfxTick() {
-    var st = fig.state;
+    var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (st !== sfxWas) {
-      if (st === 'air' && fig.vy < -300) sfx('hop', 0.35, 0.95 + Math.random() * 0.1);   // a launch, not a fall off an edge
-      if (st === 'hang') sfx('grab', 0.4);
+      if (st === 'air' && fig.vy < -300) sfx('jump', 0.35, 0.95 + Math.random() * 0.1);   // a launch, not a fall off an edge
+      if (st === 'hang') sfx('grip', 0.4);
       sfxWas = st;
     }
+    /* the same sheet and frame clayPick draws: each strike frame passed since the last tick is one footstep */
+    var sh = st === 'move' && sp >= 12 && !fig.landT && !fig.slideT ? (sp > 230 ? 'run-x3' : 'walk-x3') : null;
+    var k = sh ? Math.floor(CLAY.dist / (sh === 'run-x3' ? 3 : 1.83)) % 48 : 0;
+    if (sh && sh === stepS)
+      for (var j = stepK; j !== k; j = (j + 1) % 48)
+        if (STRIKES[sh].indexOf((j + 1) % 48) >= 0) { sfx('step', sh === 'run-x3' ? 0.3 : 0.2, 0.92 + Math.random() * 0.16); break; }
+    stepS = sh; stepK = k;
   }
 
   function advance(dt) {
