@@ -1187,6 +1187,9 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   .work-sec[data-view="list"] .view-list{margin-top:8px}
   #work .view-list .wproject:first-child{padding-top:12px}   /* #work: outranks the card rule below */
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
+  /* focus at rest (see FOCUS AT REST in app.js): neighbours fade almost away once the scroll is still */
+  #work .view-list .wproject>*{transition:opacity .2s ease-out}
+  #work .view-list.settled .wproject:not(.focus)>*{opacity:var(--rest-dim,.12);transition:opacity .45s ease-out}
 }
 .project-media-wrap{display:flex;justify-content:center}
 
@@ -2312,6 +2315,20 @@ function makeJS() {
     }).catch(()=>{});
   }
 
+  /* FOCUS AT REST (her 2026-10-24, phone list: "this feels too crowded… there needs to be focus when I'm scrolling but
+     when I'm scrolling past them they can be close together"). The card nearest the middle of the screen is .focus;
+     the list is .settled once the scroll has been still for a beat. While moving, the neighbours keep the GSAP focus
+     dim above (close together, continuous); at rest they fade almost away (--rest-dim) so the centred one stands alone.
+     Children carry this opacity, so it multiplies with GSAP's on the card rather than fighting it. */
+  if(phoneList.matches&&cardsM.length){
+    const listEl=cardsM[0].parentElement;let still=0,raf=0;
+    const mark=()=>{raf=0;const mid=innerHeight/2;let best=null,bd=1e9;
+      cardsM.forEach(c=>{const r=c.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-mid);if(d<bd){bd=d;best=c}});
+      cardsM.forEach(c=>c.classList.toggle('focus',c===best))};
+    const onScroll=()=>{listEl.classList.remove('settled');clearTimeout(still);still=setTimeout(()=>listEl.classList.add('settled'),160);if(!raf)raf=requestAnimationFrame(mark)};
+    addEventListener('scroll',onScroll,{passive:true});mark();listEl.classList.add('settled');
+  }
+
   /* REELS PAGING (phones, SCROLL view). While the list holds the middle of the screen (html.reels-on), a vertical
      swipe on it is taken over: the page tracks the finger exactly, and on release eases to the next or previous
      project, or back to the same one for a small nudge, with power3.out (no overshoot, no spring). Swiping above
@@ -3001,12 +3018,14 @@ function renderHome() {
      into scroll mode"). SWIPE (the deck) is the default; SCROLL is the stacked list (one project per screen
      on phones). app.js flips data-view and remembers the choice in this browser. */
   const workHTML = `
-<section id="work" class="work-sec" data-view="deck">
+<!-- the vertical list is the primary view (her 2026-10-24: "the vertical scroll should be the primary one"); the swipe deck is
+     the alternative, and a visitor who picked it keeps it (localStorage) -->
+<section id="work" class="work-sec" data-view="list">
   <div class="work-head">
     <h2 class="section-title fade">${typo(site.work.title)}</h2>
     <div class="view-toggle head-toggle" role="group" aria-label="How to browse the projects (top)">
-      <button type="button" class="view-btn" data-view="deck" aria-pressed="true" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
-      <button type="button" class="view-btn" data-view="list" aria-pressed="false" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="true" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="deck" aria-pressed="false" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
     </div>
   </div>
   <div class="view-deck">${sdeckHTML}</div>
@@ -3014,8 +3033,8 @@ function renderHome() {
   <!-- the toggle floats at the bottom of the screen the whole time the projects are on screen (her ask: "should always be visible") -->
   <div class="view-dock">
     <div class="view-toggle" role="group" aria-label="How to browse the projects">
-      <button type="button" class="view-btn" data-view="deck" aria-pressed="true" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
-      <button type="button" class="view-btn" data-view="list" aria-pressed="false" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="true" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="deck" aria-pressed="false" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
     </div>
   </div>
 </section>`;

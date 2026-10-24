@@ -1053,7 +1053,7 @@
        jumping up sound sounds super weird now"). The files download at load; they decode once the context exists. */
     var AC = window.AudioContext || window.webkitAudioContext, raw = {};
     if (!AC) return s;
-    ['step', 'jump', 'grip', 'land'].forEach(function (n) {
+    ['step', 'jump', 'grip'].forEach(function (n) {   // land.mp3 is retired: landings are two soft steps
       fetch(dir + n + '.mp3' + ver).then(function (r) { return r.arrayBuffer(); }).then(function (ab) { raw[n] = ab; decode(); }).catch(function () {});
     });
     function decode() {
@@ -1085,7 +1085,7 @@
   var CLIP = { jump: 0.3 };
   /* her 2026-10-24: "the landing sound is too harsh and the jumping up sound is too sharp". The whoosh's energy sits
      around 2.2kHz (a hiss) and the thud opens on a click, so both are low-passed and given a soft attack */
-  var TONE = { jump: { lp: 1300, attack: 0.05 }, land: { lp: 650, attack: 0.018 } };
+  var TONE = { jump: { lp: 800, attack: 0.06 } };   // jump 1300 → 800 (her: still "shrill")
   /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
      where the foot drops lowest after the flight */
   var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
@@ -1093,11 +1093,11 @@
   function sfxTick() {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (st !== sfxWas) {
-      if (st === 'air' && fig.vy < -300) { sfx('jump', 0.35, 0.95 + Math.random() * 0.1); leapt = true; }   // a launch, not a fall off an edge
+      if (st === 'air' && fig.vy < -300) { sfx('jump', 0.26, 0.9 + Math.random() * 0.08); leapt = true; }   // a launch, not a fall off an edge
       if (st === 'hang') sfx('grip', 0.4);
-      /* a landing THUD, firmer for a longer fall; and ALWAYS after a jump (her ask: "a sound when I land on something I
+      /* a landing, ALWAYS after a jump (her ask: "a sound when I land on something I
          jumped on" — landing up on a ledge comes in slow, near the top of the arc) */
-      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) sfx('land', Math.min(0.34, 0.14 + Math.max(0, fallV) / 4000), 0.95 + Math.random() * 0.1);
+      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) { sfx('step', 0.2, 1.08); setTimeout(function () { sfx('step', 0.13, 1.14); }, 70); }   // LIGHT ON HER FEET (her 2026-10-24: the landing 'so heavy'): two soft quick footfalls, not the thud;
       if (st !== 'air' && st !== 'mantle') leapt = false;
       sfxWas = st;
     }
