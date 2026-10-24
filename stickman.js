@@ -169,8 +169,9 @@
     hero.querySelectorAll('.jump-box:not(.gone)').forEach(function (b) {
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 6, r.y1 + r.h * .12, r.w - 12, r.h * .88);
     });
-    /* the clay icons that tumbled out of it are blocks to stand on too */
-    hero.querySelectorAll('.jb-logo.out').forEach(function (b) {
+    /* the clay icons that tumbled out of it are blocks to stand on too — once they have come to REST, so the fall
+       out of the dissolving piece goes all the way to the floor (her ask) instead of catching on a mid-air icon */
+    hero.querySelectorAll('.jb-logo.rest').forEach(function (b) {
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
     });
 

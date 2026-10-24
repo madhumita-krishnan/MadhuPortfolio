@@ -842,11 +842,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   opacity:0;transition:opacity 700ms var(--ease-standard) 1700ms}
 .hero.revealed>.jump-box{opacity:1}
 .jump-box:focus-visible{outline:2px solid var(--accent);outline-offset:6px;border-radius:16px}
-/* the clay piece (Flora, 2026-10-23: "I don't want it to look like a box. I want it to be blue"); "JUMP !" is her
-   handwriting font laid over it, never painted into the art */
+/* the clay piece (Flora, 2026-10-23: "I don't want it to look like a box. I want it to be blue"); "JUMP !" is set in
+   the site's sans over it (never painted into the art, and not her handwriting: her call) */
 .jb-art{position:relative;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
 .jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
-.jb-word{position:absolute;left:0;right:0;top:50%;transform:translateY(-46%);text-align:center;font-family:var(--font-hand);font-size:24px;color:#1f3266;letter-spacing:.02em;pointer-events:none}
+.jb-word{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:700;font-size:17px;color:#1f3266;letter-spacing:.08em;pointer-events:none}   /* not her handwriting (her ask) */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
 .jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
@@ -2459,7 +2459,7 @@ function makeJS() {
       const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
       paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
       /* her ask: "I want to be able to jump on top of the linkedin and the x logos": once they rest they are ground */
-      if(still)return dispatchEvent(new Event('mk-terrain'));
+      if(still){logos.forEach(a=>a.classList.add('rest'));return dispatchEvent(new Event('mk-terrain'))}
       let last=performance.now();
       const step=t=>{const dt=Math.min(.033,(t-last)/1000);last=t;let moving=false;
         for(const p of ps){if(p.rest)continue;moving=true;
@@ -2470,7 +2470,7 @@ function makeJS() {
             else{p.vy=0;p.vx*=Math.pow(.004,dt);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: slide to a stop, stand upright
               if(Math.abs(p.vx)<6&&Math.abs(up-p.r)<.6){p.r=up;p.rest=true}}}
           else p.r+=p.vr*dt;}
-        paint();if(moving)requestAnimationFrame(step);else dispatchEvent(new Event('mk-terrain'))};
+        paint();if(moving)requestAnimationFrame(step);else{logos.forEach(a=>a.classList.add('rest'));dispatchEvent(new Event('mk-terrain'))}};
       requestAnimationFrame(step);
     };
     /* then the box is DONE (her ask: "when the box opens it dissolves in a puff of dust and the person falls down"):
