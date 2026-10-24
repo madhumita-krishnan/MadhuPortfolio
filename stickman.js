@@ -1801,10 +1801,15 @@
   /* 2026-10-23: the headline now waves, then SHRINKS while the bio grows (her ask), so she waits for
      that hand-off (app.js fires mk-hero-settled, and sets __mkHeroSettled in case it already did) and
      spawns on the d at the headline's final size. 4.2s is the fail-safe if it never comes. */
+  /* (her ask 2026-10-24: "I need the person to load onto the page with I'm MADHU and before the text under") she
+     arrives the moment the headline has LANDED (app.js mk-hero-landed, ~1.6s), not after the whole hero has settled;
+     the name's load wave then plays under her feet, so the loop runs through it to let her ride the d */
   function bootWhenSettled() {
-    if (window.__mkHeroSettled) return boot();
-    addEventListener('mk-hero-settled', boot, { once: true });
-    setTimeout(boot, 4200);
+    var go = function () { boot(); rideT = 2.6; start(); };
+    if (window.__mkHeroLanded || window.__mkHeroSettled) return go();
+    addEventListener('mk-hero-landed', go, { once: true });
+    addEventListener('mk-hero-settled', go, { once: true });
+    setTimeout(go, 4200);
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(bootWhenSettled);
   else addEventListener('load', bootWhenSettled);

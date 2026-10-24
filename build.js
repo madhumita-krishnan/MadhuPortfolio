@@ -1813,7 +1813,12 @@ function makeJS() {
       el.addEventListener('mouseenter',()=>{if(!rmActive()){[...el.querySelectorAll('.ch')].forEach((c,i)=>c.style.transitionDelay=(i*stagger)+'ms')}el.classList.add('waving')});
       el.addEventListener('mouseleave',()=>{if(!rmActive()){const chs=[...el.querySelectorAll('.ch')];chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*stagger)+'ms')}el.classList.remove('waving')});
     });
-    requestAnimationFrame(()=>setTimeout(()=>hero.classList.add('revealed'),120));
+    /* "landed": the headline's rise (450ms delay + 950ms) is done, so clay-her can step onto the d WITH the name and
+       before the bio starts (data-base 1800) — her ask 2026-10-24 */
+    const landHero=()=>{if(window.__mkHeroLanded)return;window.__mkHeroLanded=true;dispatchEvent(new Event('mk-hero-landed'))};
+    const h1El=hero.querySelector('h1');
+    if(h1El)h1El.addEventListener('transitionend',e=>{if(e.target===h1El&&e.propertyName==='transform')landHero()});   // the rise has truly finished: she stands on the d where it stays
+    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
     /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
        back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
        its final size, so she spawns on the d where it will stay. */
