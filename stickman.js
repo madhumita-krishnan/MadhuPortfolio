@@ -897,7 +897,7 @@
       }
       if (best) {
         fig.state = 'hang';
-        fig.hang = { bar: best.b, hx: nx, th: Math.max(-0.9, Math.min(0.9, fig.vx / 500)), om: fig.vx / 160, reach: 0,
+        fig.hang = { bar: best.b, hx: nx, th: Math.max(-.3, Math.min(.3, fig.vx / 700)), om: Math.max(-2, Math.min(2, fig.vx / 220)), reach: 0,
                      hands: [{ x: best.gp.x - 2, y: best.gp.y + 1.75 }, { x: best.gp.x + 2, y: best.gp.y + 1.75 }] };
         fig.vx = 0; fig.vy = 0; fig.flip = null;
         return;
@@ -956,8 +956,10 @@
   function tickHang(dt) {
     var h = fig.hang, b = h.bar;
     var mdx = mouse.x - h.hx;
-    h.om += (-(G / 90) * Math.sin(h.th) - 1.1 * h.om + Math.max(-3, Math.min(3, mdx / 60))) * dt;
-    h.th += h.om * dt;
+    /* a person on monkey bars, not a rigid pendulum chasing the cursor (her: "the hanging swinging doesn't look natural"):
+       gravity + a firm damping, so an entry swing settles in a couple of passes; never past ~26° */
+    h.om += (-(G / 90) * Math.sin(h.th) - 1.8 * h.om) * dt;
+    h.th = Math.max(-.45, Math.min(.45, h.th + h.om * dt));
     var tv = Math.abs(mdx) < 26 ? 0 : Math.max(-170, Math.min(170, mdx * 2.4));
     h.hx += tv * dt;
     h.reach = tv ? (h.reach + dt * 6) % (Math.PI * 2) : 0;
@@ -1252,7 +1254,11 @@
         /* zoom .82: these 24 frames were cut from their sheet ~1.2x bigger than her standing frame (her: "when it's hanging,
            why does the person get bigger") */
         if (h.reach && CLAY.man['monkey-x3']) return { s: 'monkey-x3', k: Math.floor(h.reach / (Math.PI * 2) * 24) % 24, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir, zoom: .82 };
-        return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
+        /* the pose follows the swing: legs out ahead on the way forward (frames 1, 9 — the only ones that really grip,
+           with 0 and 11), and the straight body trailing on the way back; the frames carry the swing, so the body
+           itself only tilts a little */
+        var hk = th > .2 ? 9 : th > .07 ? 1 : 0, tilt = hk ? th * .35 : th * .8;
+        return { s: 'hang-swing-climb-x3', k: hk, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(tilt / .04) * .04 * fig.dir };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
         if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1,

@@ -467,6 +467,9 @@ html,body{overflow-x:clip}
    comes near the top. Same curve and timing as the pill. app.js toggles .nav-hidden. */
 .nav-wrap{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease}
 .nav-wrap.nav-hidden{transform:translateY(-160%);opacity:0;pointer-events:none}
+/* inside the phone REELS (html.reels-on, one project per screen) the nav stays away, scrolling up included: paging
+   back a project is not "going back up the page" (her ask 2026-10-24) */
+html.reels-on .nav-wrap{transform:translateY(-160%);opacity:0;pointer-events:none}
 /* never two say hey!s on screen (her ask 2026-10-23): the nav's steps aside while the hero's is in view, and the pill
    CLOSES UP around the wordmark and links instead of keeping an empty stretch ("the nav bar looks empty without the
    say hey"). app.js measures that compact width into --nav-compact; scrolling past the hero opens it back out. */
@@ -1176,8 +1179,10 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
      in. I just don't want the swipe to ever be over shot"). iPhone's native snapping on the page glides past and
      snaps back, so app.js pages the list itself (REELS PAGING): the page follows the finger 1:1, and on release
      GSAP eases to the next project (or back) with a decelerating curve that never passes it. */
-  #work .wproject{min-height:100svh;margin-bottom:0;align-content:center;gap:calc(var(--space)*3);
-    padding-top:calc(var(--space)*5);padding-bottom:calc(var(--space)*5)}
+  /* natural height, not a full screen each (her: "when I'm not in the reels there's too much white space between them");
+     the reels still click one project to the centre of the screen at a time */
+  #work .wproject{margin-bottom:0;align-content:center;gap:calc(var(--space)*3);
+    padding-top:calc(var(--space)*4);padding-bottom:calc(var(--space)*4)}
   /* the WHOLE phone always shows (her: "the phone should never get cut off"): every screen is capped by the
      screen's height, and the card carries only the name and its headline, smaller; the tags and stack stay
      on desktop, in the swipe deck (press and hold) and on the case study */
@@ -1196,7 +1201,7 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   /* the first project sits right under the heading (her: "this is way too much space it looks weird"); every card is a
      full-screen panel with its content centred, which left ~300px of nothing between the heading and the first demo */
   .work-sec[data-view="list"] .view-list{margin-top:8px}
-  #work .view-list .wproject:first-child{align-content:start;padding-top:12px}   /* #work: outranks the card rule below */
+  #work .view-list .wproject:first-child{padding-top:12px}   /* #work: outranks the card rule below */
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
 }
 .project-media-wrap{display:flex;justify-content:center}
