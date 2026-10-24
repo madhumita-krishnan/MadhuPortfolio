@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Vantage's mark (made 2026-10-24, her ask "make a logo for vantage"): the sharp geometric V of her light, airy
+       VANTAGE wordmark exploration, with a point resting in it, the vantage point you watch a prototype from -->
+  <rect width="64" height="64" rx="14" fill="#F1F2F4"/>
+  <path d="M16.5 16.5 L32 47.5 L47.5 16.5" fill="none" stroke="#16181D" stroke-width="6" stroke-linejoin="miter" stroke-miterlimit="10"/>
+  <circle cx="32" cy="24" r="3.8" fill="#3D7BFF"/>
+</svg>

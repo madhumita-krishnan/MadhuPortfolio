@@ -1101,7 +1101,7 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
 .sdeck-progress{position:relative}
 .sdeck-progress button{position:relative;z-index:1}
 .sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;bottom:100%;height:52px}
-.sd-ico{position:absolute;left:50%;bottom:calc(100% - 2px);width:min(34px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
+.sd-ico{position:absolute;left:50%;bottom:calc(100% - 2px);width:min(40px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
   display:grid;place-items:center;background:#262931;color:#f3f4f6;font:400 1.15rem/1 'Cormorant Garamond',Georgia,serif;
   box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;
   transform:translate(-50%,10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}

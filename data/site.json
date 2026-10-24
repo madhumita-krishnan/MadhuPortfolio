@@ -118,7 +118,8 @@
           "Docker",
           "GitHub",
           "Claude Code"
-        ]
+        ],
+        "icon": "assets/case-studies/vantage/vantage-logo.svg"
       },
       {
         "slug": "pratus-kitchen",
@@ -143,7 +144,8 @@
           "GSAP",
           "GitHub",
           "Claude Code"
-        ]
+        ],
+        "icon": "assets/case-studies/pratus-kitchen/pratus-logo.svg"
       },
       {
         "slug": "driftwood",
@@ -185,7 +187,7 @@
           "Figma",
           "Miro"
         ],
-        "icon": "assets/case-studies/spotify/mix-glyph.svg"
+        "icon": "assets/case-studies/spotify/spotify-logo.svg"
       },
       {
         "slug": "stack",
@@ -219,7 +221,8 @@
         },
         "stack": [
           "Adobe Creative Suite"
-        ]
+        ],
+        "icon": "assets/case-studies/message-testing/atlantic-logo.svg"
       },
       {
         "slug": "ai-tools",
@@ -241,7 +244,7 @@
           "Node.js",
           "Claude Code"
         ],
-        "mark": "AI"
+        "icon": "assets/favicon/apple-touch-icon.png"
       }
     ]
   },
