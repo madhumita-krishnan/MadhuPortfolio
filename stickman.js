@@ -1247,6 +1247,7 @@
   }
 
   function figure(px, py, dir, o) {
+    if (fig.hidden) return;   // stood in for by another drawing of her (resume-plane.js plays her paper-airplane throw in her spot)
     if (CLAY.on) { if (CLAY.ready) clayFigure(px, py, dir, o); return; }   // NEVER the stick figure (her call 2026-10-24: "no more stick man"); until her clay frames are in, nothing
     /* grounded poses NEVER float: whatever the gait is doing, the lowest contact —
        foot, or knee when the legs are folded — is planted exactly on the surface */
@@ -1751,6 +1752,9 @@
   window.__stick = {
     fig: fig, bars: function () { return bars; }, step: advance, draw: draw,
     plan: function (x, y) { return planRoute(x, y); },
+    clayH: function () { return CLAY.ready ? CLAY.H : 0; },
+    canvas: function () { return cv; },
+    hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
     groundTop: function (x, y) { return groundTop(x, y, H); },
   };
