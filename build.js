@@ -1493,6 +1493,15 @@ footer a:hover{color:var(--accent)}
   background:var(--bg-deep);color:var(--text-on-deep);
   transition:margin var(--motion-base) var(--ease-standard),padding var(--motion-base) var(--ease-standard)}
 .cs-next-copy{position:relative;z-index:1}
+/* the plain tools page (renderSimpleCase) */
+.tools-page{max-width:980px;margin:0 auto;padding:calc(var(--space)*20) calc(var(--space)*6) calc(var(--space)*12)}
+.tp-title{font-family:var(--font-display);font-weight:600;font-size:clamp(2.4rem,5.2vw,4.2rem);line-height:1.05;letter-spacing:-.02em;color:var(--ink-blue)}
+.tp-lead{margin-top:calc(var(--space)*3);max-width:52ch;font-size:clamp(1.05rem,1.6vw,1.25rem);line-height:1.6;color:var(--text-secondary)}
+.tools-page .tp-tool{margin:calc(var(--space)*14) 0 0;padding:0;max-width:none}   /* not the global section padding */
+.tp-h{font-family:var(--font-display);font-weight:600;font-size:clamp(1.5rem,2.6vw,2rem);line-height:1.2;color:var(--ink-blue)}
+.tp-p{margin-top:calc(var(--space)*1.5);max-width:56ch;font-size:1.05rem;line-height:1.65;color:var(--text-secondary)}
+.tp-tool .mac-media{margin-top:calc(var(--space)*5)}
+@media (max-width:760px){.tools-page{padding:calc(var(--space)*14) calc(var(--space)*3) calc(var(--space)*8)}.tools-page .tp-tool{margin-top:calc(var(--space)*10)}}
 .cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
 .cs-next-peek{position:absolute;z-index:0;top:100%;right:clamp(28px,6vw,84px);pointer-events:none;
@@ -2770,7 +2779,29 @@ function csHeroMedia(cs) {
   return '';
 }
 
+/* a plain page (her ask 2026-10-23 on the AI tools page: "the tool page is weird. Make it simpler
+   looking. The title should be simpler."): one title, one line, then each tool as a plain heading,
+   a sentence or two, and its screen in the bezel. No hero band, badges, meta, labels or next card. */
+function renderSimpleCase(cs) {
+  return head(`${cs.name} — ${site.title}`, cs.tagline) + `
+${navBar('case')}
+<main class="tools-page">
+  <header class="tp-head">
+    <h1 class="tp-title">${typo(cs.title)}</h1>
+    <p class="tp-lead">${typo(cs.tagline)}</p>
+  </header>
+  ${cs.sections.map(s => `
+  <section class="tp-tool fade">
+    <h2 class="tp-h">${typo(s.heading)}</h2>
+    ${s.body.map(p => `<p class="tp-p">${typo(p)}</p>`).join('')}
+    ${macFrame(s.media)}
+  </section>`).join('')}
+</main>
+` + footerHTML();
+}
+
 function renderCase(cs) {
+  if (cs.layout === 'simple') return renderSimpleCase(cs);
   const tone = cs.heroTone === 'light' ? 'light' : '';
   /* the light hero band sits on cream, the default band is the deep green — so the chips
      take the on-deep inks there, the same switch the rest of that band already makes */
