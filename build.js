@@ -747,6 +747,12 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   .hero-line span.hs{position:relative;z-index:0;border-radius:12px;box-shadow:0 0 0 100vmax transparent;
     transition:color 240ms var(--ease-standard),box-shadow 240ms var(--ease-standard)}
   .hero-line span.hs:hover{z-index:60;box-shadow:0 0 0 100vmax color-mix(in srgb,var(--bg-base) 82%,transparent)}
+  /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
+     "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
+     (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
+  .hero-line:hover span.hs:hover{color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(100deg,var(--hs-dim) 40%,var(--ink-blue-hover) 50%,var(--hs-dim) 60%);background-size:250% 100%;
+    --hs-dim:color-mix(in srgb,var(--ink-blue-hover) 55%,var(--bg-base));animation:hs-glimmer 2s linear infinite}
   /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
   body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.2}
 }
@@ -1622,6 +1628,9 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
+@keyframes hs-glimmer{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.hero-line:hover span.hs:hover{animation:none;background-position:50% 0}}
+.rm-mode .hero-line:hover span.hs:hover{animation:none;background:none;-webkit-background-clip:border-box;background-clip:border-box}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
