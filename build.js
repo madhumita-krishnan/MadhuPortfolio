@@ -747,12 +747,16 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      page-sized shadow, so crossing between lines dropped the dim for a moment and the white buttons blinked
      ("feels like a seizure warning"). The lines touch now (padding, not margin), so there is no gap to fall through,
      and the dim fades out slowly, a beat after the cursor leaves. */
-  .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard)}
+  .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard),transform 320ms var(--ease-standard),filter 320ms var(--ease-standard)}
   .hero-line span.hs + span.hs{margin-top:0;padding-top:.5em}
   .hero-line::before{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
     background:color-mix(in srgb,var(--bg-base) 40%,transparent);transition:opacity 700ms var(--ease-standard) 120ms}   /* 40%, not 82%: the deep dim was too much ("watching everything dim is giving me a seizure") */
   .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 600ms var(--ease-standard)}
-  .hero-line span.hs:hover{z-index:60}
+  /* every bio line stays ABOVE the dim (her: "the text isn't that readable, I need more contrast"): the others keep
+     their quieter grey at full strength (~8.5:1), the hovered one is white. The hovered line also ELEVATES: up 4px on
+     a soft shadow (a filter, not text-shadow, which would paint over the glimmer's clipped fill) */
+  .hero-line:has(span.hs:hover) span.hs{z-index:60}
+  .hero-line span.hs:hover{transform:translateY(-4px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
   /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
      "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
      (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
@@ -1643,7 +1647,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
 @keyframes hs-glimmer{from{background-position:100% 0}to{background-position:0 0}}
-@media (prefers-reduced-motion:reduce){.hero-line:hover span.hs:hover{animation:none;background-position:50% 0}}
+@media (prefers-reduced-motion:reduce){.hero-line:hover span.hs:hover{animation:none;background-position:50% 0;transform:none}}
 .rm-mode .hero-line:hover span.hs:hover{animation:none;background:none;-webkit-background-clip:border-box;background-clip:border-box}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
