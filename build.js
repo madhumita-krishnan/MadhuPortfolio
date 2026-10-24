@@ -979,6 +979,9 @@ ${swipeTweaks()}
   transition:opacity 200ms var(--ease-standard),transform 200ms var(--ease-standard)}
 .view-dock.floating.on{opacity:1;transform:none}
 .view-dock.floating.on .view-toggle{pointer-events:auto}
+/* laptop: nav and toggle take turns (her ask) — scrolling up brings the nav back, so the toggle steps away until it hides again */
+@media (hover:hover) and (pointer:fine){body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on{opacity:0;transform:translateY(8px)}
+  body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on .view-toggle{pointer-events:none}}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
