@@ -3,7 +3,7 @@
    seeing a full-screen clip: "too zoomed in. I wanted the person on the screen to go do it on the screen", and "the
    path of the paper airplane to glide around and fly super close to the screen sideways swiftly").
 
-   Only the clay resume icon (the .jb-logo out of the cloud) is taken over; other resume links open the PDF.
+   Only the clay resume tile (.cta-resume, beside say hey!) is taken over; other resume links open the PDF.
    If clay-her is standing on screen (the home hero), SHE does it, in her spot and
    at her size: a keyed Flora clip (assets/resume-throw.png, 62 frames at 12fps) of her folding the resume and throwing
    it stands in for her while stickman.js hides her own drawing. At the release frame a paper plane
@@ -200,7 +200,7 @@
 
   /* only the CLAY resume icon flies (her 2026-10-24: "I only want the airplane claymation thing to happen when you click
      on the clay icon"); every other resume link (nav, About, footer, case studies) just opens the PDF */
-  var isResume = function (a) { return a && a.classList.contains('jb-logo') && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
+  var isResume = function (a) { return a && a.classList.contains('cta-resume') && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
     if (!isResume(a) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
