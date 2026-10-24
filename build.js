@@ -182,6 +182,8 @@ function swipeTweaks() {
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
+/* the JUMP! cloud's morph: a WebP grid of keyed video frames (Flora clay video, see clay-character/) + its numbers */
+const CLOUD = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/clay/props/cloud-sprite.json'), 'utf8')); } catch (e) { return null; } })();
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
   return `
@@ -814,6 +816,41 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   opacity:0;transition:opacity 600ms var(--ease-standard)}
 .hero.stick-on>.stick-cv{opacity:1}
 .hero.stick-dragging{user-select:none;-webkit-user-select:none}
+/* THE JUMP! BOX (placeholder clay, drawn in CSS). app.js places it beside the name; stickman.js treats the
+   (still) button as ground, while .jb-art bobs gently inside it. Under the figure's canvas (z 3) so she
+   stands ON it; the socials sit under the box (z 1) so they come OUT of its opening. Laptop only for now. */
+.hero>.jump-box{position:absolute;margin:0;max-width:none;z-index:2;width:136px;padding:0;border:0;background:none;cursor:pointer;
+  opacity:0;transition:opacity 700ms var(--ease-standard) 1700ms}
+.hero.revealed>.jump-box{opacity:1}
+.jump-box:focus-visible{outline:2px solid var(--accent);outline-offset:6px;border-radius:16px}
+/* the clay piece: a WHITE clay cloud that bobs (her call 2026-10-23, after a blue box, blue shapes and a blue cloud;
+   the Flora blue cloud re-inked white by its own shading). "jump!" is type laid over it, never painted into the art */
+.jb-art{position:relative;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
+.jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none;transition:opacity 1.1s ease-in-out}
+/* the cloud MORPHS (her ask: "morph around in shape and have light hit it differently as it morphs", then "make a better
+   morphing gif with Flora"): a Flora clay VIDEO of the cloud reshaping as the light travels round it, keyed off its
+   green and packed into one WebP grid that app.js steps through at the video's frame rate, a seamless loop */
+.jb-morph{display:block;width:100%;background-repeat:no-repeat;background-position:0 0}
+.jb-word{position:absolute;left:50%;top:56%;width:60%;height:auto;transform:translate(-50%,-50%);pointer-events:none;-webkit-user-drag:none}   /* "jump!" in clay (Flora), inked the same blue as her shorts (#454E93), pressed onto the cloud */
+@keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
+.jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
+.jb-art.slam{animation:jb-slam 420ms cubic-bezier(.3,1.5,.5,1)}
+@keyframes jb-slam{0%{transform:none}25%{transform:scale(1.08,.82)}100%{transform:none}}
+.hero>.jb-socials{position:absolute;inset:0;margin:0;max-width:none;z-index:1;pointer-events:none}
+.jb-logo{position:absolute;left:0;top:0;width:52px;height:52px;opacity:0;pointer-events:none;will-change:transform;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));transition:opacity 120ms linear}
+.jb-logo img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+.jb-logo.out{opacity:1;pointer-events:auto}
+.jb-logo:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+/* a little clay wiggle on hover (her ask 2026-10-24); on the image, since the link's own transform places it */
+.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:jb-wiggle .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes jb-wiggle{0%{transform:none}20%{transform:rotate(-9deg) scale(1.06)}45%{transform:rotate(7deg) scale(1.06)}70%{transform:rotate(-4deg) scale(1.03)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:none}}
+.hero>.jump-box.gone{visibility:hidden;pointer-events:none}
+.hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
+@media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
+@media (prefers-reduced-motion:reduce){.jb-art{animation:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
    handwriting wrote itself in word by word while the blooms, the headline and the two
    buttons just APPEARED at first paint — which is the harshness she named (2026-08-19,
@@ -2507,6 +2544,98 @@ function makeJS() {
      deliberately heavy module, which is exactly why it is NOT in this bundle: the code
      is FETCHED when the reader is within a screen or two of the pot and RUN when the
      pot is properly on screen (60% visible), once per visit. */
+  /* THE JUMP! BOX (see .jump-box). Placed beside the name; a click sends clay-her (stickman.js 'mk-box-jump'), and
+     her slam ('mk-box-slam') drops the bottom open and tumbles the socials out: real gravity, a couple of bounces,
+     they come to rest standing upright on the line of the buttons, as ordinary links. If she can't jump (reduced
+     motion, or she isn't there) the box simply opens. */
+  const jb=document.querySelector('.hero>.jump-box');
+  if(jb&&matchMedia('(min-width:761px)').matches){
+    const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
+    const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
+      const x=Math.min(t.right-hr.left+80,hr.width-jb.offsetWidth-24),y=t.top-hr.top+t.height/2-jb.offsetHeight/2;
+      jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
+    const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
+    placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
+    /* the morph loop: step the sprite grid at its frame rate while the cloud is on screen; stops once it's jumped on */
+    const mo=jb.querySelector('.jb-morph');let mk=0,moT=0,seen=false;
+    const morph=()=>{clearInterval(moT);if(!mo||!seen||state!=='idle'||rmActive())return;
+      const n=+mo.dataset.n,cols=+mo.dataset.cols,rows=Math.ceil(n/cols);
+      moT=setInterval(()=>{if(state!=='idle')return clearInterval(moT);mk=(mk+1)%n;
+        mo.style.backgroundPosition=((mk%cols)/(cols-1)*100)+'% '+(rows>1?(Math.floor(mk/cols)/(rows-1)*100):0)+'%'},1000/(+mo.dataset.fps))};
+    new IntersectionObserver(es=>{seen=es.some(e=>e.isIntersecting);if(seen)morph();else clearInterval(moT)}).observe(jb);
+    let state='idle',fallback=0;
+    const tumble=still=>{
+      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
+      const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+110);
+      /* EVENLY SPACED where they land (her ask): each icon owns a slot, 76px apart, centred under the cloud (kept on
+         screen); it's thrown toward its slot, tumbles and bounces, and once on the line steers into the slot and stops */
+      const gapX=S+24,c0=Math.max(S/2+8+(n-1)/2*gapX,Math.min(hr.width-S/2-8-(n-1)/2*gapX,x0));
+      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,x:x0,y:y0,tx,vx:(tx-x0)/.55,vy:40+i*25,r:0,vr:(i%2?-1:1)*(360+i*90),rest:false}});
+      if(still)ps.forEach(p=>{p.x=p.tx;p.y=floor;p.rest=true});
+      const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
+      paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
+      /* her ask: "I want to be able to jump on top of the linkedin and the x logos": once they rest they are ground */
+      if(still){logos.forEach(a=>a.classList.add('rest'));return dispatchEvent(new Event('mk-terrain'))}
+      let last=performance.now();
+      const step=t=>{const dt=Math.min(.033,(t-last)/1000);last=t;let moving=false;
+        for(const p of ps){if(p.rest)continue;moving=true;
+          p.vy+=1900*dt;p.x=Math.max(S/2,Math.min(hr.width-S/2,p.x+p.vx*dt));p.y+=p.vy*dt;
+          const up=Math.round(p.r/360)*360;
+          if(p.y>=floor){p.y=floor;
+            if(p.vy>160){p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time
+            else{p.vy=0;p.vx=0;p.x+=(p.tx-p.x)*Math.min(1,dt*9);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: settle into its slot, stand upright
+              if(Math.abs(p.tx-p.x)<.5&&Math.abs(up-p.r)<.6){p.x=p.tx;p.r=up;p.rest=true}}}
+          else p.r+=p.vr*dt;}
+        paint();if(moving)requestAnimationFrame(step);else{logos.forEach(a=>a.classList.add('rest'));dispatchEvent(new Event('mk-terrain'))}};
+      requestAnimationFrame(step);
+    };
+    /* then the box is DONE (her ask: "when the box opens it dissolves in a puff of dust and the person falls down"):
+       it bulges, shrinks to nothing inside a burst of clay dust, stops being ground, and she drops */
+    const dissolve=still=>{
+      const gone=()=>{const f=document.activeElement===jb;jb.classList.add('gone');if(f&&logos[0])logos[0].focus();dispatchEvent(new Event('mk-box-gone'))};
+      if(still)return gone();
+      /* the CLAY burst (her ask: "have the puff when the cloud explodes also be claymation"): 8 Flora stop-motion frames —
+         squash, crack, burst into clay balls, scatter, specks — stepped on the clay clock in the cloud's place.
+         Sized so frame 1's squashed cloud matches the cloud on the page (it spans 374 of the frame's 420px). */
+      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),pw=br.width*420/374;
+      const pf=document.createElement('i');pf.className='jb-puff';
+      Object.assign(pf.style,{width:pw+'px',left:(br.left-hr.left+br.width/2-pw*.4686)+'px',top:(br.top-hr.top+br.height/2-pw*341/420/2)+'px'});
+      heroEl.appendChild(pf);art.style.opacity='0';gone();
+      let k=0;const tick=setInterval(()=>{k++;if(k>=8){clearInterval(tick);pf.remove();return}pf.style.backgroundPosition=(k/7*100)+'% 0'},70);
+    };
+    const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
+      if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
+      setTimeout(()=>tumble(still),still?0:120);setTimeout(()=>dissolve(still),still?0:560);
+      if(!still)setTimeout(reform,4600)};
+    /* THE CLOUD COMES BACK (her: "I'm not able to get the person to do the tuck jump slam" — after one go it was gone for
+       the visit): ~4s after it bursts, the icons tuck back away and the cloud re-forms in its spot with a clay pop, ready
+       for another jump */
+    const reform=()=>{
+      logos.forEach(a=>{a.classList.remove('out','rest');a.setAttribute('tabindex','-1')});dispatchEvent(new Event('mk-terrain'));
+      jb.classList.remove('gone');jb.setAttribute('aria-expanded','false');art.classList.remove('still','slam');art.style.opacity='';art.style.transform='';
+      art.getAnimations().forEach(an=>an.cancel());
+      art.animate([{transform:'scale(.2)',opacity:0},{transform:'scale(1.12,.9)',opacity:1,offset:.6},{transform:'scale(.96,1.04)',offset:.82},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.3,1.4,.5,1)'});
+      state='idle';dispatchEvent(new Event('mk-terrain'));if(typeof morph==='function')morph();
+    };
+    jb.addEventListener('click',()=>{
+      if(state!=='idle')return;state='jumping';
+      /* stop the bob where it is and ease it level, so the lid is exactly where she will land */
+      const cur=getComputedStyle(art).transform;art.style.transform=cur==='none'?'':cur;art.classList.add('still');
+      requestAnimationFrame(()=>{art.style.transform=''});
+      if(rmActive())return open(true);
+      dispatchEvent(new CustomEvent('mk-box-jump',{detail:{el:jb}}));
+      fallback=setTimeout(()=>open(false),2200);
+    });
+    /* sounds (Flora / ElevenLabs SFX, 2026-10-24): a clay SQUISH when an icon is clicked, a POP when she lands on the
+       cloud. Only ever after a click (browsers allow sound then), at a gentle volume. */
+    const sfx={};['squish','pop'].forEach(n=>{try{const a=new Audio('assets/sfx/'+n+'.mp3?v=${BUILD_V}');a.preload='auto';a.volume=.5;sfx[n]=a}catch(e){}});
+    const play=n=>{const a=sfx[n];if(!a)return;try{a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
+    logos.forEach(a=>a.addEventListener('click',()=>play('squish')));
+    addEventListener('mk-box-slam',()=>play('pop'));
+    addEventListener('mk-box-slam',()=>{if(state==='jumping')return open(false);
+      if(state==='idle'){state='jumping';const cur=getComputedStyle(art).transform;art.style.transform=cur==='none'?'':cur;art.classList.add('still');requestAnimationFrame(()=>{art.style.transform=''});open(false)}});   // she landed on it on her own
+  }
+
   const potEl=document.querySelector('.pot');
   if(potEl){
     /* QA hook in the ?shot= family: ?fishfreeze=0.5 holds the flight at that fraction
@@ -2821,6 +2950,14 @@ function renderHome() {
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
   <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}</p>
+  <!-- THE JUMP! BOX (2026-10-23 her ask). A placeholder drawn in CSS until the clay art is made. Click it: clay-her
+       tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
+       LinkedIn / Twitter / X links, so adding one there adds it here. -->
+  <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
+    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<img class="jb-word" src="assets/clay/props/jump-word-shorts.png?v=${BUILD_V}" alt="" draggable="false"></span>
+  </button>
+  <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
+    { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
   </p>

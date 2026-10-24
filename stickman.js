@@ -165,6 +165,16 @@
       else g.fillRect(r.x1, r.y1, r.w, r.h);
     });
 
+    /* the JUMP! box is a solid block she can land on (its art bobs inside; this outer box stays still) */
+    hero.querySelectorAll('.jump-box:not(.gone)').forEach(function (b) {
+      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 6, r.y1 + r.h * .12, r.w - 12, r.h * .88);
+    });
+    /* the clay icons that tumbled out of it are blocks to stand on too — once they have come to REST, so the fall
+       out of the dissolving piece goes all the way to the floor (her ask) instead of catching on a mid-air icon */
+    hero.querySelectorAll('.jb-logo.rest').forEach(function (b) {
+      var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
+    });
+
     md = g.getImageData(0, 0, W2, H2).data;
 
     /* monkey bars: the undersides of the copy blocks (reachable from the floor with one
@@ -362,6 +372,38 @@
     fig.state = 'celeb';
     start();
   }
+  /* THE JUMP! BOX (2026-10-23 her ask: "the claymation madhu does a tuck flip slam jump on it"). app.js sends
+     'mk-box-jump' with the box; she leaves on a true projectile whose apex clears both her and the lid by 110px,
+     throws ONE tuck flip timed to finish just before her feet arrive, and lands hard (see the landing hook). No
+     steering in the air (no target), so the arc is exactly the one solved here. */
+  addEventListener('mk-box-jump', function (e) {
+    if (!booted || rmActive() || !e.detail || !e.detail.el) return;
+    var r = localRect(e.detail.el, cv.getBoundingClientRect());
+    var tx = (r.x1 + r.x2) / 2, ty = r.y1;
+    if (fig.state === 'hang') release(0);
+    fig.celeb = null; fig.target = null; fig.waypoint = null; fig.drag = null; fig.wave = 0;
+    var apex = Math.min(fig.y, ty) - 110, up = fig.y - apex, dn = ty - apex;
+    var T = Math.sqrt(2 * up / G) + Math.sqrt(2 * dn / G);
+    fig.vy = -Math.sqrt(2 * G * up); fig.vx = (tx - fig.x) / T;
+    /* the spinning tuck flip, facing the cloud (her call: the clay backflip version was tried 2026-10-24 and "the jump on
+       the cloud used to be cooler" — this one) */
+    fig.dir = tx >= fig.x ? 1 : -1;
+    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true;
+    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.88);
+    fig.boxJump = { at: performance.now() };
+    start();
+  });
+  addEventListener('mk-terrain', queueRebuild, { passive: true });
+  /* the box dissolved under her: the world is rebuilt without it at once, and she simply drops (no flip) */
+  addEventListener('mk-box-gone', function () {
+    if (!booted) return;
+    rebuild();
+    if (fig.state === 'idle' || fig.state === 'move' || fig.state === 'sign' || fig.state === 'wave' || fig.state === 'celeb') {
+      fig.celeb = null; fig.target = null; fig.waypoint = null;
+      fig.state = 'air'; fig.vy = 0; fig.vx = 0; fig.fallFrom = fig.y; fig.flipQueued = true;
+      start();
+    }
+  });
   function waveHello() {
     if (rmActive()) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {
@@ -641,7 +683,7 @@
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && fig.vy < 160 && !fig.hangCool && !fig.target) {
+    if (!fig.flip && !fig.boxJump && fig.vy < 160 && !fig.hangCool && !fig.target) {   // never grabs a bar mid box-jump
       var handY = ny - LEG - HANDUP;
       /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
          her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
@@ -667,7 +709,7 @@
        when the goal is BELOW us — mantling up is the opposite of a descent, and it can
        intercept the very landing the route is falling toward. */
     var gA = fig.waypoint || fig.target;
-    if (fig.vx && !(gA && gA.y > ny - 10)) {
+    if (fig.vx && !fig.boxJump && !(gA && gA.y > ny - 10)) {
       var dirx = fig.vx > 0 ? 1 : -1;
       var py = ny - LEG;
       if (solid(nx + dirx * 5, py)) {
@@ -695,6 +737,9 @@
         }
         fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
         if (fig.vy > 620 || drop > 130) { fig.landT = 0.18; puff(fig.x, fig.y, 4); }
+        /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
+           jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
+        if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7); }
         fig.vy = 0;
         if (!fig.target && !fig.drag) fig.vx = 0;
         return;
@@ -763,7 +808,19 @@
   function needsLoop() {
     return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0;
   }
+  /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
+     across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
+  function cloudCheck() {
+    var jbEl = hero.querySelector('.jump-box:not(.gone)'), on = false;
+    if (jbEl && (fig.state === 'idle' || fig.state === 'move')) {
+      var jr = localRect(jbEl, cv.getBoundingClientRect());
+      on = fig.x >= jr.x1 + 4 && fig.x <= jr.x2 - 4 && Math.abs(fig.y - (jr.y1 + jr.h * .12)) < 6;
+    }
+    if (on && !fig.onCloud) { if (!fig.landT) { fig.landT = 0.32; puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
+    fig.onCloud = on;
+  }
   function advance(dt) {
+    cloudCheck();
     rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
     fig.slideT = Math.max(0, fig.slideT - dt);
