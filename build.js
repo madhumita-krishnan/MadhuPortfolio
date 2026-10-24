@@ -1094,21 +1094,21 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
 .sdeck-progress button.on::before{background:var(--text-primary)}
 .sdeck-progress button:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
 /* the company icons (her ask 2026-10-24: "if I hover over the dash line … can the icons for the companies pop up so
-   people can tap on the company logo to navigate faster?"): an app-icon tile over each dash, springing up in a quick
+   people can tap on the company logo to navigate faster?"): an app-icon tile UNDER each dash (over it they covered the demos), dropping in with a quick
    left-to-right ripple while the line is hovered, focused or being scrubbed (a finger down on a phone). A tap on a tile
-   is a tap on its dash, so the bar's own pointer handling takes it there. The pad above the line keeps the hover alive
+   is a tap on its dash, so the bar's own pointer handling takes it there. The pad below the line keeps the hover alive
    across the gaps between tiles. Real marks where she has them, else the initial on a quiet tile (site.json icon / mark). */
 .sdeck-progress{position:relative}
 .sdeck-progress button{position:relative;z-index:1}
-.sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;bottom:100%;height:52px}
-.sd-ico{position:absolute;left:50%;bottom:calc(100% - 2px);width:min(40px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
+.sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;top:100%;height:56px}
+.sd-ico{position:absolute;left:50%;top:calc(100% - 4px);width:min(40px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
   display:grid;place-items:center;background:#262931;color:#f3f4f6;font:400 1.15rem/1 'Cormorant Garamond',Georgia,serif;
   box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;
-  transform:translate(-50%,10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}
+  transform:translate(-50%,-10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}
 .sd-ico img{width:100%;height:100%;display:block;-webkit-user-drag:none}
 .sdeck-progress:hover .sd-ico,.sdeck-progress:focus-within .sd-ico,.sdeck-progress.scrub .sd-ico{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
 .sdeck-progress button.on .sd-ico{box-shadow:0 0 0 2px var(--text-primary),0 6px 16px rgba(0,0,0,.4)}
-.sdeck-progress .sd-ico:hover{transform:translate(-50%,-3px) scale(1.12);transition-delay:0s}
+.sdeck-progress .sd-ico:hover{transform:translate(-50%,3px) scale(1.12);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -2590,7 +2590,8 @@ function makeJS() {
          "Hi, I'm Madhu" (her ask 2026-10-24: its middle on the name's middle). The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
          the icons it drops have a long fall to the say-hey line */
       /* (her ask 2026-10-24: "right after Madhu") tucked just past the end of the name, not out in the open sky */
-      const x=Math.min(t.right-hr.left+28,hr.width-jb.offsetWidth-24),
+      const x=Math.min(t.right-hr.left+60,hr.width-jb.offsetWidth-24),   // 60: "a little to the right" (her ask, was 28)
+        
         y=t.top-hr.top-new DOMMatrix(getComputedStyle(heroEl.querySelector('h1')).transform).m42+t.height/2-jb.offsetHeight/2;   // minus the headline's rise, so it's measured where it lands
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
