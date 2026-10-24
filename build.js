@@ -2581,8 +2581,8 @@ function makeJS() {
          visually"): centred in the open space between the end of the copy and the hero's right edge, in line with
          "Hi, I'm Madhu" (her ask 2026-10-24: its middle on the name's middle). The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
          the icons it drops have a long fall to the say-hey line */
-      const bio=heroEl.querySelector('.hero-line').getBoundingClientRect(),copyR=Math.max(t.right,bio.right)-hr.left;
-      const x=Math.min(Math.max(copyR+40,(copyR+hr.width)/2-jb.offsetWidth/2),hr.width-jb.offsetWidth-24),
+      /* (her ask 2026-10-24: "right after Madhu") tucked just past the end of the name, not out in the open sky */
+      const x=Math.min(t.right-hr.left+28,hr.width-jb.offsetWidth-24),
         y=t.top-hr.top-new DOMMatrix(getComputedStyle(heroEl.querySelector('h1')).transform).m42+t.height/2-jb.offsetHeight/2;   // minus the headline's rise, so it's measured where it lands
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
