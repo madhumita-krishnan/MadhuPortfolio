@@ -178,7 +178,7 @@ const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
   const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg',
-    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease' };
+    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease', speed: '--sd-speed' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
@@ -2028,10 +2028,16 @@ function makeJS() {
       titleEl.style.minHeight=th+'px';place(pos);
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
-    const settle=(i,instant)=>{
+    /* speed (px/ms) = a GLIDE (her ask: "no matter how strong the horizontal scroll, don't lose speed till it clicks
+       in place"): constant speed, never slower than --sd-speed, no ease-out — it holds its pace and stops dead on the
+       card. Without speed (keys, the progress bar) it eases in as before. */
+    const settle=(i,instant,speed)=>{
       const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
       if(instant||rm||!window.gsap)return place(to);
-      const o={v:pos};tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out',onUpdate:()=>place(o.v)});
+      const o={v:pos};
+      if(speed){const px=Math.abs(to-pos)*R,sp=Math.min(8,Math.max(num('--sd-speed')||1.6,speed));
+        tween=gsap.to(o,{v:to,duration:Math.max(.08,px/sp/1000),ease:'none',onUpdate:()=>place(o.v),onComplete:()=>{tween=null}});return}
+      tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out',onUpdate:()=>place(o.v)});
     };
     sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{
@@ -2043,7 +2049,7 @@ function makeJS() {
       if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');if(d.axis!=='x')return;
       const a=d.pts[0],b=d.pts[d.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);   // px per ms
       const near=Math.round(pos),pick=Math.round(pos-v*110/R);   // the nearest card; a real flick may carry one further
-      settle(Math.max(near-1,Math.min(near+1,pick)));suppress=true;setTimeout(()=>{suppress=false},0);
+      settle(Math.max(near-1,Math.min(near+1,pick)),false,Math.abs(v));suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
@@ -2067,9 +2073,17 @@ function makeJS() {
       bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
+    /* trackpad: the deck follows the fingers 1:1 until the push reaches 40px, then COMMITS to the next card and glides
+       there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
+       the wheel goes quiet, so it never drags the glide down. */
+    let wAcc=0,wFrom=0,wLock=false;
     sd.addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
-      place(edge(pos+e.deltaX/R));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(pos)),120);
+      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
+      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0},180);
+      if(wLock)return;
+      if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
+      wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
+      if(Math.abs(wAcc)>=40){wLock=true;settle(wFrom+Math.sign(wAcc),false,Math.abs(e.deltaX)/16)}
     },{passive:false});
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
