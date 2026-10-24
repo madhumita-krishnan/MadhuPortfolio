@@ -1022,6 +1022,16 @@ ${swipeTweaks()}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
    to jump straight there. Each segment's hit area is taller than its 3px line. */
+/* LAPTOPS (her 2026-10-23 correction): the demo IS the card. No navy square, no padding; each card keeps its own
+   media's shape (app.js sizes it: ~58% of the screen's height, at most 80% of its width, every demo's bottom edge on
+   one line), and the headline gets a wide measure 28px under it. Phones keep the square cards above. */
+@media (min-width:761px){
+  .scard{width:var(--w,40vw);height:var(--h,auto);margin:calc(var(--h,0px) / -2) 0 0 calc(var(--w,40vw) / -2);padding:0;background:none;border-radius:0;overflow:visible}
+  .scard-media{display:block;height:auto}
+  .scard-media>*,.scard-media .phone-media{width:100%;height:auto;max-width:none;max-height:none}
+  .scard-stack{border-radius:0 0 var(--r-media) var(--r-media);padding:24px;padding-top:64px}
+  .sdeck-title{width:min(100% - 32px,56vw);margin-top:28px;font-size:clamp(1.2rem,1.9vw,1.75rem)}
+}
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
@@ -1969,6 +1979,9 @@ function makeJS() {
     const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
+    /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
+       Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
+    const desk=matchMedia('(min-width:761px)');let dims=[],top=0,bot=0;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
@@ -1976,10 +1989,10 @@ function makeJS() {
       setTitle.t=setTimeout(()=>{fill(active);titleEl.classList.remove('swap')},130);
     };
     const place=v=>{
-      pos=v;const side=num('--side')||.5,cy=.51*H,top=.30*H,bot=.72*H;
+      pos=v;const side=num('--side')||.5;
       cards.forEach((c,i)=>{
-        const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot);
-        const x=Math.sign(t)*(a<=1?a*R:R+(a-1)*R2),y=lane+p*(cy-lane),sc=side+(1-side)*p;
+        const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
+        const x=Math.sign(t)*(a<=1?a*d.R:d.R+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
       });
       const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
@@ -1994,6 +2007,18 @@ function makeJS() {
       const ah=(num('--ah')||75)/100;S=Math.max(160,Math.min(W*(num('--aw')||73)/100,avail*ah));   // ~73% of the width, or 75% of the room
       H=S/ah;   // the stage the lanes live in: the active card fills ah of its height
       R=Math.max(.75*S+gap,W/2-peek+side*S/2);R2=side*S+gap;
+      dims=cards.map(()=>({R,cy:.51*H}));top=.30*H;bot=.72*H;
+      if(desk.matches){
+        /* the demo's height: ~58% of the screen, less if the stage (1.18 x it: room above for the top lane), the 28px
+           gap, the headline, the progress bar and the floating toggle (~100px with its margin) wouldn't all fit */
+        const Ht=Math.max(200,Math.min(innerHeight*.58,(innerHeight-th-28-bar.offsetHeight-100)/1.18)),cyB=.68*Ht;
+        let wMax=0;
+        dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
+          let w=Ht*ar,h=Ht;if(w>.8*W){w=.8*W;h=w/ar}wMax=Math.max(wMax,w);
+          c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:cyB+(Ht-h)/2}});   // bottoms aligned: the gap to the headline never changes
+        dims.forEach(d=>{d.R=Math.max(wMax/2+side*d.w/2+gap,W/2-peek+side*d.w/2)});
+        R=dims[0].R;R2=side*wMax+gap;H=1.18*Ht;top=cyB-.28*Ht;bot=cyB+.28*Ht;
+      }else cards.forEach(c=>{c.style.removeProperty('--w');c.style.removeProperty('--h')});
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       titleEl.style.minHeight=th+'px';place(pos);
     };
