@@ -2507,8 +2507,11 @@ function makeJS() {
     const tumble=still=>{
       const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect();
       const S=52,n=logos.length,x0=br.left-hr.left+br.width/2,y0=br.bottom-hr.top-6,floor=Math.max(cta.bottom-hr.top,y0+110);
-      const ps=logos.map((a,i)=>({a,x:x0,y:y0,vx:(i-(n-1)/2)*150+(Math.random()-.5)*50,vy:40+Math.random()*80,r:0,vr:(Math.random()<.5?-1:1)*(300+Math.random()*320),rest:false}));
-      if(still)ps.forEach((p,i)=>{p.x=x0+(i-(n-1)/2)*72;p.y=floor;p.rest=true});
+      /* EVENLY SPACED where they land (her ask): each icon owns a slot, 76px apart, centred under the cloud (kept on
+         screen); it's thrown toward its slot, tumbles and bounces, and once on the line steers into the slot and stops */
+      const gapX=S+24,c0=Math.max(S/2+8+(n-1)/2*gapX,Math.min(hr.width-S/2-8-(n-1)/2*gapX,x0));
+      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,x:x0,y:y0,tx,vx:(tx-x0)/.55,vy:40+i*25,r:0,vr:(i%2?-1:1)*(360+i*90),rest:false}});
+      if(still)ps.forEach(p=>{p.x=p.tx;p.y=floor;p.rest=true});
       const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
       paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
       /* her ask: "I want to be able to jump on top of the linkedin and the x logos": once they rest they are ground */
@@ -2520,8 +2523,8 @@ function makeJS() {
           const up=Math.round(p.r/360)*360;
           if(p.y>=floor){p.y=floor;
             if(p.vy>160){p.vy*=-.38;p.vx*=.6;p.vr*=.4}            // a bounce, smaller each time
-            else{p.vy=0;p.vx*=Math.pow(.004,dt);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: slide to a stop, stand upright
-              if(Math.abs(p.vx)<6&&Math.abs(up-p.r)<.6){p.r=up;p.rest=true}}}
+            else{p.vy=0;p.vx=0;p.x+=(p.tx-p.x)*Math.min(1,dt*9);p.r+=(up-p.r)*Math.min(1,dt*12);p.vr=0;   // on the line: settle into its slot, stand upright
+              if(Math.abs(p.tx-p.x)<.5&&Math.abs(up-p.r)<.6){p.x=p.tx;p.r=up;p.rest=true}}}
           else p.r+=p.vr*dt;}
         paint();if(moving)requestAnimationFrame(step);else{logos.forEach(a=>a.classList.add('rest'));dispatchEvent(new Event('mk-terrain'))}};
       requestAnimationFrame(step);

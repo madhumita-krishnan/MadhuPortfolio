@@ -377,12 +377,12 @@
     var apex = Math.min(fig.y, ty) - 110, up = fig.y - apex, dn = ty - apex;
     var T = Math.sqrt(2 * up / G) + Math.sqrt(2 * dn / G);
     fig.vy = -Math.sqrt(2 * G * up); fig.vx = (tx - fig.x) / T;
-    /* a real BACK tuck (her: "the jump on the cloud looks so weird" — it was one frozen tuck frame spun like a wheel):
-       she turns her back to the cloud and travels backwards onto it, playing her clay backflip frames across the
-       flight, the way a back tuck actually moves */
-    fig.dir = tx >= fig.x ? -1 : 1;
-    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true; fig.flip = null;
-    fig.boxJump = { at: performance.now(), T: T };
+    /* the spinning tuck flip, facing the cloud (her call: the clay backflip version was tried 2026-10-24 and "the jump on
+       the cloud used to be cooler" — this one) */
+    fig.dir = tx >= fig.x ? 1 : -1;
+    fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true;
+    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.88);
+    fig.boxJump = { at: performance.now() };
     start();
   });
   addEventListener('mk-terrain', queueRebuild, { passive: true });
@@ -945,8 +945,6 @@
         if (sp > 230) return { s: 'run-x3', k: Math.floor(CLAY.dist / 3) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
         return { s: 'walk-x3', k: Math.floor(CLAY.dist / 1.83) % 48 };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
-        if (fig.boxJump && fig.boxJump.T) { var bp = Math.min(1, (performance.now() - fig.boxJump.at) / 1000 / fig.boxJump.T);
-          return { s: 'backflip-x3', k: Math.min(17, Math.floor(bp * 18)), mid: true }; }   // the box jump: her backflip, start to finish over the arc
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
       case 'hang': {
