@@ -1061,7 +1061,7 @@
   function frame(now) {
     raf = 0;
     var dt = Math.min((now - last) / 1000, 0.05); last = now;
-    if (rmActive()) { cv.style.display = 'none'; return; }
+    if (rmActive()) { cv.style.display = ''; draw(now); return; }   // Reduce Motion: she stands still, but she's THERE
     if (!visible) return;
     advance(dt);
     draw(now);
@@ -1069,7 +1069,8 @@
     else if (CLAY.ready) requestAnimationFrame(function (t) { draw(t); });   // settle on the resting clay frame, not the last moving one
   }
   function start() {
-    if (!raf && !rmActive()) { cv.style.display = ''; last = performance.now(); raf = requestAnimationFrame(frame); }
+    if (rmActive()) { cv.style.display = ''; draw(performance.now()); return; }
+    if (!raf) { cv.style.display = ''; last = performance.now(); raf = requestAnimationFrame(frame); }
   }
 
   /* ------------------------------------------------------------------ ink rendering
@@ -1150,9 +1151,14 @@
           im.onload = im.onerror = function () { if (++n === total) done(); }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
         if (!total) done();
       }
-      loadSet(CORE.concat([CORE_FRAMES]), function () {
+      /* she APPEARS the moment her standing frame is in (one small file); everything else streams behind her, a frame
+         not yet arrived holding her last drawn one (clayFigure). Waiting for all 4.4MB of core motion first meant on a
+         phone over cellular she simply never showed up (her: "people report … doesn't show up on mobile") */
+      loadSet(['idle-wave-sign'], function () {
         CLAY.ready = true; draw(performance.now()); start();
-        loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0; }), function () {});
+        loadSet(CORE.slice(1).concat([CORE_FRAMES]), function () {
+          loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0; }), function () {});
+        });
       });
       /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
       if (m._smile) CLAY.img.smile = [].concat(m._smile).map(function (n) { var sm = new Image(); sm.src = dir + n + ver; return sm; });   // same box as idle-wave-sign-0, only the face differs

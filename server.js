@@ -68,6 +68,7 @@ function handleEdit(req, res) {
       const file = side ? path.join(ROOT, JSON.parse(fs.readFileSync(caseFile, 'utf8')).dir, side[1] === 'iter' ? 'iter/iterations.json' : 'clips/clips.json') : caseFile;
       const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
       const keys = side ? side[2].split('.') : keyPath.split('.');
+      if (keys.some(k => k === '__proto__' || k === 'constructor' || k === 'prototype')) throw new Error('bad path');   // no prototype pollution
       if (side && side[1] === 'clip') { const i = doc.findIndex(c => c.name === keys[0]); if (i < 0) throw new Error('no such clip: ' + keys[0]); keys[0] = String(i); }
       let o = doc;
       for (const k of keys.slice(0, -1)) { o = o[k]; if (o === null || typeof o !== 'object') throw new Error('no such path: ' + keyPath); }
@@ -162,7 +163,20 @@ function handleTweak(req, res) {
   });
 }
 
+/* the /__ dev endpoints write her data files, so they answer ONLY her own pages on this machine. The loopback check
+   in each handler isn't enough on its own: any website she has open can make HER browser POST here (a text/plain body
+   skips the CORS preflight) and DNS rebinding can point a foreign name at 127.0.0.1. So: the Host must be this
+   machine, and a browser's Origin / Sec-Fetch-Site (which pages can't forge) must say same-origin. */
+const devOnly = req => {
+  const host = req.headers.host || '', origin = req.headers.origin, site = req.headers['sec-fetch-site'];
+  if (!/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host)) return false;
+  if (origin && origin !== 'http://' + host) return false;
+  if (site && site !== 'same-origin' && site !== 'none') return false;
+  return true;
+};
+
 http.createServer((req, res) => {
+  if (req.url.startsWith('/__') && !devOnly(req)) { res.writeHead(403); return res.end('same-origin only'); }
   if (req.url === '/__tweak' && (req.method === 'POST' || req.method === 'GET')) return handleTweak(req, res);
   if (req.method === 'POST' && req.url === '/__edit') return handleEdit(req, res);
   if (req.method === 'POST' && req.url === '/__cursor') return handleCursor(req, res);

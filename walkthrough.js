@@ -1490,5 +1490,5 @@ if (/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)) {
 
 /* a #view-x link opens straight into that viewer — handy mid-presentation */
 const m = location.hash.match(/^#view-(.+)$/);
-if (m && V[m[1]]) { history.replaceState(null, '', location.pathname); open(m[1], null); }
+if (m && Object.prototype.hasOwnProperty.call(V, m[1])) { history.replaceState(null, '', location.pathname); open(m[1], null); }   // own views only, never #view-constructor
 })();`;

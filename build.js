@@ -849,7 +849,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 @media (prefers-reduced-motion:reduce){.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:none}}
 .hero>.jump-box.gone{visibility:hidden;pointer-events:none}
 .hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
-@media (max-width:760px){.hero>.jump-box{width:96px}}   /* on phones too (her ask 2026-10-24: "the cloud isn't on mobile"), sized to her smaller phone figure */
+@media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}   /* laptops only (her call 2026-10-24: "we don't need the jump thing on mobile") */
 @media (prefers-reduced-motion:reduce){.jb-art{animation:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
    handwriting wrote itself in word by word while the blooms, the headline and the two
@@ -2581,7 +2581,7 @@ function makeJS() {
      they come to rest standing upright on the line of the buttons, as ordinary links. If she can't jump (reduced
      motion, or she isn't there) the box simply opens. */
   const jb=document.querySelector('.hero>.jump-box');
-  if(jb){
+  if(jb&&matchMedia('(min-width:761px)').matches){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
     if(!rmActive()){heroEl.classList.add('cta-wait');window.__ctaSync&&__ctaSync()}   // say hey! waits for the pop (see .cta-wait)
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
