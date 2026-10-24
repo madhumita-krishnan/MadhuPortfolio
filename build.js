@@ -842,11 +842,11 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   opacity:0;transition:opacity 700ms var(--ease-standard) 1700ms}
 .hero.revealed>.jump-box{opacity:1}
 .jump-box:focus-visible{outline:2px solid var(--accent);outline-offset:6px;border-radius:16px}
-/* the clay piece (Flora, 2026-10-23: "I don't want it to look like a box. I want it to be blue"); "JUMP !" is set in
-   the site's sans over it (never painted into the art, and not her handwriting: her call) */
+/* the clay piece: a WHITE clay cloud that bobs (her call 2026-10-23, after a blue box, blue shapes and a blue cloud;
+   the Flora blue cloud re-inked white by its own shading). "jump!" is type laid over it, never painted into the art */
 .jb-art{position:relative;display:block;transform-origin:50% 100%;animation:jb-bob 2.8s ease-in-out infinite}
 .jb-img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
-.jb-word{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:700;font-size:17px;color:#1f3266;letter-spacing:.08em;pointer-events:none}   /* not her handwriting (her ask) */
+.jb-word{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;font-family:var(--font-body);font-weight:600;font-size:19px;color:#151a2b;letter-spacing:.01em;pointer-events:none}   /* "jump!" set like the say hey! button (not her handwriting) */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
 .jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
@@ -2820,7 +2820,7 @@ function renderHome() {
        tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
        LinkedIn / Twitter / X links, so adding one there adds it here. -->
   <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
-    <span class="jb-art" aria-hidden="true"><img class="jb-img" src="assets/clay/props/jump.png?v=${BUILD_V}" alt="" draggable="false"><span class="jb-word">JUMP !</span></span>
+    <span class="jb-art" aria-hidden="true"><img class="jb-img" src="assets/clay/props/jump.png?v=${BUILD_V}" alt="" draggable="false"><span class="jb-word">jump!</span></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
