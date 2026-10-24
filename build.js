@@ -967,8 +967,9 @@ ${swipeTweaks()}
 .work-sec[data-view="deck"] .view-list,.work-sec[data-view="list"] .view-deck{display:none}
 .work-sec[data-view="list"] .view-list{margin-top:calc(var(--space)*6)}
 /* the toggle's dock: sticky to the bottom of the screen while the work section is on screen, so it is always
-   in reach; it comes to rest at the end of the section */
-.view-dock{position:sticky;bottom:16px;z-index:20;display:flex;justify-content:center;margin-top:calc(var(--space)*4);pointer-events:none}
+   in reach; it comes to rest at the end of the section. z-index 45 keeps it ABOVE the phone's bottom edge-fade
+   haze (40), which was blurring it (her: "the toggle at the bottom is hidden behind a haze") */
+.view-dock{position:sticky;bottom:16px;z-index:45;display:flex;justify-content:center;margin-top:calc(var(--space)*4);pointer-events:none}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
@@ -1067,6 +1068,12 @@ ${swipeTweaks()}
   #work .wproject .w-outcome{font-size:clamp(1.15rem,5vw,1.4rem);line-height:1.3}
   #work .wproject .w-tags,#work .wproject .w-stack{display:none}
   #work .wproject .w-chiprow{margin-top:calc(var(--space)*1.5)}
+  /* paging back UP shows where you are (her ask: "when you scroll up, Selected Projects should show"): the section
+     head pins to the top and slides in on the way up, tucks away on the way down. Above the top haze. */
+  .work-sec[data-view="list"] .work-head{position:sticky;top:78px;z-index:45;padding:10px 0 16px;margin:0;   /* sits just under the nav, which also comes back on the way up */
+    background:linear-gradient(var(--bg-base) 72%,rgba(15,16,19,0));transform:translateY(-110%);transition:transform 260ms var(--ease-standard)}
+  .work-sec[data-view="list"] .work-head.peek{transform:none}
+  .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
 }
 .project-media-wrap{display:flex;justify-content:center}
 
@@ -1848,7 +1855,7 @@ function makeJS() {
     let navY=scrollY,navUp=0,navHover=false;
     addEventListener('scroll',()=>{const y=scrollY,d=y-navY;navY=y;
       if(d>0){navUp=0;if(y>140&&!navHover&&!navW.contains(document.activeElement))navW.classList.add('nav-hidden')}
-      else{navUp-=d;if((navUp>40&&!document.documentElement.classList.contains('reels-on'))||y<140)navW.classList.remove('nav-hidden')}},{passive:true});   // paging the phone Reels never calls the nav back
+      else{navUp-=d;if(navUp>40||y<140)navW.classList.remove('nav-hidden')}},{passive:true});   // scrolling up always brings it back (her ask), Reels included
     /* only a real mouse near the top reveals it: phones send a mousemove with every tap, which kept popping it up */
     if(matchMedia('(hover:hover) and (pointer:fine)').matches)addEventListener('mousemove',e=>{const near=e.clientY<90;if(near===navHover)return;navHover=near;if(near)navW.classList.remove('nav-hidden')},{passive:true});
     navW.addEventListener('focusin',()=>navW.classList.remove('nav-hidden'));
@@ -2048,7 +2055,7 @@ function makeJS() {
      layout positions (offsetTop), which the GSAP focus effect doesn't shift. */
   if(phoneList.matches&&cardsM.length){
     const workSec=document.getElementById('work'),root=document.documentElement;let inMid=false;
-    const sync=()=>root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');
+    const sync=()=>{root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');if(!inMid){const h=workSec.querySelector('.work-head');h&&h.classList.remove('peek')}};
     new IntersectionObserver(es=>es.forEach(e=>{inMid=e.isIntersecting;sync()}),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
     addEventListener('mk-work-view',sync);
     const docTop=e=>{let t=0;while(e){t+=e.offsetTop;e=e.offsetParent}return t};
@@ -2072,7 +2079,9 @@ function makeJS() {
       jump(t0.s-dy);t0.pts.push([e.timeStamp,y]);if(t0.pts.length>6)t0.pts.shift();
     },{passive:false});
     /* the click: a short, decisive ease onto the project (power2.out, ~0.32s), never past it */
+    const head=workSec.querySelector('.work-head');let at=0;
     const glideTo=i=>{const go=Math.max(0,Math.min(cardsM.length-1,i)),o={y:scrollY},to=aim(go);if(glide)glide.kill();
+      if(head){if(go<at)head.classList.add('peek');else if(go>at)head.classList.remove('peek')}at=go;   // up = show the title, down = tuck it
       if(rmActive()||!window.gsap)return jump(to);glide=gsap.to(o,{y:to,duration:.32,ease:'power2.out',onUpdate:()=>jump(o.y)})};
     const release=()=>{
       if(!t0||!t0.own||t0.done){t0=null;return}const a=t0.pts[0],b=t0.pts[t0.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);
