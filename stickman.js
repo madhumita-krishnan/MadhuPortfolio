@@ -252,7 +252,16 @@
       var e = walkEdge(fig.x, fig.y, fig.dir), room = e == null ? (fig.dir > 0 ? W - 10 - fig.x : fig.x - 10) : Math.abs(e - fig.x) - 14;
       c.x0 = fig.x; c.D = Math.max(0, Math.min(CLAY.H * 1.05, room));
     }
-    var u = Math.max(0, Math.min(1, (c.t - .18) / .64)), sm = u * u * (3 - 2 * u), nx = c.x0 + fig.dir * c.D * sm;
+    /* the torso's travel follows the frames, so her FEET stay planted: tipping in, it moves only as far as the tilt
+       carries it over the planted feet; across the hands-down frames it goes steadily; landing, it eases in over the
+       feet that have touched down ahead */
+    var T = function (a) { return Math.sin(Math.abs(a)) * CLAY.H * .5 * .85; }, n = CW_SEQ.length, M = T(.7);
+    var a = CW_SEQ.findIndex(function (e) { return e[0] === CW_50; }), b = n - 1 - CW_SEQ.slice().reverse().findIndex(function (e) { return e[0] === CW_50; });
+    var at = function (j) { var e = CW_SEQ[Math.max(0, Math.min(n - 1, j))];
+      if (e[3] > 0) return T(e[3]); if (e[3] < 0) return c.D - T(e[3]);
+      if (j < a) return 0; if (j > b) return c.D;
+      return M + (c.D - 2 * M) * (j - a) / Math.max(1, b - a); };
+    var f = Math.min(n - 1.001, c.t * n), j = Math.floor(f), nx = c.x0 + fig.dir * Math.max(0, at(j) + (at(j + 1) - at(j)) * (f - j));
     var gy = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
     if (gy != null && gy >= fig.y - STEP_UP - .5 && gy <= fig.y + STEP_DOWN + .5) { fig.x = nx; fig.y = gy; }
   }
@@ -379,7 +388,7 @@
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
     fig.target = null; fig.waypoint = null; fig.vx = 0;
     var name = CELEBS[fig.celebIdx % CELEBS.length];
-    fig.celeb = { name: name, t: 0, dur: { star: 1.1, backflip: 1.0, dance: 1.5, cartwheel: 1.15, bow: 1.2 }[name] };
+    fig.celeb = { name: name, t: 0, dur: { star: 1.1, backflip: 1.0, dance: 1.5, cartwheel: 1.45, bow: 1.2 }[name] };
     fig.celebIdx++;
     fig.state = 'celeb';
     start();
@@ -1170,7 +1179,11 @@
       loadSet(['idle-wave-sign'], function () {
         CLAY.ready = true; draw(performance.now()); start();
         loadSet(CORE.slice(1).concat([CORE_FRAMES]), function () {
-          loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0; }), function () {});
+          /* the rest: what a click shows first (the celebrations) goes first; the dance is out of the rotation, so its
+             frames are never fetched at all */
+          var FIRST = ['cartwheel-x3', 'cartwheel-50', 'star-bow-x3', 'backflip-x3'];
+          loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0 && k.indexOf('dance') !== 0; })
+            .sort(function (x, y) { return (FIRST.indexOf(x) < 0 ? 9 : FIRST.indexOf(x)) - (FIRST.indexOf(y) < 0 ? 9 : FIRST.indexOf(y)); }), function () {});
         });
       });
       /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
@@ -1187,7 +1200,24 @@
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
   /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
      lifted; rot in radians about the anchor; flip mirrors on top of dir */
-  var CW_SEQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 18, 19, 19].concat([11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(function (k) { return -k - 1; }));   // negative: that frame mirrored
+  /* [sheet, frame, mirrored, tilt]: the cartwheel, built so it makes sense (her: "how can we do a cartwheel if after we
+     bring our hands up we bring them both down and then suddenly we're upside down", and "there used to be more
+     frames"). Arms go UP and stay up: her arms-up frame (x3) TIPS over (tilt, radians toward the way she travels),
+     then the 50-frame set's hand frames, one hand, past vertical, handstand (cartwheel-50, exported at half size so
+     it matches her standing scale); then all of it mirrored and backwards: the other hand, legs over, feet down on
+     the far side, tipping back up arms-up. Left out on purpose, both sets drop her back onto a FOOT mid-roll
+     (x3 12-15, 50-set 14-15), lower her arms before the hands go down (x3 2-7, 50-set 8), and swing the legs back
+     the way they came after the handstand. */
+  var CW_X3 = 'cartwheel-x3', CW_50 = 'cartwheel-50', CW_ZOOM = { 'cartwheel-x3': .85, 'cartwheel-50': 1 };
+  var CW_SEQ = (function () {
+    var tilts = [.1, .22, .34, .46, .58, .7], hands = [1, 2, 3, 4, 5, 8, 9, 10], top = [11, 12, 13, 14, 15, 16, 17];
+    var s = [[CW_X3, 0, 0, 0], [CW_X3, 1, 0, 0]];
+    tilts.forEach(function (t) { s.push([CW_X3, 1, 0, t]); });
+    hands.concat(top).forEach(function (k) { s.push([CW_50, k, 0, 0]); });
+    hands.slice().reverse().forEach(function (k) { s.push([CW_50, k, 1, 0]); });
+    tilts.slice().reverse().forEach(function (t) { s.push([CW_X3, 1, 1, -t]); });
+    return s.concat([[CW_X3, 1, 1, 0], [CW_X3, 0, 1, 0]]);
+  })();
   var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
@@ -1235,7 +1265,8 @@
              handstand) and its MIRROR played backwards: foot, hand, other hand, foot, foot, travelling one way. The
              clip was cut ~1.18x bigger than her standing frame, hence the zoom. */
           case 'cartwheel': { var cw = CW_SEQ[Math.min(CW_SEQ.length - 1, Math.floor(ct * CW_SEQ.length))];
-            return { s: 'cartwheel-x3', k: cw < 0 ? -cw - 1 : cw, flip: cw < 0, zoom: .85 }; }
+            if (!CLAY.man[cw[0]]) cw = [CW_X3, 0, 0, 0];   // (clay.json without the 50-set: hold her arms-up frame)
+            return { s: cw[0], k: cw[1], flip: !!cw[2], tilt: cw[3], zoom: CW_ZOOM[cw[0]] }; }
           case 'bow': return { s: 'star-bow-x3', k: [9, 10, 11, 12, 12, 12, 11, 10, 13, 14][Math.min(9, Math.floor(ct * 10))] };
         }
         return { s: 'idle-wave-sign', k: 0 }; }
@@ -1267,7 +1298,12 @@
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
     else if (pk.mid) { ctx.translate(px, groundY - CLAY.H * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5); }
-    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); var zf = pk.zoom || 1; ctx.scale(sc * d * zf, sc * zf); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
+    else { var zf = pk.zoom || 1;
+      /* a cartwheel TILT pivots on her feet but keeps her torso where the other frames put it (on px), so tipping over
+         and the hands-down frames that follow line up: the feet sit behind (or, landing, ahead of) the torso */
+      var tOff = pk.tilt ? Math.sin(pk.tilt) * CLAY.H * .5 * zf * dir : 0;
+      ctx.translate(px - tOff, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); if (pk.tilt) ctx.rotate(pk.tilt * dir);
+      ctx.scale(sc * d * zf, sc * zf); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
   }
