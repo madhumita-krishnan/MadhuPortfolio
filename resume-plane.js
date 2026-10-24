@@ -37,10 +37,12 @@
       '.rz-sheet.on{visibility:visible}' +
       '.rz-sheet img{display:block;width:min(880px,100%);height:auto;margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}' +
       '.rz-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px clamp(16px,4vw,56px);background:linear-gradient(#0f1013 55%,rgba(15,16,19,0))}' +
-      '.rz-x{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid rgba(169,196,245,.45);background:rgba(15,16,19,.6);color:#e9eaee}' +
-      '.rz-x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}' +
-      '.rz-dl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font:500 14px/1 "Plus Jakarta Sans",system-ui,sans-serif;height:36px;padding:0 14px 1px 12px;border-radius:999px;background:#fff;color:#111;text-decoration:none}' +
-      '.rz-dl svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+      /* = walkthrough.js .arrow-btn + .ic */
+      '.rz-ib{flex:none;width:44px;height:44px;padding:0;border-radius:50%;border:1px solid #2a2f3a;display:grid;place-items:center;background:rgba(15,16,19,.75);color:#e9eaee;transition:border-color .2s,transform .3s cubic-bezier(.2,.7,.2,1)}' +
+      '.rz-ib:hover{border-color:#5a6070;transform:scale(1.06)}.rz-ib:active{transform:scale(.94)}' +
+      '.rz-ib svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}' +
+      '.rz-acts{display:flex;align-items:center;gap:10px}' +
+      '.rz-toast{font:300 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;color:#9aa0ad;opacity:0;transition:opacity .25s ease;white-space:nowrap}.rz-toast.on{opacity:1}' +
       '.rz-bar :focus{outline:none}.rz-bar :focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}' +
       /* her throw, standing in for her, and the flying plane: above the page, below the resume layer */
       '.rz-her{position:fixed;z-index:2147482990;pointer-events:none;background-repeat:no-repeat}' +
@@ -51,14 +53,27 @@
     css();
     el = document.createElement('div');
     el.className = 'rz'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Resume');
-    /* one quiet bar (her: "this ui is super clunky"): a small ✕ on the left, one compact download pill on the right */
+    /* the bar in the site's own controls (her: "the buttons here don't feel like they work in my design system … just use
+       the download and share and copy icons"): the walkthrough pages' round arrow-buttons and line icons. Back on the
+       left; download, share (where the device has a share sheet) and copy-link on the right. */
+    var ic = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>'; };
     el.innerHTML = '<div class="rz-flash"></div><div class="rz-sheet"><div class="rz-bar">' +
-      '<button class="rz-x" type="button" aria-label="Close the resume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button>' +
-      '<a class="rz-dl" href="' + PDF + '" download="Madhumita-Krishnan-Resume.pdf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 V15 M7 10 L12 15 L17 10 M5 20 H19"/></svg>PDF</a></div>' +
+      '<button class="rz-ib rz-x" type="button" aria-label="Back">' + ic('M19 12 L5 12 M11 6 L5 12 L11 18') + '</button>' +
+      '<span class="rz-acts"><span class="rz-toast" role="status" aria-live="polite"></span>' +
+      '<a class="rz-ib" href="' + PDF + '" download="Madhumita-Krishnan-Resume.pdf" aria-label="Download the resume">' + ic('M12 4 L12 15 M7 10 L12 15 L17 10 M5 19.5 L19 19.5') + '</a>' +
+      (navigator.share ? '<button class="rz-ib rz-share" type="button" aria-label="Share the resume">' + ic('M12 3.5 L12 14 M8 7.5 L12 3.5 L16 7.5 M8.5 10.5 L6.5 10.5 L6.5 20 L17.5 20 L17.5 10.5 L15.5 10.5') + '</button>' : '') +
+      '<button class="rz-ib rz-copy" type="button" aria-label="Copy the link to the resume">' + ic('M9 9 L19 9 L19 20 L9 20 Z M15 9 L15 5 L5 5 L5 16 L9 16') + '</button></span></div>' +
       '<img alt="Madhumita Krishnan, resume" src="' + PAGE + '"></div>';
     document.body.appendChild(el);
     flash = el.querySelector('.rz-flash'); sheet = el.querySelector('.rz-sheet');
     el.querySelector('.rz-x').addEventListener('click', close);
+    var url = new URL('assets/resume.pdf', base || location.href).href, toast = el.querySelector('.rz-toast');
+    var say = function (t) { toast.textContent = t; toast.classList.add('on'); clearTimeout(say.t); say.t = setTimeout(function () { toast.classList.remove('on'); }, 1600); };
+    var sh = el.querySelector('.rz-share');
+    if (sh) sh.addEventListener('click', function () { navigator.share({ title: 'Madhumita Krishnan, resume', url: url }).catch(function () {}); });
+    el.querySelector('.rz-copy').addEventListener('click', function () {
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { say('Link copied'); }, function () { say(url); });
+    });
     sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });   // the dark around the page
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && el.classList.contains('on')) close(); });
     new Image().src = THROW; new Image().src = PLANE;   // warm both
@@ -103,7 +118,8 @@
       'background-image:url("' + THROW + '");background-size:' + (SP.cols * w) + 'px auto';
     document.body.appendChild(d);
     window.__stick.hide(true);
-    var i = 8, show = function () {   // from frame 8: the clip opens with her just holding the page d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
+    /* from frame 8: the clip opens with her just holding the page */
+    var i = 8, show = function () { d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
     show();
     var iv = setInterval(function () {
       i++;
