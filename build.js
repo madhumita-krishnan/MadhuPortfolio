@@ -886,6 +886,9 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    line; she called the spacing "insane", so the hero keeps its own rhythm and her legs simply dangle in front */
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
+/* (her ask 2026-10-24) on laptops the hero's say hey! waits for the cloud: it loads in once she has popped it, as the
+   icons come down onto its line. Until then the nav's own say hey! stays out (app.js holds hero-cta-on off). */
+.hero.cta-wait .hero-cta-row{opacity:0;transform:translateY(14px);visibility:hidden;pointer-events:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
    (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
    because she asked to keep it for the word portfolio. */
@@ -1950,7 +1953,9 @@ function makeJS() {
     const bar=document.querySelector('nav.bar'),wm=bar&&bar.querySelector('.wordmark'),lk=bar&&bar.querySelector('.nav-links');
     const fit=()=>{if(bar&&wm&&lk)bar.style.setProperty('--nav-compact',Math.ceil(wm.offsetWidth+lk.scrollWidth+20+6+44)+'px')};   // padding + gap + air
     fit();addEventListener('resize',fit,{passive:true});document.fonts&&document.fonts.ready.then(fit);
-    new IntersectionObserver(es=>es.forEach(e=>document.body.classList.toggle('hero-cta-on',e.isIntersecting))).observe(heroSay);
+    let seen=false;const hero=heroSay.closest('.hero');
+    const sync=window.__ctaSync=()=>document.body.classList.toggle('hero-cta-on',seen&&!hero.classList.contains('cta-wait'));   // a waiting say hey! doesn't count
+    new IntersectionObserver(es=>es.forEach(e=>{seen=e.isIntersecting;sync()})).observe(heroSay);
   }
 
   /* the nav hides on the way down and comes back on the way up — the same rules as the walkthrough
@@ -2576,6 +2581,7 @@ function makeJS() {
   const jb=document.querySelector('.hero>.jump-box');
   if(jb&&matchMedia('(min-width:761px)').matches){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
+    if(!rmActive()){heroEl.classList.add('cta-wait');window.__ctaSync&&__ctaSync()}   // say hey! waits for the pop (see .cta-wait)
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
       /* IN THE SKY to the right of the name (her: lower to jump onto, then higher for balance, then "a better place
          visually"): centred in the open space between the end of the copy and the hero's right edge, in line with
@@ -2645,6 +2651,7 @@ function makeJS() {
       if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
       /* the instant she hits: the cloud bursts, and the icons are flung up out of it a beat later */
       dissolve(still);setTimeout(()=>tumble(still),still?0:70);
+      heroEl.classList.remove('cta-wait');setTimeout(()=>window.__ctaSync&&__ctaSync(),1350);   // say hey! loads in (its 1.35s reveal delay), then the nav's steps aside
       };   // once popped it stays gone until the page loads again (her call 2026-10-24; the re-forming cloud was tried)
     /* THE CLOUD COMES BACK (her: "I'm not able to get the person to do the tuck jump slam" — after one go it was gone for
        the visit): ~4s after it bursts, the icons tuck back away and the cloud re-forms in its spot with a clay pop, ready
