@@ -244,6 +244,18 @@
      strides over glyph gaps — until it truly ends WITH a drop below. An ascender is a
      bump, not an edge: falling at one just lands you back at the same height, which is
      exactly the dithering loop this function exists to avoid. */
+  /* THE CARTWHEEL TRAVELS (her: "the person doesn't move forward in the direction that they cartwheel"): about one
+     body length the way she faces, eased, the feet riding the surface; never past an edge or out of the hero */
+  function cartwheelTravel() {
+    var c = fig.celeb;
+    if (c.x0 == null) {
+      var e = walkEdge(fig.x, fig.y, fig.dir), room = e == null ? (fig.dir > 0 ? W - 10 - fig.x : fig.x - 10) : Math.abs(e - fig.x) - 14;
+      c.x0 = fig.x; c.D = Math.max(0, Math.min(CLAY.H * 1.05, room));
+    }
+    var u = Math.max(0, Math.min(1, (c.t - .18) / .64)), sm = u * u * (3 - 2 * u), nx = c.x0 + fig.dir * c.D * sm;
+    var gy = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
+    if (gy != null && gy >= fig.y - STEP_UP - .5 && gy <= fig.y + STEP_DOWN + .5) { fig.x = nx; fig.y = gy; }
+  }
   function walkEdge(x0, y0, dir) {
     var y = y0;
     for (var n = 3; n < 500; n += 3) {
@@ -367,7 +379,7 @@
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
     fig.target = null; fig.waypoint = null; fig.vx = 0;
     var name = CELEBS[fig.celebIdx % CELEBS.length];
-    fig.celeb = { name: name, t: 0, dur: { star: 1.1, backflip: 1.0, dance: 1.5, cartwheel: 1.0, bow: 1.2 }[name] };
+    fig.celeb = { name: name, t: 0, dur: { star: 1.1, backflip: 1.0, dance: 1.5, cartwheel: 1.15, bow: 1.2 }[name] };
     fig.celebIdx++;
     fig.state = 'celeb';
     start();
@@ -1050,6 +1062,7 @@
     else if (fig.state === 'mantle') tickMantle(dt);
     else if (fig.state === 'celeb') {
       fig.celeb.t += dt / fig.celeb.dur;
+      if (fig.celeb.name === 'cartwheel') cartwheelTravel();
       if (fig.celeb.t >= 1) { fig.celeb = null; fig.state = 'idle'; }
     }
     else if (fig.state === 'wave') {
@@ -1174,6 +1187,7 @@
   function timedAt(list, t) { var tot = 0, i; for (i = 0; i < list.length; i++) tot += list[i][1]; var x = Math.min(t, tot - 1e-6); for (i = 0; i < list.length; i++) { if (x < list[i][1]) return list[i][0]; x -= list[i][1]; } return list[list.length - 1][0]; }
   /* which clay frame, how it is anchored: feet on the ground (default), hands on a grip, or
      lifted; rot in radians about the anchor; flip mirrors on top of dir */
+  var CW_SEQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 18, 19, 19].concat([11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(function (k) { return -k - 1; }));   // negative: that frame mirrored
   var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
@@ -1215,7 +1229,13 @@
           case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
           case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: Math.sin(Math.PI * ct) * .5 };
           case 'dance': return { s: 'dance-x3', k: Math.min(47, Math.floor(ct * 48)) };
-          case 'cartwheel': { var cn = CLAY.man['cartwheel-x3'].length; return { s: 'cartwheel-x3', k: Math.min(cn - 1, Math.floor(ct * cn)) }; }   // 45 frames (3x the old 15), one roll
+          /* (2026-10-24, her: "glitchy … at one point she's already on one hand but the next image has her back on her
+             foot"): the clip's frames 12-15 drop her back onto a foot, and its second half swings the legs back the
+             way they came. So the cartwheel is built from the coherent first half only (stand, lean, one hand,
+             handstand) and its MIRROR played backwards: foot, hand, other hand, foot, foot, travelling one way. The
+             clip was cut ~1.18x bigger than her standing frame, hence the zoom. */
+          case 'cartwheel': { var cw = CW_SEQ[Math.min(CW_SEQ.length - 1, Math.floor(ct * CW_SEQ.length))];
+            return { s: 'cartwheel-x3', k: cw < 0 ? -cw - 1 : cw, flip: cw < 0, zoom: .85 }; }
           case 'bow': return { s: 'star-bow-x3', k: [9, 10, 11, 12, 12, 12, 11, 10, 13, 14][Math.min(9, Math.floor(ct * 10))] };
         }
         return { s: 'idle-wave-sign', k: 0 }; }
@@ -1247,7 +1267,7 @@
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
     else if (pk.mid) { ctx.translate(px, groundY - CLAY.H * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5); }
-    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
+    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); var zf = pk.zoom || 1; ctx.scale(sc * d * zf, sc * zf); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
   }
