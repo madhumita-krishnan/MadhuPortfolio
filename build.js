@@ -1098,7 +1098,7 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
    left-to-right ripple while the line is hovered, focused or being scrubbed (a finger down on a phone). A tap on a tile
    is a tap on its dash, so the bar's own pointer handling takes it there. The pad below the line keeps the hover alive
    across the gaps between tiles. Real marks where she has them, else the initial on a quiet tile (site.json icon / mark). */
-.sdeck-progress{position:relative}
+.sdeck-progress{position:relative;margin-bottom:50px}   /* room for the tiles: .sdeck clips its overflow (her: "logos … are getting cut off") */
 .sdeck-progress button{position:relative;z-index:1}
 .sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;top:100%;height:56px}
 .sd-ico{position:absolute;left:50%;top:calc(100% - 4px);width:min(40px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
@@ -2590,7 +2590,7 @@ function makeJS() {
          "Hi, I'm Madhu" (her ask 2026-10-24: its middle on the name's middle). The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
          the icons it drops have a long fall to the say-hey line */
       /* (her ask 2026-10-24: "right after Madhu") tucked just past the end of the name, not out in the open sky */
-      const x=Math.min(t.right-hr.left+60,hr.width-jb.offsetWidth-24),   // 60: "a little to the right" (her ask, was 28)
+      const x=Math.min(t.right-hr.left+100,hr.width-jb.offsetWidth-24),   // 100: "a little more to the right" (her asks: 28 → 60 → 100)
         
         y=t.top-hr.top-new DOMMatrix(getComputedStyle(heroEl.querySelector('h1')).transform).m42+t.height/2-jb.offsetHeight/2;   // minus the headline's rise, so it's measured where it lands
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
