@@ -177,7 +177,8 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
 const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'tweaks.json'), 'utf8')); } catch (e) { return {}; } })();
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
-  const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg' };
+  const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg',
+    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease', speed: '--sd-speed' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
@@ -1054,6 +1055,16 @@ ${swipeTweaks()}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
    to jump straight there. Each segment's hit area is taller than its 3px line. */
+/* LAPTOPS (her 2026-10-23 correction): the demo IS the card. No navy square, no padding; each card keeps its own
+   media's shape (app.js sizes it: ~58% of the screen's height, at most 80% of its width, every demo's bottom edge on
+   one line), and the headline gets a wide measure 28px under it. Phones keep the square cards above. */
+@media (min-width:761px){
+  .scard{width:var(--w,40vw);height:var(--h,auto);margin:calc(var(--h,0px) / -2) 0 0 calc(var(--w,40vw) / -2);padding:0;background:none;border-radius:0;overflow:visible}
+  .scard-media{display:block;height:auto}
+  .scard-media>*,.scard-media .phone-media{width:100%;height:auto;max-width:none;max-height:none}
+  .scard-stack{border-radius:0 0 var(--r-media) var(--r-media);padding:24px;padding-top:64px}
+  .sdeck-title{width:min(100% - 32px,calc(var(--sd-tw,56) * 1vw));margin-top:calc(var(--sd-tgap,28) * 1px);font-size:clamp(1.2rem,1.9vw,1.75rem)}
+}
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
@@ -2004,6 +2015,9 @@ function makeJS() {
     const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
+    /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
+       Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
+    const desk=matchMedia('(min-width:761px)');let dims=[],top=0,bot=0;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
@@ -2011,10 +2025,10 @@ function makeJS() {
       setTitle.t=setTimeout(()=>{fill(active);titleEl.classList.remove('swap')},130);
     };
     const place=v=>{
-      pos=v;const side=num('--side')||.5,cy=.51*H,top=.30*H,bot=.72*H;
+      pos=v;const side=num('--side')||.5;
       cards.forEach((c,i)=>{
-        const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot);
-        const x=Math.sign(t)*(a<=1?a*R:R+(a-1)*R2),y=lane+p*(cy-lane),sc=side+(1-side)*p;
+        const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
+        const x=Math.sign(t)*(a<=1?a*d.R:d.R+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
       });
       const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
@@ -2029,14 +2043,36 @@ function makeJS() {
       const ah=(num('--ah')||75)/100;S=Math.max(160,Math.min(W*(num('--aw')||73)/100,avail*ah));   // ~73% of the width, or 75% of the room
       H=S/ah;   // the stage the lanes live in: the active card fills ah of its height
       R=Math.max(.75*S+gap,W/2-peek+side*S/2);R2=side*S+gap;
+      dims=cards.map(()=>({R,cy:.51*H}));top=.30*H;bot=.72*H;
+      if(desk.matches){
+        /* the demo's height: ~58% of the screen, less if the stage (1.18 x it: room above for the top lane), the 28px
+           gap, the headline, the progress bar and the floating toggle (~100px with its margin) wouldn't all fit */
+        /* dials (studies/tweaker-swipe/): demo height dh% of the screen, max width dw%, lanes ±lane x the demo height
+           from its centre, headline tgap px under it */
+        const dh=(num('--sd-dh')||58)/100,dw=(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?.28:ln,tgap=num('--sd-tgap'),tg=isNaN(tgap)?28:tgap;
+        const above=Math.max(.18,lane+side/2-.5),room=above+1;   // stage = room above the demo (the top lane's card must fit) + the demo
+        const cyF=above+.5,Ht=Math.max(200,Math.min(innerHeight*dh,(innerHeight-th-tg-bar.offsetHeight-100)/room)),cyB=cyF*Ht;
+        let wMax=0;
+        dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
+          let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
+          c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:cyB+(Ht-h)/2}});   // bottoms aligned: the gap to the headline never changes
+        dims.forEach(d=>{d.R=Math.max(wMax/2+side*d.w/2+gap,W/2-peek+side*d.w/2)});
+        R=dims[0].R;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
+      }else cards.forEach(c=>{c.style.removeProperty('--w');c.style.removeProperty('--h')});
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       titleEl.style.minHeight=th+'px';place(pos);
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
-    const settle=(i,instant)=>{
+    /* speed (px/ms) = a GLIDE (her ask: "no matter how strong the horizontal scroll, don't lose speed till it clicks
+       in place"): constant speed, never slower than --sd-speed, no ease-out — it holds its pace and stops dead on the
+       card. Without speed (keys, the progress bar) it eases in as before. */
+    const settle=(i,instant,speed)=>{
       const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
       if(instant||rm||!window.gsap)return place(to);
-      const o={v:pos};tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:'power3.out',onUpdate:()=>place(o.v)});
+      const o={v:pos};
+      if(speed){const px=Math.abs(to-pos)*R,sp=Math.min(8,Math.max(num('--sd-speed')||1.6,speed));
+        tween=gsap.to(o,{v:to,duration:Math.max(.08,px/sp/1000),ease:'none',onUpdate:()=>place(o.v),onComplete:()=>{tween=null}});return}
+      tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out',onUpdate:()=>place(o.v)});
     };
     sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{
@@ -2048,7 +2084,7 @@ function makeJS() {
       if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');if(d.axis!=='x')return;
       const a=d.pts[0],b=d.pts[d.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);   // px per ms
       const near=Math.round(pos),pick=Math.round(pos-v*110/R);   // the nearest card; a real flick may carry one further
-      settle(Math.max(near-1,Math.min(near+1,pick)));suppress=true;setTimeout(()=>{suppress=false},0);
+      settle(Math.max(near-1,Math.min(near+1,pick)),false,Math.abs(v));suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
@@ -2072,9 +2108,17 @@ function makeJS() {
       bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
+    /* trackpad: the deck follows the fingers 1:1 until the push reaches 40px, then COMMITS to the next card and glides
+       there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
+       the wheel goes quiet, so it never drags the glide down. */
+    let wAcc=0,wFrom=0,wLock=false;
     sd.addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
-      place(edge(pos+e.deltaX/R));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(pos)),120);
+      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
+      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0},180);
+      if(wLock)return;
+      if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
+      wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
+      if(Math.abs(wAcc)>=40){wLock=true;settle(wFrom+Math.sign(wAcc),false,Math.abs(e.deltaX)/16)}
     },{passive:false});
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
