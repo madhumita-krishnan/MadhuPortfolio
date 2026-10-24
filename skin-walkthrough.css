@@ -47,7 +47,7 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 .stat-card.glass{background:var(--bg-raised);border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .stat-value{font-weight:600;letter-spacing:-.02em}
 .cs-title,.cs-heading{color:var(--ink-blue);font-weight:600;letter-spacing:-.02em}
-.footer .wordmark,footer .wordmark{font-family:'Cormorant Garamond',Georgia,serif}
+footer .foot-mark{font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink-blue);font-size:1.55rem;letter-spacing:.02em;white-space:nowrap}   /* the same M--K as the nav's (it had been left in the body sans) */
 @media (max-width:520px){nav.bar .btn.sm{font-size:.9rem;padding:0 16px;min-height:38px}.nav-links a{font-size:.9rem;padding-left:10px;padding-right:10px}.wordmark{margin-right:0}}
 
 /* THE NAV, REIMAGINED (2026-10-24, her pick #1 from the Flora concept board): NO BAR. M--K at the far left, the links as
