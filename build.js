@@ -741,6 +741,14 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      and a hover-dim state is allowed to sit lighter than a control outline is. */
   .hero-line:hover span.hs{color:var(--hero-hush)}
   .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
+  /* 2026-10-23 "make everything else dimmer so it's the only thing with the highest contrast on the page": the
+     line under the cursor lifts above the page and throws a page-sized shadow in the page's own colour, which
+     dims everything else at once without touching anyone's opacity or transitions */
+  .hero-line span.hs{position:relative;z-index:0;border-radius:12px;box-shadow:0 0 0 100vmax transparent;
+    transition:color 240ms var(--ease-standard),box-shadow 240ms var(--ease-standard)}
+  .hero-line span.hs:hover{z-index:60;box-shadow:0 0 0 100vmax color-mix(in srgb,var(--bg-base) 82%,transparent)}
+  /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
+  body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.2}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
