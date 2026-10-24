@@ -1928,7 +1928,7 @@ function makeJS() {
      local tweaker (studies/tweaker-logos/) can drive it; a 'tweak' event updates it and replays. */
   const brandRow=document.querySelector('.brands-row');
   if(brandRow&&!rmActive()&&'IntersectionObserver' in window){
-    const W=window.__wisp=Object.assign({step:3,dot:1.6,scatter:170,curl:36,dur:1.7,stagger:.11,spread:.45,lift:.6},${JSON.stringify(TWEAKS['logo-wisps'] || {})},window.__wisp||{});
+    const W=window.__wisp=Object.assign({step:3,dot:1.6,scatter:170,curl:36,dur:.9,stagger:.05,spread:.3,lift:.6},${JSON.stringify(TWEAKS['logo-wisps'] || {})},window.__wisp||{});
     const marks=[...brandRow.querySelectorAll('.brand')],PAD=220;
     const hide=()=>marks.forEach(b=>{b.style.transition='opacity .6s ease';b.style.opacity='0'});
     brandRow.classList.add('gs-roll');
@@ -1969,11 +1969,17 @@ function makeJS() {
         tl.to(m,{f:0,duration:.5,ease:'power1.out'},i*W.stagger+W.dur-.1);
       });
     };
-    const go=()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()});
+    /* "the logos take too long to load in, so I scroll past" (2026-10-23): GSAP and every mark's dots are made
+       READY a screen before the row arrives, and the wisps PLAY the moment its first pixel shows (it used to start
+       fetching only once the row was 12% in, then play ~3s; now ~1.5s, the first logos within a few frames) */
+    let ready=null,seen=false;
+    const prep=()=>ready||(ready=vendorJS('gsap.min.js').then(()=>Promise.all(marks.map(sample))).then(d=>{data=d},e=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='');throw e}));
+    const near=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){near.disconnect();prep().catch(()=>{})}},{rootMargin:'100% 0px'});
+    near.observe(brandRow);
     const bio=new IntersectionObserver(es=>{
-      if(!es.some(e=>e.isIntersecting))return;bio.disconnect();
-      vendorJS('gsap.min.js').then(go,()=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='')});
-    },{rootMargin:'0px 0px -12% 0px'});
+      if(seen||!es.some(e=>e.isIntersecting))return;seen=true;bio.disconnect();
+      prep().then(run,()=>{});
+    });
     bio.observe(brandRow);
     addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});

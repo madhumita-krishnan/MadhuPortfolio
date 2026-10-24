@@ -19,9 +19,9 @@ Tweaker({
     { key: 'scatter', label: 'How far they drift in from', group: 'Layout', type: 'range', min: 20, max: 400, step: 5, value: 170, unit: 'px' },
     { key: 'lift', label: 'Vertical spread', group: 'Layout', type: 'range', min: 0, max: 1.5, step: .05, value: .6, unit: '×', hint: 'How tall the incoming cloud is' },
     { key: 'curl', label: 'Wisp curl', group: 'Shape', type: 'range', min: 0, max: 100, step: 1, value: 36, unit: 'px', hint: 'How much each dot loops on its way in' },
-    { key: 'dur', label: 'Time to settle', group: 'Motion', type: 'range', min: .4, max: 4, step: .05, value: 1.7, unit: 's' },
-    { key: 'stagger', label: 'Logo to logo delay', group: 'Motion', type: 'range', min: 0, max: .5, step: .01, value: .11, unit: 's' },
-    { key: 'spread', label: 'Dots arrive spread over', group: 'Motion', type: 'range', min: 0, max: .9, step: .01, value: .45, unit: '×', hint: '0 = every dot of a logo leaves together' }
+    { key: 'dur', label: 'Time to settle', group: 'Motion', type: 'range', min: .3, max: 4, step: .05, value: .9, unit: 's' },
+    { key: 'stagger', label: 'Logo to logo delay', group: 'Motion', type: 'range', min: 0, max: .5, step: .01, value: .05, unit: 's' },
+    { key: 'spread', label: 'Dots arrive spread over', group: 'Motion', type: 'range', min: 0, max: .9, step: .01, value: .3, unit: '×', hint: '0 = every dot of a logo leaves together' }
   ].map(p => (p.key in saved ? Object.assign(p, { value: saved[p.key] }) : p))
 });
 });
