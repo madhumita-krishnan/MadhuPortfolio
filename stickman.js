@@ -389,6 +389,9 @@
     var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y; CLAY.away = false;
     /* her ask: hover over clay-her and she smiles (the standing frame swaps to its smile twin) */
     var sm = !touchMode && CLAY.ready && onClay(p);
+    /* …and as the cursor arrives on her she WAVES with one hand, smiling (her ask 2026-10-24), then keeps smiling
+       while you stay; the same wave she gives the say-hey button. Once per arrival. */
+    if (sm && !CLAY.smile) waveHello();
     if (sm !== CLAY.smile) { CLAY.smile = sm; if (!raf) draw(performance.now()); }
     /* drag never arms on touch — a moving finger on the hero is the page scrolling */
     if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
@@ -640,22 +643,24 @@
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
     if (!fig.flip && fig.vy < 160 && !fig.hangCool && !fig.target) {
       var handY = ny - LEG - HANDUP;
+      /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
+         her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
+         one's underside (2026-10-23 "my claymation isn't hanging on the top text"; 2026-10-24 "hang off the top
+         sentence as well"). Of the bars in reach, the one nearest her hands wins; it must have real ink to hold. */
+      var best = null;
       for (var i = 0; i < bars.length; i++) {
-        var b = bars[i];
-        /* hands within 15px below the bar, OR up to 40px above it: the clay figure is taller than the gap between
-           the eyebrow and the headline, so standing on "Hi" her hands already start ABOVE the eyebrow's underside
-           and a hop never crossed it (2026-10-23 "my claymation isn't hanging on the top text"); now the hop grabs */
-        var dh = handY - b.y;
-        if (nx >= b.x1 - 4 && nx <= b.x2 + 4 && dh < 15 && dh > -40) {
-          /* only grab where there is actual ink to hold — a word gap is not a bar */
-          var gp = grip(nx, b.y, 14);
-          if (!gp) continue;
-          fig.state = 'hang';
-          fig.hang = { bar: b, hx: nx, th: Math.max(-0.9, Math.min(0.9, fig.vx / 500)), om: fig.vx / 160, reach: 0,
-                       hands: [{ x: gp.x - 2, y: gp.y + 1.75 }, { x: gp.x + 2, y: gp.y + 1.75 }] };
-          fig.vx = 0; fig.vy = 0; fig.flip = null;
-          return;
-        }
+        var b = bars[i], dh = handY - b.y;
+        if (nx < b.x1 - 4 || nx > b.x2 + 4 || dh >= 15 || dh <= -70) continue;
+        if (best && Math.abs(dh) >= Math.abs(best.dh)) continue;
+        var gp = grip(nx, b.y, 14);   // a word gap is not a bar
+        if (gp) best = { b: b, gp: gp, dh: dh };
+      }
+      if (best) {
+        fig.state = 'hang';
+        fig.hang = { bar: best.b, hx: nx, th: Math.max(-0.9, Math.min(0.9, fig.vx / 500)), om: fig.vx / 160, reach: 0,
+                     hands: [{ x: best.gp.x - 2, y: best.gp.y + 1.75 }, { x: best.gp.x + 2, y: best.gp.y + 1.75 }] };
+        fig.vx = 0; fig.vy = 0; fig.flip = null;
+        return;
       }
     }
     /* edge mantle: moving into ink whose top is at hand height → climb its lip. Never
