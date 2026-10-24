@@ -125,9 +125,14 @@
         "outcome": "Directing end-to-end brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand.",
         "tags": "In progress · Web · Brand + product design + code",
         "media": {
-          "type": "phone-image",
-          "src": "assets/case-studies/pratus-kitchen/home-phone.jpg",
-          "alt": "The Pratus Kitchen home page on a phone: the PRATUS wordmark and ‘Culture that performs’"
+          "type": "browser",
+          "src": "assets/case-studies/pratus-kitchen/demo.mp4",
+          "poster": "assets/case-studies/pratus-kitchen/demo-poster.jpg",
+          "url": "pratuskitchen.com",
+          "tab": "Pratus Kitchen · Culture that performs",
+          "autoplay": true,
+          "ar": "1280/800",
+          "alt": "A walkthrough of the Pratus Kitchen storefront: the home page, the meal lineup, a product page, the cart and checkout"
         },
         "stack": [
           "JavaScript",

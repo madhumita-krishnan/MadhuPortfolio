@@ -465,6 +465,11 @@ html,body{overflow-x:clip}
    comes near the top. Same curve and timing as the pill. app.js toggles .nav-hidden. */
 .nav-wrap{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease}
 .nav-wrap.nav-hidden{transform:translateY(-160%);opacity:0;pointer-events:none}
+/* never two say hey!s on screen (her ask 2026-10-23): the nav's steps aside while the hero's is in view. It keeps its
+   space, so the nav doesn't reflow */
+.nav-wrap .bar>.btn.sm{transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear 0s}
+body.hero-cta-on .nav-wrap .bar>.btn.sm{opacity:0;transform:scale(.9);visibility:hidden;pointer-events:none;
+  transition:opacity .3s var(--ease-standard),transform .3s var(--ease-standard),visibility 0s linear .3s}
 @media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
@@ -705,45 +710,16 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    between the paragraph and anything else. */
 .hero-line span.hs{display:block}
 .hero-line span.hs + span.hs{margin-top:.5em}
-/* sentence focus (2026-08-19, her ask): hovering one handwritten sentence quiets the
-   others, so the eye can hold a single thought. Opacity only — nothing moves, the
-   stickman's terrain is untouched (his rebuild listener allowlists load-sequence
-   elements precisely so this hover never re-reads the world). Hover devices only:
-   a phone tap should never dim two-thirds of the hero. */
-.hero-line span.hs{transition:color 240ms var(--ease-standard)}
+/* hovering a bio line: hover devices only (a phone tap shouldn't set anything moving) */
 @media (hover:hover){
-  /* 2026-08-19: colour, not opacity — the sentences step back into a light teal and
-     the one under the cursor deepens slightly past resting ink. The step-back ink is
-     its OWN token (2026-08-20 "make the light blue a tad lighter"): it used to borrow
-     --teal-baby, but that hex belongs to the button system's 3:1-on-cream invariant,
-     and a hover-dim state is allowed to sit lighter than a control outline is. */
-  .hero-line:hover span.hs{color:var(--hero-hush)}
-  .hero-line:hover span.hs:hover{color:var(--ink-blue-hover)}
-  /* 2026-10-23 "make everything else dimmer so it's the only thing with the highest contrast on the page". ONE dim
-     layer (the bio's ::before, fixed over the screen) comes up when the cursor reaches a line and STAYS up while it
-     moves between lines; only the line under the cursor sits above it. The first version gave every line its own
-     page-sized shadow, so crossing between lines dropped the dim for a moment and the white buttons blinked
-     ("feels like a seizure warning"). The lines touch now (padding, not margin), so there is no gap to fall through,
-     and the dim fades out slowly, a beat after the cursor leaves. */
-  .hero-line span.hs{position:relative;z-index:0;transition:color 240ms var(--ease-standard),transform 320ms var(--ease-standard),filter 320ms var(--ease-standard)}
-  .hero-line span.hs + span.hs{margin-top:0;padding-top:.5em}
-  .hero-line::before{content:"";position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
-    background:color-mix(in srgb,var(--bg-base) 40%,transparent);transition:opacity 700ms var(--ease-standard) 120ms}   /* 40%, not 82%: the deep dim was too much ("watching everything dim is giving me a seizure") */
-  .hero-line:has(span.hs:hover)::before{opacity:1;transition:opacity 600ms var(--ease-standard)}
-  /* every bio line stays ABOVE the dim (her: "the text isn't that readable, I need more contrast"): the others keep
-     their quieter grey at full strength (~8.5:1), the hovered one is white. The hovered line also ELEVATES: up 4px on
-     a soft shadow (a filter, not text-shadow, which would paint over the glimmer's clipped fill) */
-  .hero-line:has(span.hs:hover) span.hs{z-index:60}
+  /* the bio no longer dims anything when a line is hovered (her call 2026-10-23: "we don't need to do the dimming thing
+     anymore"): no page dim, no other line stepping back. The hovered line still lifts and waves. */
+  .hero-line span.hs{position:relative;transition:transform 320ms var(--ease-standard),filter 320ms var(--ease-standard)}
   .hero-line span.hs:hover{transform:translateY(-4px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
-  /* 2026-10-23 her ask: not straight-up white — a glimmer of light runs through the line, like Claude Code's
-     "running a command" text. A dimmer ink with a bright band sweeping left to right, on a loop while hovered.
-     (The old no-shimmer rule was about the glass buttons; this one she asked for by name.) */
-  .hero-line:hover span.hs:hover{color:transparent;-webkit-background-clip:text;background-clip:text;
-    background-image:linear-gradient(100deg,var(--ink-blue-hover) 40%,var(--accent) 50%,var(--ink-blue-hover) 60%);background-size:250% 100%;
-    animation:hs-glimmer 2.6s ease-in-out 1 both}   /* 2.6s, not 1.6s: "the blue flash over text is a little too fast" */   /* white line, BLUE glimmer, ONE pass per hover (her follow-ups: base hard to read; "only ripple through once") */
-  /* the nav and the day/night toggle float above <main>, out of the shadow's reach: they step back by opacity */
-  body:has(.hero-line span.hs:hover) :is(.nav-wrap,.theme-toggle){opacity:.65}
-  body:has(.hero-line span.hs:hover) .theme-toggle{transition:opacity 600ms var(--ease-standard)}
+  /* the hovered line WAVES like "Hi, I'm Madhu" (her ask 2026-10-23, replacing the blue glimmer): app.js splits each
+     word into letters, and they rise 7px in the accent one after another, falling back in reverse on leave */
+  .hero-line .hs .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
+  .hero-line .hs.waving .ch{transform:translateY(-7px);color:var(--accent)}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
@@ -1020,6 +996,17 @@ ${swipeTweaks()}
 /* laptop: nav and toggle take turns (her ask) — scrolling up brings the nav back, so the toggle steps away until it hides again */
 @media (hover:hover) and (pointer:fine){body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on{opacity:0;transform:translateY(8px)}
   body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on .view-toggle{pointer-events:none}}
+/* the toggle STARTS beside the "Selected Projects" title (her ask: "toggle should start next to selected project
+   first and then move — right now it feels in the way"); the floating one at the bottom only appears once that
+   title has scrolled away, and the first time it MATERIALIZES (her Apple reference): one small dark pill at its
+   centre that widens into the bar (a clip, so the icons never stretch), then the icons fade in. Once per visit. */
+.work-head .head-toggle{background:rgba(22,27,40,.88);transition:opacity 200ms var(--ease-standard)}
+body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}   /* never two toggles on screen */
+.view-toggle.materialize{animation:vt-grow 700ms cubic-bezier(.22,1,.36,1) 150ms both}   /* the pill shows for a beat, then widens */
+.view-toggle.materialize .view-btn{animation:vt-icons 260ms ease-out 820ms both}   /* icons once the bar is whole: ~1.1s in all */
+@keyframes vt-grow{from{clip-path:inset(0 calc(50% - 22px) round 999px)}to{clip-path:inset(0 0 round 999px)}}
+@keyframes vt-icons{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.view-toggle.materialize,.view-toggle.materialize .view-btn{animation:none}}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
@@ -1053,6 +1040,9 @@ ${swipeTweaks()}
   color:var(--text-primary);text-wrap:balance}
 .sdeck-title>span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
 .sdeck-title.swap>span{opacity:0;transform:translateY(10px)}
+/* her ask: "I can't tell that the text changed when I swiped … when you swipe the text should fully disappear":
+   it is gone the moment the deck moves and comes back once a project has clicked into place */
+.sdeck-title.moving>span{opacity:0;transform:translateY(10px);transition-duration:110ms}
 /* the project name, plain, over its full-sentence headline */
 .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.72rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .sdeck-line{display:block}
@@ -1060,16 +1050,24 @@ ${swipeTweaks()}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
    to jump straight there. Each segment's hit area is taller than its 3px line. */
-/* LAPTOPS (her 2026-10-23 correction): the demo IS the card. No navy square, no padding; each card keeps its own
-   media's shape (app.js sizes it: ~58% of the screen's height, at most 80% of its width, every demo's bottom edge on
-   one line), and the headline gets a wide measure 28px under it. Phones keep the square cards above. */
-@media (min-width:761px){
-  .scard{width:var(--w,40vw);height:var(--h,auto);margin:calc(var(--h,0px) / -2) 0 0 calc(var(--w,40vw) / -2);padding:0;background:none;border-radius:0;overflow:visible}
-  .scard-media{display:block;height:auto}
-  .scard-media>*,.scard-media .phone-media{width:100%;height:auto;max-width:none;max-height:none}
-  .scard-stack{border-radius:0 0 var(--r-media) var(--r-media);padding:24px;padding-top:64px}
-  .sdeck-title{width:min(100% - 32px,calc(var(--sd-tw,56) * 1vw));margin-top:calc(var(--sd-tgap,28) * 1px);font-size:clamp(1.2rem,1.9vw,1.75rem)}
-}
+/* THE DEMO IS THE CARD, on every screen (her 2026-10-23 correction for laptops, then "I want the screens to be
+   bigger for the phone especially"): no navy square, no padding; each card keeps its own media's shape and app.js
+   sizes it. Phones: the demo fills ~58% of the screen's height or 88% of its width, the headline under it.
+   Laptops (1000px+, .sdeck.side): the demo sits left of centre and the headline reads in a column on its RIGHT
+   ("can you have the case study text show up on the right? it just feels hard to read"), bigger and in white. */
+.scard{width:var(--w,40vw);height:var(--h,auto);margin:calc(var(--h,0px) / -2) 0 0 calc(var(--w,40vw) / -2);padding:0;background:none;border-radius:0;overflow:visible}
+.scard-media{display:block;height:auto}
+.scard-media>*,.scard-media .phone-media{width:100%;height:auto;max-width:none;max-height:none}
+.scard-stack{border-radius:0 0 var(--r-media) var(--r-media);padding:24px;padding-top:64px}
+.sdeck-title{width:min(100% - 32px,calc(var(--sd-tw,56) * 1vw));margin-top:calc(var(--sd-tgap,28) * 1px);font-size:clamp(1.2rem,1.9vw,1.75rem)}
+@media (max-width:760px){.sdeck-title{width:calc(100% - 32px);font-size:1.15rem}}
+.sdeck.side .sdeck-title{position:absolute;left:var(--tl,60%);top:var(--tt,50%);width:var(--tw,30%);margin:0;padding:0;min-height:0 !important;
+  transform:translateY(-50%);text-align:left;text-wrap:pretty;font-size:clamp(1.45rem,1.9vw,2.05rem);line-height:1.25;color:var(--ink-blue)}
+.sdeck.side .sdeck-name{margin-bottom:.7em;font-size:.76rem}
+/* phones (.stack): every demo centred in the stage and the headline follows right under whichever one is showing,
+   so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
+.sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
+.sdeck.stack .sdeck-progress{margin-top:var(--tres,24px)}
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
@@ -1121,10 +1119,10 @@ ${swipeTweaks()}
   /* the WHOLE phone always shows (her: "the phone should never get cut off"): every screen is capped by the
      screen's height, and the card carries only the name and its headline, smaller; the tags and stack stay
      on desktop, in the swipe deck (press and hold) and on the case study */
-  #work .wproject .project-media-wrap{max-height:50svh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center}   /* a full-width column: an auto one sized the shots to nothing */
+  #work .wproject .project-media-wrap{max-height:64svh;display:grid;grid-template-columns:minmax(0,1fr);place-items:center}   /* a full-width column: an auto one sized the shots to nothing */
   #work .wproject .project-media-wrap>*{width:100%}   /* browser and laptop shots keep full width; phones size by height below */
-  #work .wproject .phone-media{height:min(50svh,380px);width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
-  #work .wproject .project-media,#work .wproject .browser-media,#work .wproject .mac-media{max-height:50svh}
+  #work .wproject .phone-media{height:min(64svh,560px);width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
+  #work .wproject .project-media,#work .wproject .browser-media,#work .wproject .mac-media{max-height:64svh}
   #work .wproject .w-outcome{font-size:clamp(1.15rem,5vw,1.4rem);line-height:1.3}
   #work .wproject .w-tags,#work .wproject .w-stack{display:none}
   #work .wproject .w-chiprow{margin-top:calc(var(--space)*1.5)}
@@ -1660,9 +1658,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
-@keyframes hs-glimmer{from{background-position:100% 0}to{background-position:0 0}}
-@media (prefers-reduced-motion:reduce){.hero-line:hover span.hs:hover{animation:none;background-position:50% 0;transform:none}}
-.rm-mode .hero-line:hover span.hs:hover{animation:none;background:none;-webkit-background-clip:border-box;background-clip:border-box}
+@media (prefers-reduced-motion:reduce){.hero-line span.hs:hover,.hero-line .hs.waving .ch{transform:none}}
+.rm-mode .hero-line span.hs:hover,.rm-mode .hero-line .hs.waving .ch{transform:none}
 @media (prefers-reduced-motion:reduce){
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
@@ -1765,6 +1762,14 @@ function makeJS() {
       };
       walk(el);
       el.dataset.seqEnd=seq;
+    });
+    /* the bio lines wave like the headline (see .hero-line .hs .ch). Letters go INSIDE the reveal's word spans, so the
+       words still arrive the same way and the clay figure still reads each word as one block of ground */
+    if(matchMedia('(hover:hover)').matches)hero.querySelectorAll('.hero-line .hs').forEach(hs=>{
+      hs.querySelectorAll('.w').forEach(w=>{const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
+      const chs=[...hs.querySelectorAll('.ch')],st=Math.min(26,700/Math.max(1,chs.length));   // the whole line rises in ~0.7s, however long it is
+      hs.addEventListener('mouseenter',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=(i*st)+'ms');hs.classList.add('waving')});
+      hs.addEventListener('mouseleave',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*st)+'ms');hs.classList.remove('waving')});
     });
     document.querySelectorAll('.lively').forEach(el=>{
       const txt=el.textContent;el.textContent='';
@@ -1909,6 +1914,9 @@ function makeJS() {
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
+  const heroSay=document.querySelector('.hero-cta-row .btn.solid');
+  if(heroSay)new IntersectionObserver(es=>es.forEach(e=>document.body.classList.toggle('hero-cta-on',e.isIntersecting))).observe(heroSay);
+
   /* the nav hides on the way down and comes back on the way up — the same rules as the walkthrough
      pill (walkthrough.js): hidden past 140px going down, back after 40px of scrolling up, at the top,
      or whenever the pointer comes within 90px of the top. Never hidden while it holds keyboard focus. */
@@ -2003,7 +2011,13 @@ function makeJS() {
     btns.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view,true)));
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
-      new IntersectionObserver(es=>es.forEach(e=>dock.classList.toggle('on',e.isIntersecting)),{rootMargin:'-20% 0px -20% 0px'}).observe(workEl)}
+      const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
+      let inWork=false,headGone=false,grown=false;
+      const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
+        if(on&&!grown){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
+      new IntersectionObserver(es=>es.forEach(e=>{inWork=e.isIntersecting;sync()}),{rootMargin:'-20% 0px -20% 0px'}).observe(workEl);
+      /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
+      new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
   }
 
   /* THE SWIPE DECK (see .sdeck), her v2 lane model. pos is the one source of truth: a continuous index of the
@@ -2021,12 +2035,14 @@ function makeJS() {
   const sd=document.querySelector('.sdeck');
   if(sd){
     const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line'),bar=sd.querySelector('.sdeck-progress'),segs=bar?[...bar.children]:[];
-    const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title};
+    const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title;
+      if(sd.classList.contains('stack')&&dims[i])sd.style.setProperty('--tt',(stage.offsetTop+dims[i].cy+dims[i].h/2+tgNow)+'px')};
+    let tgNow=18;
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
        Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
-    const desk=matchMedia('(min-width:761px)');let dims=[],top=0,bot=0;
+    let dims=[],top=0,bot=0,shift=0,nudging=false,touched=false;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
@@ -2037,38 +2053,46 @@ function makeJS() {
       pos=v;const side=num('--side')||.5;
       cards.forEach((c,i)=>{
         const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
-        const x=Math.sign(t)*(a<=1?a*d.R:d.R+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
+        const Rs=t>0?d.Rr:d.Rl,x=shift+Math.sign(t)*(a<=1?a*Rs:Rs+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
       });
+      titleEl.classList.toggle('moving',!nudging&&Math.abs(v-Math.round(v))>.02);
       const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
     };
     const layout=()=>{
       W=sd.clientWidth;const side=num('--side')||.5,gap=(num('--gap')||6)/100*W,peek=(num('--peek')||7)/100*W;
       /* the tallest headline sets the reserved title height, so the card can be sized to leave room for it */
       if(!W)return;   // hidden (SCROLL view): laid out again when SWIPE is shown
-      let th=0;titleEl.style.minHeight='0';titleEl.style.setProperty('--S',Math.min(W*(num('--aw')||73)/100,W)+'px');
+      let th=0;titleEl.style.minHeight='0';titleEl.style.setProperty('--S',Math.min(W*(num('--aw')||73)/100,W)+'px');sd.classList.remove('side');
       cards.forEach((c,i)=>{fill(i);th=Math.max(th,titleEl.offsetHeight)});fill(Math.max(0,active));
       const avail=innerHeight-th-150;   // nav, section heading and breathing room
       const ah=(num('--ah')||75)/100;S=Math.max(160,Math.min(W*(num('--aw')||73)/100,avail*ah));   // ~73% of the width, or 75% of the room
       H=S/ah;   // the stage the lanes live in: the active card fills ah of its height
       R=Math.max(.75*S+gap,W/2-peek+side*S/2);R2=side*S+gap;
-      dims=cards.map(()=>({R,cy:.51*H}));top=.30*H;bot=.72*H;
-      if(desk.matches){
-        /* the demo's height: ~58% of the screen, less if the stage (1.18 x it: room above for the top lane), the 28px
-           gap, the headline, the progress bar and the floating toggle (~100px with its margin) wouldn't all fit */
-        /* dials (studies/tweaker-swipe/): demo height dh% of the screen, max width dw%, lanes ±lane x the demo height
-           from its centre, headline tgap px under it */
-        const dh=(num('--sd-dh')||58)/100,dw=(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?.28:ln,tgap=num('--sd-tgap'),tg=isNaN(tgap)?28:tgap;
-        const above=Math.max(.18,lane+side/2-.5),room=above+1;   // stage = room above the demo (the top lane's card must fit) + the demo
-        const cyF=above+.5,Ht=Math.max(200,Math.min(innerHeight*dh,(innerHeight-th-tg-bar.offsetHeight-100)/room)),cyB=cyF*Ht;
-        let wMax=0;
-        dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
-          let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
-          c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:cyB+(Ht-h)/2}});   // bottoms aligned: the gap to the headline never changes
-        dims.forEach(d=>{d.R=Math.max(wMax/2+side*d.w/2+gap,W/2-peek+side*d.w/2)});
-        R=dims[0].R;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
-      }else cards.forEach(c=>{c.style.removeProperty('--w');c.style.removeProperty('--h')});
+      /* the demo's height: dh of the screen, less if everything under/around it wouldn't fit (the stage is 'room' x it:
+         space above for the top lane, plus the demo). Phones and tablets: headline UNDER the demo, as wide as the
+         dial allows. Laptops 1000px+ (.side): the demo's centre sits at 34% of the width, at most 48% wide, and the
+         headline takes the column to its right; the neighbours peek in at both screen edges, past that column.
+         Dials (studies/tweaker-swipe/): dh, dw, lane, tgap, tw. */
+      const sideM=W>=1000;sd.classList.toggle('side',sideM);sd.classList.remove('stack');
+      const phone=W<761,dh=(num('--sd-dh')||58)/100,dw=sideM?.48:phone?.88:(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?(phone?.2:.28):ln,
+        tgap=num('--sd-tgap'),tg=isNaN(tgap)?(phone?18:28):tgap;
+      const above=Math.max(.18,lane+side/2-.5),room=above+1,cyF=above+.5;
+      const under=sideM?0:th+tg;   // a side headline takes no height
+      const Ht=Math.max(phone?220:200,Math.min(innerHeight*dh,(innerHeight-under-bar.offsetHeight-(phone?166:100))/room)),cyB=cyF*Ht;
+      let wMax=0;
+      dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
+        let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
+        c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:sideM||phone?cyB:cyB+(Ht-h)/2}});   // under: bottoms aligned so the headline gap never changes; side: centred
+      const cx=sideM?.34*W:W/2;shift=cx-W/2;
+      dims.forEach(d=>{const sw=side*d.w/2,min=wMax/2+sw+gap;
+        d.Rl=Math.max(min,cx-peek+sw);d.Rr=Math.max(min,W-peek-cx+sw)});
+      R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
+      if(sideM){const aw=Math.max(...dims.map(d=>d.w)),tl=cx+aw/2+48;
+        sd.style.setProperty('--tl',tl+'px');sd.style.setProperty('--tw',Math.max(240,W-tl-peek-40)+'px');
+        sd.style.setProperty('--tt',(stage.offsetTop+cyB)+'px')}
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
+      if(phone){tgNow=tg;sd.classList.add('stack');sd.style.setProperty('--tres',(tg+th+16)+'px');fill(Math.max(0,active))}
       titleEl.style.minHeight=th+'px';place(pos);
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
@@ -2121,14 +2145,24 @@ function makeJS() {
        there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
        the wheel goes quiet, so it never drags the glide down. */
     let wAcc=0,wFrom=0,wLock=false;
-    sd.addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
+    /* on the WINDOW, not the deck (her: "depending on where my mouse is, I find it hard to horizontally scroll"):
+       a sideways swipe works anywhere while the deck holds the middle of the screen */
+    addEventListener('wheel',e=>{
+      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)||!sd.offsetParent)return;
+      const r=sd.getBoundingClientRect();if(r.top>innerHeight*.5||r.bottom<innerHeight*.5)return;
+      e.preventDefault();touched=true;
       clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0},180);
       if(wLock)return;
       if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
       wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
       if(Math.abs(wAcc)>=40){wLock=true;settle(wFrom+Math.sign(wAcc),false,Math.abs(e.deltaX)/16)}
     },{passive:false});
+    /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
+       and back, once, unless you've already touched it. The headline stays put for the nudge. */
+    sd.addEventListener('pointerdown',()=>{touched=true});
+    new IntersectionObserver((es,io)=>{if(!es.some(e=>e.intersectionRatio>=.6))return;io.disconnect();
+      setTimeout(()=>{if(touched||rm||!window.gsap||pos!==0||cards.length<2)return;nudging=true;const o={v:0};
+        gsap.timeline({onComplete:()=>{nudging=false;place(0)}}).to(o,{v:.22,duration:.45,ease:'power2.out',onUpdate:()=>place(o.v)}).to(o,{v:0,duration:.55,ease:'power2.inOut',onUpdate:()=>place(o.v)},'+=.08')},700)},{threshold:.6}).observe(sd);
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
     if(!rm)vendorJS('gsap.min.js').catch(()=>{});
@@ -2257,6 +2291,13 @@ function makeJS() {
       }
     }
     document.querySelectorAll('[data-curious]').forEach(card=>{
+      /* deck cards: the pill only on the centred demo, and the deck's own code owns the click (drag, peeks) */
+      if(card.classList.contains('scard')){
+        card.addEventListener('pointerenter',()=>{if(card.getAttribute('aria-current')==='true')curious(true,card.dataset.curious)});
+        card.addEventListener('pointerleave',()=>curious(false));
+        card.addEventListener('pointerdown',()=>curious(false));
+        return;
+      }
       card.addEventListener('pointerenter',()=>curious(true,card.dataset.curious));
       card.addEventListener('pointerleave',()=>curious(false));
       card.addEventListener('click',e=>{
@@ -2895,7 +2936,7 @@ function renderHome() {
   const sdeckHTML = `
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
     <div class="sdeck-stage">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
     <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"></button>`).join('')}</div>
@@ -2908,6 +2949,10 @@ function renderHome() {
 <section id="work" class="work-sec" data-view="deck">
   <div class="work-head">
     <h2 class="section-title fade">${typo(site.work.title)}</h2>
+    <div class="view-toggle head-toggle" role="group" aria-label="How to browse the projects (top)">
+      <button type="button" class="view-btn" data-view="deck" aria-pressed="true" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="false" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+    </div>
   </div>
   <div class="view-deck">${sdeckHTML}</div>
   <div class="view-list">${listHTML}</div>
