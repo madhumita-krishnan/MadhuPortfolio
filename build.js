@@ -476,6 +476,9 @@ nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
 .on-deep .chip,.chip.on-deep{border-color:var(--line-on-deep);color:var(--text-on-deep-secondary)}
 .on-deep .chip::before,.chip.on-deep::before{background:var(--text-on-deep-secondary)}
 
+/* nothing may widen the page sideways: on iPhone a single element past the right edge zooms the WHOLE page out.
+   clip (not hidden) so position:sticky keeps working */
+html,body{overflow-x:clip}
 /* ------------------------------------------------ nav */
 .nav-wrap{position:fixed;top:14px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px}
 /* STANDING RULE (her ask 2026-10-23, then "all across my page, not just the driftwood retention
@@ -969,7 +972,13 @@ ${swipeTweaks()}
 /* the toggle's dock: sticky to the bottom of the screen while the work section is on screen, so it is always
    in reach; it comes to rest at the end of the section. z-index 45 keeps it ABOVE the phone's bottom edge-fade
    haze (40), which was blurring it (her: "the toggle at the bottom is hidden behind a haze") */
-.view-dock{position:sticky;bottom:16px;z-index:45;display:flex;justify-content:center;margin-top:calc(var(--space)*4);pointer-events:none}
+.view-dock{display:flex;justify-content:center;margin-top:calc(var(--space)*4)}
+/* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
+   z-index went) and floats it at the bottom of the screen while the work section is on screen */
+.view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:translateY(8px);
+  transition:opacity 200ms var(--ease-standard),transform 200ms var(--ease-standard)}
+.view-dock.floating.on{opacity:1;transform:none}
+.view-dock.floating.on .view-toggle{pointer-events:auto}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
@@ -1071,8 +1080,9 @@ ${swipeTweaks()}
   /* paging back UP shows where you are (her ask: "when you scroll up, Selected Projects should show"): the section
      head pins to the top and slides in on the way up, tucks away on the way down. Above the top haze. */
   .work-sec[data-view="list"] .work-head{position:sticky;top:78px;z-index:45;padding:10px 0 16px;margin:0;   /* sits just under the nav, which also comes back on the way up */
-    background:linear-gradient(var(--bg-base) 72%,rgba(15,16,19,0));transform:translateY(-110%);transition:transform 260ms var(--ease-standard)}
-  .work-sec[data-view="list"] .work-head.peek{transform:none}
+    background:linear-gradient(var(--bg-base) 72%,rgba(15,16,19,0));transition:transform 260ms var(--ease-standard)}
+  /* it only tucks away WHILE paging through the projects; arriving at the section it sits in its place */
+  .work-sec[data-view="list"] .work-head.tuck{transform:translateY(-110%)}
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
 }
 .project-media-wrap{display:flex;justify-content:center}
@@ -1887,10 +1897,13 @@ function makeJS() {
       if(tl)tl.kill();if(cv)cv.remove();hide();brandRow.classList.remove('gs-roll');
       const rr=brandRow.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
       cv=document.createElement('canvas');cv.className='brands-wisp';cv.setAttribute('aria-hidden','true');
-      Object.assign(cv.style,{left:-PAD+'px',top:-PAD+'px',width:rr.width+PAD*2+'px',height:rr.height+PAD*2+'px'});
-      cv.width=(rr.width+PAD*2)*dpr;cv.height=(rr.height+PAD*2)*dpr;brandRow.appendChild(cv);
+      /* the canvas spans the row plus room for the drifting dots, but never past the screen's own edges: wider,
+         and iPhone Safari zoomed the whole page out while the wisps played ("glitchy and keeps zooming out") */
+      const padL=Math.min(PAD,Math.max(0,rr.left)),padR=Math.min(PAD,Math.max(0,document.documentElement.clientWidth-rr.right)),cw=rr.width+padL+padR,ch=rr.height+PAD*2;
+      Object.assign(cv.style,{left:-padL+'px',top:-PAD+'px',width:cw+'px',height:ch+'px'});
+      cv.width=cw*dpr;cv.height=ch*dpr;brandRow.appendChild(cv);
       const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
-      const ms=data.filter(Boolean).map(d=>{const r=d.b.getBoundingClientRect();return Object.assign({},d,{ox:r.left-rr.left+PAD,oy:r.top-rr.top+PAD,p:0,f:1})});
+      const ms=data.filter(Boolean).map(d=>{const r=d.b.getBoundingClientRect();return Object.assign({},d,{ox:r.left-rr.left+padL,oy:r.top-rr.top+PAD,p:0,f:1})});
       const draw=()=>{ctx.clearRect(0,0,cv.width,cv.height);
         for(const m of ms){if(!m.f||!m.p)continue;ctx.fillStyle=m.col;
           for(let i=0,n=m.pts.length;i<n;i+=2){const r=m.rnd[i>>1],d=r*W.spread,q=Math.min(1,Math.max(0,(m.p-d)/(1-W.spread)));if(!q)continue;
@@ -1930,6 +1943,9 @@ function makeJS() {
     let saved=null;try{saved=localStorage.getItem('mk-work-view')}catch(e){}
     if(saved==='list'||saved==='deck')setView(saved,false);
     btns.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view,true)));
+    const dock=workEl.querySelector('.view-dock');
+    if(dock){document.body.appendChild(dock);dock.classList.add('floating');
+      new IntersectionObserver(es=>es.forEach(e=>dock.classList.toggle('on',e.isIntersecting)),{rootMargin:'-20% 0px -20% 0px'}).observe(workEl)}
   }
 
   /* THE SWIPE DECK (see .sdeck), her v2 lane model. pos is the one source of truth: a continuous index of the
@@ -2055,7 +2071,7 @@ function makeJS() {
      layout positions (offsetTop), which the GSAP focus effect doesn't shift. */
   if(phoneList.matches&&cardsM.length){
     const workSec=document.getElementById('work'),root=document.documentElement;let inMid=false;
-    const sync=()=>{root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');if(!inMid){const h=workSec.querySelector('.work-head');h&&h.classList.remove('peek')}};
+    const sync=()=>{root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');if(!inMid){const h=workSec.querySelector('.work-head');h&&h.classList.remove('tuck')}};
     new IntersectionObserver(es=>es.forEach(e=>{inMid=e.isIntersecting;sync()}),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
     addEventListener('mk-work-view',sync);
     const docTop=e=>{let t=0;while(e){t+=e.offsetTop;e=e.offsetParent}return t};
@@ -2081,7 +2097,7 @@ function makeJS() {
     /* the click: a short, decisive ease onto the project (power2.out, ~0.32s), never past it */
     const head=workSec.querySelector('.work-head');let at=0;
     const glideTo=i=>{const go=Math.max(0,Math.min(cardsM.length-1,i)),o={y:scrollY},to=aim(go);if(glide)glide.kill();
-      if(head){if(go<at)head.classList.add('peek');else if(go>at)head.classList.remove('peek')}at=go;   // up = show the title, down = tuck it
+      if(head){if(go>at)head.classList.add('tuck');else if(go<at)head.classList.remove('tuck')}at=go;   // down = tuck the title, up = bring it back
       if(rmActive()||!window.gsap)return jump(to);glide=gsap.to(o,{y:to,duration:.32,ease:'power2.out',onUpdate:()=>jump(o.y)})};
     const release=()=>{
       if(!t0||!t0.own||t0.done){t0=null;return}const a=t0.pts[0],b=t0.pts[t0.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);
