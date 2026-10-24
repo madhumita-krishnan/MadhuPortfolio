@@ -1190,10 +1190,9 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   #work .wproject .w-chiprow{margin-top:calc(var(--space)*1.5)}
   /* paging back UP shows where you are (her ask: "when you scroll up, Selected Projects should show"): the section
      head pins to the top and slides in on the way up, tucks away on the way down. Above the top haze. */
-  .work-sec[data-view="list"] .work-head{position:sticky;top:78px;z-index:45;padding:10px 0 16px;margin:0;   /* sits just under the nav, which also comes back on the way up */
-    background:linear-gradient(var(--bg-base) 72%,rgba(15,16,19,0));transition:transform 260ms var(--ease-standard)}
-  /* it only tucks away WHILE paging through the projects; arriving at the section it sits in its place */
-  .work-sec[data-view="list"] .work-head.tuck{transform:translateY(-110%)}
+  /* scrolls away with the page like every other heading (her 2026-10-24: "I don't like the way that selected project
+     stays like weird banner when I scroll"); it used to stick under the nav over the cards */
+  .work-sec[data-view="list"] .work-head{padding:10px 0 16px;margin:0}
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
 }
 .project-media-wrap{display:flex;justify-content:center}
