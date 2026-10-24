@@ -309,7 +309,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
   <p class="brand"><img src="${A((cs.brand || {}).logo || 'logo.svg')}" alt="" width="34" height="34">${esc((cs.brand || {}).name || 'driftwood')}</p>
   <h1${E('title')}>${md(cs.title)}</h1>
   <p class="sub"${E('subtitle')}>${md(cs.subtitle)}</p>
-  ${cs.designSystem ? `<p class="ds-row"><a class="btn-o" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"><span>View design system</span>${ic('external')}</a></p>` : ''}
+  ${cs.designSystem ? `<p class="ds-row"><a class="btn-o" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"><span>View design system</span></a></p>` : ''}
   <div class="stage">
     ${cs.hero.phone ? `<div class="hero-phone">${phoneFrame(cs.hero.phone.video
       ? `<video src="${A(cs.hero.phone.video)}" poster="${A(cs.hero.phone.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(cs.hero.phone.alt)}"></video>`
