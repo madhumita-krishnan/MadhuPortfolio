@@ -49,3 +49,15 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 .cs-title,.cs-heading{color:var(--ink-blue);font-weight:600;letter-spacing:-.02em}
 .footer .wordmark,footer .wordmark{font-family:'Cormorant Garamond',Georgia,serif}
 @media (max-width:520px){nav.bar .btn.sm{font-size:.9rem;padding:0 16px;min-height:38px}.nav-links a{font-size:.9rem;padding-left:10px;padding-right:10px}.wordmark{margin-right:0}}
+
+/* THE NAV, REIMAGINED (2026-10-24, her pick #1 from the Flora concept board): NO BAR. M--K at the far left, the links as
+   quiet text at the far right, nothing behind them, so there is no pill that can look empty. say hey! slides in beside
+   the links once the hero's own button has scrolled away. Over the page (once scrolled) a soft fade of the page colour
+   sits behind it so the links stay readable without drawing a bar. */
+.nav-wrap{top:0;padding:0}
+nav.bar,nav.bar.glass,body.hero-cta-on nav.bar{max-width:none;width:100%;border-radius:0;background:none;border:0;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;padding:20px clamp(20px,4vw,56px);justify-content:flex-start;gap:clamp(8px,1.4vw,18px)}
+nav.bar .wordmark{margin-right:auto}
+.nav-wrap::before{content:"";position:absolute;left:0;right:0;top:0;bottom:-30px;z-index:-1;pointer-events:none;
+  background:linear-gradient(var(--bg-base) 50%,rgba(15,16,19,0));opacity:0;transition:opacity .3s ease}
+body.scrolled .nav-wrap::before{opacity:1}

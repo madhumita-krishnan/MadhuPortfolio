@@ -1908,7 +1908,7 @@ function makeJS() {
   const navW=document.querySelector('.nav-wrap');
   if(navW){
     let navY=scrollY,navUp=0,navHover=false;
-    addEventListener('scroll',()=>{const y=scrollY,d=y-navY;navY=y;
+    addEventListener('scroll',()=>{const y=scrollY,d=y-navY;navY=y;document.body.classList.toggle('scrolled',y>40);   // the bar-less nav's soft backing
       if(d>0){navUp=0;if(y>140&&!navHover&&!navW.contains(document.activeElement))navW.classList.add('nav-hidden')}
       else{navUp-=d;if(navUp>40||y<140)navW.classList.remove('nav-hidden')}},{passive:true});   // scrolling up always brings it back (her ask), Reels included
     /* only a real mouse near the top reveals it: phones send a mousemove with every tap, which kept popping it up */
