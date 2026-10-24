@@ -177,7 +177,7 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
 const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'tweaks.json'), 'utf8')); } catch (e) { return {}; } })();
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
-  const u = { cardW: '--sd-card-w', cardH: '--sd-card-h', gap: '--sd-gap', radius: '--sd-radius', side: '--sd-side', settle: '--sd-settle', bg: '--sd-bg' };
+  const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.sdeck-sec{' + decl + '}' : '';
 }
@@ -945,29 +945,32 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    read as a cold sheet laid over the warm cream */
 .wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
-/* ------------------------------------------------ the swipe deck (review copy, see sdeckHTML)
-   Video-derived ratios from her spec: background #101010; active card 68% of the viewport's width (capped
-   by height so card + title never clip); corners 8% of the card's width; gap 6% of the viewport's width;
-   neighbours scale toward 0.65; settle about 0.6s. Every dial reads a --sd-* override first (tweaker). */
+/* ------------------------------------------------ the swipe deck (deck.html, see sdeckHTML)
+   Her v2 brief, measured from reference-swipe-deck.mov: the active card is ~73% of the width (capped by the
+   screen's height so card + headline fit) and centred at 51% of the deck's height; every other card waits at
+   half size in a corner lane, top (30%) or bottom (72%); the two neighbours always sit in opposite corners and
+   the pairing flips with each swipe, as in the video. app.js places every card from one swipe progress p (y and scale
+   move with x, never as a separate step). Background #101010, corners 8% of the card. Dials read --sd-* first. */
 ${swipeTweaks()}
-.sdeck-sec{max-width:none;padding:calc(var(--space)*10) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
+.sdeck-sec{max-width:none;padding:calc(var(--space)*9) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
 .sdeck-sec .section-title{max-width:1240px;margin:0 auto;padding:0 calc(var(--space)*6)}
-.sdeck{--card-w:var(--sd-card-w,68);--card-h:var(--sd-card-h,62);--card:min(calc(var(--card-w) * 1vw),calc(var(--card-h) * 1svh));
-  --gap:calc(var(--sd-gap,6) * 1vw);--radius:var(--sd-radius,.08);--side:var(--sd-side,.65);--settle:var(--sd-settle,.6);
-  position:relative;height:calc(var(--card) + 7.5rem);margin-top:calc(var(--space)*5);overflow:hidden;
-  touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
+.sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
+  --settle:var(--sd-settle,.5);--radius:var(--sd-radius,.08);
+  position:relative;margin-top:calc(var(--space)*3);overflow:hidden;touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
 .sdeck:focus-visible{box-shadow:inset 0 0 0 2px var(--ink-blue)}
 .sdeck.dragging{cursor:grabbing}
-.sdeck-track{position:absolute;left:0;top:0;height:var(--card);display:flex;gap:var(--gap);will-change:transform}
-.scard{flex:0 0 var(--card);height:var(--card);border-radius:calc(var(--card) * var(--radius));background:var(--bg-raised);
-  display:grid;place-items:center;padding:calc(var(--card) * .08);overflow:hidden;transform-origin:50% 50%;
-  color:inherit;text-decoration:none;-webkit-user-drag:none;will-change:transform}
+.sdeck-stage{position:relative;height:var(--stage,60vh)}
+.scard{position:absolute;left:50%;top:0;width:var(--S,50vw);height:var(--S,50vw);margin:calc(var(--S,50vw) / -2) 0 0 calc(var(--S,50vw) / -2);
+  border-radius:calc(var(--S,50vw) * var(--radius));background:var(--bg-raised);display:grid;place-items:center;padding:calc(var(--S,50vw) * .08);
+  overflow:hidden;transform-origin:50% 50%;color:inherit;text-decoration:none;-webkit-user-drag:none;will-change:transform}
 .scard-media{width:100%;height:100%;display:grid;place-items:center;pointer-events:none}
 .scard-media>*{max-width:100%;max-height:100%}
 .scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
-/* only the centred project's title, directly under the card, swapping with a quiet fade and 10px slide */
-.sdeck-title{position:absolute;left:0;right:0;top:calc(var(--card) + 1.25rem);margin:0;padding:0 16px;text-align:center;
-  font-family:var(--font-display);font-weight:500;font-size:clamp(1.3rem,2.6vw,2.2rem);line-height:1.15;letter-spacing:-.02em;color:var(--text-primary)}
+/* the centred project's full-sentence headline, directly under the card; wraps freely, and its box is held
+   at the height of the longest headline so nothing below jumps when it changes */
+.sdeck-title{margin:1.2rem auto 0;padding:0 16px;width:min(100%,calc(var(--S,50vw) + 2rem));min-height:var(--title-h,auto);box-sizing:border-box;
+  text-align:center;font-family:var(--font-display);font-weight:500;font-size:clamp(1.05rem,2vw,1.6rem);line-height:1.3;letter-spacing:-.01em;
+  color:var(--text-primary);text-wrap:balance}
 .sdeck-title span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
 .sdeck-title.swap span{opacity:0;transform:translateY(10px)}
 @media (prefers-reduced-motion:reduce){.sdeck-title span{transition:none}}
@@ -1851,59 +1854,75 @@ function makeJS() {
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
   }
 
-  /* THE SWIPE DECK (see .sdeck). The track's x is the one source of truth: every card's scale is computed
-     from its distance to the centre on every move (1 - (1 - side) x clamp(|offset| / pitch, 0, 1)), so the
-     incoming card grows and the outgoing one shrinks throughout the drag, not only after release. Release
-     projects the flick's velocity, picks the nearest card and settles there with a decelerating ease
-     (power3.out over --settle seconds: no overshoot, no rotation, no fading). Stops at both ends. Vertical
-     swipes and wheel stay with the page (touch-action:pan-y; only a mostly-horizontal wheel is taken). */
+  /* THE SWIPE DECK (see .sdeck), her v2 lane model. pos is the one source of truth: a continuous index of the
+     card at the centre. For card i, t = i - pos and p = max(0, 1 - |t|) is its progress toward the centre:
+       y     = lane + p x (centre - lane)        lanes 30% (top) and 72% (bottom) of the stage
+     Lanes as in her reference video (she chose "match the video"): the two neighbours always sit in OPPOSITE
+     corners and the pairing flips with each swipe, so a card peeks from one lane on the right and the other on
+     the left, switching only as it passes the centre (p = 1, where its lane doesn't show).
+       scale = side + (1 - side) x p             side 0.5
+       x     = sign(t) x |t| x R                 (R past one card: the next cards queue further out)
+     R = 0.75 x card + gap keeps the active card's edge and the incoming card's edge a constant gap apart through
+     the whole drag; on wide screens R grows so only a ~7% slice of each neighbour peeks in. Release settles on
+     the nearest card with a decelerating ease (no overshoot, rotation or fading); stops at both ends; vertical
+     swipes and wheel stay with the page. */
   const sd=document.querySelector('.sdeck');
   if(sd){
-    const track=sd.querySelector('.sdeck-track'),cards=[...track.children],titleEl=sd.querySelector('.sdeck-title'),span=titleEl.querySelector('span');
+    const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),span=titleEl.querySelector('span');
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
-    let x=0,pitch=1,idx=0,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
+    let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       const n=cards[i].dataset.title;if(rm||span.textContent===n){span.textContent=n;return}
       titleEl.classList.add('swap');clearTimeout(setTitle.t);
       setTitle.t=setTimeout(()=>{span.textContent=cards[active].dataset.title;titleEl.classList.remove('swap')},130);
     };
-    const setX=v=>{
-      x=v;track.style.transform='translate3d('+v+'px,0,0)';const side=num('--side')||.65;
-      /* each card shrinks from the side FACING the centre, so a neighbour's inner edge holds its place and it
-         keeps peeking in (shrinking around its own middle pushed it off a phone screen); at the centre scale is 1,
-         so the origin flip as a card crosses over is invisible */
-      cards.forEach((c,i)=>{const off=i*pitch+v,d=Math.min(1,Math.abs(off)/pitch);c.style.transformOrigin=(off<0?'100%':'0%')+' 50%';c.style.transform='scale('+(1-(1-side)*d)+')'});
-      const near=Math.max(0,Math.min(cards.length-1,Math.round(-v/pitch)));if(near!==active)setTitle(near);
+    const place=v=>{
+      pos=v;const side=num('--side')||.5,cy=.51*H,top=.30*H,bot=.72*H;
+      cards.forEach((c,i)=>{
+        const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot);
+        const x=Math.sign(t)*(a<=1?a*R:R+(a-1)*R2),y=lane+p*(cy-lane),sc=side+(1-side)*p;
+        c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
+      });
+      const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active)setTitle(near);
     };
-    const layout=()=>{const cw=cards[0].offsetWidth;pitch=cw+(parseFloat(getComputedStyle(track).columnGap)||0);track.style.left=(sd.clientWidth-cw)/2+'px';setX(-idx*pitch)};
-    const edge=v=>Math.max(-(cards.length-1)*pitch-pitch*.18,Math.min(pitch*.18,v));   // a little give past the ends
+    const layout=()=>{
+      W=sd.clientWidth;const side=num('--side')||.5,gap=(num('--gap')||6)/100*W,peek=(num('--peek')||7)/100*W;
+      /* the tallest headline sets the reserved title height, so the card can be sized to leave room for it */
+      const keep=span.textContent;let th=0;titleEl.style.minHeight='0';titleEl.style.setProperty('--S',Math.min(W*(num('--aw')||73)/100,W)+'px');
+      cards.forEach(c=>{span.textContent=c.dataset.title;th=Math.max(th,titleEl.offsetHeight)});span.textContent=keep;
+      const avail=innerHeight-th-150;   // nav, section heading and breathing room
+      const ah=(num('--ah')||75)/100;S=Math.max(160,Math.min(W*(num('--aw')||73)/100,avail*ah));   // ~73% of the width, or 75% of the room
+      H=S/ah;   // the stage the lanes live in: the active card fills ah of its height
+      R=Math.max(.75*S+gap,W/2-peek+side*S/2);R2=side*S+gap;
+      sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
+      titleEl.style.minHeight=th+'px';place(pos);
+    };
+    const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
     const settle=(i,instant)=>{
-      idx=Math.max(0,Math.min(cards.length-1,i));const to=-idx*pitch;if(tween)tween.kill();
-      if(instant||rm||!window.gsap)return setX(to);
-      const o={v:x};tween=gsap.to(o,{v:to,duration:num('--settle')||.6,ease:'power3.out',onUpdate:()=>setX(o.v)});
+      const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
+      if(instant||rm||!window.gsap)return place(to);
+      const o={v:pos};tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:'power3.out',onUpdate:()=>place(o.v)});
     };
-    sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,x0:x,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
+    sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{
       if(!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
       if(!drag.axis){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;drag.axis=Math.abs(dx)>Math.abs(dy)?'x':'y';if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging')}}
-      if(drag.axis!=='x')return;drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>6)drag.pts.shift();setX(edge(drag.x0+dx));
+      if(drag.axis!=='x')return;drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>6)drag.pts.shift();place(edge(drag.p0-dx/R));
     });
     const end=()=>{
-      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');
-      if(d.axis!=='x'){if(d.axis===null)return;settle(Math.round(-x/pitch));return}
+      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');if(d.axis!=='x')return;
       const a=d.pts[0],b=d.pts[d.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);   // px per ms
-      const near=Math.round(-x/pitch),pick=Math.round(-(x+v*110)/pitch);   // the nearest card; a real flick may carry one further
+      const near=Math.round(pos),pick=Math.round(pos-v*110/R);   // the nearest card; a real flick may carry one further
       settle(Math.max(near-1,Math.min(near+1,pick)));suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
-    /* the centred card opens its case study; a neighbour comes to the centre instead; a drag never clicks */
-    track.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
-    track.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(c&&+c.dataset.i!==active)settle(+c.dataset.i)});
+    stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
+    stage.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(c&&+c.dataset.i!==active)settle(+c.dataset.i)});
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     sd.addEventListener('wheel',e=>{
       if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();if(tween)tween.kill();
-      setX(edge(x-e.deltaX));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(-x/pitch)),120);
+      place(edge(pos+e.deltaX/R));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(pos)),120);
     },{passive:false});
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});
@@ -2550,17 +2569,17 @@ function renderHome(mode = 'list') {
 </section>`;
 
   /* THE SWIPE DECK (review copy, branch review/swipe-deck; her spec claude-case-study-swipe-deck.md and her
-     reference-swipe-deck.mov): one large centred case-study card, smaller neighbours peeking in from both
-     sides, dragged or swiped sideways; only the centred project's title shows, UNDER the card (her change
-     from the reference, where text sits on the cards). Cards use the same media and links as the list. */
+     reference-swipe-deck.mov): one large centred case-study card; the others wait in alternating corner lanes
+     (her v2 brief, claude-case-study-swipe-deck-v2.md). Only the centred project's FULL-SENTENCE headline shows,
+     UNDER the card (her change from the reference). Cards use the same media and links as the list. */
   const sdeckHTML = `
 <section id="work" class="sdeck-sec">
   <h2 class="section-title fade">${typo(site.work.title)}</h2>
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
-    <div class="sdeck-track">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-title="${esc(p.name)}" aria-label="${esc(p.name)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
+    <div class="sdeck-stage">
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
     </div>
-    <p class="sdeck-title" aria-live="polite"><span>${esc(site.work.projects[0].name)}</span></p>
+    <p class="sdeck-title" aria-live="polite"><span>${typo(site.work.projects[0].outcome)}</span></p>
   </div>
 </section>`;
 
