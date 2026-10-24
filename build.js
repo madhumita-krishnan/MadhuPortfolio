@@ -840,6 +840,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .jb-logo img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
 .jb-logo.out{opacity:1;pointer-events:auto}
 .jb-logo:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+/* a little clay wiggle on hover (her ask 2026-10-24); on the image, since the link's own transform places it */
+.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:jb-wiggle .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes jb-wiggle{0%{transform:none}20%{transform:rotate(-9deg) scale(1.06)}45%{transform:rotate(7deg) scale(1.06)}70%{transform:rotate(-4deg) scale(1.03)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:none}}
 .hero>.jump-box.gone{visibility:hidden;pointer-events:none}
 .hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
 @media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
@@ -2566,6 +2570,12 @@ function makeJS() {
       dispatchEvent(new CustomEvent('mk-box-jump',{detail:{el:jb}}));
       fallback=setTimeout(()=>open(false),2200);
     });
+    /* sounds (Flora / ElevenLabs SFX, 2026-10-24): a clay SQUISH when an icon is clicked, a POP when she lands on the
+       cloud. Only ever after a click (browsers allow sound then), at a gentle volume. */
+    const sfx={};['squish','pop'].forEach(n=>{try{const a=new Audio('assets/sfx/'+n+'.mp3?v=${BUILD_V}');a.preload='auto';a.volume=.5;sfx[n]=a}catch(e){}});
+    const play=n=>{const a=sfx[n];if(!a)return;try{a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
+    logos.forEach(a=>a.addEventListener('click',()=>play('squish')));
+    addEventListener('mk-box-slam',()=>play('pop'));
     addEventListener('mk-box-slam',()=>{if(state==='jumping')return open(false);
       if(state==='idle'){state='jumping';const cur=getComputedStyle(art).transform;art.style.transform=cur==='none'?'':cur;art.classList.add('still');requestAnimationFrame(()=>{art.style.transform=''});open(false)}});   // she landed on it on her own
   }
