@@ -2545,7 +2545,18 @@ function makeJS() {
     };
     const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
       if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
-      setTimeout(()=>tumble(still),still?0:120);setTimeout(()=>dissolve(still),still?0:560)};
+      setTimeout(()=>tumble(still),still?0:120);setTimeout(()=>dissolve(still),still?0:560);
+      if(!still)setTimeout(reform,4600)};
+    /* THE CLOUD COMES BACK (her: "I'm not able to get the person to do the tuck jump slam" — after one go it was gone for
+       the visit): ~4s after it bursts, the icons tuck back away and the cloud re-forms in its spot with a clay pop, ready
+       for another jump */
+    const reform=()=>{
+      logos.forEach(a=>{a.classList.remove('out','rest');a.setAttribute('tabindex','-1')});dispatchEvent(new Event('mk-terrain'));
+      jb.classList.remove('gone');jb.setAttribute('aria-expanded','false');art.classList.remove('still','slam');art.style.opacity='';art.style.transform='';
+      art.getAnimations().forEach(an=>an.cancel());
+      art.animate([{transform:'scale(.2)',opacity:0},{transform:'scale(1.12,.9)',opacity:1,offset:.6},{transform:'scale(.96,1.04)',offset:.82},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.3,1.4,.5,1)'});
+      state='idle';dispatchEvent(new Event('mk-terrain'));if(typeof morph==='function')morph();
+    };
     jb.addEventListener('click',()=>{
       if(state!=='idle')return;state='jumping';
       /* stop the bob where it is and ease it level, so the lid is exactly where she will land */
