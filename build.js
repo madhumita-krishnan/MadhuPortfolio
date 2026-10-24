@@ -179,7 +179,7 @@ function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
   const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
-  return decl ? '.sdeck-sec{' + decl + '}' : '';
+  return decl ? '.work-sec{' + decl + '}' : '';
 }
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
@@ -952,8 +952,22 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    the pairing flips with each swipe, as in the video. app.js places every card from one swipe progress p (y and scale
    move with x, never as a separate step). Background #101010, corners 8% of the card. Dials read --sd-* first. */
 ${swipeTweaks()}
-.sdeck-sec{max-width:none;padding:calc(var(--space)*9) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
-.sdeck-sec .section-title{max-width:1240px;margin:0 auto;padding:0 calc(var(--space)*6)}
+/* the work section: SWIPE (deck, default) or SCROLL (list), flipped by the toggle in its head */
+.work-sec[data-view="deck"]{max-width:none;padding:calc(var(--space)*9) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
+.work-head{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.work-sec[data-view="deck"] .work-head{padding:0 calc(var(--space)*6)}
+.work-head .section-title{margin:0}
+.view-toggle{display:inline-flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid var(--line)}
+/* icons, not words (her ask): three cards side by side = swipe, two stacked rows = scroll */
+.view-btn{display:grid;place-items:center;width:44px;height:36px;padding:0;border:0;border-radius:var(--r-pill);
+  background:transparent;color:var(--text-secondary);cursor:pointer;transition:background var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
+.view-btn[aria-pressed="true"]{background:var(--text-primary);color:var(--bg-base)}
+.view-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
+.view-btn:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
+.work-sec[data-view="deck"] .view-list,.work-sec[data-view="list"] .view-deck{display:none}
+.work-sec[data-view="list"] .view-list{margin-top:calc(var(--space)*6)}
+/* the project name, plain (no pill): small capitals over the headline/tags */
+.w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
 .sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
   --settle:var(--sd-settle,.5);--radius:var(--sd-radius,.08);
   position:relative;margin-top:calc(var(--space)*3);overflow:hidden;touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
@@ -971,9 +985,12 @@ ${swipeTweaks()}
 .sdeck-title{margin:1.2rem auto 0;padding:0 16px;width:min(100%,calc(var(--S,50vw) + 2rem));min-height:var(--title-h,auto);box-sizing:border-box;
   text-align:center;font-family:var(--font-display);font-weight:500;font-size:clamp(1.05rem,2vw,1.6rem);line-height:1.3;letter-spacing:-.01em;
   color:var(--text-primary);text-wrap:balance}
-.sdeck-title span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
-.sdeck-title.swap span{opacity:0;transform:translateY(10px)}
-@media (prefers-reduced-motion:reduce){.sdeck-title span{transition:none}}
+.sdeck-title>span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
+.sdeck-title.swap>span{opacity:0;transform:translateY(10px)}
+/* the project name, plain, over its full-sentence headline */
+.sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.72rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+.sdeck-line{display:block}
+@media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
@@ -1863,6 +1880,21 @@ function makeJS() {
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
   }
 
+  /* SWIPE / SCROLL (see .work-sec): flips the work section's view, remembers it in this browser, and tells the
+     deck (it lays out when shown) and the phone list (snapping, focus) to catch up */
+  const workEl=document.querySelector('.work-sec');
+  if(workEl){
+    const btns=[...workEl.querySelectorAll('.view-btn')];
+    const setView=(v,save)=>{
+      workEl.dataset.view=v;btns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
+      if(save)try{localStorage.setItem('mk-work-view',v)}catch(e){}
+      dispatchEvent(new Event('mk-work-view'));if(window.ScrollTrigger)ScrollTrigger.refresh();
+    };
+    let saved=null;try{saved=localStorage.getItem('mk-work-view')}catch(e){}
+    if(saved==='list'||saved==='deck')setView(saved,false);
+    btns.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view,true)));
+  }
+
   /* THE SWIPE DECK (see .sdeck), her v2 lane model. pos is the one source of truth: a continuous index of the
      card at the centre. For card i, t = i - pos and p = max(0, 1 - |t|) is its progress toward the centre:
        y     = lane + p x (centre - lane)        lanes 30% (top) and 72% (bottom) of the stage
@@ -1877,14 +1909,15 @@ function makeJS() {
      swipes and wheel stay with the page. */
   const sd=document.querySelector('.sdeck');
   if(sd){
-    const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),span=titleEl.querySelector('span');
+    const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line');
+    const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
-      const n=cards[i].dataset.title;if(rm||span.textContent===n){span.textContent=n;return}
+      if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
       titleEl.classList.add('swap');clearTimeout(setTitle.t);
-      setTitle.t=setTimeout(()=>{span.textContent=cards[active].dataset.title;titleEl.classList.remove('swap')},130);
+      setTitle.t=setTimeout(()=>{fill(active);titleEl.classList.remove('swap')},130);
     };
     const place=v=>{
       pos=v;const side=num('--side')||.5,cy=.51*H,top=.30*H,bot=.72*H;
@@ -1898,8 +1931,9 @@ function makeJS() {
     const layout=()=>{
       W=sd.clientWidth;const side=num('--side')||.5,gap=(num('--gap')||6)/100*W,peek=(num('--peek')||7)/100*W;
       /* the tallest headline sets the reserved title height, so the card can be sized to leave room for it */
-      const keep=span.textContent;let th=0;titleEl.style.minHeight='0';titleEl.style.setProperty('--S',Math.min(W*(num('--aw')||73)/100,W)+'px');
-      cards.forEach(c=>{span.textContent=c.dataset.title;th=Math.max(th,titleEl.offsetHeight)});span.textContent=keep;
+      if(!W)return;   // hidden (SCROLL view): laid out again when SWIPE is shown
+      let th=0;titleEl.style.minHeight='0';titleEl.style.setProperty('--S',Math.min(W*(num('--aw')||73)/100,W)+'px');
+      cards.forEach((c,i)=>{fill(i);th=Math.max(th,titleEl.offsetHeight)});fill(Math.max(0,active));
       const avail=innerHeight-th-150;   // nav, section heading and breathing room
       const ah=(num('--ah')||75)/100;S=Math.max(160,Math.min(W*(num('--aw')||73)/100,avail*ah));   // ~73% of the width, or 75% of the room
       H=S/ah;   // the stage the lanes live in: the active card fills ah of its height
@@ -1934,7 +1968,7 @@ function makeJS() {
       place(edge(pos+e.deltaX/R));clearTimeout(wheelT);wheelT=setTimeout(()=>settle(Math.round(pos)),120);
     },{passive:false});
     addEventListener('resize',layout);layout();settle(0,true);
-    addEventListener('tweak',()=>{layout()});
+    addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
     if(!rm)vendorJS('gsap.min.js').catch(()=>{});
   }
 
@@ -1963,7 +1997,9 @@ function makeJS() {
      covers the middle line of the screen, so the rest of the page keeps free scrolling */
   if(phoneList.matches&&cardsM.length){
     const workSec=document.getElementById('work');
-    new IntersectionObserver(es=>es.forEach(e=>document.documentElement.classList.toggle('reels-on',e.isIntersecting)),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
+    let inMid=false;const sync=()=>document.documentElement.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');   // SCROLL view only
+    new IntersectionObserver(es=>es.forEach(e=>{inMid=e.isIntersecting;sync()}),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
+    addEventListener('mk-work-view',sync);
   }
 
   /* screenshot/QA hook: ?shot=1200 shifts the page up by 1200px with everything
@@ -2485,7 +2521,7 @@ function macFrame(m, { eager = false } = {}) {
 }
 
 /* ---------------------------------------------------------------- home page */
-function renderHome(mode = 'list') {
+function renderHome() {
   const h = site.hero;
 
   /* Her sentences, set in her own hand — one span each so they break where the thought
@@ -2562,34 +2598,44 @@ function renderHome(mode = 'list') {
     </div>`;
   };
 
-  const workHTML = `
-<section id="work">
-  ${site.work.eyebrow ? `<p class="eyebrow fade">${esc(site.work.eyebrow)}</p>` : ''}
-  <h2 class="section-title fade">${typo(site.work.title)}</h2>
-  ${site.work.projects.map(p => `
+  /* the SCROLL view: one project per screen on phones (Reels), the stacked list on desktop. The project name is
+     plain text now: she didn't like the pill around it (2026-10-23) */
+  const listHTML = `${site.work.projects.map(p => `
   <a class="wproject fade" href="${esc(p.slug)}.html" data-curious>
     <div class="w-copy">
       <h3 class="w-outcome">${typo(p.outcome)}</h3>
-      <p class="w-chiprow"><span class="w-chip glass">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
+      <p class="w-chiprow"><span class="w-name">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
       ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
     <div class="project-media-wrap">${projectMedia(p)}</div>
-  </a>`).join('\n')}
-</section>`;
+  </a>`).join('\n')}`;
 
   /* THE SWIPE DECK (review copy, branch review/swipe-deck; her spec claude-case-study-swipe-deck.md and her
      reference-swipe-deck.mov): one large centred case-study card; the others wait in alternating corner lanes
      (her v2 brief, claude-case-study-swipe-deck-v2.md). Only the centred project's FULL-SENTENCE headline shows,
      UNDER the card (her change from the reference). Cards use the same media and links as the list. */
   const sdeckHTML = `
-<section id="work" class="sdeck-sec">
-  <h2 class="section-title fade">${typo(site.work.title)}</h2>
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
     <div class="sdeck-stage">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div></a>`).join('\n      ')}
     </div>
-    <p class="sdeck-title" aria-live="polite"><span>${typo(site.work.projects[0].outcome)}</span></p>
+    <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
+  </div>`;
+
+  /* THE WORK SECTION (her ask 2026-10-23: the swipe deck on the main screen, "with a toggle that lets you go
+     into scroll mode"). SWIPE (the deck) is the default; SCROLL is the stacked list (one project per screen
+     on phones). app.js flips data-view and remembers the choice in this browser. */
+  const workHTML = `
+<section id="work" class="work-sec" data-view="deck">
+  <div class="work-head">
+    <h2 class="section-title fade">${typo(site.work.title)}</h2>
+    <div class="view-toggle" role="group" aria-label="How to browse the projects">
+      <button type="button" class="view-btn" data-view="deck" aria-pressed="true" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
+      <button type="button" class="view-btn" data-view="list" aria-pressed="false" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
+    </div>
   </div>
+  <div class="view-deck">${sdeckHTML}</div>
+  <div class="view-list">${listHTML}</div>
 </section>`;
 
   const panels = site.disciplines.panels;
@@ -2689,7 +2735,7 @@ ${navBar('home')}
 <main>
 ${heroHTML}
 ${brandsHTML}
-${mode === 'c' ? sdeckHTML : workHTML}
+${workHTML}
 ${panelsHTML}
 ${storyHTML}
 ${aboutHTML}
@@ -2981,10 +3027,6 @@ function lintIcons(html, page) {
 const homePage = lintIcons(renderHome(), 'index.html');
 fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
-/* locally deck.html also carries the tweaker receiver; never on Vercel (process.env.VERCEL is set in its
-   builds): the receiver trusts any window that posts to it */
-const deckPage = lintIcons(renderHome('c'), 'deck.html');
-fs.writeFileSync(path.join(DIST, 'deck.html'), process.env.VERCEL ? deckPage : deckPage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
