@@ -2726,7 +2726,6 @@ function renderHome() {
   <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}</p>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
-    <a class="btn outline" href="${esc(h.ctaSecondary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaSecondary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaSecondary.label)}</a>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
