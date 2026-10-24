@@ -166,7 +166,7 @@
     });
 
     /* the JUMP! box is a solid block she can land on (its art bobs inside; this outer box stays still) */
-    hero.querySelectorAll('.jump-box').forEach(function (b) {
+    hero.querySelectorAll('.jump-box:not(.gone)').forEach(function (b) {
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 4, r.y1, r.w - 8, r.h);
     });
 
@@ -379,6 +379,16 @@
     start();
   });
   addEventListener('mk-terrain', queueRebuild, { passive: true });
+  /* the box dissolved under her: the world is rebuilt without it at once, and she simply drops (no flip) */
+  addEventListener('mk-box-gone', function () {
+    if (!booted) return;
+    rebuild();
+    if (fig.state === 'idle' || fig.state === 'move' || fig.state === 'sign' || fig.state === 'wave' || fig.state === 'celeb') {
+      fig.celeb = null; fig.target = null; fig.waypoint = null;
+      fig.state = 'air'; fig.vy = 0; fig.vx = 0; fig.fallFrom = fig.y; fig.flipQueued = true;
+      start();
+    }
+  });
   function waveHello() {
     if (rmActive()) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {

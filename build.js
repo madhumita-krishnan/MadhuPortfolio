@@ -895,6 +895,9 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .jb-logo svg{display:block;width:100%;height:100%}
 .jb-logo.out{opacity:1;pointer-events:auto}
 .jb-logo:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:8px}
+.hero>.jump-box.gone{visibility:hidden;pointer-events:none}
+.hero>.jb-dust{position:absolute;margin:0;max-width:none;z-index:2;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#f6d08a,#d39a45 60%,#a8732c)}
 @media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}
 @media (prefers-reduced-motion:reduce){.jb-art{animation:none}.jb-flap{transition:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
@@ -2507,9 +2510,23 @@ function makeJS() {
         paint();if(moving)requestAnimationFrame(step)};
       requestAnimationFrame(step);
     };
+    /* then the box is DONE (her ask: "when the box opens it dissolves in a puff of dust and the person falls down"):
+       it bulges, shrinks to nothing inside a burst of clay dust, stops being ground, and she drops */
+    const dissolve=still=>{
+      const hr=heroEl.getBoundingClientRect(),br=jb.getBoundingClientRect(),cx=br.left-hr.left+br.width/2,cy=br.top-hr.top+br.height/2;
+      if(!still)for(let i=0;i<34;i++){const d=document.createElement("i"),z=7+Math.random()*13,a=Math.random()*Math.PI*2,r=34+Math.random()*80;
+        d.className='jb-dust';Object.assign(d.style,{left:cx-z/2+(Math.random()-.5)*br.width*.7+'px',top:cy-z/2+(Math.random()-.5)*br.height*.7+'px',width:z+'px',height:z+'px'});
+        heroEl.appendChild(d);
+        d.animate([{transform:'translate(0,0) scale(1)',opacity:.95},{transform:'translate('+(Math.cos(a)*r*1.3).toFixed(1)+'px,'+(Math.sin(a)*r-46).toFixed(1)+'px) scale(.15)',opacity:0}],
+          {duration:650+Math.random()*450,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>d.remove()}
+      const gone=()=>{const f=document.activeElement===jb;jb.classList.add('gone');if(f&&logos[0])logos[0].focus();dispatchEvent(new Event('mk-box-gone'))};
+      if(still)return gone();
+      art.animate([{transform:'none',opacity:1},{transform:'scale(1.12,.9)',opacity:.9,offset:.3},{transform:'scale(.35)',opacity:0}],{duration:300,easing:'ease-in',fill:'forwards'});
+      setTimeout(gone,150);
+    };
     const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
       art.classList.add('open');if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
-      setTimeout(()=>tumble(still),still?0:120)};
+      setTimeout(()=>tumble(still),still?0:120);setTimeout(()=>dissolve(still),still?0:560)};
     jb.addEventListener('click',()=>{
       if(state!=='idle')return;state='jumping';
       /* stop the bob where it is and ease it level, so the lid is exactly where she will land */
