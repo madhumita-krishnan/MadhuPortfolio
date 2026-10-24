@@ -2593,6 +2593,9 @@ function makeJS() {
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
     placeBox();addEventListener('resize',placeBox,{passive:true});
+    /* re-measure once the headline's real font is in: placed against the fallback font, the name later grew under the
+       cloud (her: "still in the wrong place … the icons aren't coming out" — she landed on the letters, not the cloud) */
+    document.fonts&&document.fonts.ready.then(placeBox);addEventListener('load',placeBox);setTimeout(placeBox,2100);
     /* the morph loop: step the sprite grid at its frame rate while the cloud is on screen; stops once it's jumped on */
     const mo=jb.querySelector('.jb-morph');let mk=0,moT=0,seen=false;
     const morph=()=>{clearInterval(moT);if(!mo||!seen||state!=='idle'||rmActive())return;
