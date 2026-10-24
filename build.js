@@ -828,7 +828,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    morphing gif with Flora"): a Flora clay VIDEO of the cloud reshaping as the light travels round it, keyed off its
    green and packed into one WebP grid that app.js steps through at the video's frame rate, a seamless loop */
 .jb-morph{display:block;width:100%;background-repeat:no-repeat;background-position:0 0}
-.jb-word{position:absolute;left:50%;top:56%;width:60%;height:auto;transform:translate(-50%,-50%);pointer-events:none;-webkit-user-drag:none}   /* "jump!" in navy clay (Flora), pressed onto the cloud */
+.jb-word{position:absolute;left:50%;top:56%;width:60%;height:auto;transform:translate(-50%,-50%);pointer-events:none;-webkit-user-drag:none}   /* "jump!" in clay (Flora), inked the same blue as her shorts (#454E93), pressed onto the cloud */
 @keyframes jb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .jb-art.still{animation:none;transition:transform 250ms var(--ease-standard)}
 .jump-box:hover .jb-art:not(.still){animation-duration:1.6s}
@@ -2877,7 +2877,7 @@ function renderHome() {
        tuck-flips onto it, slams, its bottom drops open and her socials tumble out. The socials are the footer's
        LinkedIn / Twitter / X links, so adding one there adds it here. -->
   <button class="jump-box" type="button" aria-label="Jump on the box to see my socials" aria-expanded="false">
-    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<img class="jb-word" src="assets/clay/props/jump-word-navy.png?v=${BUILD_V}" alt="" draggable="false"></span>
+    <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<img class="jb-word" src="assets/clay/props/jump-word-shorts.png?v=${BUILD_V}" alt="" draggable="false"></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
     { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
