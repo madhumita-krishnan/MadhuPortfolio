@@ -2552,12 +2552,13 @@ function makeJS() {
   if(jb&&matchMedia('(min-width:761px)').matches){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
-      /* halfway between the name and the say-hey row, past the end of the bio (her: lower "so the person can properly tuck
-         jump slam", then "higher, it doesn't feel visually balanced"): from the d she still gets a real arc down onto it,
-         and the icons it drops land on the say-hey line */
-      const cta=heroEl.querySelector('.hero-cta-row').getBoundingClientRect(),bio=heroEl.querySelector('.hero-line').getBoundingClientRect();
-      const x=Math.min(Math.max(t.right-hr.left+80,bio.right-hr.left+48),hr.width-jb.offsetWidth-24),
-        y=((t.top+t.height/2)+(cta.top+cta.height/2))/2-hr.top-jb.offsetHeight/2;
+      /* IN THE SKY to the right of the name (her: lower to jump onto, then higher for balance, then "a better place
+         visually"): centred in the open space between the end of the copy and the hero's right edge, level with the top
+         of the headline. The text holds the left, the cloud the right; from the d she makes a long flat leap to it, and
+         the icons it drops have a long fall to the say-hey line */
+      const bio=heroEl.querySelector('.hero-line').getBoundingClientRect(),copyR=Math.max(t.right,bio.right)-hr.left;
+      const x=Math.min(Math.max(copyR+40,(copyR+hr.width)/2-jb.offsetWidth/2),hr.width-jb.offsetWidth-24),
+        y=t.top-hr.top+t.height*.18-jb.offsetHeight/2;
       jb.style.left=x+'px';jb.style.top=y+'px';dispatchEvent(new Event('mk-terrain'))};
     const jimg=jb.querySelector('.jb-img');if(jimg&&!jimg.complete)jimg.addEventListener('load',placeBox,{once:true});   // (the sprite version is sized by its aspect-ratio)
     placeBox();setTimeout(placeBox,2100);addEventListener('resize',placeBox,{passive:true});   // 2.1s: after the headline's rise lands
@@ -2575,7 +2576,7 @@ function makeJS() {
       /* EVENLY SPACED where they land (her ask): each icon owns a slot, 76px apart, centred under the cloud (kept on
          screen); it's thrown toward its slot, tumbles and bounces, and once on the line steers into the slot and stops */
       const gapX=S+24,c0=Math.max(S/2+8+(n-1)/2*gapX,Math.min(hr.width-S/2-8-(n-1)/2*gapX,x0));
-      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,x:x0,y:y0,tx,vx:(tx-x0)/.55,vy:40+i*25,r:0,vr:(i%2?-1:1)*(360+i*90),rest:false}});
+      const ps=logos.map((a,i)=>{const tx=c0+(i-(n-1)/2)*gapX;return {a,x:x0,y:y0-br.height*.4,tx,vx:(tx-x0)/.8,vy:-420-i*45,r:0,vr:(i%2?-1:1)*(520+i*120),rest:false}});   // flung UP out of the burst
       if(still)ps.forEach(p=>{p.x=p.tx;p.y=floor;p.rest=true});
       const paint=()=>ps.forEach(p=>{p.a.style.transform='translate('+(p.x-S/2).toFixed(1)+'px,'+(p.y-S).toFixed(1)+'px) rotate('+p.r.toFixed(1)+'deg)'});
       paint();logos.forEach(a=>{a.classList.add('out');a.removeAttribute('tabindex')});
@@ -2610,15 +2611,16 @@ function makeJS() {
     };
     const open=still=>{if(state==='open')return;state='open';clearTimeout(fallback);jb.setAttribute('aria-expanded','true');
       if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
-      setTimeout(()=>tumble(still),still?0:120);setTimeout(()=>dissolve(still),still?0:560);
-      if(!still)setTimeout(reform,4600)};
+      /* the instant she hits: the cloud bursts, and the icons are flung up out of it a beat later */
+      dissolve(still);setTimeout(()=>tumble(still),still?0:70);
+      };   // once popped it stays gone until the page loads again (her call 2026-10-24; the re-forming cloud was tried)
     /* THE CLOUD COMES BACK (her: "I'm not able to get the person to do the tuck jump slam" — after one go it was gone for
        the visit): ~4s after it bursts, the icons tuck back away and the cloud re-forms in its spot with a clay pop, ready
        for another jump */
     const reform=()=>{
       logos.forEach(a=>{a.classList.remove('out','rest');a.setAttribute('tabindex','-1')});dispatchEvent(new Event('mk-terrain'));
       jb.classList.remove('gone');jb.setAttribute('aria-expanded','false');art.classList.remove('still','slam');art.style.opacity='';art.style.transform='';
-      art.getAnimations().forEach(an=>an.cancel());
+      art.getAnimations().forEach(an=>{if(!(window.CSSAnimation&&an instanceof CSSAnimation))an.cancel()});   // the dissolve's leftovers only — never the bob (cancelling that stopped the cloud floating)
       art.animate([{transform:'scale(.2)',opacity:0},{transform:'scale(1.12,.9)',opacity:1,offset:.6},{transform:'scale(.96,1.04)',offset:.82},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.3,1.4,.5,1)'});
       state='idle';dispatchEvent(new Event('mk-terrain'));if(typeof morph==='function')morph();
     };

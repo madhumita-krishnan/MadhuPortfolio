@@ -378,21 +378,38 @@
      steering in the air (no target), so the arc is exactly the one solved here. */
   addEventListener('mk-box-jump', function (e) {
     if (!booted || rmActive() || !e.detail || !e.detail.el) return;
-    var r = localRect(e.detail.el, cv.getBoundingClientRect());
+    boxLaunch(e.detail.el);
+  });
+  function boxLaunch(el) {
+    var r = localRect(el, cv.getBoundingClientRect());
     var tx = (r.x1 + r.x2) / 2, ty = r.y1;
     if (fig.state === 'hang') release(0);
     fig.celeb = null; fig.target = null; fig.waypoint = null; fig.drag = null; fig.wave = 0;
-    var apex = Math.min(fig.y, ty) - 110, up = fig.y - apex, dn = ty - apex;
-    var T = Math.sqrt(2 * up / G) + Math.sqrt(2 * dn / G);
-    fig.vy = -Math.sqrt(2 * G * up); fig.vx = (tx - fig.x) / T;
+    /* FORCEFUL (her: "momentum filled and forceful so the cloud immediately pops"): a lower apex and 1.8x gravity — she
+       snaps up, spins fast, and drives down into the cloud */
+    var GB = G * 1.8, apex = Math.min(fig.y, ty) - 80, up = fig.y - apex, dn = ty - apex;
+    var T = Math.sqrt(2 * up / GB) + Math.sqrt(2 * dn / GB);
+    fig.vy = -Math.sqrt(2 * GB * up); fig.vx = (tx - fig.x) / T;
     /* the spinning tuck flip, facing the cloud (her call: the clay backflip version was tried 2026-10-24 and "the jump on
        the cloud used to be cooler" — this one) */
     fig.dir = tx >= fig.x ? 1 : -1;
     fig.fallFrom = fig.y; fig.state = 'air'; fig.flipQueued = true;
-    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.88);
-    fig.boxJump = { at: performance.now() };
+    startFlip(fig.dir); fig.flip.w = (Math.PI * 2) / (T * 0.85);
+    fig.boxJump = { at: performance.now(), g: GB };
     start();
-  });
+  }
+  /* THE CLOUD MAGNET (her rule 2026-10-24: "if the person is going to make contact with the cloud the motion always has
+     to be tuck jump flip slam"). Every frame: if she's been sent to the cloud and is within a leap of it, or she's
+     come close to it any other way (mid-air, climbing its edge, walking under its lip), she launches the same tuck
+     jump flip slam its click sends. Standing on the floor beneath it doesn't count; neither does dropping out of it. */
+  function cloudMagnet() {
+    if (fig.boxJump || fig.dropping || fig.state === 'hang' || rmActive()) return;
+    var cl = hero.querySelector('.jump-box:not(.gone)'); if (!cl) return;
+    var r = localRect(cl, cv.getBoundingClientRect()), ctop = r.y1 + r.h * .12, cx = (r.x1 + r.x2) / 2, g = fig.waypoint || fig.target;
+    var sentThere = g && g.x >= r.x1 - 10 && g.x <= r.x2 + 10 && Math.abs(g.y - ctop) < 16 && Math.abs(fig.x - cx) < 380;
+    var close = fig.x > r.x1 - 50 && fig.x < r.x2 + 50 && fig.y > ctop - 130 && fig.y < r.y2 + 110 && (fig.state === 'air' || fig.state === 'mantle' || fig.state === 'move');
+    if (sentThere || close) { if (fig.state === 'mantle') fig.mantle = null; boxLaunch(cl); }
+  }
   addEventListener('mk-terrain', queueRebuild, { passive: true });
   /* the box dissolved under her: the world is rebuilt without it at once, and she simply drops (no flip) */
   addEventListener('mk-box-gone', function () {
@@ -651,7 +668,7 @@
   }
 
   function tickAir(dt) {
-    fig.vy = Math.min(fig.vy + G * dt, 1500);
+    fig.vy = fig.boxJump && fig.boxJump.g ? Math.min(fig.vy + fig.boxJump.g * dt, 2600) : Math.min(fig.vy + G * dt, 1500);
     var g = fig.waypoint || fig.target;
     /* steer proportionally, not at full run — the dot of an i is a small landing pad */
     var want = fig.drag ? fig.drag.vx : (g ? Math.max(-RUN, Math.min(RUN, (g.x - fig.x) * 3)) : fig.vx);
@@ -752,7 +769,7 @@
         if (fig.vy > 620 || drop > 130) { fig.landT = 0.18; puff(fig.x, fig.y, 4); }
         /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
            jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
-        if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.32; puff(fig.x, fig.y, 7); }
+        if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.36; puff(fig.x, fig.y, 11); }   // the SLAM: deep crouch, big puff
         fig.dropping = false;
         fig.vy = 0;
         if (!fig.target && !fig.drag) fig.vx = 0;
@@ -760,7 +777,9 @@
       }
     }
     fig.x = nx; fig.y = Math.min(ny, floorY);
-    if (fig.y >= floorY) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; }
+    /* only when coming DOWN: a jump launched from the floor sits on it for its first (zero-length) frame, and this used to
+       cancel it on the spot — why a second jump at the cloud, from the floor, sometimes never left the ground */
+    if (fig.y >= floorY && fig.vy >= 0) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; }
   }
 
   function tickHang(dt) {
@@ -834,6 +853,7 @@
     fig.onCloud = on;
   }
   function advance(dt) {
+    cloudMagnet();
     cloudCheck();
     rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
@@ -984,7 +1004,9 @@
         /* travelling along the line: hand over hand, like the stick figure (her ask 2026-10-23,
            "monkey bars and alternating hands"). The 8 clay frames follow the same reach phase that
            alternates the stick figure's grips; each frame's top is its gripping hand. */
-        if (h.reach && CLAY.man['monkey-x3']) return { s: 'monkey-x3', k: Math.floor(h.reach / (Math.PI * 2) * 24) % 24, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir };
+        /* zoom .82: these 24 frames were cut from their sheet ~1.2x bigger than her standing frame (her: "when it's hanging,
+           why does the person get bigger") */
+        if (h.reach && CLAY.man['monkey-x3']) return { s: 'monkey-x3', k: Math.floor(h.reach / (Math.PI * 2) * 24) % 24, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir, zoom: .82 };
         return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th / .09) * .09 * fig.dir };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
@@ -1024,7 +1046,7 @@
     } else CLAY.sk = 0;
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
-    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d, sc); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
+    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
