@@ -1359,7 +1359,8 @@ ${PHONE_CSS}
 .rm-mode .about-more,.rm-mode .about-more>div{transition:none}
 /* .btn-link was drawn for <a>; on a real <button> the UA's own border and padding come
    with it and read as a boxed control — strip everything but the drawn underline */
-.about-toggle{margin-bottom:calc(var(--space)*4);position:relative;
+.about-toggle{margin-top:10px;margin-bottom:calc(var(--space)*4);position:relative;   /* margin-top: a tiny bit lower (her ask 2026-10-24) */
+
   border:0;border-bottom:1.5px solid var(--teal-baby);padding:0 0 7px;background:none}
 .about-toggle:hover{border-color:var(--ink-blue)}
 /* ---- education (2026-08-25 her ask): the Block M and the Google G, official marks at
@@ -2132,7 +2133,8 @@ function makeJS() {
       setTitle.t=setTimeout(()=>{fill(active);titleEl.classList.remove('swap')},130);
     };
     const place=v=>{
-      pos=v;const side=num('--side')||.5;
+      pos=v;if(!dims.length)return;   // not laid out yet (loaded in SCROLL view, the deck hidden): layout() places it once shown
+      const side=num('--side')||.5;
       cards.forEach((c,i)=>{
         const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
         const Rs=t>0?d.Rr:d.Rl,x=shift+Math.sign(t)*(a<=1?a*Rs:Rs+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
