@@ -1059,6 +1059,9 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   color:var(--text-primary);text-wrap:balance}
 .sdeck-title>span{display:inline-block;transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
 .sdeck-title.swap>span{opacity:0;transform:translateY(10px)}
+/* her ask: "I can't tell that the text changed when I swiped … when you swipe the text should fully disappear":
+   it is gone the moment the deck moves and comes back once a project has clicked into place */
+.sdeck-title.moving>span{opacity:0;transform:translateY(10px);transition-duration:110ms}
 /* the project name, plain, over its full-sentence headline */
 .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.72rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .sdeck-line{display:block}
@@ -2050,7 +2053,7 @@ function makeJS() {
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
        Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
-    let dims=[],top=0,bot=0,shift=0;
+    let dims=[],top=0,bot=0,shift=0,nudging=false,touched=false;
     const setTitle=i=>{
       active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
@@ -2064,6 +2067,7 @@ function makeJS() {
         const Rs=t>0?d.Rr:d.Rl,x=shift+Math.sign(t)*(a<=1?a*Rs:Rs+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
       });
+      titleEl.classList.toggle('moving',!nudging&&Math.abs(v-Math.round(v))>.02);
       const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
     };
     const layout=()=>{
@@ -2152,14 +2156,24 @@ function makeJS() {
        there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
        the wheel goes quiet, so it never drags the glide down. */
     let wAcc=0,wFrom=0,wLock=false;
-    sd.addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();
+    /* on the WINDOW, not the deck (her: "depending on where my mouse is, I find it hard to horizontally scroll"):
+       a sideways swipe works anywhere while the deck holds the middle of the screen */
+    addEventListener('wheel',e=>{
+      if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)||!sd.offsetParent)return;
+      const r=sd.getBoundingClientRect();if(r.top>innerHeight*.5||r.bottom<innerHeight*.5)return;
+      e.preventDefault();touched=true;
       clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0},180);
       if(wLock)return;
       if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
       wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
       if(Math.abs(wAcc)>=40){wLock=true;settle(wFrom+Math.sign(wAcc),false,Math.abs(e.deltaX)/16)}
     },{passive:false});
+    /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
+       and back, once, unless you've already touched it. The headline stays put for the nudge. */
+    sd.addEventListener('pointerdown',()=>{touched=true});
+    new IntersectionObserver((es,io)=>{if(!es.some(e=>e.intersectionRatio>=.6))return;io.disconnect();
+      setTimeout(()=>{if(touched||rm||!window.gsap||pos!==0||cards.length<2)return;nudging=true;const o={v:0};
+        gsap.timeline({onComplete:()=>{nudging=false;place(0)}}).to(o,{v:.22,duration:.45,ease:'power2.out',onUpdate:()=>place(o.v)}).to(o,{v:0,duration:.55,ease:'power2.inOut',onUpdate:()=>place(o.v)},'+=.08')},700)},{threshold:.6}).observe(sd);
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
     if(!rm)vendorJS('gsap.min.js').catch(()=>{});
@@ -2288,6 +2302,13 @@ function makeJS() {
       }
     }
     document.querySelectorAll('[data-curious]').forEach(card=>{
+      /* deck cards: the pill only on the centred demo, and the deck's own code owns the click (drag, peeks) */
+      if(card.classList.contains('scard')){
+        card.addEventListener('pointerenter',()=>{if(card.getAttribute('aria-current')==='true')curious(true,card.dataset.curious)});
+        card.addEventListener('pointerleave',()=>curious(false));
+        card.addEventListener('pointerdown',()=>curious(false));
+        return;
+      }
       card.addEventListener('pointerenter',()=>curious(true,card.dataset.curious));
       card.addEventListener('pointerleave',()=>curious(false));
       card.addEventListener('click',e=>{
@@ -2855,7 +2876,7 @@ function renderHome() {
   const sdeckHTML = `
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
     <div class="sdeck-stage">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
     <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"></button>`).join('')}</div>
