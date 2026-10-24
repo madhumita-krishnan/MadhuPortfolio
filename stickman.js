@@ -896,7 +896,7 @@
     }
     /* a letter's SIDE stops her sideways (she slides down it); before this, falling into one snapped her up onto its
        top in a single frame, which is most of what read as "spazzing" on the way somewhere */
-    if (solid(nx, Math.min(ny, fig.y) - 6) && !solid(fig.x, Math.min(ny, fig.y) - 6)) { nx = fig.x; fig.vx = 0; }
+    if (!fig.boxJump && solid(nx, Math.min(ny, fig.y) - 6) && !solid(fig.x, Math.min(ny, fig.y) - 6)) { nx = fig.x; fig.vx = 0; }   // (never the cloud jump: its arc flies through the copy by design)
     if (fig.vy > 0) {
       var land = groundTop(nx, fig.y + 0.5, Math.max(2, ny - fig.y + 2));
       if (land != null && land >= fig.y - 2 && land <= ny + 0.5 && clearance(nx, land) >= MIN_CLR) {   // never lands ABOVE her feet
