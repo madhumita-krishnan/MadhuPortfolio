@@ -1,0 +1,113 @@
+{
+  "slug": "pratus-kitchen",
+  "name": "Pratu’s Kitchen",
+  "order": 0.5,
+  "title": "A protein brand needed a storefront as premium as its product",
+  "tagline": "End-to-end brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand, launching in 2026.",
+  "heroTone": "deep",
+  "heroMedia": {
+    "type": "image",
+    "src": "assets/case-studies/pratus-kitchen/home-desktop.jpg",
+    "alt": "The Pratus Kitchen home page: the PRATUS wordmark and ‘Culture that performs’ over a photo of the founder holding a cooler and meal pouches",
+    "frame": "mac",
+    "url": "pratuskitchen.com",
+    "tab": "Pratus Kitchen · Culture that performs"
+  },
+  "meta": [
+    {
+      "label": "Role",
+      "value": "Brand + product design, front end"
+    },
+    {
+      "label": "Timeline",
+      "value": "Sept 2026 – now"
+    },
+    {
+      "label": "Status",
+      "value": "Launching in 2026"
+    },
+    {
+      "label": "Code",
+      "value": "On GitHub",
+      "href": "https://github.com/madhumita-krishnan/pratus-kitchen"
+    }
+  ],
+  "tags": [
+    "In progress",
+    "Web",
+    "Brand + product design + code"
+  ],
+  "intro": [
+    "Pratus Kitchen is a vegetarian, high-protein Indian meal brand, with the tagline “Culture that performs.” I’m directing its end-to-end brand and digital product design: the user journeys, the visual direction, the brand’s design system and the front end.",
+    "The direction from the start was clean, professional and premium. Think Nike, not a recipe blog."
+  ],
+  "sections": [
+    {
+      "label": "The product page",
+      "heading": "Every meal leads with its macros",
+      "body": [
+        "Each meal page puts calories, protein, carbs and fat right under the price, the same numbers that are printed on the pouch."
+      ],
+      "media": {
+        "type": "image",
+        "src": "assets/case-studies/pratus-kitchen/product-desktop.jpg",
+        "wash": "wash",
+        "alt": "The Push Day Paneer Paratha product page: a photo of the founder flexing with the pouch beside the macros — 470 calories, 30g protein, 29g carbs, 26g fat",
+        "caption": "The paneer paratha page: macros sit above the description, not below it.",
+        "frame": "mac",
+        "url": "pratuskitchen.com/product",
+        "tab": "Paneer Paratha · Pratus Kitchen"
+      }
+    },
+    {
+      "label": "Shop and account",
+      "heading": "A full shop, ready for the backend",
+      "body": [
+        "Behind the product pages: a cart, a three-step checkout and an account page with orders, one-tap reorder and a running tally of meals and protein delivered.",
+        "Payments, sign-in and real orders connect through a written API contract with the backend developer, so the front end and the backend can be built in parallel."
+      ],
+      "media": {
+        "type": "phones",
+        "wash": "wash",
+        "items": [
+          {
+            "src": "assets/case-studies/pratus-kitchen/product-phone.jpg",
+            "alt": "The paneer paratha page on a phone"
+          },
+          {
+            "src": "assets/case-studies/pratus-kitchen/account-phone.jpg",
+            "alt": "The account page on a phone, with orders and a reorder button"
+          }
+        ],
+        "caption": "Product and account on a phone.",
+        "frame": "phone"
+      }
+    },
+    {
+      "label": "Rounds with the client",
+      "heading": "Calmer with every round",
+      "body": [
+        "The client asked for flat colour, a calm hero, full-photo cards and a standard two-column product page, so the animated tagline effect came out of the hero.",
+        "Some calls were mine. I tried a white About section and kept it dark. Larger how-to icons were too big, so they now sit at the height of the step numbers. On phones the menu stays a compact pill instead of spreading full width."
+      ],
+      "media": {
+        "type": "image",
+        "src": "assets/case-studies/pratus-kitchen/checkout-desktop.jpg",
+        "wash": "deep",
+        "alt": "The Pratus Kitchen checkout: three numbered blocks beside a sticky order summary",
+        "caption": "Checkout: three numbered steps and a summary that stays in view.",
+        "frame": "mac",
+        "url": "pratuskitchen.com/checkout",
+        "tab": "Checkout · Pratus Kitchen"
+      }
+    }
+  ],
+  "reflection": {
+    "label": "Where it is now",
+    "heading": "Launching in 2026",
+    "body": [
+      "Prices, shipping and the founder’s story are still placeholders waiting on the client, and the backend is being built alongside the front end."
+    ]
+  },
+  "next": "driftwood"
+}

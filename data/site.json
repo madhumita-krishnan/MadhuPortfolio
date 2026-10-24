@@ -122,6 +122,26 @@
         ]
       },
       {
+        "slug": "pratus-kitchen",
+        "name": "Pratu’s Kitchen",
+        "outcome": "Directing end-to-end brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand.",
+        "tags": "In progress · Web · Brand + product design + code",
+        "media": {
+          "type": "phone-image",
+          "src": "assets/case-studies/pratus-kitchen/home-phone.jpg",
+          "alt": "The Pratus Kitchen home page on a phone: the PRATUS wordmark and ‘Culture that performs’"
+        },
+        "stack": [
+          "JavaScript",
+          "HTML",
+          "CSS",
+          "Vite",
+          "GSAP",
+          "GitHub",
+          "Claude Code"
+        ]
+      },
+      {
         "slug": "driftwood",
         "name": "Driftwood",
         "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
@@ -191,6 +211,27 @@
         },
         "stack": [
           "Adobe Creative Suite"
+        ]
+      },
+      {
+        "slug": "ai-tools",
+        "name": "My AI tools",
+        "outcome": "An in-page editor and a slider tweaker I built so I can change copy and visuals directly instead of describing them to AI.",
+        "tags": "Tooling · Web · Built with Claude Code",
+        "media": {
+          "type": "browser",
+          "src": "assets/case-studies/ai-tools/tweaker-logos.jpg",
+          "url": "localhost:4174/studies/tweaker-logos",
+          "tab": "Logo wisps tweaker",
+          "alt": "The tweaker beside the live home page",
+          "ar": "1440/900"
+        },
+        "stack": [
+          "JavaScript",
+          "HTML",
+          "CSS",
+          "Node.js",
+          "Claude Code"
         ]
       }
     ]

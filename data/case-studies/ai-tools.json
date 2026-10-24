@@ -1,0 +1,83 @@
+{
+  "slug": "ai-tools",
+  "name": "My AI tools",
+  "order": 6,
+  "title": "Two tools I built to work faster with AI",
+  "tagline": "An editor that writes my changes straight into the page, and a tweaker that turns every visual decision into a slider.",
+  "heroTone": "deep",
+  "heroMedia": {
+    "type": "image",
+    "src": "assets/case-studies/ai-tools/tweaker-logos.jpg",
+    "alt": "The tweaker beside the live home page: sliders for dot spacing, dot size, drift, curl and timing of the logo animation",
+    "frame": "mac",
+    "url": "localhost:4174/studies/tweaker-logos",
+    "tab": "Logo wisps tweaker"
+  },
+  "meta": [
+    {
+      "label": "Role",
+      "value": "Design + build, solo"
+    },
+    {
+      "label": "Built with",
+      "value": "Claude Code"
+    },
+    {
+      "label": "Runs",
+      "value": "On my machine only"
+    }
+  ],
+  "tags": [
+    "Tooling",
+    "Built with Claude Code"
+  ],
+  "intro": [
+    "I build my portfolio with Claude Code. These are the two tools I made so I can change copy and visuals with my own hands instead of describing every change in a prompt."
+  ],
+  "sections": [
+    {
+      "label": "The editor",
+      "heading": "Rewrite the page by clicking on it",
+      "body": [
+        "On my case-study pages, a local-only Edit text button outlines every line of copy. I click a line, rewrite it, and the new wording is written straight back into that case study’s file, so the next refresh rebuilds the page from it.",
+        "The same mode swaps the image on any screen, places the mouse pointer on a screenshot, and pins a new callout wherever I click."
+      ],
+      "media": {
+        "type": "image",
+        "src": "assets/case-studies/ai-tools/editor.jpg",
+        "wash": "deep",
+        "alt": "A case-study page in edit mode: every line of copy outlined, Mouse and Swap buttons on the screenshot, and a Done editing button",
+        "caption": "Edit mode on a case-study page.",
+        "frame": "mac",
+        "url": "localhost:4174/driftwood-retention",
+        "tab": "Race to a faster first demo"
+      }
+    },
+    {
+      "label": "The tweaker",
+      "heading": "Every visual decision becomes a slider",
+      "body": [
+        "The tweaker is a Claude Code skill: whenever something visual gets built, it comes with a live panel beside the real page and a control for every value that shapes how it looks or moves.",
+        "I drag, pin a version to compare against, slow the motion down, and press Save. The values are written into the site and become its defaults."
+      ],
+      "media": {
+        "type": "image",
+        "src": "assets/case-studies/ai-tools/tweaker-deck.jpg",
+        "wash": "wash",
+        "alt": "The tweaker beside the case-study deck: sliders for card size, spacing, neighbour drop and corner softness",
+        "caption": "Tuning the case-study deck.",
+        "frame": "mac",
+        "url": "localhost:4174/studies/tweaker-deck",
+        "tab": "Case study deck tweaker"
+      }
+    }
+  ],
+  "reflection": {
+    "label": "Why",
+    "heading": "Built to make me more productive with AI",
+    "body": [
+      "Both tools run only on my machine; the live site never loads them."
+    ]
+  },
+  "next": "driftwood-retention"
+}
