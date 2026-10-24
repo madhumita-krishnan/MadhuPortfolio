@@ -182,6 +182,14 @@ function swipeTweaks() {
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
+/* THE PHONE HERO FRAME (her 2026-10-24: "something about the mobile hero doesn't sit well"): the hero fills the
+   first screen, one spacing scale, accent on one thing, wordmark on the copy's left edge. Every number is a dial
+   in studies/tweaker-hero/; Save writes data/tweaks.json['hero-frame'] and these become the defaults. */
+const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'none', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
+function heroFrameVars() {
+  const h = HERO_FRAME, n = k => Number(h[k]) || 0;
+  return `.hero{--hx-h:${n('heroH')}svh;--hx-top:${n('top')}px;--hx-bottom:${n('bottom')}px;--hx-eb:${n('ebGap')}px;--hx-name:${n('nameGap')}px;--hx-bio:${n('bioGap')}px}:root{--hx-wm:${n('wm')}px;--clay-cave:${n('cave')};--clay-dark:${n('dark')};--clay-dent:${n('dent')};--clay-in:${n('pressIn')}ms;--clay-back:${n('back')}ms}`;
+}
 /* the JUMP! cloud's morph: a WebP grid of keyed video frames (Flora clay video, see clay-character/) + its numbers */
 const CLOUD = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/clay/props/cloud-sprite.json'), 'utf8')); } catch (e) { return null; } })();
 function makeCSS() {
@@ -732,33 +740,15 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
 .hero-cta-row{margin-top:calc(var(--space)*7);display:flex;gap:14px;flex-wrap:wrap}
-/* PHONES: say hey! is a little clay pop-out (her idea 2026-10-24: "when you click say hey, a zoom icon shows up, and
-   then x and twitter blocks show up. Like it's a claymation animation"). The tiles wait inside the button and squash-
-   and-stretch out one after another, stepped like stop-motion (7 steps ≈ 12fps): Zoom books the call (Calendly),
-   then LinkedIn, then X. Laptops: say hey! goes straight to Calendly and the cloud carries the socials. */
+/* PHONES: the clay LinkedIn + X tiles sit beside say hey! from the moment the page loads (her 2026-10-24: clay-her was
+   the only clay thing on screen and read as out of place). say hey! goes straight to Calendly, same as laptops; the
+   tiles are ground for clay-her. Laptops: the cloud carries the socials. */
 .cta-socials{display:none;align-items:center;gap:18px}
-.cta-socials a{display:block;width:48px;height:48px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .15s ease}
-/* (her follow-up: "say hey doesn't need to be big. Can it horizontally poof into itself to the left and the icons pop
-   out as a result?") on phones the button is smaller, and a tap squashes it sideways into its own left edge in clay
-   steps (the poof); the tiles pop out of that spot as it goes. Closing pops it back. */
-@media (max-width:760px){
-  .hero-cta-row .btn.solid{min-height:42px;padding:0 20px 3px;font-size:.95rem;transform-origin:0 50%}
-  .hero-cta-row.socials-open{gap:0}
-  .hero-cta-row.socials-open .btn.solid{animation:say-poof .3s steps(5,end) forwards;pointer-events:none;min-width:0;overflow:hidden;white-space:nowrap}
-  .hero-cta-row.socials-back .btn.solid{animation:clay-pop .42s steps(6,end) both}
-}
-@keyframes say-poof{0%{transform:none;max-width:200px}40%{transform:scale(.62,1.14)}75%{transform:scale(.22,.82);opacity:1}
-  100%{transform:scale(0,.6);opacity:0;max-width:0;padding-left:0;padding-right:0;margin-right:0}}
-.hero-cta-row.socials-open .cta-socials{gap:18px}   /* room between the tiles (her: "a little too close together") */
-.hero-cta-row.socials-open .cta-socials a{opacity:1;pointer-events:auto;animation:clay-pop .56s steps(7,end) .2s both}
-.hero-cta-row.socials-open .cta-socials a:nth-child(2){animation-delay:.29s}
-.hero-cta-row.socials-open .cta-socials a:nth-child(3){animation-delay:.38s}
-@keyframes clay-pop{0%{opacity:0;transform:translateX(-70px) scale(.2)}35%{opacity:1;transform:translateX(6px) scale(1.25,.8)}
-  60%{transform:translateX(-2px) scale(.88,1.15)}80%{transform:scale(1.06,.95)}100%{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.hero-cta-row.socials-open .cta-socials a,.hero-cta-row.socials-back .btn.solid{animation:none}.hero-cta-row.socials-open .btn.solid{animation:none;display:none}}
+.cta-socials a{display:block;width:48px;height:48px;border-radius:12px}
 .cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
 .cta-socials a:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
-@media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}}
+@media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}
+  .hero-cta-row .btn.solid{min-height:42px;padding:0 20px 3px;font-size:.95rem}}
 
 /* florals. The composition is her reference's: one bloom hanging from the top and running
    off the LEFT edge, one rising from the bottom and running off the RIGHT, with the copy in
@@ -843,7 +833,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    it at its intrinsic bitmap size (device pixels — double size on Retina) instead of
    stretching it to its box. */
 .hero>.stick-cv{position:absolute;top:0;left:50%;width:100vw;height:100%;transform:translateX(-50%);z-index:3;pointer-events:none;margin-left:0;max-width:none;
-  opacity:0;transition:opacity 600ms var(--ease-standard)}
+  opacity:0;transition:opacity 300ms var(--ease-standard)}
 .hero.stick-on>.stick-cv{opacity:1}
 .hero.stick-dragging{user-select:none;-webkit-user-select:none}
 /* THE JUMP! BOX (placeholder clay, drawn in CSS). app.js places it beside the name; stickman.js treats the
@@ -877,6 +867,25 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:jb-wiggle .5s cubic-bezier(.3,1.4,.5,1)}
 @keyframes jb-wiggle{0%{transform:none}20%{transform:rotate(-9deg) scale(1.06)}45%{transform:rotate(7deg) scale(1.06)}70%{transform:rotate(-4deg) scale(1.03)}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.jb-logo.rest:hover img,.jb-logo.rest:focus-visible img{animation:none}}
+/* PRESS = the clay CAVES IN (her asks 2026-10-24: "squish a little like clay would if I pressed", then "squish inside,
+   not top to bottom", "getting smaller isn't what clay does", and "the squishing would make the clay buttons cave in").
+   The rim stays exactly where it is; the MIDDLE sinks: a copy of the tile (::before, --tile set on each link) masked
+   to its centre shrinks and darkens over the original, so the centre reads as pushed in, with the original's edge
+   showing round it as the dent's wall, and a ring of shade (::after) where the wall meets the floor of the dent.
+   Letting go, the middle springs back up with one soft overshoot. Pressing also cancels the hover wiggle.
+   Dials in studies/tweaker-hero/ (Clay press). */
+.cta-socials a{position:relative}
+.jb-logo::before,.cta-socials a::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:var(--tile) center/contain no-repeat;-webkit-mask-image:radial-gradient(closest-side,#000 52%,transparent 80%);mask-image:radial-gradient(closest-side,#000 52%,transparent 80%);
+  transition:opacity var(--clay-back,.6s) ease-out,filter var(--clay-back,.6s) ease-out,
+    transform var(--clay-back,.6s) linear(0,.167,.457,.727,.92,1.027,1.068,1.069,1.052,1.031,1.013,1.002,.997,.995,.995,.997,.998,.999,1,1,1)}
+.jb-logo.rest:active::before,.cta-socials a:active::before{opacity:1;transform:scale(var(--clay-cave,.84));filter:brightness(var(--clay-dark,.82));
+  transition:opacity var(--clay-in,80ms) ease-out,filter var(--clay-in,80ms) ease-out,transform var(--clay-in,80ms) cubic-bezier(.3,.7,.4,1)}
+.jb-logo::after,.cta-socials a::after{content:'';position:absolute;inset:6%;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,transparent 48%,rgba(0,0,0,.38) 66%,transparent 88%);transition:opacity var(--clay-back,.6s) ease-out}
+.jb-logo.rest:active::after,.cta-socials a:active::after{opacity:var(--clay-dent,.8);transition:opacity var(--clay-in,80ms) ease-out}
+.jb-logo.rest:active img{animation:none}
+@media (prefers-reduced-motion:reduce){.jb-logo::before,.cta-socials a::before,.jb-logo::after,.cta-socials a::after{transition:none}}
 .hero>.jump-box.gone{visibility:hidden;pointer-events:none}
 .hero>.jb-puff{position:absolute;margin:0;max-width:none;z-index:2;pointer-events:none;background:url('assets/clay/props/cloud-puff.webp?v=${BUILD_V}') 0 0/800% 100% no-repeat;aspect-ratio:420/341}
 @media (max-width:760px){.hero>.jump-box,.hero>.jb-socials{display:none}}   /* laptops only (her call 2026-10-24: "we don't need the jump thing on mobile") */
@@ -916,9 +925,6 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    line; she called the spacing "insane", so the hero keeps its own rhythm and her legs simply dangle in front */
 .hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
 .hero.revealed .hero-cta-row{opacity:1;transform:none}
-/* (her ask 2026-10-24) on laptops the hero's say hey! waits for the cloud: it loads in once she has popped it, as the
-   icons come down onto its line. Until then the nav's own say hey! stays out (app.js holds hero-cta-on off). */
-.hero.cta-wait .hero-cta-row{opacity:0;transform:translateY(14px);visibility:hidden;pointer-events:none}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
    (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
    because she asked to keep it for the word portfolio. */
@@ -951,7 +957,17 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px);color:var(--accent)}   /* rises in the accent, on hover and in the load hand-off */
-@media (max-width:760px){.hero{padding-top:calc(var(--space)*20);min-height:0}
+@media (max-width:760px){.hero{padding-top:var(--hx-top);padding-bottom:var(--hx-bottom);min-height:var(--hx-h);justify-content:center}
+  .hero .eyebrow{margin-bottom:var(--hx-eb)}
+  .hero h1{margin-bottom:0}
+  .hero .hero-line{margin-top:var(--hx-name)}
+  .hero-cta-row{margin-top:var(--hx-bio)}
+  .hero[data-btn="low"]{justify-content:flex-start}
+  .hero[data-btn="low"] .hero-line{margin-bottom:var(--hx-bio)}   /* the least gap, even when the screen is short */
+  .hero[data-btn="low"] .hero-cta-row{margin-top:auto}
+  .hero[data-accent="none"] .eyebrow,.hero[data-accent="name"] .eyebrow{color:var(--text-secondary)}
+  .hero[data-accent="name"] h1{color:var(--accent)}
+  .wordmark{margin-left:var(--hx-wm)}
   /* phone measure wraps her sentences onto more lines, so descender collisions that
      desktop never sees show up here — the g of "strategy" landing in "study"
      (2026-08-19 "the g in the hero text gets cut off"). More leading, not less type. */
@@ -1016,6 +1032,7 @@ a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--acc
    the pairing flips with each swipe, as in the video. app.js places every card from one swipe progress p (y and scale
    move with x, never as a separate step). Background #101010, corners 8% of the card. Dials read --sd-* first. */
 ${swipeTweaks()}
+${heroFrameVars()}
 /* the work section: SWIPE (deck, default) or SCROLL (list), flipped by the toggle in its head */
 .work-sec[data-view="deck"]{max-width:none;padding:calc(var(--space)*9) 0 calc(var(--space)*6);background:var(--sd-bg,#101010)}
 .work-head{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -1853,7 +1870,7 @@ function makeJS() {
     const landHero=()=>{if(window.__mkHeroLanded)return;window.__mkHeroLanded=true;dispatchEvent(new Event('mk-hero-landed'))};
     const h1El=hero.querySelector('h1');
     if(h1El)h1El.addEventListener('transitionend',e=>{if(e.target===h1El&&e.propertyName==='transform')landHero()});   // the rise has truly finished: she stands on the d where it stays
-    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
+    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
     /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
        back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
        its final size, so she spawns on the d where it will stay. */
@@ -1989,30 +2006,15 @@ function makeJS() {
   /* absolute fail-safe: everything visible even if transitions never tick */
   setTimeout(()=>document.body.classList.add('settled'),1900);
 
-  /* PHONES: say hey! opens / closes the clay pop-out (see .cta-socials) instead of leaving for Calendly; the Zoom tile
-     inside it books the call. A tap anywhere else closes it. */
-  const sayRow=document.querySelector('.hero-cta-row'),sayPop=sayRow&&sayRow.querySelector('.cta-socials'),sayBtn=sayRow&&sayRow.querySelector('.btn.solid');
-  if(sayPop&&sayBtn){
-    const phone=matchMedia('(max-width:760px)'),setOpen=on=>{const was=sayRow.classList.contains('socials-open');
-      if(was&&!on){   // tuck the tiles back in, THEN say hey! pops back out
-        if(sayRow.classList.contains('socials-tucking'))return;
-        sayRow.classList.add('socials-tucking');sayBtn.setAttribute('aria-expanded','false');
-        setTimeout(()=>{sayRow.classList.remove('socials-open','socials-tucking');sayRow.classList.add('socials-back');setTimeout(()=>sayRow.classList.remove('socials-back'),500);dispatchEvent(new Event('mk-terrain'))},rmActive()?0:300);
-        return}
-      sayRow.classList.toggle('socials-open',on);sayBtn.setAttribute('aria-expanded',String(on));
-      setTimeout(()=>dispatchEvent(new Event('mk-terrain')),on?800:0)};   // the tiles are ground for clay-her once they've popped out (and gone when closed)
-    sayBtn.setAttribute('aria-controls','say-pop');
-    sayBtn.addEventListener('click',e=>{if(!phone.matches)return;e.preventDefault();setOpen(!sayRow.classList.contains('socials-open'))});
-    /* (no close on a tap elsewhere: a tap is how you send clay-her somewhere, and the tiles are platforms she can jump
-       onto — her: "the current thing doesn't let me jump on the clay icons". The ✕ tucks them away) */
-  }
+  /* the hero-frame tweaker (studies/tweaker-hero/, local only) drives the two non-number dials here */
+  addEventListener('tweak',e=>{const v=e.detail.values,h=document.querySelector('.hero');if(!h||!v)return;if('accent' in v)h.dataset.accent=v.accent;if('btnLow' in v)h.dataset.btn=v.btnLow?'low':'flow'});
   const heroSay=document.querySelector('.hero-cta-row .btn.solid');
   if(heroSay){
     const bar=document.querySelector('nav.bar'),wm=bar&&bar.querySelector('.wordmark'),lk=bar&&bar.querySelector('.nav-links');
     const fit=()=>{if(bar&&wm&&lk)bar.style.setProperty('--nav-compact',Math.ceil(wm.offsetWidth+lk.scrollWidth+20+6+44)+'px')};   // padding + gap + air
     fit();addEventListener('resize',fit,{passive:true});document.fonts&&document.fonts.ready.then(fit);
     let seen=false;const hero=heroSay.closest('.hero');
-    const sync=window.__ctaSync=()=>document.body.classList.toggle('hero-cta-on',seen&&!hero.classList.contains('cta-wait'));   // a waiting say hey! doesn't count
+    const sync=window.__ctaSync=()=>document.body.classList.toggle('hero-cta-on',seen);   // (say hey! loads with the hero again on laptops, her 2026-10-24 call: waiting for the cloud "looks weird")
     new IntersectionObserver(es=>es.forEach(e=>{seen=e.isIntersecting;sync()})).observe(heroSay.closest('.hero-cta-row')||heroSay);   // the ROW: the button collapsing into its poof made the nav think it had scrolled away (the jerk)
   }
 
@@ -2640,7 +2642,6 @@ function makeJS() {
   const jb=document.querySelector('.hero>.jump-box');
   if(jb&&matchMedia('(min-width:761px)').matches){
     const heroEl=jb.parentElement,art=jb.querySelector('.jb-art'),soc=heroEl.querySelector('.jb-socials'),logos=[...soc.children];
-    if(!rmActive()){heroEl.classList.add('cta-wait');window.__ctaSync&&__ctaSync()}   // say hey! waits for the pop (see .cta-wait)
     const placeBox=()=>{const hr=heroEl.getBoundingClientRect(),t=heroEl.querySelector('h1 .lively').getBoundingClientRect();if(!t.width)return;
       /* IN THE SKY to the right of the name (her: lower to jump onto, then higher for balance, then "a better place
          visually"): centred in the open space between the end of the copy and the hero's right edge, in line with
@@ -2717,7 +2718,6 @@ function makeJS() {
       if(!still){art.classList.remove('slam');void art.offsetWidth;art.classList.add('slam')}
       /* the instant she hits: the cloud bursts, and the icons are flung up out of it a beat later */
       dissolve(still);setTimeout(()=>tumble(still),still?0:70);
-      heroEl.classList.remove('cta-wait');setTimeout(()=>window.__ctaSync&&__ctaSync(),1350);   // say hey! loads in (its 1.35s reveal delay), then the nav's steps aside
       };   // once popped it stays gone until the page loads again (her call 2026-10-24; the re-forming cloud was tried)
     /* THE CLOUD COMES BACK (her: "I'm not able to get the person to do the tuck jump slam" — after one go it was gone for
        the visit): ~4s after it bursts, the icons tuck back away and the cloud re-forms in its spot with a clay pop, ready
@@ -3053,7 +3053,8 @@ function renderHome() {
   const heroLinesHTML = h.lines.map(l => `<span class="hs">${typo(l)}</span>`).join('');
 
   const heroHTML = `
-<section class="hero" id="hero">
+<section class="hero" id="hero" data-accent="${esc(HERO_FRAME.accent)}" data-btn="${HERO_FRAME.btnLow ? 'low' : 'flow'}">
+<link rel="preload" href="assets/clay/clay.json?v=${BUILD_V}" as="fetch" crossorigin><link rel="preload" href="assets/clay/idle-wave-sign-0.png?v=${BUILD_V}" as="image">
   <div class="hero-flora" aria-hidden="true">
     <!-- These are not drawings of her reference — they ARE her reference, cut out of
          "color pallete I like.png" pixel-for-pixel by tools/lift-flowers.js. Every attempt
@@ -3074,10 +3075,10 @@ function renderHome() {
     <span class="jb-art" aria-hidden="true">${CLOUD ? `<span class="jb-morph" data-n="${CLOUD.n}" data-fps="${CLOUD.fps}" data-cols="${CLOUD.cols}" style="aspect-ratio:${CLOUD.fw}/${CLOUD.fh};background-image:url('assets/clay/props/cloud-sprite.webp?v=${BUILD_V}');background-size:${CLOUD.cols * 100}% ${CLOUD.rows * 100}%"></span>` : `<img class="jb-img" src="assets/clay/props/cloud-0.png?v=${BUILD_V}" alt="" draggable="false">`}<img class="jb-word" src="assets/clay/props/jump-word-shorts.png?v=${BUILD_V}" alt="" draggable="false"></span>
   </button>
   <div class="jb-socials" aria-label="Socials">${[...(site.footer.links || []).filter(l => /linkedin\.com|twitter\.com|\/\/(www\.)?x\.com/i.test(l.href)).map(l => ({ label: l.label, href: l.href, icon: /linkedin/i.test(l.href) ? 'linkedin' : 'x' })),
-    { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
+    { label: 'Resume', href: h.ctaSecondary.href, icon: 'resume' }].map(l => `<a class="jb-logo" style="--tile:url('assets/clay/props/${l.icon}.png?v=${BUILD_V}')" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}" tabindex="-1"><img src="assets/clay/props/${l.icon}.png?v=${BUILD_V}" alt="" draggable="false"></a>`).join('')}</div>
   <p class="hero-cta-row">
     <a class="btn solid" href="${esc(h.ctaPrimary.href)}" target="_blank" rel="noopener" data-hand="${esc(h.ctaPrimary.label.replace(/[^ '!,.A-Za-z\u2019]/g,'').trim().toUpperCase())}">${esc(h.ctaPrimary.label)}</a>
-    <span class="cta-socials" id="say-pop"><a href="${esc(site.calendly)}" target="_blank" rel="noopener" aria-label="Book a Zoom call"><img src="${asset('assets/clay/props/zoom.png')}" alt="" width="48" height="48" draggable="false"></a>${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => `<a href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png')}" alt="" width="48" height="48" draggable="false"></a>`).join('')}</span>
+    <span class="cta-socials">${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => { const src = asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png'); return `<a href="${esc(l.href)}" style="--tile:url('${src}')" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${src}" alt="" width="48" height="48" draggable="false"></a>`; }).join('')}</span>
   </p>
 </section>
 <!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.

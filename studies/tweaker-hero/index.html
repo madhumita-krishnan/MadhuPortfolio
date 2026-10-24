@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phone hero tweaker</title><style>body{margin:0;background:#0d0e12}</style></head>
+<body>
+<script src="../tweaker-deck/tweaker.js"></script>
+<script>
+/* the phone hero's frame: how tall it is, one spacing scale top to bottom, where say hey! sits, which line carries
+   the accent, and the wordmark's line-up with the copy. Phone width only (the dials live in a phone media query),
+   so judge it in the Phone viewport (the Clay press dials work at any size). Save writes data/tweaks.json 'hero-frame', which build.js turns into the defaults. */
+fetch('/__tweak').then(r => r.json()).catch(() => ({})).then(all => {
+const saved = all['hero-frame'] || {};
+Tweaker({
+  save: values => fetch('/__tweak', { method: 'POST', body: JSON.stringify({ name: 'hero-frame', values }) }).then(r => { if (!r.ok) throw new Error(r.status); }),
+  title: 'Phone hero frame',
+  url: '../../index.html',
+  params: [
+    { key: 'heroH', label: 'Hero height', group: 'Frame', type: 'range', min: 60, max: 110, step: 1, value: 100, unit: '%', cssUnit: 'svh', css: '--hx-h', hint: '100 = exactly the first screen, so the Brands section waits below the fold' },
+    { key: 'top', label: 'Space above, under the nav', group: 'Frame', type: 'range', min: 72, max: 220, step: 4, value: 112, unit: 'px', css: '--hx-top' },
+    { key: 'bottom', label: 'Space below', group: 'Frame', type: 'range', min: 8, max: 140, step: 4, value: 40, unit: 'px', css: '--hx-bottom' },
+    { key: 'btnLow', label: 'say hey! sits at the bottom of the screen', group: 'Frame', type: 'toggle', value: false, hint: 'On: the words sit up top and the button row drops to the bottom. Off: the whole block is centred' },
+    { key: 'ebGap', label: 'Eyebrow → name', group: 'Spacing', type: 'range', min: 0, max: 48, step: 2, value: 12, unit: 'px', css: '--hx-eb', hint: 'Tight reads as one unit: the eyebrow is describing the name' },
+    { key: 'nameGap', label: 'Name → bio', group: 'Spacing', type: 'range', min: 4, max: 72, step: 2, value: 24, unit: 'px', css: '--hx-name' },
+    { key: 'bioGap', label: 'Bio → say hey!', group: 'Spacing', type: 'range', min: 8, max: 120, step: 4, value: 40, unit: 'px', css: '--hx-bio', hint: 'With say hey! at the bottom, this is the least gap it keeps' },
+    { key: 'accent', label: 'The blue accent goes on', group: 'Colour', type: 'select', options: ['none', 'eyebrow', 'name'], value: 'none', hint: 'none = clay-you is the only colour in the hero' },
+    { key: 'cave', label: 'Cave-in depth', group: 'Clay press', type: 'range', min: .6, max: 1, step: .01, value: .84, unit: '×', css: '--clay-cave', hint: 'How far the middle sinks while the rim stays put. Press and hold a clay tile in the preview' },
+    { key: 'dark', label: 'Shade in the dent', group: 'Clay press', type: 'range', min: .5, max: 1, step: .01, value: .82, unit: '×', css: '--clay-dark', hint: '1 = no shade; lower = the sunk middle darker' },
+    { key: 'dent', label: 'Dent wall shadow', group: 'Clay press', type: 'range', min: 0, max: 1, step: .05, value: .8, unit: '', css: '--clay-dent', hint: 'The ring of shadow where the rim drops into the dent' },
+    { key: 'pressIn', label: 'Press speed', group: 'Clay press', type: 'range', min: 20, max: 300, step: 10, value: 80, unit: 'ms', css: '--clay-in' },
+    { key: 'back', label: 'Spring back', group: 'Clay press', type: 'range', min: 200, max: 1400, step: 50, value: 600, unit: 'ms', css: '--clay-back', hint: 'How long the bounce back to shape takes' },
+    { key: 'wm', label: 'Wordmark nudge', group: 'Alignment', type: 'range', min: -8, max: 16, step: 1, value: 4, unit: 'px', css: '--hx-wm', hint: '4 lines the M of M--K up with the copy below it' }
+  ].map(p => (p.key in saved ? Object.assign(p, { value: saved[p.key] }) : p))
+});
+});
+</script>
+</body></html>

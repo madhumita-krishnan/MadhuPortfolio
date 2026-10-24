@@ -3,7 +3,8 @@
    seeing a full-screen clip: "too zoomed in. I wanted the person on the screen to go do it on the screen", and "the
    path of the paper airplane to glide around and fly super close to the screen sideways swiftly").
 
-   Any link to resume.pdf is taken over. If clay-her is standing on screen (the home hero), SHE does it, in her spot and
+   Only the clay resume icon (the .jb-logo out of the cloud) is taken over; other resume links open the PDF.
+   If clay-her is standing on screen (the home hero), SHE does it, in her spot and
    at her size: a keyed Flora clip (assets/resume-throw.png, 62 frames at 12fps) of her folding the resume and throwing
    it stands in for her while stickman.js hides her own drawing. At the release frame a paper plane
    (assets/resume-plane.png) leaves her hand and GSAP flies it: up and around the page in long gliding curves, growing
@@ -101,13 +102,26 @@
     if (matchMedia('(hover: hover)').matches) { var x = el.querySelector('.rz-x'); x && x.focus({ preventScroll: true }); }   // keyboard/desktop only: no ring on a phone
   }
 
-  /* where clay-her stands on screen, if she's there to do it herself */
+  /* where clay-her stands on screen, if she's there to do it herself. ready = on her feet; a celebration is cut short */
   function herOnScreen() {
     var S = window.__stick; if (!S || !S.clayH || !S.clayH()) return null;
     var f = S.fig, c = S.canvas().getBoundingClientRect(), x = c.left + f.x, y = c.top + f.y;
-    if (f.state !== 'idle' && f.state !== 'move' && f.state !== 'sign' && f.state !== 'wave') return null;   // mid-air, hanging: just the plane
-    if (y < 40 || y > innerHeight || x < 0 || x > innerWidth) return null;
-    return { x: x, y: y, h: S.clayH() };
+    if (y < 40 || y > innerHeight + 60 || x < 0 || x > innerWidth) return null;
+    if (f.state === 'celeb') { f.celeb = null; f.state = 'idle'; }
+    return { x: x, y: y, h: S.clayH(), ready: f.state === 'idle' || f.state === 'move' || f.state === 'sign' || f.state === 'wave' };
+  }
+  /* WHENEVER she's on screen she makes the plane herself (her 2026-10-24: "I want the paper plane be folded and made by
+     the person in the hero when the screen is on them"): clicked while she's mid-air, hanging or climbing, the throw
+     waits for her to land (up to 2.5s); only if she never does, or she's off screen, does it fly from the icon */
+  function whenReady(done) {
+    var t0 = performance.now();
+    (function poll() {
+      var her = herOnScreen();
+      if (!her) return done(null);
+      if (her.ready) return done(her);
+      if (performance.now() - t0 > 2500) return done(null);
+      setTimeout(poll, 80);
+    })();
   }
 
   /* her throw, frame by frame in her spot; calls release(x, y, w) at the throw */
@@ -170,9 +184,10 @@
     if (rm()) { showSheet(false); busy = false; return; }
     gsapReady().then(function () {
       if (!window.gsap) { showSheet(false); busy = false; return; }
-      var her = herOnScreen();
-      if (her) playThrow(her, fly);
-      else { var r = link.getBoundingClientRect(); fly(r.left + r.width / 2, r.top + r.height / 2, 40); }
+      whenReady(function (her) {
+        if (her) playThrow(her, fly);
+        else { var r = link.getBoundingClientRect(); fly(r.left + r.width / 2, r.top + r.height / 2, 40); }
+      });
     });
   }
 
@@ -183,7 +198,9 @@
     if (opener && opener.focus) opener.focus({ preventScroll: true });
   }
 
-  var isResume = function (a) { return a && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
+  /* only the CLAY resume icon flies (her 2026-10-24: "I only want the airplane claymation thing to happen when you click
+     on the clay icon"); every other resume link (nav, About, footer, case studies) just opens the PDF */
+  var isResume = function (a) { return a && a.classList.contains('jb-logo') && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
     if (!isResume(a) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

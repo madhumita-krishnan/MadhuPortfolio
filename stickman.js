@@ -80,12 +80,13 @@
   var mk = document.createElement('canvas');
   var bars = [];
   var chRide = [];               // headline glyphs' RESTING boxes — see rideDy()
+  var h1Lift = 0;                // the headline's live load-rise offset, taken out of every rect inside it (see rebuild)
   var sign = null;               // {cx, bottom} — the say-hey board he holds up
   var ink = '#3C6B76';
 
   function localRect(el, hr) {
-    var r = el.getBoundingClientRect();
-    return { x1: r.left - hr.left, x2: r.right - hr.left, y1: r.top - hr.top, y2: r.bottom - hr.top, w: r.width, h: r.height };
+    var r = el.getBoundingClientRect(), d = h1Lift && el.closest && el.closest('h1') ? h1Lift : 0;
+    return { x1: r.left - hr.left, x2: r.right - hr.left, y1: r.top - hr.top - d, y2: r.bottom - hr.top - d, w: r.width, h: r.height };
   }
 
   /* re-set a text span into the mask with the same font at the same place. The baseline
@@ -118,6 +119,10 @@
        figure agree about where everything is. */
     var hr = cv.getBoundingClientRect();
     if (hr.width < 40) return;
+    /* she arrives while the name is still RISING (her 2026-10-24: "I need the person to be there before the text under
+       I'm madhu"), so the headline is read where it will rest; rideDy() carries her up with it meanwhile */
+    var h1e = hero.querySelector('h1');
+    h1Lift = h1e && window.DOMMatrix ? new DOMMatrix(getComputedStyle(h1e).transform).m42 : 0;
     DPR = Math.min(devicePixelRatio || 1, 2);
     W = hr.width; H = hr.height;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
@@ -171,9 +176,9 @@
     });
     /* the clay icons that tumbled out of it are blocks to stand on too — once they have come to REST, so the fall
        out of the dissolving piece goes all the way to the floor (her ask) instead of catching on a mid-air icon */
-    /* …and on phones the clay tiles that pop out of say hey! (her ask 2026-10-24: "I want to be able to jump on top of
-       the claymation icons too"), while they're out */
-    hero.querySelectorAll('.jb-logo.rest, .hero-cta-row.socials-open .cta-socials a').forEach(function (b) {
+    /* …and on phones the clay tiles beside say hey! (her ask 2026-10-24: "I want to be able to jump on top of
+       the claymation icons too") */
+    hero.querySelectorAll('.jb-logo.rest, .hero-cta-row .cta-socials a').forEach(function (b) {
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
     });
 
@@ -425,6 +430,7 @@
     if (sentThere || close) { if (fig.state === 'mantle') fig.mantle = null; boxLaunch(cl); }
   }
   addEventListener('mk-terrain', queueRebuild, { passive: true });
+  addEventListener('tweak', queueRebuild);   // a local tweaker resized the hero (studies/tweaker-hero/)
   /* the box dissolved under her: the world is rebuilt without it at once, and she simply drops (no flip) */
   addEventListener('mk-box-gone', function () {
     if (!booted) return;
@@ -681,7 +687,7 @@
     var up = Math.min(Math.max(rise, 0) + 34 + Math.min(40, Math.abs(dx) * .15), 330);   // ~the old 1210px/s cap
     var vy0 = Math.sqrt(2 * G * up), T = vy0 / G + Math.sqrt(2 * (up - rise) / G);
     fig.vy = -vy0; fig.vx = dx / T; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
-    fig.dir = dx >= 0 ? 1 : -1; fig.flipQueued = true;   // a plain jump on the way somewhere: no flip (only the cloud gets one)
+    fig.dir = dx >= 0 ? 1 : -1;   // flips only if it turns out to be a far drop (tickAir)
   }
   /* one tick of following the route; returns the speed she wants, or null when this tick is spent */
   function followRoute(dt) {
@@ -735,7 +741,7 @@
         if (Math.abs(dyP) <= 12) {
           if (fig.waypoint) fig.waypoint = null;
           else { fig.target = null; want = 0; }
-        } else if (dyP > 12 && fig.target.tries < 24) {
+        } else if (dyP > 12 && fig.target.tries < 3) {   // 3 goes, then she gives up (24 read as jumping up and down forever)
           /* the boundaries must be continuous with the arrived-band: a 16px rise that no
              branch owned used to fall through to the give-up else */
           fig.target.tries++;
@@ -757,7 +763,7 @@
           }
           if (stone) fig.waypoint = { x: stone.x, y: stone.y };
           else { fig.target = null; fig.waypoint = null; want = 0; }
-        } else if (dyP < -12 && fig.target.tries < 24) {
+        } else if (dyP < -12 && fig.target.tries < 3) {
           /* the click was BELOW: gravity is the elevator, but it needs an edge — walk to
              the end of the WALKABLE surface (following it, gaps and steps included, not
              just this blob's top row) and fall a level, then re-approach */
@@ -846,7 +852,7 @@
     if (fig.flip) {
       fig.flip.rot += fig.flip.w * dt;
       if (fig.flip.rot >= Math.PI * 2) fig.flip = null;
-    } else if (fig.vy >= 0 && !fig.flipQueued && !fig.target) {   // no showy flips on the way to a tap
+    } else if (fig.vy >= 0 && !fig.flipQueued) {   // a tap too: a FAR drop flips (her 2026-10-24: "when it jumps down from far can it do a flip"); hops up and small steps down never reach FLIP_DROP
       /* a big fall earns a full tuck flip — but the LANDING decides, not the fall so
          far. The old rule measured distance already fallen and demanded 60px of floor
          clearance, so most real drops (off a petal, off the headline, onto the floor)
@@ -897,7 +903,8 @@
       }
       if (best) {
         fig.state = 'hang';
-        fig.hang = { bar: best.b, hx: nx, th: Math.max(-.3, Math.min(.3, fig.vx / 700)), om: Math.max(-2, Math.min(2, fig.vx / 220)), reach: 0,
+        var th0 = Math.max(-.3, Math.min(.3, fig.vx / 700)), om0 = Math.max(-2, Math.min(2, fig.vx / 220));
+        fig.hang = { bar: best.b, hx: nx, th: th0, om: om0, la: th0, lw: om0 * 1.4, reach: 0,   // la/lw: the legs' own swing (see tickHang)
                      hands: [{ x: best.gp.x - 2, y: best.gp.y + 1.75 }, { x: best.gp.x + 2, y: best.gp.y + 1.75 }] };
         fig.vx = 0; fig.vy = 0; fig.flip = null;
         return;
@@ -960,6 +967,13 @@
        gravity + a firm damping, so an entry swing settles in a couple of passes; never past ~26° */
     h.om += (-(G / 90) * Math.sin(h.th) - 1.8 * h.om) * dt;
     h.th = Math.max(-.45, Math.min(.45, h.th + h.om * dt));
+    /* THE BODY ISN'T RIGID (her: "the hanging swinging still doesn't move organically the way our shoulders and our back
+       would move if we were monkey bar-ing"): the legs ride their own softer spring toward the body's line, so they lag
+       as the swing sets off (back arches) and carry on past it at the turn (hips pike), then settle. clayPick turns
+       the difference into a bend down her back and legs, and the swing's height into a shoulder shrug. */
+    if (h.la == null) { h.la = h.th; h.lw = h.om; }
+    h.lw += (55 * (h.th - h.la) - 6.5 * h.lw) * dt;
+    h.la += h.lw * dt;
     var tv = Math.abs(mdx) < 26 ? 0 : Math.max(-170, Math.min(170, mdx * 2.4));
     h.hx += tv * dt;
     h.reach = tv ? (h.reach + dt * 6) % (Math.PI * 2) : 0;
@@ -1031,15 +1045,47 @@
      ("makes me think something is bouncing"), a creaky-bar grab. Browsers keep them silent until the visitor's first click. */
   var SFX = (function () {
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
-    var dir = base.replace(/stick\.js.*$/, '') + 'assets/sfx/', ver = (base.match(/\?v=[^&#]*/) || [''])[0], a = {};
-    ['step', 'jump', 'grip', 'land'].forEach(function (n) { try { a[n] = new Audio(dir + n + '.mp3' + ver); a[n].preload = 'auto'; } catch (e) {} });
-    return a;
+    var dir = base.replace(/stick\.js.*$/, '') + 'assets/sfx/', ver = (base.match(/\?v=[^&#]*/) || [''])[0], s = { ctx: null, buf: {} };
+    /* Web Audio, decoded once (her 2026-10-24: "the person sounds are delayed"): a cloned <audio> per play started
+       late, worst on iPhones, so the step landed after the foot did. A buffer source starts on the frame. */
+    /* the context is made on the visitor's first touch, click or key, not at load: iOS Safari can give a context made
+       before then the wrong sample rate (44.1k files on 48k hardware) and every sound comes out warped (her: "the
+       jumping up sound sounds super weird now"). The files download at load; they decode once the context exists. */
+    var AC = window.AudioContext || window.webkitAudioContext, raw = {};
+    if (!AC) return s;
+    ['step', 'jump', 'grip', 'land'].forEach(function (n) {
+      fetch(dir + n + '.mp3' + ver).then(function (r) { return r.arrayBuffer(); }).then(function (ab) { raw[n] = ab; decode(); }).catch(function () {});
+    });
+    function decode() {
+      if (s.ctx) Object.keys(raw).forEach(function (n) { var ab = raw[n]; delete raw[n]; s.ctx.decodeAudioData(ab, function (d) { s.buf[n] = d; }, function () {}); });
+    }
+    var wake = function () {
+      if (!s.ctx) { try { s.ctx = new AC(); } catch (e) { return; } decode(); }
+      if (s.ctx.state !== 'running') s.ctx.resume();
+    };
+    ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { addEventListener(t, wake, { passive: true, capture: true }); });
+    return s;
   })();
   function sfx(n, vol, rate) {
-    if (!SFX[n] || rmActive()) return;
-    try { var c = SFX[n].cloneNode(); c.volume = vol; c.playbackRate = rate || 1; c.preservesPitch = false;
-      var p = c.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+    var c = SFX.ctx, d = SFX.buf[n];
+    if (!c || !d || c.state !== 'running' || rmActive()) return;
+    var src = c.createBufferSource(), g = c.createGain(), t = c.currentTime, len = CLIP[n], tone = TONE[n];
+    src.buffer = d; src.playbackRate.value = rate || 1; g.gain.value = vol;
+    if (tone) {   // muffled and eased in: the low-pass takes the edge off, the fade-in rounds off the attack
+      var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tone.lp; lp.Q.value = 0.5;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + tone.attack);
+      src.connect(lp); lp.connect(g);
+    } else src.connect(g);
+    g.connect(c.destination);
+    if (len) { g.gain.setValueAtTime(vol, t + len - 0.06); g.gain.linearRampToValueAtTime(0, t + len); src.start(t, 0, len); }
+    else src.start();
   }
+  /* jump.mp3 is a whoosh that builds for 0.3s and THEN a thump at 0.34s, its loudest moment; that thump landed while
+     she was still in the air (her: "the jumping up sound sounds super weird"). Only the whoosh plays, faded out. */
+  var CLIP = { jump: 0.3 };
+  /* her 2026-10-24: "the landing sound is too harsh and the jumping up sound is too sharp". The whoosh's energy sits
+     around 2.2kHz (a hiss) and the thud opens on a click, so both are low-passed and given a soft attack */
+  var TONE = { jump: { lp: 1300, attack: 0.05 }, land: { lp: 650, attack: 0.018 } };
   /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
      where the foot drops lowest after the flight */
   var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
@@ -1051,7 +1097,7 @@
       if (st === 'hang') sfx('grip', 0.4);
       /* a landing THUD, firmer for a longer fall; and ALWAYS after a jump (her ask: "a sound when I land on something I
          jumped on" — landing up on a ledge comes in slow, near the top of the arc) */
-      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) sfx('land', Math.min(0.5, 0.2 + Math.max(0, fallV) / 3000), 0.95 + Math.random() * 0.1);
+      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) sfx('land', Math.min(0.34, 0.14 + Math.max(0, fallV) / 4000), 0.95 + Math.random() * 0.1);
       if (st !== 'air' && st !== 'mantle') leapt = false;
       sfxWas = st;
     }
@@ -1198,7 +1244,7 @@
     }).catch(function () { CLAY.on = false; });
   }
   function onClay(p) { return Math.abs(p.x - fig.x) < 34 && p.y > fig.y - CLAY.H - 6 && p.y < fig.y + 6; }
-  (window.requestIdleCallback || function (f) { setTimeout(f, 600); })(loadClay);
+  loadClay();   // at once, not on idle: her standing frame must be in by the time the name rises (the link preload in the hero has it in flight already)
   /* her ask (2026-10-23, "the wave is spazzy. smile and only wave one hand"): frames 2/5 and 3/4 are
      DIFFERENT hands with the body turned opposite ways, so mixing them flipped her back and forth.
      Only 3↔4 now: one hand, one stance, both smiling, unhurried. */
@@ -1257,8 +1303,13 @@
         /* the pose follows the swing: legs out ahead on the way forward (frames 1, 9 — the only ones that really grip,
            with 0 and 11), and the straight body trailing on the way back; the frames carry the swing, so the body
            itself only tilts a little */
-        var hk = th > .2 ? 9 : th > .07 ? 1 : 0, tilt = hk ? th * .35 : th * .8;
-        return { s: 'hang-swing-climb-x3', k: hk, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(tilt / .04) * .04 * fig.dir };
+        /* one pose, the dead hang, so nothing pops between frames: the WHOLE body pivots from the hands like a pendulum,
+           the back and legs bend with the legs' lag, and the shoulders shrug up toward the hands as the swing climbs
+           (the arms pull) and stretch out at the bottom where it's fastest */
+        var bend = Math.max(-.7, Math.min(.7, (h.la == null ? th : h.la) - th));
+        var shrug = Math.min(1, Math.abs(Math.sin(th)) / Math.sin(.45)), stretch = Math.min(1, (h.om || 0) * (h.om || 0) / 4);
+        return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -th * fig.dir,
+                 bend: bend, armSy: 1 - .12 * shrug + .04 * stretch };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
         if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1,
@@ -1307,7 +1358,8 @@
     } else CLAY.sk = 1;   // back to standing she is already smiling, never a beat of the flat face
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
-    if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
+    if (pk.anchor === 'hands' && pk.bend != null) { ctx.translate(pk.ax, pk.ay); ctx.rotate(pk.rot); ctx.scale(sc * d, sc); bentHang(im, f, pk); }
+    else if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
@@ -1315,6 +1367,22 @@
     else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
+  }
+
+  /* the hang frame drawn as a chain of thin horizontal slices from the grip down, each turned a little more than the
+     one above: the arms (top 22%) squash or stretch with the shrug, the back takes a third of the bend, the legs the
+     rest. In the frame's own (already mirrored) space, so the bend follows her facing. */
+  function bentHang(im, f, pk) {
+    var gx = f.gx != null ? f.gx : f.cx, S = 6, px = 0, py = 0, w = f.w, h = f.h;
+    for (var y0 = 0; y0 < h; y0 += S) {
+      var u = (y0 + S / 2) / h, sh = Math.min(S, h - y0);
+      var a = -pk.bend * (u < .22 ? 0 : u < .5 ? .35 * (u - .22) / .28 : .35 + .65 * (u - .5) / .5);
+      var dh = sh * (u < .22 ? pk.armSy : 1);
+      ctx.save(); ctx.translate(px, py); ctx.rotate(a);
+      ctx.drawImage(im, 0, y0, w, Math.min(sh + 1, h - y0), -gx, 0, w, dh + (y0 + sh < h ? 1 : 0));
+      ctx.restore();
+      px -= Math.sin(a) * dh; py += Math.cos(a) * dh;
+    }
   }
 
   function figure(px, py, dir, o) {
@@ -1816,6 +1884,8 @@
   function bootWhenSettled() {
     var go = function () { boot(); rideT = 2.6; start(); };
     if (window.__mkHeroLanded || window.__mkHeroSettled) return go();
+    if (window.__mkHeroRising) return go();
+    addEventListener('mk-hero-rising', go, { once: true });   // the name has started its rise: she comes in with it
     addEventListener('mk-hero-landed', go, { once: true });
     addEventListener('mk-hero-settled', go, { once: true });
     setTimeout(go, 4200);
