@@ -1993,14 +1993,44 @@ function makeJS() {
     };
     let saved=null;try{saved=localStorage.getItem('mk-work-view')}catch(e){}
     if(saved==='list'||saved==='deck')setView(saved,false);
-    /* switching view takes you TO it (her ask: "when I toggle to the horizontal swipe I want to be taken back to where I can
-       see it, not staring at the wrong place if I toggle after scrolling down"): SWIPE brings the deck to the middle of the
-       screen, SCROLL brings the first project under the section title. Only when it isn't already in view. */
-    const bring=v=>{const el=v==='deck'?workEl.querySelector('.sdeck'):workEl.querySelector('.view-list .wproject');if(!el)return;
-      const r=el.getBoundingClientRect();if(r.top>=60&&r.bottom<=innerHeight)return;
-      const y=v==='deck'?r.top+scrollY-Math.max(70,(innerHeight-r.height)/2):workEl.querySelector('.work-head').getBoundingClientRect().top+scrollY-90;
-      scrollTo({top:Math.max(0,y),behavior:rmActive()?'auto':'smooth'})};
-    btns.forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view,true);requestAnimationFrame(()=>bring(b.dataset.view))}));
+    /* SWITCHING VIEW MORPHS (her ask 2026-10-23: "there needs to be a GSAP animation transition when you toggle rather than
+       switch flip … the demo zooms in a lot and then moves into place"). The project you were looking at carries across:
+       its demo is measured where it sat on screen, the views switch and the page jumps (instantly, no smooth scroll) so
+       the SAME project is in view in the new one, and then GSAP flies that demo from where it was, up big in the middle
+       of the screen, and down into its new place. Everything else in the new view arrives around it. Reduced motion (or
+       no GSAP yet): the same project, no flight. */
+    const listMedia=[...workEl.querySelectorAll('.view-list .project-media-wrap>*')];
+    const deckMedia=()=>[...workEl.querySelectorAll('.sdeck .scard .scard-media>*')];
+    const nowIdx=()=>{if(workEl.dataset.view==='deck')return window.__deckActive?Math.max(0,window.__deckActive()):0;
+      let best=0,bd=1e9;listMedia.forEach((m,i)=>{const r=m.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-innerHeight/2);if(d<bd){bd=d;best=i}});return best};
+    const morph=v=>{
+      if(v===workEl.dataset.view)return;
+      const i=nowIdx(),fromEl=(workEl.dataset.view==='deck'?deckMedia():listMedia)[i],F=fromEl&&fromEl.getBoundingClientRect(),seen=F&&F.bottom>0&&F.top<innerHeight;
+      setView(v,true);
+      if(v==='deck')dispatchEvent(new CustomEvent('mk-deck-go',{detail:{i}}));
+      /* jump so the same project sits where you can see it */
+      const toEl=(v==='deck'?deckMedia():listMedia)[i];if(!toEl)return;
+      const sd=workEl.querySelector('.sdeck'),anchor=v==='deck'?sd:toEl,ar=anchor.getBoundingClientRect();
+      scrollTo({top:Math.max(0,ar.top+scrollY-(v==='deck'?Math.max(70,(innerHeight-ar.height)/2):Math.max(90,(innerHeight-ar.height)/2))),behavior:'instant'});   // 'instant', not 'auto': the page's own scroll-behavior is smooth, and the flight is measured right after this
+      if(!seen||rmActive()||!window.gsap)return;
+      const T=toEl.getBoundingClientRect(),big=Math.min(innerWidth*.86/T.width,innerHeight*.8/T.height,2.6);
+      /* the flight: F (where it was) -> big in the middle of the screen -> T (its place). transformOrigin 0 0, so x/y
+         are the top-left corner's offset from T's */
+      const at=(r,sc)=>({x:r.left-T.left,y:r.top-T.top,scale:sc});
+      const mid={left:(innerWidth-T.width*big)/2,top:(innerHeight-T.height*big)/2};
+      const holder=v==='deck'?sd:null;if(holder)holder.style.overflow='visible';
+      const card=toEl.closest('.scard,.wproject');const z0=card.style.zIndex;card.style.zIndex='60';
+      /* (phones' list cards already ride their own ScrollTrigger focus, so they're left to it) */
+      const others=v==='deck'?deckMedia().filter((m,k)=>k!==i):matchMedia('(max-width:760px)').matches?[]:listMedia.filter((m,k)=>k!==i).map(m=>m.closest('.wproject'));
+      const extra=v==='deck'?[...sd.querySelectorAll('.sdeck-title,.sdeck-progress')]:[...toEl.closest('.wproject').querySelectorAll('.w-copy')];
+      gsap.set(toEl,{transformOrigin:'0 0'});
+      gsap.timeline({onComplete:()=>{gsap.set(toEl,{clearProps:'transform,transformOrigin'});if(holder)holder.style.overflow='';card.style.zIndex=z0}})
+        .fromTo(toEl,at(F,F.width/T.width),{...at(mid,big),duration:.45,ease:'power2.inOut'})
+        .to(toEl,{x:0,y:0,scale:1,duration:.65,ease:'expo.out'})
+        .from(others,{opacity:0,y:30,duration:.5,ease:'power2.out',stagger:.04,clearProps:'opacity,transform'},.55)
+        .from(extra,{opacity:0,y:12,duration:.4,ease:'power2.out',clearProps:'opacity,transform'},.8);
+    };
+    btns.forEach(b=>b.addEventListener('click',()=>morph(b.dataset.view)));
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
@@ -2161,6 +2191,8 @@ function makeJS() {
         gsap.timeline({onComplete:()=>{nudging=false;place(0)}}).to(o,{v:.22,duration:.45,ease:'power2.out',onUpdate:()=>place(o.v)}).to(o,{v:0,duration:.55,ease:'power2.inOut',onUpdate:()=>place(o.v)},'+=.08')},700)},{threshold:.6}).observe(sd);
     addEventListener('resize',layout);layout();settle(0,true);
     addEventListener('tweak',()=>{layout()});addEventListener('mk-work-view',()=>{layout()});
+    addEventListener('mk-deck-go',e=>{touched=true;settle(e.detail.i,true)});   // the view toggle opens the deck on the project you were reading
+    window.__deckActive=()=>active;
     if(!rm)vendorJS('gsap.min.js').catch(()=>{});
   }
 
