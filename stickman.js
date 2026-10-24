@@ -249,12 +249,12 @@
   /* THE CARTWHEEL TRAVELS (her: "the person doesn't move forward in the direction that they cartwheel"): about one
      body length the way she faces, eased, the feet riding the surface; never past an edge or out of the hero */
   function cartwheelTravel() {
-    var c = fig.celeb;
+    var c = fig.celeb, n = CW_SEQ.length, sc = CLAY.H / (CLAY.man ? CLAY.man._ref : 252), total = CW_DX[n - 1] * sc;
     if (c.x0 == null) {
       var e = walkEdge(fig.x, fig.y, fig.dir), room = e == null ? (fig.dir > 0 ? W - 10 - fig.x : fig.x - 10) : Math.abs(e - fig.x) - 14;
-      c.x0 = fig.x; c.D = Math.max(0, Math.min(CLAY.H * 1.05, room));
+      c.x0 = fig.x; c.k = Math.max(0, Math.min(1, room / total));   // short of room (an edge): the roll compresses, never overshoots
     }
-    var u = Math.max(0, Math.min(1, (c.t - .15) / .7)), nx = c.x0 + fig.dir * c.D * u * u * (3 - 2 * u);   // through the roll, not the lunges
+    var j = Math.min(n - 1, Math.floor(c.t * n)), nx = c.x0 + fig.dir * CW_DX[j] * sc * c.k;   // per frame, like the clay: contacts hold still
     var gy = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
     if (gy != null && gy >= fig.y - STEP_UP - .5 && gy <= fig.y + STEP_DOWN + .5) { fig.x = nx; fig.y = gy; }
   }
@@ -1217,6 +1217,11 @@
     hands.slice().reverse().forEach(function (k) { s.push([CW_50, k, 1]); });
     return s.concat(entry.slice().reverse().map(function (k) { return [CW_IN, k, 1]; }));
   })();
+  /* where her torso sits in each cartwheel frame (clay px, forward), so whatever is touching the floor STAYS put and
+     the body rotates over it: foot, hand, other hand, foot (her: "she moves too far to the right and left … it's really
+     dictated by the points of contact"). Measured off each frame's lowest pixels: of the contacts that carry over from
+     the frame before, the one that keeps her from going backwards is the planted one. */
+  var CW_DX = [0,0,58,58,77,77,161,161,218,218,228,228,228,257,257,257,264,265,270,331,352,352,352,362,362,419,419,503,503,522,522,580,580];
   var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
