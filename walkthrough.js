@@ -296,7 +296,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 
 <nav class="pill" aria-label="Main">
   <a class="wm wm-load" href="index.html">${(m => m ? `<span class="wm-m">${esc(m[1])}</span><span class="wm-d">${esc(m[2])}</span><span class="wm-k">${esc(m[3])}</span>` : esc(site.wordmark))(String(site.wordmark).match(/^(.)(-+)(.)$/))}</a>
-  <a href="index.html#work">Work</a><a class="nav-opt" href="index.html#about">About</a><a class="nav-res" href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a>
+  <span class="pill-links"><a href="index.html#work">Work</a><a class="nav-opt" href="index.html#disciplines">Disciplines</a><a class="nav-opt" href="index.html#about">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a></span>
   <a class="cta" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav>
 <a class="edge prev arrow-btn" href="${caseHref(cs.prev)}" aria-label="Previous project">${ic('back')}</a>
@@ -376,10 +376,18 @@ img{display:block;max-width:100%}
 .eyebrow{font:500 13px/1 'Plus Jakarta Sans';letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
 
 /* nav pill + edge arrows */
-.pill{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;padding:6px 6px 6px 18px;border-radius:999px;background:rgba(22,27,40,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #232a3a}
-.pill a{white-space:nowrap;font-size:16px;font-weight:400;color:#9aa0ad;text-decoration:none;padding:8px 18px;border-radius:999px;transition:color .2s}
+/* the SAME bar as every other page (her ask 2026-10-24: "the nav bar isn't consistent across the site"), measured off
+   the main site's: no bar, M--K far left, the links as quiet text far right, the white say hey!, a fade of the page
+   colour behind it so it reads over content */
+.pill{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:clamp(8px,1.4vw,18px);padding:20px clamp(20px,4vw,56px)}
+.pill::before{content:"";position:absolute;left:0;right:0;top:0;bottom:-30px;z-index:-1;pointer-events:none;background:linear-gradient(#0f1013 50%,rgba(15,16,19,0))}
+.pill .wm{margin-right:auto}
+.pill-links{display:flex;gap:2px}
+.pill a{white-space:nowrap;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:16px;font-weight:300;line-height:26.4px;color:#9aa0ad;text-decoration:none;padding:10px 13px;transition:color .2s}
 .pill a:hover{color:var(--hi)}
-.pill a.cta{background:#fff;color:#111;font-weight:500}
+.pill a.cta{display:inline-flex;align-items:center;min-height:42px;padding:0 22px 4px;border-radius:999px;background:#fff;color:#111;font-weight:500}
+@media (max-width:360px){.pill{gap:6px!important;padding-left:14px;padding-right:14px}.pill-links a{padding-left:7px!important;padding-right:7px!important}.pill a.cta{padding:0 12px 3px!important}}
+@media (max-width:520px){.pill{gap:8px}.pill a.wm{padding-right:4px}.pill a.cta{font-size:.9rem;padding:0 16px 3px;min-height:38px}.pill-links a{font-size:.9rem;padding-left:10px;padding-right:10px}}
 /* the wordmark keeps the site's own face — Cormorant Garamond, as in the main nav */
 .pill a.wm{font:400 22px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:var(--hi);padding:6px 14px 6px 4px;--wm-dx:.34em}
 /* the home page's wordmark greeting, copied from build.js: M and K start together and ease
@@ -400,12 +408,12 @@ img{display:block;max-width:100%}
 .arrow-btn{flex:none;width:48px;height:48px;padding:0;border-radius:50%;border:1px solid #2a2f3a;display:grid;place-items:center;background:rgba(15,16,19,.75);color:#e9eaee;transition:border-color .2s,transform .3s var(--ease)}
 .arrow-btn:hover,a:hover>*>.arrow-btn{border-color:#5a6070;transform:scale(1.06)}
 .arrow-btn .ic{width:20px;height:20px;stroke-width:1.6}
-.edge{position:fixed;top:22px;z-index:30}
+.edge{position:fixed;top:96px;z-index:30}   /* under the full-width bar */
 .edge.prev{left:24px}.edge.next{right:24px}
 /* the top bar (pill + project arrows) slides away while reading down and drops back on any
    scroll up */
 .pill,.edge{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease,border-color .2s}
-.nav-away .pill{transform:translate(-50%,-160%);opacity:0;pointer-events:none}
+.nav-away .pill{transform:translateY(-160%);opacity:0;pointer-events:none}
 .nav-away .edge{transform:translateY(-160%);opacity:0;pointer-events:none}
 
 /* TOC: a quiet column of dashes docked bottom-left, the section you're in longest and
@@ -891,7 +899,7 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 .v-strip span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;height:2.6em;font-size:11px;line-height:1.3;color:#9aa0ad;margin-top:5px}
 
 @media (max-width:700px){
-  body{font-size:16px}.pill{padding-left:10px}.pill a{padding:7px 10px;font-size:14px}.pill a.nav-opt,.pill a.nav-res{display:none}
+  body{font-size:16px}.pill a.nav-opt{display:none}
   .edge{display:none}.sec{padding-top:90px}.lede p{font-size:19px}
   :root{--lab:118px}.hl{font-size:13px}.float{display:none}
   .quotes{grid-template-columns:1fr}.q{min-height:200px}

@@ -63,3 +63,5 @@ nav.bar .wordmark{margin-right:auto}
 body.scrolled .nav-wrap::before{opacity:1}
 /* say hey! sat ~2px low in its pill: Plus Jakarta's ink rides below the middle of its line box, so lift it optically */
 nav.bar .btn.sm{padding-bottom:4px}
+/* the narrowest phones (≤360px): the bar tightens so say hey! never runs off the edge (walkthrough.js mirrors this) */
+@media (max-width:360px){nav.bar,nav.bar.glass,body.hero-cta-on nav.bar{gap:6px;padding-left:14px;padding-right:14px}.nav-links a{padding-left:7px;padding-right:7px}nav.bar .btn.sm{padding:0 12px 3px}}

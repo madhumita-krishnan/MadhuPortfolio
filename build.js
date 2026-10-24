@@ -2850,9 +2850,10 @@ function svgFilters() {
 
 function navBar(kind) {
   const home = kind === 'home';
-  const links = home
-    ? `<a href="#work" data-hand="Work">Work</a><a class="optional" href="#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="#about" data-hand="About">About</a><a href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`
-    : `<a href="index.html#work" data-hand="All work">All work</a><a class="optional" href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
+  /* the SAME links on every page (her ask 2026-10-24: "the nav bar isn't consistent across the site"); off the home page
+     they point back into it. walkthrough.js draws the identical bar for the walkthrough case studies. */
+  const pre = home ? '' : 'index.html';
+  const links = `<a href="${pre}#work" data-hand="Work">Work</a><a class="optional" href="${pre}#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="${pre}#about" data-hand="About">About</a><a href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="edge-fade top" aria-hidden="true"></div><div class="edge-fade bottom" aria-hidden="true"></div>
 <div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
