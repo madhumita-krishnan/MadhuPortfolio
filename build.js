@@ -2688,6 +2688,10 @@ function head(title, desc) {
 <!-- Google Fonts load WITHOUT blocking the page (media=print, then all): a slow or blocked fonts host used to leave the page
      blank until it timed out; now it shows in the fallback font and swaps (device-check blocked-third-party / slow-3g) -->
 <link href="${theme.fonts['google-css']}" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="${theme.fonts['google-css']}" rel="stylesheet"></noscript>
+<!-- a RELOAD always starts at the top (her 2026-10-24: it reopened on Selected Projects); back/forward and a Work link from a case study still land where they should -->
+<script>(function(){var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0],r=n&&n.type==='reload';
+if('scrollRestoration' in history)history.scrollRestoration=r?'manual':'auto';
+if(r&&location.hash)history.replaceState(null,'',location.pathname+location.search)})()</script>
 <!-- theme boots BEFORE the stylesheet so night never flashes cream: a stored choice
      wins; otherwise the viewer's own sunrise/sunset decides (NOAA short-form solar
      position, coordinates approximated from the IANA timezone — no permission prompt,
