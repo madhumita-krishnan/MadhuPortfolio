@@ -2058,10 +2058,13 @@ function makeJS() {
     const prep=()=>ready||(ready=vendorJS('gsap.min.js').then(()=>Promise.all(marks.map(sample))).then(d=>{data=d},e=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='');throw e}));
     const near=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){near.disconnect();prep().catch(()=>{})}},{rootMargin:'100% 0px'});
     near.observe(brandRow);
+    /* ...but it PLAYS only once the row is a third of the way up the screen (her 2026-10-24: "the logo
+       animation loads when the page loads, not when I scroll past it"): the row sits just under the hero, so on the
+       first pixel it played out while still at the bottom edge, over before she got there */
     const bio=new IntersectionObserver(es=>{
       if(seen||!es.some(e=>e.isIntersecting))return;seen=true;bio.disconnect();
       prep().then(run,()=>{});
-    });
+    },{rootMargin:'0px 0px -35% 0px'});
     bio.observe(brandRow);
     addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
