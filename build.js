@@ -185,7 +185,7 @@ function swipeTweaks() {
 /* THE PHONE HERO FRAME (her 2026-10-24: "something about the mobile hero doesn't sit well"): the hero fills the
    first screen, one spacing scale, accent on one thing, wordmark on the copy's left edge. Every number is a dial
    in studies/tweaker-hero/; Save writes data/tweaks.json['hero-frame'] and these become the defaults. */
-const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'none', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
+const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'eyebrow', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
 function heroFrameVars() {
   const h = HERO_FRAME, n = k => Number(h[k]) || 0;
   return `@supports (height:1svh){.hero{--hx-h:${n('heroH')}svh}}.hero{--hx-h:${n('heroH')}vh;--hx-top:${n('top')}px;--hx-bottom:${n('bottom')}px;--hx-eb:${n('ebGap')}px;--hx-name:${n('nameGap')}px;--hx-bio:${n('bioGap')}px}:root{--hx-wm:${n('wm')}px;--clay-cave:${n('cave')};--clay-dark:${n('dark')};--clay-dent:${n('dent')};--clay-in:${n('pressIn')}ms;--clay-back:${n('back')}ms}`;

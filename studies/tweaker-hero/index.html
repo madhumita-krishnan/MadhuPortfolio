@@ -21,7 +21,7 @@ Tweaker({
     { key: 'ebGap', label: 'Eyebrow → name', group: 'Spacing', type: 'range', min: 0, max: 48, step: 2, value: 12, unit: 'px', css: '--hx-eb', hint: 'Tight reads as one unit: the eyebrow is describing the name' },
     { key: 'nameGap', label: 'Name → bio', group: 'Spacing', type: 'range', min: 4, max: 72, step: 2, value: 24, unit: 'px', css: '--hx-name' },
     { key: 'bioGap', label: 'Bio → say hey!', group: 'Spacing', type: 'range', min: 8, max: 120, step: 4, value: 40, unit: 'px', css: '--hx-bio', hint: 'With say hey! at the bottom, this is the least gap it keeps' },
-    { key: 'accent', label: 'The blue accent goes on', group: 'Colour', type: 'select', options: ['none', 'eyebrow', 'name'], value: 'none', hint: 'none = clay-you is the only colour in the hero' },
+    { key: 'accent', label: 'The blue accent goes on', group: 'Colour', type: 'select', options: ['none', 'eyebrow', 'name'], value: 'eyebrow', hint: 'none = clay-you is the only colour in the hero' },
     { key: 'cave', label: 'Cave-in depth', group: 'Clay press', type: 'range', min: .6, max: 1, step: .01, value: .84, unit: '×', css: '--clay-cave', hint: 'How far the middle sinks while the rim stays put. Press and hold a clay tile in the preview' },
     { key: 'dark', label: 'Shade in the dent', group: 'Clay press', type: 'range', min: .5, max: 1, step: .01, value: .82, unit: '×', css: '--clay-dark', hint: '1 = no shade; lower = the sunk middle darker' },
     { key: 'dent', label: 'Dent wall shadow', group: 'Clay press', type: 'range', min: 0, max: 1, step: .05, value: .8, unit: '', css: '--clay-dent', hint: 'The ring of shadow where the rim drops into the dent' },
