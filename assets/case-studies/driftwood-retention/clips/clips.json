@@ -1,7 +1,7 @@
 [
   {
     "name": "signin",
-    "file": "signin.webm",
+    "file": "signin.mp4",
     "poster": "signin.jpg",
     "title": "Sign in",
     "description": "The helm mark builds itself, opens into the Google sign-in, and pressing it hands off to connecting accounts.",
@@ -10,7 +10,7 @@
   },
   {
     "name": "connect",
-    "file": "connect.webm",
+    "file": "connect.mp4",
     "poster": "connect.jpg",
     "title": "Connect accounts",
     "description": "LinkedIn connects and its badge pops onto the diagram, a disconnect is taken back with Undo, then X connects too.",
@@ -19,7 +19,7 @@
   },
   {
     "name": "leads",
-    "file": "leads.webm",
+    "file": "leads.mp4",
     "poster": "leads.jpg",
     "title": "Add leads",
     "description": "A CSV dropped in becomes rows in the sheet, one lead is removed, an Excel file adds more and Undo takes that file back.",
@@ -28,7 +28,7 @@
   },
   {
     "name": "team",
-    "file": "team.webm",
+    "file": "team.mp4",
     "poster": "team.jpg",
     "title": "Invite team",
     "description": "A pasted To: line turns into chips, one is removed, another is typed in, and Start begins the pilot.",
@@ -37,7 +37,7 @@
   },
   {
     "name": "pilot-launch",
-    "file": "pilot-launch.webm",
+    "file": "pilot-launch.mp4",
     "poster": "pilot-launch.jpg",
     "title": "Pilot launch",
     "description": "On the pilot dashboard a demo is picked and published: night falls, fireworks, the card flips into a bottle that is corked and splashes out to sea, Sent, and the demo flies into the menu of the main dashboard.",
@@ -46,7 +46,7 @@
   },
   {
     "name": "storyboard",
-    "file": "storyboard.webm",
+    "file": "storyboard.mp4",
     "poster": "storyboard.jpg",
     "title": "Storyboard editor",
     "description": "The storyboard editor: drag a shot into a new place, say a change to a line and read it before it applies, then cut a shot with Undo in its place.",
@@ -55,7 +55,7 @@
   },
   {
     "name": "edit-text",
-    "file": "edit-text.webm",
+    "file": "edit-text.mp4",
     "poster": "edit-text.jpg",
     "title": "Edit text, Swap image and callouts",
     "description": "On the portfolio page in Edit text mode: a caption rewritten in place, a screen swapped from every saved iteration, and a new callout added where it's needed. None of it goes through a prompt.",
@@ -64,7 +64,7 @@
   },
   {
     "name": "storyboard-peek",
-    "file": "storyboard-peek.webm",
+    "file": "storyboard-peek.mp4",
     "poster": "storyboard-peek.jpg",
     "title": "Storyboard peek",
     "description": "Hovering a demo's name on the dashboard slides its storyboard in; moving to the next name changes the title first, then the old shots slide down and the new ones slide up.",
@@ -73,7 +73,7 @@
   },
   {
     "name": "dashboard",
-    "file": "dashboard.webm",
+    "file": "dashboard.mp4",
     "poster": "dashboard.jpg",
     "title": "Main dashboard",
     "description": "The main dashboard: the Face & Voice card, the time range rolled from a month to six, Check-in expanded down to the drop-off, and a trigger swiped away and brought back with Undo.",
@@ -82,7 +82,7 @@
   },
   {
     "name": "dashboard-menu",
-    "file": "dashboard-menu.webm",
+    "file": "dashboard-menu.mp4",
     "poster": "dashboard-menu.jpg",
     "title": "Dashboard menu",
     "description": "The side menu walks through Approvals, Inbox, Strategy, Demos and Face & Voice, each opening in place inside the dashboard.",
@@ -91,7 +91,7 @@
   },
   {
     "name": "face-email",
-    "file": "face-email.webm",
+    "file": "face-email.mp4",
     "poster": "face-email.jpg",
     "title": "Face & Voice email",
     "description": "The email sent after onboarding: the same deep-tide Face & Voice card as the dashboard, a talking welcome in the porthole, and one Set up button.",
@@ -100,7 +100,7 @@
   },
   {
     "name": "phone",
-    "file": "phone.webm",
+    "file": "phone.mp4",
     "poster": "phone.jpg",
     "title": "Dashboard on a phone",
     "description": "The same dashboard at phone width: Home scrolls past the Face & Voice card, Pipeline and Strategy, then the tab row at the top opens Strategy in place and goes back Home.",

@@ -96,6 +96,7 @@ async function live() {
   section('live site (' + LIVE + ')');
   const pages = fs.existsSync(DIST)
     ? walk(DIST).filter((f) => f.endsWith('.html')).map((f) => '/' + path.relative(DIST, f).replace(/\\/g, '/'))
+        .filter((p) => !p.startsWith('/studies/'))   // local-only study pages: build.js never ships them to Vercel
     : ['/index.html'];
   const targets = ['/', ...pages.filter((p) => p !== '/index.html'), '/app.js', '/styles.css']
     .filter((p, i, a) => a.indexOf(p) === i);

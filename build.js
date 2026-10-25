@@ -188,7 +188,7 @@ function swipeTweaks() {
 const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'none', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
 function heroFrameVars() {
   const h = HERO_FRAME, n = k => Number(h[k]) || 0;
-  return `.hero{--hx-h:${n('heroH')}svh;--hx-top:${n('top')}px;--hx-bottom:${n('bottom')}px;--hx-eb:${n('ebGap')}px;--hx-name:${n('nameGap')}px;--hx-bio:${n('bioGap')}px}:root{--hx-wm:${n('wm')}px;--clay-cave:${n('cave')};--clay-dark:${n('dark')};--clay-dent:${n('dent')};--clay-in:${n('pressIn')}ms;--clay-back:${n('back')}ms}`;
+  return `@supports (height:1svh){.hero{--hx-h:${n('heroH')}svh}}.hero{--hx-h:${n('heroH')}vh;--hx-top:${n('top')}px;--hx-bottom:${n('bottom')}px;--hx-eb:${n('ebGap')}px;--hx-name:${n('nameGap')}px;--hx-bio:${n('bioGap')}px}:root{--hx-wm:${n('wm')}px;--clay-cave:${n('cave')};--clay-dark:${n('dark')};--clay-dent:${n('dent')};--clay-in:${n('pressIn')}ms;--clay-back:${n('back')}ms}`;
 }
 function makeCSS() {
   const c = theme.colors, g = theme.glass, f = theme.fonts, r = theme.radii, m = theme.motion;
@@ -977,7 +977,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    link keep the plain .brand:hover. The glow sits on the link, not the mark: a filter on the masked .brand would be
    masked away with it. */
 a.brand-slot{transition:filter var(--motion-base) var(--ease-standard)}
-a.brand-slot:hover,a.brand-slot:focus-visible{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 75%,transparent))}
+a.brand-slot:hover,a.brand-slot:focus-visible{filter:drop-shadow(0 0 8px rgba(143,178,242,.75));filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 75%,transparent))}   /* rgba first: color-mix is Safari 16.2+ / Chrome 111+ */
 a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--accent)}
 .brands-row.gs-roll .brand{opacity:0}
 /* the row carries the observer, not the movement — the logos do that */
@@ -2097,7 +2097,7 @@ function makeJS() {
       /* jump so the same project sits where you can see it */
       const toEl=(v==='deck'?deckMedia():listMedia)[i];if(!toEl)return;
       const sd=workEl.querySelector('.sdeck'),anchor=v==='deck'?sd:toEl,ar=anchor.getBoundingClientRect();
-      scrollTo({top:Math.max(0,ar.top+scrollY-(v==='deck'?Math.max(70,(innerHeight-ar.height)/2):Math.max(90,(innerHeight-ar.height)/2))),behavior:'instant'});   // 'instant', not 'auto': the page's own scroll-behavior is smooth, and the flight is measured right after this
+      (o=>{try{scrollTo(o)}catch(e){scrollTo(0,o.top)}})({top:Math.max(0,ar.top+scrollY-(v==='deck'?Math.max(70,(innerHeight-ar.height)/2):Math.max(90,(innerHeight-ar.height)/2))),behavior:'instant'});   // 'instant', not 'auto': the page's own scroll-behavior is smooth, and the flight is measured right after this
       if(!seen||rmActive()||!window.gsap)return;
       const T=toEl.getBoundingClientRect(),big=Math.min(innerWidth*.86/T.width,innerHeight*.8/T.height,2.6);
       /* the flight: F (where it was) -> big in the middle of the screen -> T (its place). transformOrigin 0 0, so x/y
@@ -2342,7 +2342,7 @@ function makeJS() {
     const docTop=e=>{let t=0;while(e){t+=e.offsetTop;e=e.offsetParent}return t};
     const aim=i=>docTop(cardsM[i])+cardsM[i].offsetHeight/2-innerHeight/2;
     const nearest=()=>{let n=0,bd=1e9;cardsM.forEach((c,i)=>{const d=Math.abs(aim(i)-scrollY);if(d<bd){bd=d;n=i}});return n};
-    const jump=y=>window.scrollTo({top:y,behavior:'instant'});
+    const jump=y=>{try{window.scrollTo({top:y,behavior:'instant'})}catch(e){window.scrollTo(0,y)}};   // older Safari rejects 'instant'
     let t0=null,glide=null;
     addEventListener('touchstart',e=>{
       if(!root.classList.contains('reels-on')||e.touches.length!==1||!workSec.contains(e.target)){t0=null;return}
@@ -2628,7 +2628,11 @@ function makeJS() {
     if(ff)window.__fishFreeze=+ff[1];
     const phone=matchMedia('(max-width:700px)').matches;
     let mod=null,fired=false;
-    const fetchIt=()=>mod||(mod=import('./fish.js?v=${BUILD_V}'));
+    /* three.js uses class static blocks, a SYNTAX error before Safari 16.4 (iOS 16.4) — the whole module would fail to load.
+       Only fetch it where the engine can read it (adoptedStyleSheets = Safari 16.4+, :has() = Chrome 105+); elsewhere the pot
+       just stays still, with no error. (device-check compat audit, 2026-10-24) */
+    const fishOK=('adoptedStyleSheets' in document)&&window.CSS&&CSS.supports&&CSS.supports('selector(:has(a))');
+    const fetchIt=()=>mod||(mod=fishOK?import('./fish.js?v=${BUILD_V}'):Promise.reject(new Error('older engine: no koi')));
     const leap=()=>{if(!rmActive())fetchIt().then(m=>m.run({phone})).catch(()=>{})};
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting)return;
       io.disconnect();if(!rmActive())fetchIt()})},{rootMargin:'900px 0px'}).observe(potEl);
@@ -2681,7 +2685,9 @@ function head(title, desc) {
 <link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="${theme.fonts['google-css']}" rel="stylesheet">
+<!-- Google Fonts load WITHOUT blocking the page (media=print, then all): a slow or blocked fonts host used to leave the page
+     blank until it timed out; now it shows in the fallback font and swaps (device-check blocked-third-party / slow-3g) -->
+<link href="${theme.fonts['google-css']}" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="${theme.fonts['google-css']}" rel="stylesheet"></noscript>
 <!-- theme boots BEFORE the stylesheet so night never flashes cream: a stored choice
      wins; otherwise the viewer's own sunrise/sunset decides (NOAA short-form solar
      position, coordinates approximated from the IANA timezone — no permission prompt,
@@ -2738,6 +2744,9 @@ if(t==='night')document.documentElement.setAttribute('data-theme','night');
 <!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
      14kb, so it is worth the early connection rather than waiting on the stylesheet -->
 <link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
+<!-- the page scripts are fetched EARLY and at high priority: as plain deferred scripts at the end of the body they queued behind
+     every poster and logo, and on a slow first visit app.js arrived ~19s in (device-check slow-3g network log, 2026-10-24) -->
+<link rel="preload" href="app.js?v=${BUILD_V}" as="script" fetchpriority="high">
 </head>
 <body>
 ${svgFilters()}
@@ -2922,7 +2931,7 @@ function renderHome() {
 
   const heroHTML = `
 <section class="hero" id="hero" data-accent="${esc(HERO_FRAME.accent)}" data-btn="${HERO_FRAME.btnLow ? 'low' : 'flow'}">
-<link rel="preload" href="assets/clay/clay.json?v=${BUILD_V}" as="fetch" crossorigin><link rel="preload" href="assets/clay/idle-wave-sign-0.png?v=${BUILD_V}" as="image">
+<link rel="preload" href="stick.js?v=${BUILD_V}" as="script" fetchpriority="high"><link rel="preload" href="assets/clay/clay.json?v=${BUILD_V}" as="fetch" crossorigin fetchpriority="high"><link rel="preload" href="assets/clay/idle-wave-sign-0.png?v=${BUILD_V}" as="image" fetchpriority="high">
   <div class="hero-flora" aria-hidden="true">
     <!-- These are not drawings of her reference — they ARE her reference, cut out of
          "color pallete I like.png" pixel-for-pixel by tools/lift-flowers.js. Every attempt
@@ -2930,8 +2939,8 @@ function renderHome() {
          only look right because they are the actual paint.
          ?v= for the same reason the handwriting mask carries it: the art is regenerated in
          place, so without a version a returning visitor keeps being served the old bloom. -->
-    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="785" height="1680" loading="eager" decoding="async" fetchpriority="high">
-    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="791" height="1175" loading="eager" decoding="async" fetchpriority="high">
+    <img class="flora-a" src="assets/hero/bloom-left.png?v=${BUILD_V}" alt="" width="785" height="1680" loading="lazy" decoding="async">
+    <img class="flora-b" src="assets/hero/bloom-right.png?v=${BUILD_V}" alt="" width="791" height="1175" loading="lazy" decoding="async">
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
@@ -3489,4 +3498,71 @@ if (missingArt.length) {
 if (fitWarnings.length) {
   console.log('Phone screens (aspect check against 9:19.5 = 0.4615):');
   console.log([...new Set(fitWarnings)].join('\n'));
+}
+
+/* OLDER BROWSERS: container-query units (cqw) size every device frame (phone, browser, MacBook), and Safari < 16 /
+   Chrome < 105 don't know them (iOS 15 is still on many iPhones, incl. ones stuck on it; old Android Chrome too) —
+   the frames collapsed there. Every Ncqw in the shipped CSS/HTML becomes calc(N * var(--cqw, 1cqw)): modern engines
+   ignore --cqw and use real cqw; older ones get --cqw in px from a tiny script that measures each container.
+   (her 2026-10-24: "this needs to load on all iPhone models … and old Android") — checked by device-check's compat audit. */
+{
+  const CQ_POLYFILL = `<script>(function(){if(window.CSS&&CSS.supports&&CSS.supports('width','1cqw'))return;var sel='.phone-media,.mac-media,.browser';
+function fit(e){var cs=getComputedStyle(e);e.style.setProperty('--cqw',(e.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight))/100+'px')}
+var ro=window.ResizeObserver?new ResizeObserver(function(es){es.forEach(function(x){fit(x.target)})}):null,seen=[];
+function scan(){var l=document.querySelectorAll(sel);for(var i=0;i<l.length;i++){fit(l[i]);if(ro&&seen.indexOf(l[i])<0){ro.observe(l[i]);seen.push(l[i])}}}
+scan();document.addEventListener('DOMContentLoaded',scan);addEventListener('load',scan);addEventListener('resize',scan)})()</script>`;
+  /* OLDER BROWSERS, part 2: a safe rewrite of the shipped CSS (styles.css and every page's <style>):
+     - a rule whose selector list mixes plain selectors with :focus-visible / :has() is split in two — older
+       engines drop a WHOLE rule over one unknown selector, which took hover styles down with focus rings;
+     - every svh/dvh/lvh height gets a plain vh line before it (older engines keep the line they understand);
+     - mask / backdrop-filter without its -webkit- twin gets the twin.
+     Comments are stripped first (they're for the source, not the browser). */
+  function cssCompat(css) {
+    css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const topSplit = (s, ch) => { const out = []; let d = 0, q = null, last = 0;
+      for (let i = 0; i < s.length; i++) { const c = s[i];
+        if (q) { if (c === q && s[i - 1] !== '\\') q = null; continue; }
+        if (c === '"' || c === "'") q = c; else if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
+        else if (c === ch && d === 0) { out.push(s.slice(last, i)); last = i + 1; } }
+      out.push(s.slice(last)); return out; };
+    const findTop = (s, from) => { let q = null; for (let i = from; i < s.length; i++) { const c = s[i];
+        if (q) { if (c === q && s[i - 1] !== '\\') q = null; continue; } if (c === '"' || c === "'") q = c; else if (c === '{' || c === ';' || c === '}') return i; } return -1; };
+    const close = (s, open) => { let d = 0, q = null; for (let i = open; i < s.length; i++) { const c = s[i];
+        if (q) { if (c === q && s[i - 1] !== '\\') q = null; continue; } if (c === '"' || c === "'") q = c; else if (c === '{') d++; else if (c === '}' && --d === 0) return i; } return s.length - 1; };
+    const decls = body => topSplit(body, ';').map(d => {
+      const k = d.indexOf(':'); if (k < 0) return d; const prop = d.slice(0, k).trim(), val = d.slice(k + 1);
+      if (prop.startsWith('--')) return d;
+      const add = [];
+      if (/\d[sdl]vh\b/.test(val)) add.push(prop + ':' + val.replace(/(\d)[sdl]vh\b/g, '$1vh'));
+      if (/^(mask|mask-image|mask-size|mask-position|mask-repeat|mask-composite|backdrop-filter)$/.test(prop) && !body.includes('-webkit-' + prop + ':'))
+        add.push('-webkit-' + prop + ':' + val);
+      return add.concat(d.trim()).join(';');
+    }).join(';');
+    const rules = s => { let out = '', i = 0;
+      while (i < s.length) { const k = findTop(s, i); if (k < 0) { out += s.slice(i); break; }
+        if (s[k] !== '{') { out += s.slice(i, k + 1); i = k + 1; continue; }
+        const pre = s.slice(i, k), end = close(s, k), body = s.slice(k + 1, end), p = pre.trim();
+        if (p.startsWith('@')) out += pre + '{' + (/^@(media|supports|container|layer|document)/.test(p) ? rules(body) : body) + '}';
+        else { const b = decls(body), sels = topSplit(pre, ','), risky = sels.filter(x => /:focus-visible|:has\(/.test(x)), safe = sels.filter(x => !/:focus-visible|:has\(/.test(x));
+          out += risky.length && safe.length ? safe.join(',') + '{' + b + '}' + risky.join(',') + '{' + b + '}' : pre + '{' + b + '}'; }
+        i = end + 1; }
+      return out; };
+    return rules(css);
+  }
+  
+  const walk = d => fs.readdirSync(d).forEach(f => {
+    const p = path.join(d, f);
+    if (fs.statSync(p).isDirectory()) { if (!/^(studies|vendor)$/.test(f)) walk(p); return; }
+    if (!/\.(css|html)$/.test(f)) return;
+    let s = fs.readFileSync(p, 'utf8');
+    s = s.replace(/(-?\d*\.?\d+)cqw\b/g, 'calc($1 * var(--cqw, 1cqw))');
+    if (f.endsWith('.css')) s = cssCompat(s);
+    else {
+      s = s.replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (m, a, b) => '<style' + a + '>' + cssCompat(b) + '</style>');
+      // every page gets the measurer: the frames' cqw sizes usually live in styles.css, not in the page itself
+      if (!s.includes("CSS.supports('width','1cqw')")) s = s.includes('</body>') ? s.replace('</body>', CQ_POLYFILL + '\n</body>') : s + CQ_POLYFILL;
+    }
+    fs.writeFileSync(p, s);
+  });
+  walk(DIST);
 }

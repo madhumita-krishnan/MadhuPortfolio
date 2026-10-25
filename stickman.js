@@ -31,14 +31,15 @@
    settles — an idle figure is a single static draw costing zero frames. Touch boots it
    too (her 2026-08-17 ask — it was desktop-only before): tap-to-walk, tap-to-celebrate,
    the sign hold, everything but DRAG, which on a phone is the scroll gesture and is left
-   alone. Only reduced motion never boots it: there the CTA stays an ordinary button. */
+   alone. Reduce Motion boots her too, standing still (see rmActive in start()); she is never hidden for it. */
 (function () {
   'use strict';
   var hero = document.querySelector('.hero');
   if (!hero) return;
   var fine = matchMedia('(hover: hover) and (pointer: fine)');
+  /* Reduce Motion used to RETURN here, so every visitor with it on (a common iPhone setting) never saw her at all
+     (found 2026-10-24 by device-check). start() already draws her still under it. */
   var prefersRM = matchMedia('(prefers-reduced-motion: reduce)');
-  if (prefersRM.matches) return;
   var touchMode = !fine.matches;
   var rmActive = function () { return prefersRM.matches || document.body.classList.contains('rm-mode'); };
 
@@ -430,6 +431,8 @@
     if (sentThere || close) { if (fig.state === 'mantle') fig.mantle = null; boxLaunch(cl); }
   }
   addEventListener('mk-terrain', queueRebuild, { passive: true });
+  /* the web fonts now load without blocking the page, so they can arrive AFTER she boots: re-read the letters she stands on */
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', queueRebuild);
   addEventListener('tweak', queueRebuild);   // a local tweaker resized the hero (studies/tweaker-hero/)
   /* the box dissolved under her: the world is rebuilt without it at once, and she simply drops (no flip) */
   addEventListener('mk-box-gone', function () {
@@ -1071,10 +1074,12 @@
     if (!c || !d || c.state !== 'running' || rmActive()) return;
     var src = c.createBufferSource(), g = c.createGain(), t = c.currentTime, len = CLIP[n], tone = TONE[n];
     src.buffer = d; src.playbackRate.value = rate || 1; g.gain.value = vol;
-    if (tone) {   // muffled and eased in: the low-pass takes the edge off, the fade-in rounds off the attack
-      var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tone.lp; lp.Q.value = 0.5;
-      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + tone.attack);
-      src.connect(lp); lp.connect(g);
+    if (tone) {   // the low-pass takes the edge off, the high-pass drops lows a speaker can't play, the fade-in rounds off the attack
+      if (tone.gain) { vol *= tone.gain; g.gain.value = vol; }
+      var node = src;
+      ['lp', 'hp'].forEach(function (k) { if (!tone[k]) return; var f = c.createBiquadFilter(); f.type = k === 'lp' ? 'lowpass' : 'highpass'; f.frequency.value = tone[k]; f.Q.value = 0.5; node.connect(f); node = f; });
+      if (tone.attack) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + tone.attack); }
+      node.connect(g);
     } else src.connect(g);
     g.connect(c.destination);
     if (len) { g.gain.setValueAtTime(vol, t + len - 0.06); g.gain.linearRampToValueAtTime(0, t + len); src.start(t, 0, len); }
@@ -1085,7 +1090,12 @@
   var CLIP = { jump: 0.3 };
   /* her 2026-10-24: "the landing sound is too harsh and the jumping up sound is too sharp". The whoosh's energy sits
      around 2.2kHz (a hiss) and the thud opens on a click, so both are low-passed and given a soft attack */
-  var TONE = { jump: { lp: 800, attack: 0.06 } };   // jump 1300 → 800 (her: still "shrill")
+  var TONE = { jump: { lp: 800, attack: 0.06 } };
+  /* PHONES get their own tuning (her 2026-10-24: 'the jumping sounds on the phone don't sound as good as the laptop'): phone
+     speakers can't play below ~300Hz, so the low-passed whoosh came out as a faint muddy puff. On a touch device every sound
+     loses the lows it can't play (high-pass, so nothing distorts) and the jump keeps more of its middle, a touch louder. */
+  var PHONE = matchMedia('(pointer: coarse)').matches;
+  if (PHONE) TONE = { jump: { lp: 2200, hp: 320, attack: 0.05, gain: 1.25 }, step: { hp: 220 }, grip: { hp: 220 } };   // jump 1300 → 800 (her: still "shrill")
   /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
      where the foot drops lowest after the flight */
   var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
@@ -1881,7 +1891,9 @@
   /* (her ask 2026-10-24: "I need the person to load onto the page with I'm MADHU and before the text under") she
      arrives the moment the headline has LANDED (app.js mk-hero-landed, ~1.6s), not after the whole hero has settled;
      the name's load wave then plays under her feet, so the loop runs through it to let her ride the d */
+  var bootArmed = false;
   function bootWhenSettled() {
+    if (bootArmed) return; bootArmed = true;
     var go = function () { boot(); rideT = 2.6; start(); };
     if (window.__mkHeroLanded || window.__mkHeroSettled) return go();
     if (window.__mkHeroRising) return go();
@@ -1890,6 +1902,9 @@
     addEventListener('mk-hero-settled', go, { once: true });
     setTimeout(go, 4200);
   }
+  /* never wait on fonts alone: on a slow connection document.fonts.ready can take longer than a visitor stays (device-check
+     slow-3g: she never appeared in 20s). Whichever comes first: fonts ready, or 2.5s after this script runs. */
+  setTimeout(bootWhenSettled, 2500);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(bootWhenSettled);
   else addEventListener('load', bootWhenSettled);
 

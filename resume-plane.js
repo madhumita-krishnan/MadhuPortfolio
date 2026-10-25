@@ -181,7 +181,11 @@
   function start(link) {
     if (busy) return; busy = true; opener = link;
     if (!el) build();
-    if (rm()) { showSheet(false); busy = false; return; }
+    /* pinch-zoomed (her 2026-10-24: "when I zoom in on my avatar and click resume my avatar moves off screen and glitches"):
+       the throw and the flight are placed in fixed screen positions, which drift away from what a zoomed-in visitor sees,
+       so the resume simply opens */
+    var zoomed = window.visualViewport && visualViewport.scale > 1.05;
+    if (rm() || zoomed) { showSheet(false); busy = false; return; }
     gsapReady().then(function () {
       if (!window.gsap) { showSheet(false); busy = false; return; }
       whenReady(function (her) {

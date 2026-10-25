@@ -283,8 +283,8 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- her hand has no digits, dashes or brackets yet; these few glyphs come from a thin
      handwritten stand-in until she writes them (text= keeps the download to those glyphs) -->
-<link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&text=0123456789%E2%80%93%E2%80%94-():%2F%25%2B%E2%86%92%C3%97%3F%26%22%E2%80%9C%E2%80%9D&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&text=0123456789%E2%80%93%E2%80%94-():%2F%25%2B%E2%86%92%C3%97%3F%26%22%E2%80%9C%E2%80%9D&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&text=0123456789%E2%80%93%E2%80%94-():%2F%25%2B%E2%86%92%C3%97%3F%26%22%E2%80%9C%E2%80%9D&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <script>document.documentElement.classList.add('js');
 /* a refresh always starts at the top of the walkthrough (a #view- link still opens its viewer) */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -536,7 +536,7 @@ mark.tk{background:#f2c46d;color:#1b1406;font-weight:700;padding:0 5px;border-ra
 .grid em{position:absolute;bottom:-22px;left:0;transform:translateX(-50%);font:400 13px 'Plus Jakarta Sans';font-style:normal;color:#6c717c;white-space:nowrap}
 .hrow,.trow{position:relative;display:flex;align-items:center;height:58px}
 .hl{flex:0 0 var(--lab);font-size:15px;color:#9da2ad;padding-right:16px}
-.track{position:relative;flex:1;height:100%}
+.track{position:relative;flex:1;height:100%;margin-right:60px}   /* room for the end label of the longest bar (it overflowed the page on iPads — device-check) */
 .bar{position:absolute;left:0;top:50%;height:3px;margin-top:-1.5px;width:0;border-radius:2px;transition:width 1.4s var(--ease)}
 .bar.ok{background:var(--ok)}.bar.bad{background:var(--bad);height:5px;margin-top:-2.5px}.bar.dim{background:#7d828f}
 .in .bar,.drawn .bar{width:var(--w)}
@@ -963,15 +963,20 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
    Measured in the page, since the label's size depends on its words and the font */
 function fitNotes(root = document) {
   $$('.shot', root).forEach(shot => {
-    const sr = shot.getBoundingClientRect(); if (!sr.width) return;
+    const sr = shot.getBoundingClientRect(); if (!sr.width || !sr.height) return;   // an image not loaded yet has no height: wait for it
     $$('.note', shot).forEach(lab => {
       const i = lab.dataset.i, path = $('path[data-i="' + i + '"]', shot); if (!path) return;
-      const x = +lab.dataset.x, y = +lab.dataset.y, lr = lab.getBoundingClientRect(), pad = 6;
+      const x = +lab.dataset.x, y = +lab.dataset.y, pad = 6;
+      /* keep the label on screen: near the right edge on iPad widths it ran past the page (device-check, sideways scroll) */
+      lab.style.translate = ''; let lr = lab.getBoundingClientRect(); const vw = document.documentElement.clientWidth, m = 8;
+      let shift = lr.right > vw - m ? vw - m - lr.right : 0; if (lr.left + shift < m) shift = m - lr.left;
+      if (shift) { lab.style.translate = shift + 'px 0'; lr = lab.getBoundingClientRect(); }
       const cx = lr.left + lr.width / 2 - sr.left, cy = lr.top + lr.height / 2 - sr.top;
       const px = x / 100 * sr.width, py = y / 100 * sr.height, dx = px - cx, dy = py - cy;
       const t = Math.min(dx ? (lr.width / 2 + pad) / Math.abs(dx) : Infinity, dy ? (lr.height / 2 + pad) / Math.abs(dy) : Infinity);
       if (!(t < 1)) { path.setAttribute('d', ''); return; }   // the pin sits under the label: no line
       const sx = (cx + dx * t) / sr.width * 100, sy = (cy + dy * t) / sr.height * 100;
+      if (!isFinite(sx) || !isFinite(sy)) { path.setAttribute('d', ''); return; }
       path.setAttribute('d', 'M' + sx.toFixed(2) + ' ' + sy.toFixed(2) + ' Q' + ((x + sx) / 2 + (y > sy ? 6 : -6)).toFixed(2) + ' ' + ((y + sy) / 2).toFixed(2) + ' ' + x + ' ' + y);
     });
   });
@@ -998,7 +1003,7 @@ const heads = secs.map(x => x.querySelector(':scope > .eyebrow, :scope > .h2') |
 let lastSec = null, raf = 0;
 function where() {
   raf = 0; const y = innerHeight / 2;
-  let i = heads.findLastIndex(h => h.getBoundingClientRect().top <= y); if (i < 0) i = 0;
+  let i = 0; heads.forEach((h, k) => { if (h.getBoundingClientRect().top <= y) i = k; });   // (findLastIndex: Safari 15.4+ / Chrome 97+)
   const s = secs[i];
   if (s === lastSec) return; lastSec = s;
   secs.forEach((x, j) => x.classList.toggle('past', j < i));

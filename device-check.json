@@ -1,0 +1,104 @@
+{
+  "base": "http://localhost:4174/",
+  "pages": [
+    "",
+    "driftwood.html",
+    "driftwood-retention.html"
+  ],
+  "ready": [
+    {
+      "page": "",
+      "selector": ".hero h1",
+      "label": "headline"
+    },
+    {
+      "page": "",
+      "selector": "canvas.stick-cv",
+      "label": "clay avatar",
+      "canvasInk": true
+    },
+    {
+      "page": "driftwood.html",
+      "selector": ".cs-title",
+      "label": "case title"
+    },
+    {
+      "page": "driftwood-retention.html",
+      "selector": "h1",
+      "label": "case title"
+    }
+  ],
+  "motion": [
+    {
+      "page": "",
+      "selector": ".brands-wisp",
+      "scrollTo": ".brands-row",
+      "label": "logo wisps",
+      "ms": 8000,
+      "after": 2000,
+      "settle": 0
+    }
+  ],
+  "interactions": [
+    {
+      "page": "",
+      "label": "tap Resume tile",
+      "views": [
+        "phone",
+        "laptop"
+      ],
+      "steps": [
+        {
+          "click": ".cta-resume"
+        },
+        {
+          "wait": 10000
+        }
+      ],
+      "expect": {
+        "visible": ".rz-sheet.on"
+      }
+    },
+    {
+      "page": "",
+      "label": "tap Resume tile while pinch-zoomed",
+      "zoom": 2,
+      "views": [
+        "phone"
+      ],
+      "steps": [
+        {
+          "click": ".cta-resume"
+        },
+        {
+          "wait": 10000
+        }
+      ],
+      "expect": {
+        "visible": ".rz-sheet.on"
+      }
+    }
+  ],
+  "blockHosts": [
+    "fonts.googleapis.com",
+    "fonts.gstatic.com"
+  ],
+  "out": "../_proof/device-check-after",
+  "compatAccept": [
+    {
+      "feature": "class static block",
+      "file": "vendor/three",
+      "reason": "three.js is only imported after a feature test (fishOK in app.js); older engines skip the koi"
+    },
+    {
+      "feature": ":has() selector",
+      "file": "design-systems/",
+      "reason": "text on a design-system page, not a style"
+    },
+    {
+      "feature": "color-mix()",
+      "file": "design-systems/",
+      "reason": "one swatch on the design-system showcase page; it shows without its tint on Safari < 16.2"
+    }
+  ]
+}
