@@ -3470,6 +3470,10 @@ for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lin
     : renderCase(cs).replace(/(<body[^>]*>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
+/* the resume sheet shows a picture of resume.pdf with its links laid over it: a new PDF needs a new picture */
+try{const rp=JSON.parse(fs.readFileSync(path.join(ROOT,'assets','resume-page.json'),'utf8'));
+  if(rp.pdf!==require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT,'assets','resume.pdf'))).digest('hex'))
+    console.warn('⚠ assets/resume.pdf changed: run  swift tools/resume-page.swift  (the site still shows the old resume page)')}catch(e){console.warn('⚠ resume-page.json missing: run  swift tools/resume-page.swift')}
 /* the design-system showcase pages are standalone HTML (their own tokens, their own
    fonts) — copied through as-is, reachable from each case study's ds-link icon.
    The repo README rides along as the folder's "read the rules" link: the hub at

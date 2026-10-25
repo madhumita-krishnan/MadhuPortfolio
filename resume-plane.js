@@ -36,7 +36,10 @@
       '.rz-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}' +
       '.rz-sheet{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;opacity:0;visibility:hidden;background:#0f1013;padding:84px 16px 48px;-webkit-overflow-scrolling:touch}' +
       '.rz-sheet.on{visibility:visible}' +
-      '.rz-sheet img{display:block;width:min(880px,100%);height:auto;margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}' +
+      '.rz-page{position:relative;width:min(880px,100%);margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}' +
+      '.rz-page img{display:block;width:100%;height:auto;border-radius:6px}' +
+      /* the PDF's own links, laid over the picture where they sit on the page (padded a little for fingers) */
+      '.rz-page a{position:absolute;margin:-4px;padding:4px;border-radius:3px}.rz-page a:hover{background:rgba(17,85,204,.08)}.rz-page a:focus-visible{outline:2px solid #8fb2f2}' +
       '.rz-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px clamp(16px,4vw,56px);background:linear-gradient(#0f1013 55%,rgba(15,16,19,0))}' +
       /* = walkthrough.js .arrow-btn + .ic */
       '.rz-ib{flex:none;width:44px;height:44px;padding:0;border-radius:50%;border:1px solid #2a2f3a;display:grid;place-items:center;background:rgba(15,16,19,.75);color:#e9eaee;transition:border-color .2s,transform .3s cubic-bezier(.2,.7,.2,1)}' +
@@ -64,7 +67,7 @@
       '<a class="rz-ib" href="' + PDF + '" download="Madhumita-Krishnan-Resume.pdf" aria-label="Download the resume">' + ic('M12 4 L12 15 M7 10 L12 15 L17 10 M5 19.5 L19 19.5') + '</a>' +
       (navigator.share ? '<button class="rz-ib rz-share" type="button" aria-label="Share the resume">' + ic('M12 3.5 L12 14 M8 7.5 L12 3.5 L16 7.5 M8.5 10.5 L6.5 10.5 L6.5 20 L17.5 20 L17.5 10.5 L15.5 10.5') + '</button>' : '') +
       '<button class="rz-ib rz-copy" type="button" aria-label="Copy the link to the resume">' + ic('M9 9 L19 9 L19 20 L9 20 Z M15 9 L15 5 L5 5 L5 16 L9 16') + '</button></span></div>' +
-      '<img alt="Madhumita Krishnan, resume" src="' + PAGE + '"></div>';
+      '<div class="rz-page"><img alt="Madhumita Krishnan, resume" src="' + PAGE + '"></div></div>';
     document.body.appendChild(el);
     flash = el.querySelector('.rz-flash'); sheet = el.querySelector('.rz-sheet');
     el.querySelector('.rz-x').addEventListener('click', close);
@@ -78,6 +81,16 @@
     sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });   // the dark around the page
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && el.classList.contains('on')) close(); });
     new Image().src = THROW; new Image().src = PLANE;   // warm both
+    /* a picture of a PDF has no links (someone found them dead): tools/resume-page.swift lists them with the picture */
+    fetch(base + 'assets/resume-page.json' + ver).then(function (r) { return r.json(); }).then(function (j) {
+      var pg = el.querySelector('.rz-page'), pc = function (v) { return (v * 100).toFixed(3) + '%'; };
+      j.links.forEach(function (l) {
+        var a = document.createElement('a');
+        a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', l.url);
+        a.style.left = pc(l.x); a.style.top = pc(l.y); a.style.width = pc(l.w); a.style.height = pc(l.h);
+        pg.appendChild(a);
+      });
+    }).catch(function () {});
   }
   var gsapReady = function () {
     if (window.gsap) return Promise.resolve();
@@ -90,7 +103,7 @@
     el.classList.add('on');
     document.documentElement.style.overflow = 'hidden';
     sheet.classList.add('on'); sheet.scrollTop = 0;
-    var img = sheet.querySelector('img');
+    var img = sheet.querySelector('.rz-page');
     if (window.gsap && !rm()) {
       gsap.set(flash, { opacity: fromWhite ? 1 : 0 });
       gsap.timeline()
