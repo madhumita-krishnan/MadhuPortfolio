@@ -58,7 +58,7 @@
 
   /* ------------------------------------------------------------------ tuning */
   var G = 2300;
-  var WALK = 120, RUN = 360, DRAGMAX = 640;
+  var WALK = 150, RUN = 460, DRAGMAX = 640;   // her 2026-10-26 (#84, "move with more haste"): were 120 / 360
   var STEP_UP = 20;      // absorbed in stride — the x-height bumps along a word
   var HOP_UP = 62;       // auto-hop: ascenders, petal ledges, stairs of letters
   var STEP_DOWN = 30;
@@ -429,7 +429,9 @@
   }
 
   /* ------------------------------------------------------------------ celebrations */
-  var CELEBS = ['star', 'backflip', 'cartwheel', 'bow'];   // the dance is out of the rotation (her call 2026-10-24: she didn't like how it looks)
+  /* her 2026-10-26 (#85): the first click on her is the cartwheel, the second the flip; then the star and the bow, round
+     again. The dance is out of the rotation (her call 2026-10-24: she didn't like how it looks) */
+  var CELEBS = ['cartwheel', 'backflip', 'star', 'bow'];
   function celebrate() {
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
     fig.target = null; fig.waypoint = null; fig.vx = 0;
@@ -539,8 +541,8 @@
       if (down.jy - p.y > 60 && down.jy - p.y > Math.abs(p.x - down.jx) && dragJump(down.jy - p.y, p)) { down.jy = p.y; down.jx = p.x; return; }
       down.p = p; clearTimeout(down.tt);
       var now = performance.now(), tg = fig.target;
-      if (!tg || !tg.follow || (now - (down.ft || 0) > 200 && Math.abs(tg.x - p.x) + Math.abs(tg.py - p.y) > 24)) follow(p);
-      else { var dd = down; dd.tt = setTimeout(function () { if (down === dd) follow(dd.p); }, 220); }
+      if (!tg || !tg.follow || (now - (down.ft || 0) > 120 && Math.abs(tg.x - p.x) + Math.abs(tg.py - p.y) > 24)) follow(p);
+      else { var dd = down; dd.tt = setTimeout(function () { if (down === dd) follow(dd.p); }, 140); }
     }
   }, { passive: true });
   function dragJump(up, p) {
@@ -869,8 +871,10 @@
        point onward from here: skip it. She landed past a drop's spot, ran past a point, or set off on a 13px step the wrong
        way, then turned round (her "spazzes back and forth") */
     var nw = tg.route[1];
-    if (wp.how === 'walk' && nw && Math.abs(fig.y - wp.y) <= STEP_UP && (nw.x - fig.x) * (nw.x - wp.x) > 0 && Math.abs(nw.x - fig.x) < Math.abs(nw.x - wp.x) &&
-        (nw.how === 'walk' ? Math.abs(nw.y - fig.y) <= STEP_UP : nw.how === 'fall' ? Math.sign(nw.x - fig.x) === nw.dir : arcLands(fig.x, fig.y, nw))) {
+    var onWp = wp.how === 'walk' ? Math.abs(fig.y - wp.y) <= STEP_UP : wp.how === 'fall' && Math.abs(fig.y - wp.y) <= 14;   // (a drop: already landed on its level)
+    var beyond = nw && (nw.x - fig.x) * (nw.x - wp.x) > 0 && Math.abs(nw.x - fig.x) < Math.abs(nw.x - wp.x);
+    if (onWp && nw && (nw.how === 'walk' ? beyond && Math.abs(nw.y - fig.y) <= STEP_UP : nw.how === 'fall' ? beyond && Math.sign(nw.x - fig.x) === nw.dir :
+        (beyond || Math.abs(wp.x - fig.x) < 40) && arcLands(fig.x, fig.y, nw))) {   // a jump she can already make from here: no running on past and back
       tg.route.shift(); wp = nw; tg.best = Infinity; tg.stuck = 0;
       if (wp.how === 'jump') { routeJump(wp); return null; }   // (from here: it was just flown and lands)
     }
@@ -884,7 +888,15 @@
       wp = tg.route[0];
       if (wp.how === 'jump') {
         /* fly it first from where she really stands (a stride off the planned spot can clip a letter): no good, plan again */
-        if (!arcLands(fig.x, fig.y, wp)) { (tg.bans = tg.bans || []).push({ ax: fig.x, ay: fig.y, bx: wp.x, by: wp.y }); tg.route = null; return null; }
+        if (!arcLands(fig.x, fig.y, wp)) {
+          /* it flies from the spot the route chose, a step or two back: go back to it (once), rather than ban the jump and
+             plan a way round across the whole hero */
+          var o = wp.from;
+          if (!wp.back && o && Math.abs(o.x - fig.x) < 40 && Math.abs(o.y - fig.y) <= STEP_UP && arcLands(o.x, o.y, wp)) {
+            wp.back = true; tg.route.unshift({ x: o.x, y: o.y, how: 'walk', dir: Math.sign(o.x - fig.x) || 1 }); fig.waypoint = tg.route[0]; return 0;
+          }
+          (tg.bans = tg.bans || []).push({ ax: fig.x, ay: fig.y, bx: wp.x, by: wp.y }); tg.route = null; return null;
+        }
         routeJump(wp); return null;
       }
     }
@@ -918,7 +930,7 @@
   function crouchFirst(was, x0) {
     if (fig.state !== 'air' || fig.vy > -150 || fig.loadV || (was !== 'move' && was !== 'idle')) return;
     fig.loadV = { vx: fig.vx, vy: fig.vy };
-    fig.loadT = fig.load0 = 0.07 + 0.11 * Math.min(1, -fig.vy / 1000);
+    fig.loadT = fig.load0 = 0.05 + 0.08 * Math.min(1, -fig.vy / 1000);   // quick and springy (#84): was 0.07-0.18s
     fig.state = was; fig.vx = 0; fig.vy = 0;
     if (x0 != null) fig.x = x0;   // the hop's first step waits for the crouch too: no slide while she bends
   }
@@ -1004,7 +1016,7 @@
     fig.crawl += (Math.max(0, Math.min(1, (CRAWL_CLR - clr) / (CRAWL_CLR - 22))) - fig.crawl) * Math.min(1, dt * 10);
     want *= 1 - fig.crawl * 0.55;
 
-    fig.vx += (want - fig.vx) * Math.min(1, dt * 9);
+    fig.vx += (want - fig.vx) * Math.min(1, dt * 15);   // snappy starts and turns (was dt * 9: ~0.25s to full pace, now ~0.15s)
     if (Math.abs(fig.vx) < 6 && !fig.target && !fig.drag) {
       fig.vx = 0;
       if (fig.state === 'move') fig.state = 'idle';
@@ -1061,7 +1073,7 @@
     /* nothing to stand on ahead: walk off the edge and fall… */
     fig.x = nx;
     fig.state = 'air'; fig.vy = 0; fig.fallFrom = fig.y;
-    fig.vx = fig.dir * Math.min(Math.abs(fig.vx), WALK);   // a run's speed carried her clean past the level the route dropped to
+    fig.vx = fig.dir * Math.min(Math.abs(fig.vx), 100);   // a run's speed carried her clean past the level the route dropped to (and on a phone ledge, even a walk's)
     /* …or, off a HIGH edge, spring off it and flip down (her #77/#79): walking off, a fall in the hero is over before a
        turn fits, so she hops out, slower across than her run so she still comes down near where the route meant */
     var dd = g && g.how === 'fall' ? g.y - fig.y : 0;   // only a drop her route means to take (a word space is a step across, not a dive)
@@ -1178,7 +1190,7 @@
         fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
         /* she BRACES (her 2026-10-26, #76: "athletes ... brace impact"): every landing that comes down with any speed bends
            the knees and stands back up, longer the harder she hit; a frame-deep gap between letters is still a walk */
-        if (fig.vy > 150) brace(0.09 + 0.2 * Math.min(1, (fig.vy - 150) / 900));
+        if (fig.vy > 150) brace(0.07 + 0.15 * Math.min(1, (fig.vy - 150) / 900));   // (#84: was 0.09-0.29s)
         if (fig.vy > 620 || drop > 130) puff(fig.x, fig.y, 4);
         /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
            jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
@@ -1263,7 +1275,7 @@
   var raf = 0, last = 0;
   var rideT = 0;   // seconds of rAF kept alive so a CSS-only glyph wave still animates him
   function needsLoop() {
-    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.loadT > 0 || fig.slideT > 0 || CLAY.lean !== 0 || rideT > 0 || rideBusy;
+    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.loadT > 0 || fig.slideT > 0 || CLAY.lean !== 0 || (CLAY.stopAt != null && performance.now() - CLAY.stopAt < 300) || rideT > 0 || rideBusy;
   }
   /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
      across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
@@ -1529,8 +1541,16 @@
        walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
     CLAY.run = sp > (CLAY.run ? 200 : 260);
     /* tips into the pace over a few frames, not in one, and stands back up straight the same way when she stops */
-    var lt = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT ? (CLAY.run ? RUN_LEAN : WALK_LEAN * Math.min(1, sp / WALK)) : 0;
-    CLAY.lean += (lt - CLAY.lean) * .18; if (Math.abs(lt - CLAY.lean) < .002) CLAY.lean = lt;   // (settles exactly, so the loop can stop on a straight stand)
+    var going = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT;
+    var braking = going && sp < (CLAY.sp || 0) - 2; CLAY.sp = sp;   // slowing down: a runner sits back into the brake, never tipping forward into a stop
+    var lt = braking ? -0.03 : going ? (CLAY.run ? RUN_LEAN : WALK_LEAN * Math.min(1, sp / WALK)) : 0;
+    CLAY.lean += (lt - CLAY.lean) * (braking ? .3 : .18); if (Math.abs(lt - CLAY.lean) < .002) CLAY.lean = lt;   // (settles exactly, so the loop can stop on a straight stand)
+    /* STOPPING (her 2026-10-26, #86: "when she stops the tilt is weird"): her standing frame used to inherit the stride's
+       forward lean and unwind it over 17 frames, a stiff figure tipping back like a plank. Now the lean ends with the
+       stride: she plants, brakes back a touch, and is upright in a quarter second */
+    if (going) CLAY.stopAt = null;
+    else if (CLAY.lean !== 0) { if (CLAY.stopAt == null && !fig.landT && !fig.loadT && (st === 'move' || st === 'idle')) { CLAY.stopAt = performance.now(); CLAY.b0 = Math.min(CLAY.lean, 0); } CLAY.lean = 0; }   // (a crouch or landing has its own pose)
+    var bt = CLAY.stopAt == null ? 1 : (performance.now() - CLAY.stopAt) / 260, brake = bt < 1 ? (CLAY.b0 || 0) * (1 - bt) - 0.045 * Math.sin(Math.PI * bt) : 0;   // from the brake's lean, back a touch more, then upright
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     /* the sheet's own crouch (0-3: sink, arms back, rise onto the toes) and landing (10-14: feet reach, knees take it,
        stand back up, 22: tall again), stepped through by the time left, so a quick hop is a quick dip and a slam is a deep one */
@@ -1540,7 +1560,7 @@
     if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
-        if (sp < 12) return { s: 'idle-wave-sign', k: 0, lean: CLAY.lean };
+        if (sp < 12) return { s: 'idle-wave-sign', k: 0, lean: brake };
         if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };   // her ask: tilted forward more when she runs
         return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
@@ -1593,7 +1613,7 @@
         }
         return { s: 'idle-wave-sign', k: 0 }; }
     }
-    return { s: 'idle-wave-sign', k: 0, lean: CLAY.lean };   // standing: rights itself from the lean over a few frames
+    return { s: 'idle-wave-sign', k: 0, lean: brake };   // standing: upright, after the stop's brake
   }
   /* THE RUN'S BODY MOVES AT ONE SPEED (2026-10-26, "spazzy … like it's jumping frames"): the run frames' anchors drift
      her head ~28 clay px back over each half-stride and snap it forward again at frames 1 and 25, a lurch every step.
@@ -1624,6 +1644,7 @@
   }
   function clayFigure(px, py, dir, o) {
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
+    CLAY.pl = pk.lean || 0;
     if (!f) return false;
     var im = CLAY.img[f.f];
     if (!im || !im.complete || !im.naturalWidth) { if (!CLAY.last) return false; im = CLAY.last.im; f = CLAY.last.f; }   // still streaming in: hold her last frame
@@ -2219,7 +2240,7 @@
     fig: fig, bars: function () { return bars; }, step: advance, draw: draw,
     plan: function (x, y) { return planRoute(x, y); },
     clayH: function () { return CLAY.ready ? CLAY.H : 0; },
-    clay: function () { return { f: CLAY.last && CLAY.last.f.f, lean: CLAY.lean }; },   // QA: the frame drawn last and the lean
+    clay: function () { return { f: CLAY.last && CLAY.last.f.f, lean: CLAY.pl || 0 }; },   // QA: the frame drawn last and its tilt
     canvas: function () { return cv; },
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
