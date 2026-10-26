@@ -1104,6 +1104,12 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
   font:400 1em/1 'Cormorant Garamond',Georgia,serif;box-shadow:0 2px 5px rgba(0,0,0,.18)}
 .sdeck-logo:empty{display:none}
 .sdeck-logo img{width:100%;height:100%;display:block}
+.sdeck.side.t2 .sdeck-co{position:absolute;left:var(--cl,0);top:var(--ct,0);margin:0;justify-content:flex-start;font-size:clamp(1.9rem,2.7vw,2.75rem);
+  transform:translateY(calc(-100% - 20px));transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
+.sdeck.side.t2 .sdeck-title.swap~.sdeck-co,.sdeck.side.t2 .sdeck-title.moving~.sdeck-co{opacity:0;transform:translateY(calc(-100% - 10px))}
+.sdeck.side.t3 .sdeck-title{transform:none;height:var(--th,auto)}
+.sdeck.side.t3 .sdeck-title>span{display:flex;flex-direction:column;justify-content:space-between;height:100%}
+.sdeck.side.t3 .sdeck-co{margin:0}
 @media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
@@ -2339,9 +2345,20 @@ function makeJS() {
     const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line'),bar=sd.querySelector('.sdeck-progress'),segs=bar?[...bar.children]:[];
     const logoEl=titleEl.querySelector('.sdeck-logo');
     const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title;
-      const ico=segs[i]&&segs[i].querySelector('.sd-ico');if(logoEl&&ico){logoEl.innerHTML=ico.innerHTML;logoEl.style.background=ico.style.background}
+      const ico=segs[i]&&segs[i].querySelector('.sd-ico');if(logoEl&&ico){logoEl.innerHTML=ico.innerHTML;logoEl.style.background=ico.querySelector('img')?'transparent':ico.style.background}
+      placeCo(i)
       if(sd.classList.contains('stack')&&dims[i])sd.style.setProperty('--tt',(stage.offsetTop+dims[i].cy+dims[i].h/2+tgNow)+'px')};
     let tgNow=18;
+    /* WHERE THE COMPANY TITLE SITS (her 2026-10-26: "I like where things are. i just want to explore title placement.
+       nothing else"): laptops only, the layout itself is unchanged. ?title=1 (default) the name heads the headline column;
+       2 the name sits over the case, on its left edge; 3 the column spans the case's height, the name level with its top
+       and the headline level with its bottom */
+    const tv=+new URLSearchParams(location.search).get('title')||1,coEl=titleEl.querySelector('.sdeck-co'),coHome=coEl.parentElement;sd.classList.add('t'+tv);
+    const placeCo=i=>{const side=sd.classList.contains('side'),d=dims[i];
+      if(tv===2){if(side&&coEl.parentElement===coHome)titleEl.after(coEl);else if(!side&&coEl.parentElement!==coHome)coHome.prepend(coEl)}
+      if(!side||!d)return;
+      if(tv===2){sd.style.setProperty('--cl',(W/2+shift-d.w/2)+'px');sd.style.setProperty('--ct',(stage.offsetTop+d.cy-d.h/2)+'px')}
+      if(tv===3){sd.style.setProperty('--tt',(stage.offsetTop+d.cy-d.h/2)+'px');sd.style.setProperty('--th',d.h+'px')}};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
     /* per-card geometry. Phones: every card the same square (S), centred at 51% of the stage, lanes 30%/72%.
@@ -2400,7 +2417,7 @@ function makeJS() {
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       if(phone){tgNow=tg;sd.classList.add('stack');let thS=0;cards.forEach((c,i)=>{fill(i);thS=Math.max(thS,titleEl.offsetHeight)});   // the headline's tallest height AS LAID OUT on phones (full width), not before
         sd.style.setProperty('--tres',(cyB+Math.max(...dims.map(d=>d.h))/2+tg+thS+16-H)+'px');fill(Math.max(0,active))}   // the bar sits under the headline's lowest reach from the CARD's real bottom (cyB+Ht/2), not the stage's (her 2026-10-26: "move the nav bar … higher so that the icons under never get cut off")
-      titleEl.style.minHeight=th+'px';place(pos);
+      titleEl.style.minHeight=th+'px';place(pos);placeCo(Math.max(0,active));
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
     /* speed (px/ms, from a swipe) = a GLIDE that CARRIES the swipe's speed (her 2026-10-26: "it feels a little tense"):
@@ -3311,7 +3328,7 @@ function renderHome() {
       ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
     <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-co"><span class="sdeck-logo" aria-hidden="true"></span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span></span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
-    <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"><span class="sd-ico" aria-hidden="true" style="--k:${i}${p.markBg ? `;background:${esc(p.markBg)}` : ''}">${p.icon ? `<img src="${esc(p.icon)}" alt="" draggable="false">` : esc(p.mark || p.name[0])}</span></button>`).join('')}</div>
+    <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"><span class="sd-ico" aria-hidden="true" style="--k:${i}${p.markBg ? `;background:${esc(p.markBg)}` : ''}">${p.icon ? `<img src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" draggable="false">` : esc(p.mark || p.name[0])}</span></button>`).join('')}</div>
   </div>`;
 
   /* THE WORK SECTION (her ask 2026-10-23: the swipe deck on the main screen, "with a toggle that lets you go
