@@ -81,13 +81,24 @@
   var mk = document.createElement('canvas');
   var bars = [];
   var chRide = [];               // headline glyphs' RESTING boxes — see rideDy()
-  var h1Lift = 0;                // the headline's live load-rise offset, taken out of every rect inside it (see rebuild)
   var sign = null;               // {cx, bottom} — the say-hey board he holds up
   var ink = '#3C6B76';
 
   function localRect(el, hr) {
-    var r = el.getBoundingClientRect(), d = h1Lift && el.closest && el.closest('h1') ? h1Lift : 0;
+    var r = el.getBoundingClientRect(), d = liftOf(el);
     return { x1: r.left - hr.left, x2: r.right - hr.left, y1: r.top - hr.top - d, y2: r.bottom - hr.top - d, w: r.width, h: r.height };
+  }
+  /* how far CSS has lifted an element right now (its own translateY and every one above it in the hero: the name's
+     load rise, a hovered bio line's -4px, its letters' -7px). The world is read where things REST; rideDy() puts her
+     back on the live, moved glyph (her 2026-10-26: "her contact point with the text … is attached to her") */
+  function liftOf(el) {
+    var d = 0;
+    if (!window.DOMMatrix) return 0;
+    for (var e = el; e && e !== hero; e = e.parentElement) {
+      var t = getComputedStyle(e).transform;
+      if (t && t !== 'none') try { d += new DOMMatrix(t).m42; } catch (x) { }
+    }
+    return d;
   }
 
   /* re-set a text span into the mask with the same font at the same place. The baseline
@@ -121,9 +132,8 @@
     var hr = cv.getBoundingClientRect();
     if (hr.width < 40) return;
     /* she arrives while the name is still RISING (her 2026-10-24: "I need the person to be there before the text under
-       I'm madhu"), so the headline is read where it will rest; rideDy() carries her up with it meanwhile */
-    var h1e = hero.querySelector('h1');
-    h1Lift = h1e && window.DOMMatrix ? new DOMMatrix(getComputedStyle(h1e).transform).m42 : 0;
+       I'm madhu"), so the headline is read where it will rest (localRect takes out every live lift); rideDy() carries
+       her up with it meanwhile */
     DPR = Math.min(devicePixelRatio || 1, 2);
     W = hr.width; H = hr.height;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
@@ -156,8 +166,8 @@
        to the figure at draw time instead (2026-08-19 "if i hover over hi im madhu and
        it moves, the stickman should move too"). */
     chRide = [];
-    hero.querySelectorAll('h1 .ch').forEach(function (el) {
-      if (!el.textContent.trim()) return;
+    hero.querySelectorAll('h1 .ch, .eyebrow .ch, .hero-line .ch, .hero-cta-row .cta-socials a, .jb-logo.rest').forEach(function (el) {
+      if (!el.textContent.trim() && el.tagName !== 'A' && !el.classList.contains('jb-logo')) return;
       var cr = localRect(el, hr);
       chRide.push({ el: el, x1: cr.x1, x2: cr.x2, y1: cr.y1, y2: cr.y2 });
     });
@@ -477,14 +487,24 @@
     if (sm !== CLAY.smile) { CLAY.smile = sm; if (!raf) draw(performance.now()); }
     /* drag never arms on touch — a moving finger on the hero is the page scrolling */
     if (!touchMode && down && !down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 10) { down.moved = true; hero.classList.add('stick-dragging'); }
+    /* HOLD AND DRAG = she FOLLOWS you (her 2026-10-26: "if I hold and drag can it follow me"): the spot under the pointer
+       is her target, walked (or run, if it's far) along the surfaces like a click, never a grab into the air. A new spot
+       every 24px of pointer travel, at most every 200ms (a plan is ~30ms), plus the last one once the pointer rests */
     if (down && down.moved && !rmActive()) {
-      var dx = p.x - down.x, dy = p.y - down.y;
-      fig.drag = { vx: Math.max(-DRAGMAX, Math.min(DRAGMAX, dx * 2.6)), up: dy < -70 ? -dy : 0 };
-      fig.target = null; fig.waypoint = null;
-      if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
-      start();
+      down.p = p; clearTimeout(down.tt);
+      var now = performance.now(), tg = fig.target;
+      if (!tg || !tg.follow || (now - (down.ft || 0) > 200 && Math.abs(tg.x - p.x) + Math.abs(tg.py - p.y) > 24)) follow(p);
+      else { var dd = down; dd.tt = setTimeout(function () { if (down === dd) follow(dd.p); }, 220); }
     }
   }, { passive: true });
+  function follow(p) {
+    var ty = groundTop(p.x, p.y - 2, H);
+    if (down) down.ft = performance.now();
+    if (fig.state === 'hang') release(Math.sign(p.x - fig.x));
+    fig.target = { x: p.x, y: ty == null ? floorY : ty, py: p.y, tries: 0, follow: true }; fig.waypoint = null;
+    if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
+    start();
+  }
   /* cursor left the window: forget where it was, or she keeps smiling at nobody */
   document.addEventListener('pointerout', function (e) { if (!e.relatedTarget) { CLAY.away = true; CLAY.smile = false; if (!raf && CLAY.ready) draw(performance.now()); } });
   document.addEventListener('pointerdown', function (e) {
@@ -502,13 +522,8 @@
     if (!down) { fig.drag = null; return; }
     var wasDrag = down.moved; down = null;
     if (rmActive()) { fig.drag = null; return; }
-    if (wasDrag) {
-      if (fig.drag && fig.drag.up && fig.state === 'move') {
-        fig.vy = -Math.min(Math.sqrt(2 * G * Math.min(fig.drag.up * 1.6, JUMP_MAX)), 1210);
-        fig.fallFrom = fig.y; fig.state = 'air';
-        if (Math.abs(fig.vx) > 420) startFlip(Math.sign(fig.vx) || fig.dir);
-      }
-      fig.drag = null;
+    if (wasDrag) {   // let go: she stops where she is (no fling, no jump)
+      fig.target = null; fig.waypoint = null; fig.drag = null;
       start();
       return;
     }
@@ -536,10 +551,10 @@
     if (e.target.closest && e.target.closest('a,button')) return;
     /* the click means: the first ink at or below where you clicked */
     var ty = groundTop(p.x, p.y - 2, H);
-    /* reach: only a tap RIGHT ABOVE her asks for a hop; tapping somewhere to walk or run to is just that, a walk (her:
-       "why does it always jump when I tap to make it walk or run in a direction") */
-    var overHead = Math.abs(p.x - fig.x) < 50 && p.y < fig.y - CLAY.H * .6;
-    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0, reach: overHead ? { x: p.x, y: p.y } : null };
+    /* a click is a WALK there (her 2026-10-26: "the avatar jumps anytime I click. I don't like that. why can't it just walk
+       over"): no hop at the finger any more, even right above her; she only climbs when the spot is on a surface she
+       can't walk to */
+    fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0 };
     fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -732,19 +747,8 @@
     }
     return false;
   }
-  /* WHERE YOU TAP IS WHERE SHE TRIES TO GO (her ask 2026-10-24: "if I double tap or single tap above the person can you
-     make them jump"): a tap remembers the exact spot; once she's as close as walking and climbing get her and the spot
-     is still above her, she jumps up at it, and with no target left she can catch any text up there and hang */
-  function arrived() {
-    var r = fig.target && fig.target.reach;
-    fig.target = null; fig.waypoint = null; fig.vx = 0;
-    if (!r || r.y > fig.y - 30) return;
-    /* a calm hop toward the finger, not a grab-and-swing (her: "the person is too too much when I tap") */
-    var up = Math.min(fig.y - r.y, 90);
-    fig.vy = -Math.sqrt(2 * G * (up + 10)); fig.vx = Math.max(-120, Math.min(120, (r.x - fig.x) * 2));
-    fig.dir = r.x >= fig.x ? 1 : -1; fig.fallFrom = fig.y; fig.state = 'air'; fig.hangCool = 1.2; fig.flipQueued = true;
-    start();
-  }
+  /* there: she stops (the 2026-10-24 hop up at a tap above her is gone, her 2026-10-26 call) */
+  function arrived() { fig.target = null; fig.waypoint = null; fig.vx = 0; }
   function routeJump(b) {
     var v = jumpV(fig.x, fig.y, b), dx = b.x - fig.x;
     fig.vy = v.vy; fig.vx = v.vx; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
@@ -1299,7 +1303,7 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
-  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, hx: {}, lean: 0, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
   function loadClay() {
     if (!CLAY.on) return;
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
@@ -1374,14 +1378,15 @@
        distance, so every change of pace snapped her legs to an unrelated frame. The phase carries over (run frame =
        walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
     CLAY.run = sp > (CLAY.run ? 200 : 260);
+    CLAY.lean += ((st === 'move' && CLAY.run ? RUN_LEAN : 0) - CLAY.lean) * .18;   // tips into the run over a few frames, not in one
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide-x3', k: 12 };
     if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
         if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
-        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
-        return { s: 'walk-x3', k: Math.floor(CLAY.ph) };   // x3: a frame every third of the old stride step
+        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };   // her ask: tilted forward more when she runs
+        return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
@@ -1434,6 +1439,33 @@
     }
     return { s: 'idle-wave-sign', k: 0 };
   }
+  /* THE RUN'S BODY MOVES AT ONE SPEED (2026-10-26, "spazzy … like it's jumping frames"): the run frames' anchors drift
+     her head ~28 clay px back over each half-stride and snap it forward again at frames 1 and 25, a lurch every step.
+     Each frame is placed by its head instead (the mean of the top 40 rows of ink, measured off the frames once they
+     load), held where the WALK carries its head, so the body glides, the legs do the running, and setting off into a
+     run doesn't throw her head forward. null until the frames are in; false if unreadable. */
+  function bodyOff(sheet) {
+    var raw = headX(sheet), ref = headX('walk-x3');
+    if (!raw) return raw;
+    var mean = function (a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }, m = mean(ref || raw);
+    return raw.map(function (h) { return h - m; });
+  }
+  function headX(sheet) {
+    if (CLAY.hx[sheet] != null) return CLAY.hx[sheet];
+    var list = CLAY.man[sheet], ims = list.map(function (f) { return CLAY.img[f.f]; });
+    if (ims.some(function (im) { return !im || !im.complete || !im.naturalWidth; })) return null;
+    try {
+      var c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true });
+      var hs = list.map(function (f, i) {
+        var im = ims[i], w = c.width = im.naturalWidth, h = c.height = im.naturalHeight; g.drawImage(im, 0, 0);
+        var px = g.getImageData(0, 0, w, h).data, top = -1, sx = 0, n = 0;
+        for (var y = 0; y < h && (top < 0 || y < top + 40); y++) for (var x = 0; x < w; x++)
+          if (px[(y * w + x) * 4 + 3] > 128) { if (top < 0) top = y; sx += x; n++; }
+        return n ? sx / n - f.cx : 0;
+      });
+      return (CLAY.hx[sheet] = hs);
+    } catch (e) { return (CLAY.hx[sheet] = false); }
+  }
   function clayFigure(px, py, dir, o) {
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
     if (!f) return false;
@@ -1462,7 +1494,8 @@
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
     else if (pk.mid) { ctx.translate(px, groundY - CLAY.H * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5); }
-    else { ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base); }   /* lean pivots on the feet, top toward travel */
+    else { var bo = pk.s === 'run-x3' && bodyOff(pk.s);
+      ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx - (bo ? bo[pk.k % bo.length] : 0), -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
   }
@@ -1854,7 +1887,8 @@
     /* clay hangs well BELOW fig.y (the hang frames are ~131px from grip to toe; the grip sits only
        67px above fig.y), so the box reaches R down too — at +40 her shins and feet were never erased
        and smeared behind her along the monkey bars (her "leaves body parts behind") */
-    var b = { x1: fig.x - R, y1: fig.y - LEG - R, x2: fig.x + R, y2: fig.y + (CLAY.ready ? R : 40) };
+    var rd = rideDy();
+    var b = { x1: fig.x - R, y1: fig.y - LEG - R + Math.min(0, rd), x2: fig.x + R, y2: fig.y + (CLAY.ready ? R : 40) + Math.max(0, rd) };
     for (var pi = 0; pi < puffs.length; pi++) {
       var pf = puffs[pi];
       if (pf.x - 10 < b.x1) b.x1 = pf.x - 10; if (pf.x + 10 > b.x2) b.x2 = pf.x + 10;
@@ -1872,7 +1906,9 @@
       ctx.globalAlpha = 1;
     });
     /* feet planted a hair below the surface line — contact, not hover */
-    figure(fig.x, fig.y - LEG + 0.7 + rideDy(), fig.dir, pose());
+    ctx.save(); ctx.translate(0, rd);   // the whole drawing, so a hang's hands ride with her feet's rule
+    figure(fig.x, fig.y - LEG + 0.7, fig.dir, pose());
+    ctx.restore();
   }
 
   /* How far the glyph under his feet has moved off its resting box RIGHT NOW. The
@@ -1882,15 +1918,17 @@
      talking to the resting world, and the CSS transition itself supplies the easing in
      both directions. Grounded states only: airborne/hanging/dragged figures answer to
      other math, and the sign-hold stands at the CTA, not on type. */
+  /* (2026-10-26) every letter of the bio and eyebrow and the clay tiles too, not just the name, and her HANDS on a
+     hang as well as her feet: whatever she touches, she moves with */
   function rideDy() {
-    if (!chRide.length) return 0;
-    if (fig.state !== 'idle' && fig.state !== 'move' && fig.state !== 'celeb' && fig.state !== 'wave') return 0;
+    if (!chRide.length || fig.state === 'air' || fig.state === 'sign') return 0;
+    var hg = fig.state === 'hang' && fig.hang, cx = hg ? (hg.hands[0].x + hg.hands[1].x) / 2 : fig.x, cy = hg ? hg.hands[0].y : fig.y;
     for (var i = 0; i < chRide.length; i++) {
       var c = chRide[i];
-      if (fig.x < c.x1 - 2 || fig.x > c.x2 + 2) continue;
-      /* his feet (fig.y = the glyph's ink top) must sit inside this glyph's own line
-         box — otherwise he is standing on the floor or a lower line, not on this letter */
-      if (fig.y < c.y1 - 10 || fig.y > c.y2 + 6) continue;
+      if (cx < c.x1 - 2 || cx > c.x2 + 2) continue;
+      /* feet (fig.y = the glyph's ink top) must sit inside this glyph's own line box, hands around its bottom —
+         otherwise she is on the floor or another line, not on this letter */
+      if (hg ? cy < c.y1 - 4 || cy > c.y2 + 8 : cy < c.y1 - 10 || cy > c.y2 + 6) continue;
       return (c.el.getBoundingClientRect().top - cv.getBoundingClientRect().top) - c.y1;
     }
     return 0;
@@ -1950,12 +1988,13 @@
      wake the rAF loop while the letters (and the figure riding them, see rideDy) move.
      Hovering on or off the headline buys the loop a beat: longest stagger (26ms x the
      glyph count) + the transition itself is well under a second each way. */
-  var h1Lively = hero.querySelector('h1');
-  if (h1Lively) ['mouseenter', 'mouseleave'].forEach(function (ev) {
-    h1Lively.addEventListener(ev, function () {
-      if (touchMode || !booted) return;
-      rideT = 2.2; start();
-    });
+  /* …the same for every hover or press in the hero (a bio line lifting, the clay tiles spreading) */
+  ['mouseover', 'mouseout', 'pointerdown', 'pointerup'].forEach(function (ev) {
+    hero.addEventListener(ev, function (e) {
+      if (!booted || (touchMode && ev.indexOf('mouse') === 0)) return;
+      if (!e.target.closest || !e.target.closest('h1, .eyebrow, .hero-line, .hero-cta-row')) return;
+      rideT = Math.max(rideT, 2.2); start();
+    }, { passive: true });
   });
 
   var booted = false;
