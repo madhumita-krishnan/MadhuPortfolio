@@ -1540,9 +1540,10 @@
      dictated by the points of contact"). Measured off each frame's lowest pixels: of the contacts that carry over from
      the frame before, the one that keeps her from going backwards is the planted one. */
   var CW_DX = [0,0,58,58,77,77,161,161,218,218,228,228,228,257,257,257,264,265,270,331,352,352,352,362,362,419,419,503,503,522,522,580,580];
-  /* NO WHOLE-BODY TILT (her 2026-10-26, #89: "avatar is tilting everywhere and its weird"): the walk and run frames carry
-     their own lean in the clay; rotating the whole figure on top (run, walk, the stop's brake) is gone. The athletic
-     part is the crouch before a jump and the braced landing, which are her own frames, not a rotation */
+  /* TILT IN MOTION ONLY (her 2026-10-26, #91: "i only want the tilting gone when shes stopping moving. tilt is important
+     when shes in motion"): she tips forward from her feet as she walks (~4°) and runs (~11°), easing into it; the moment
+     she stops she stands straight, no lean-back and no unwinding (#86/#89: both read as weird) */
+  var RUN_LEAN = 0.2, WALK_LEAN = 0.07;
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
@@ -1550,6 +1551,11 @@
        distance, so every change of pace snapped her legs to an unrelated frame. The phase carries over (run frame =
        walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
     CLAY.run = sp > (CLAY.run ? 200 : 260);
+    /* the lean goes with her speed, so it has faded to a walk's few degrees by the time she stops (easing down quicker than
+       up): straight up from there is a step too small to see as a rotation */
+    var lt = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT ? (CLAY.run ? RUN_LEAN * Math.min(1, sp / RUN) : WALK_LEAN * Math.min(1, sp / WALK)) : 0, l0 = CLAY.lean || 0;
+    if (lt) lt *= fig.target ? Math.min(1, Math.abs(fig.target.x - fig.x) / 40) : 0;   // and fades over her last 40px to the spot (let go mid-run: she's stopping)
+    CLAY.lean = lt ? l0 + (lt - l0) * (lt < l0 ? .4 : .18) : 0;
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     /* the sheet's own crouch (0-3: sink, arms back, rise onto the toes) and landing (10-14: feet reach, knees take it,
        stand back up, 22: tall again), stepped through by the time left, so a quick hop is a quick dip and a slam is a deep one */
@@ -1560,8 +1566,8 @@
     switch (st) {
       case 'move':
         if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
-        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48 };
-        return { s: 'walk-x3', k: Math.floor(CLAY.ph) };   // x3: a frame every third of the old stride step
+        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };
+        return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
