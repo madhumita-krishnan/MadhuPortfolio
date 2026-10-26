@@ -1095,6 +1095,15 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 /* the project name, plain, over its full-sentence headline */
 .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.75rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .sdeck-line{display:block}
+/* THE COMPANY IS THE TITLE (her 2026-10-26: "have the company and their logo visible above the case study statement more
+   boldly. there is power in titles"): its own icon tile (the same one the progress bar shows, copied in by app.js) beside
+   the name set big, bold and white; the headline reads under it as the supporting line */
+.sdeck-co{display:flex;align-items:center;justify-content:center;gap:.45em;margin-bottom:.5em;font-size:1.15rem}
+.sdeck-co .sdeck-name{margin:0;font-family:var(--font-display);font-size:1em;font-weight:700;letter-spacing:-.015em;line-height:1.05;text-transform:none;color:var(--text-primary)}
+.sdeck-logo{flex:none;display:grid;place-items:center;width:1.5em;height:1.5em;border-radius:24%;background:#262931;color:#f3f4f6;
+  font:400 1em/1 'Cormorant Garamond',Georgia,serif;box-shadow:0 2px 5px rgba(0,0,0,.18)}
+.sdeck-logo:empty{display:none}
+.sdeck-logo img{width:100%;height:100%;display:block}
 @media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
@@ -1112,7 +1121,9 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 @media (max-width:760px){.sdeck-title{width:calc(100% - 32px);font-size:1.15rem}}
 .sdeck.side .sdeck-title{position:absolute;left:var(--tl,60%);top:var(--tt,50%);width:var(--tw,30%);margin:0;padding:0;min-height:0 !important;
   transform:translateY(-50%);text-align:left;text-wrap:pretty;font-size:clamp(1.45rem,1.9vw,2.05rem);line-height:1.25;color:var(--ink-blue)}
-.sdeck.side .sdeck-name{margin-bottom:.7em;font-size:.76rem}
+.sdeck.side .sdeck-co{justify-content:flex-start;font-size:clamp(1.9rem,2.7vw,2.75rem);margin-bottom:.45em}
+.sdeck.side .sdeck-logo{width:1.25em;height:1.25em}
+.sdeck.side .sdeck-title{font-size:clamp(1.15rem,1.4vw,1.5rem);line-height:1.35}   /* the headline steps back so the name leads */
 /* phones (.stack): every demo centred in the stage and the headline follows right under whichever one is showing,
    so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
 .sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
@@ -2326,7 +2337,9 @@ function makeJS() {
   const sd=document.querySelector('.sdeck');
   if(sd){
     const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line'),bar=sd.querySelector('.sdeck-progress'),segs=bar?[...bar.children]:[];
+    const logoEl=titleEl.querySelector('.sdeck-logo');
     const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title;
+      const ico=segs[i]&&segs[i].querySelector('.sd-ico');if(logoEl&&ico){logoEl.innerHTML=ico.innerHTML;logoEl.style.background=ico.style.background}
       if(sd.classList.contains('stack')&&dims[i])sd.style.setProperty('--tt',(stage.offsetTop+dims[i].cy+dims[i].h/2+tgNow)+'px')};
     let tgNow=18;
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
@@ -2435,7 +2448,7 @@ function makeJS() {
       const v=pts.length>1?(pts[pts.length-1][1]-a[1])/Math.max(16,now-a[0]):0;   // px per ms, measured to the release
       const fwd=-Math.sign(v),cm=num('--sd-commit')||.22;
       const off=pos-home,to=Math.abs(v)>=(num('--sd-flick')||.3)?home+fwd:pos>d.p0?home+(off>cm?1:0):home-(off<-cm?1:0);
-      settle(to,false,Math.sign(to-pos)===fwd?Math.abs(v):0);suppress=true;setTimeout(()=>{suppress=false},0);
+      if(to<0||to>=cards.length)exitDeck(to<0?-1:1);else settle(to,false,Math.sign(to-pos)===fwd?Math.abs(v):0);suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
@@ -2477,26 +2490,37 @@ function makeJS() {
     /* centred = what you actually SEE (the case, its headline and the progress bar) sits mid-screen, not the stage, whose top
        lane is empty air (her 2026-10-26: "scroll mode doesn't feel like all the elements are properly centered on the screen.
        it's too moved down") */
+    /* then (her 2026-10-26: "horizontal scroll mode seems to be positioned too high up now"): the bar is a thin line, so
+       centring the case, headline AND bar left the case itself riding high with empty air above it. Now the case and its
+       headline are what's centred, and the bar (plus the icons that hang under it on hover) only has to stay on screen */
     const seenMid=()=>{const c=cards[Math.max(0,active)].getBoundingClientRect(),t=titleEl.getBoundingClientRect(),b=bar?bar.getBoundingClientRect():c;
-      return (Math.min(c.top,t.top)+Math.max(c.bottom,t.bottom,b.bottom))/2};
+      const m=(Math.min(c.top,t.top)+Math.max(c.bottom,t.bottom))/2;
+      return Math.max(m,b.bottom+56-innerHeight/2+24)};
     const centred=()=>Math.abs(seenMid()-innerHeight/2)<innerHeight*.04;
     /* …and if it isn't centred, the first sideways swipe GLIDES it there (her 2026-10-26: "when I start horizontally scrolling
        can you move my case studies into the center of the screen so it's focused rather than me having to find that scroll
        position myself?"). One short glide, only ever started by a sideways gesture on the deck: a deliberate exception to
        the no-scroll-jacking rule. Any up/down scroll or key cancels it and focus mode, as always */
-    let centring=0;
+    let centring=0,exitUntil=0;
+    const glide=(to,D,done)=>{const from=scrollY,t0=performance.now(),id=++centring,ease=x=>1-Math.pow(1-x,3);
+      addEventListener('wheel',function w(e){if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){if(centring===id)centring=0;removeEventListener('wheel',w)}},{passive:true});
+      (function step(now){if(centring!==id)return;const q=D?Math.min(1,(now-t0)/D):1;
+        try{scrollTo({top:from+(to-from)*ease(q),behavior:'instant'})}catch(err){scrollTo(0,from+(to-from)*ease(q))}
+        if(q<1)return requestAnimationFrame(step);centring=0;done&&done()})(t0)};
     const enter=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
       [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
       root.classList.add('hfocus')};
-    const focusOn=()=>{if(root.classList.contains('hfocus')||centring)return;
+    const focusOn=()=>{if(root.classList.contains('hfocus')||centring||performance.now()<exitUntil)return;
       if(centred())return enter();
-      const to=Math.max(0,scrollY+seenMid()-innerHeight/2),from=scrollY,t0=performance.now(),D=rm?0:520,id=++centring;
-      const ease=x=>1-Math.pow(1-x,3);
-      const cancel=()=>{if(centring===id)centring=0};
-      addEventListener('wheel',function w(e){if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){cancel();removeEventListener('wheel',w)}},{passive:true});
-      (function step(now){if(centring!==id)return;const q=D?Math.min(1,(now-t0)/D):1;
-        try{scrollTo({top:from+(to-from)*ease(q),behavior:'instant'})}catch(err){scrollTo(0,from+(to-from)*ease(q))}
-        if(q<1)return requestAnimationFrame(step);centring=0;enter()})(t0)};
+      glide(Math.max(0,scrollY+seenMid()-innerHeight/2),rm?0:520,enter)};
+    /* OFF EITHER END (her 2026-10-26: "if you scroll back from the first case study in scroll mode you should exit scroll
+       mode. if you scroll forward from the last case study you should exit scroll mode as well", her pick: leave focus and
+       glide the page): swiping back past the first project glides up to the Selected Projects heading, forward past the
+       last glides down to the next section; everything faded comes back. The swipe's own momentum can't re-enter focus */
+    const workSec=sd.closest('section');
+    const exitDeck=dir=>{exitUntil=performance.now()+1400;focusOff();settle(home,false,0);
+      const nx=workSec&&workSec.nextElementSibling,y=dir<0?(workSec?workSec.getBoundingClientRect().top+scrollY:0):(nx?nx.getBoundingClientRect().top+scrollY:document.body.scrollHeight);
+      glide(Math.max(0,y),rm?0:700)};
     const focusOff=()=>{if(!root.classList.contains('hfocus'))return;root.classList.add('hf-out');root.classList.remove('hfocus');
       clearTimeout(focusOff.t);focusOff.t=setTimeout(()=>{if(root.classList.contains('hfocus'))return;root.classList.remove('hf-out');document.querySelectorAll('.hf-on').forEach(e=>e.classList.remove('hf-on'));
         document.querySelectorAll('.hf-path').forEach(e=>e.classList.remove('hf-path'))},500)};
@@ -2539,7 +2563,7 @@ function makeJS() {
       wAcc+=e.deltaX;place(lim(pos+e.deltaX/rAt(dir)));
       if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wGap=0;wPeak=wFloor=wRise=0;wDir=Math.sign(wAcc);
         const wv=Math.abs(wPts.reduce((s,p)=>s+p[1],0))/(e.timeStamp-wPts[0][0]+16);   // px/ms over the last ~70ms
-        settle(home+wDir,false,wv)}
+        const to=home+wDir;if(to<0||to>=cards.length)exitDeck(wDir);else settle(to,false,wv)}
     },{passive:false});
     /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
        and back, once, unless you've already touched it. The headline stays put for the nudge. */
@@ -3286,7 +3310,7 @@ function renderHome() {
     <div class="sdeck-stage">
       ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
-    <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
+    <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-co"><span class="sdeck-logo" aria-hidden="true"></span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span></span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
     <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"><span class="sd-ico" aria-hidden="true" style="--k:${i}${p.markBg ? `;background:${esc(p.markBg)}` : ''}">${p.icon ? `<img src="${esc(p.icon)}" alt="" draggable="false">` : esc(p.mark || p.name[0])}</span></button>`).join('')}</div>
   </div>`;
 
