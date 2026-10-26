@@ -1275,7 +1275,7 @@
   var raf = 0, last = 0;
   var rideT = 0;   // seconds of rAF kept alive so a CSS-only glyph wave still animates him
   function needsLoop() {
-    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.loadT > 0 || fig.slideT > 0 || CLAY.lean !== 0 || (CLAY.stopAt != null && performance.now() - CLAY.stopAt < 300) || rideT > 0 || rideBusy;
+    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.loadT > 0 || fig.slideT > 0 || rideT > 0 || rideBusy;
   }
   /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
      across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
@@ -1473,7 +1473,7 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
-  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, hx: {}, lean: 0, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, hx: {}, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
   function loadClay() {
     if (!CLAY.on) return;
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
@@ -1540,7 +1540,9 @@
      dictated by the points of contact"). Measured off each frame's lowest pixels: of the contacts that carry over from
      the frame before, the one that keeps her from going backwards is the planted one. */
   var CW_DX = [0,0,58,58,77,77,161,161,218,218,228,228,228,257,257,257,264,265,270,331,352,352,352,362,362,419,419,503,503,522,522,580,580];
-  var RUN_LEAN = 0.2, WALK_LEAN = 0.07;   // radians (~11°, ~4°) she tips forward from her feet: running, walking somewhere
+  /* NO WHOLE-BODY TILT (her 2026-10-26, #89: "avatar is tilting everywhere and its weird"): the walk and run frames carry
+     their own lean in the clay; rotating the whole figure on top (run, walk, the stop's brake) is gone. The athletic
+     part is the crouch before a jump and the braced landing, which are her own frames, not a rotation */
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
@@ -1548,17 +1550,6 @@
        distance, so every change of pace snapped her legs to an unrelated frame. The phase carries over (run frame =
        walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
     CLAY.run = sp > (CLAY.run ? 200 : 260);
-    /* tips into the pace over a few frames, not in one, and stands back up straight the same way when she stops */
-    var going = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT;
-    var braking = going && sp < (CLAY.sp || 0) - 2; CLAY.sp = sp;   // slowing down: a runner sits back into the brake, never tipping forward into a stop
-    var lt = braking ? -0.03 : going ? (CLAY.run ? RUN_LEAN : WALK_LEAN * Math.min(1, sp / WALK)) : 0;
-    CLAY.lean += (lt - CLAY.lean) * (braking ? .3 : .18); if (Math.abs(lt - CLAY.lean) < .002) CLAY.lean = lt;   // (settles exactly, so the loop can stop on a straight stand)
-    /* STOPPING (her 2026-10-26, #86: "when she stops the tilt is weird"): her standing frame used to inherit the stride's
-       forward lean and unwind it over 17 frames, a stiff figure tipping back like a plank. Now the lean ends with the
-       stride: she plants, brakes back a touch, and is upright in a quarter second */
-    if (going) CLAY.stopAt = null;
-    else if (CLAY.lean !== 0) { if (CLAY.stopAt == null && !fig.landT && !fig.loadT && (st === 'move' || st === 'idle')) { CLAY.stopAt = performance.now(); CLAY.b0 = Math.min(CLAY.lean, 0); } CLAY.lean = 0; }   // (a crouch or landing has its own pose)
-    var bt = CLAY.stopAt == null ? 1 : (performance.now() - CLAY.stopAt) / 260, brake = bt < 1 ? (CLAY.b0 || 0) * (1 - bt) - 0.045 * Math.sin(Math.PI * bt) : 0;   // from the brake's lean, back a touch more, then upright
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     /* the sheet's own crouch (0-3: sink, arms back, rise onto the toes) and landing (10-14: feet reach, knees take it,
        stand back up, 22: tall again), stepped through by the time left, so a quick hop is a quick dip and a slam is a deep one */
@@ -1568,9 +1559,9 @@
     if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
-        if (sp < 12) return { s: 'idle-wave-sign', k: 0, lean: brake };
-        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };   // her ask: tilted forward more when she runs
-        return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
+        if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
+        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48 };
+        return { s: 'walk-x3', k: Math.floor(CLAY.ph) };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
@@ -1621,7 +1612,7 @@
         }
         return { s: 'idle-wave-sign', k: 0 }; }
     }
-    return { s: 'idle-wave-sign', k: 0, lean: brake };   // standing: upright, after the stop's brake
+    return { s: 'idle-wave-sign', k: 0 };
   }
   /* THE RUN'S BODY MOVES AT ONE SPEED (2026-10-26, "spazzy … like it's jumping frames"): the run frames' anchors drift
      her head ~28 clay px back over each half-stride and snap it forward again at frames 1 and 25, a lurch every step.
@@ -1652,7 +1643,7 @@
   }
   function clayFigure(px, py, dir, o) {
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
-    CLAY.pl = pk.lean || 0;
+    CLAY.pk = pk;
     if (!f) return false;
     var im = CLAY.img[f.f];
     if (!im || !im.complete || !im.naturalWidth) { if (!CLAY.last) return false; im = CLAY.last.im; f = CLAY.last.f; }   // still streaming in: hold her last frame
@@ -2249,7 +2240,7 @@
     plan: function (x, y) { return planRoute(x, y); },
     clayH: function () { return CLAY.ready ? CLAY.H : 0; },
     sound: function () { return { ctx: SFX.ctx ? SFX.ctx.state : null, buf: SFX.buf }; },   // QA: is the sound context awake, and the decoded clips (to tell which one played)
-    clay: function () { return { f: CLAY.last && CLAY.last.f.f, lean: CLAY.pl || 0 }; },   // QA: the frame drawn last and its tilt
+    clay: function () { var k = CLAY.pk || {}; return { f: CLAY.last && CLAY.last.f.f, lean: k.lean || 0, rot: k.rot || 0, spin: k.spin || 0 }; },   // QA: the frame drawn last and every rotation on it
     canvas: function () { return cv; },
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
