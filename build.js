@@ -1019,6 +1019,12 @@ ${heroFrameVars()}
 .view-btn{display:grid;place-items:center;width:44px;height:36px;padding:0;border:0;border-radius:var(--r-pill);
   background:transparent;color:var(--text-secondary);cursor:pointer;transition:background var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .view-btn[aria-pressed="true"]{background:var(--text-primary);color:var(--bg-base)}
+/* GOOEY SWITCH (her 2026-10-26: "I feel like the dragging toggle can feel more gooey and smooth"): the selected highlight is
+   one soft blob (.vt-knob) that rides a spring under the icons, stretching along its travel and squashing a little across */
+.view-toggle.has-knob .view-btn[aria-pressed="true"]{background:transparent}
+.view-toggle.has-knob .view-btn{position:relative;z-index:1;transition:color .18s ease}
+.vt-knob{position:absolute;left:0;top:4px;bottom:4px;border-radius:var(--r-pill);background:var(--text-primary);z-index:0;pointer-events:none;
+  transform-origin:50% 50%;will-change:transform}
 .view-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
 .view-btn:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
 .work-sec[data-view="deck"] .view-list,.work-sec[data-view="list"] .view-deck{display:none}
@@ -2155,11 +2161,33 @@ function makeJS() {
     /* DRAG the toggle (her 2026-10-26: "I can't drag the toggle"): press anywhere on it and slide; the view switches the
        moment the finger or cursor crosses into the other side, like a switch */
     document.querySelectorAll('.view-toggle').forEach(tg=>{
-      tg.addEventListener('pointerdown',e=>{if(e.button)return;try{tg.setPointerCapture(e.pointerId)}catch(err){}tg._drag=true});
-      tg.addEventListener('pointermove',e=>{if(!tg._drag)return;
-        const b=[...tg.querySelectorAll('.view-btn')].find(x=>{const r=x.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right});
-        if(b&&b.dataset.view!==workEl.dataset.view)morph(b.dataset.view)});
-      const up=()=>{tg._drag=false};tg.addEventListener('pointerup',up);tg.addEventListener('pointercancel',up)});
+      const bs=[...tg.querySelectorAll('.view-btn')];if(bs.length<2)return;
+      const knob=document.createElement('span');knob.className='vt-knob';knob.setAttribute('aria-hidden','true');tg.insertBefore(knob,tg.firstChild);tg.classList.add('has-knob');
+      const at=v=>{const b=bs.find(x=>x.dataset.view===v)||bs[0];return b.offsetLeft};
+      let x=null,vx=0,target=0,raf=0,drag=null,last=0;
+      const size=()=>{knob.style.width=bs[0].offsetWidth+'px'};
+      const paint=()=>{const sx=1+Math.min(.55,Math.abs(vx)/800),sy=1-Math.min(.22,Math.abs(vx)/2200);
+        knob.style.transform='translateX('+x.toFixed(2)+'px) scale('+sx.toFixed(3)+','+sy.toFixed(3)+')'};
+      /* a spring with a little overshoot: k pulls to the target, d damps it; the blob's stretch comes from its speed */
+      const step=now=>{const dt=Math.min(.032,(now-last)/1000||.016);last=now;
+        if(!drag){vx+=((target-x)*520-vx*17)*dt;x+=vx*dt}
+        paint();if(drag||Math.abs(target-x)>.3||Math.abs(vx)>4)raf=requestAnimationFrame(step);else{x=target;vx=0;paint();raf=0}};
+      const go=()=>{if(x===null){size();x=target=at(workEl.dataset.view);paint()}if(!raf){last=performance.now();raf=requestAnimationFrame(step)}};
+      const settle=v=>{size();target=at(v);if(x===null){x=target;paint()}rmActive()?(x=target,vx=0,paint()):go()};
+      /* the drag is followed on the WINDOW: switching view mid-drag scrolls the page and can cost the toggle its pointer capture */
+      tg.addEventListener('pointerdown',e=>{if(e.button)return;size();if(x===null)x=at(workEl.dataset.view);
+        const r=tg.getBoundingClientRect();drag={off:e.clientX-r.left-x,px:e.clientX,t:e.timeStamp,moved:false};go()});
+      addEventListener('pointermove',e=>{if(!drag)return;const r=tg.getBoundingClientRect(),lo=at(bs[0].dataset.view),hi=at(bs[bs.length-1].dataset.view);
+        if(Math.abs(e.clientX-drag.px)>3)drag.moved=true;if(!drag.moved)return;
+        let nx=e.clientX-r.left-drag.off;if(nx<lo)nx=lo-(lo-nx)*.3;if(nx>hi)nx=hi+(nx-hi)*.3;   // a soft rubber band past either end
+        const dtm=Math.max(8,e.timeStamp-drag.t);vx=vx*.6+((nx-x)/dtm*1000)*.4;x=nx;drag.t=e.timeStamp;
+        const v=(x+bs[0].offsetWidth/2)<(lo+hi+bs[0].offsetWidth)/2?bs[0].dataset.view:bs[bs.length-1].dataset.view;
+        if(v!==workEl.dataset.view)morph(v)});
+      const up=()=>{if(!drag)return;const moved=drag.moved;drag=null;if(moved)settle(workEl.dataset.view)};
+      addEventListener('pointerup',up);addEventListener('pointercancel',up);
+      addEventListener('mk-work-view',()=>{if(!drag)settle(workEl.dataset.view)});
+      addEventListener('resize',()=>{if(x!==null){size();x=target=at(workEl.dataset.view);paint()}});
+      requestAnimationFrame(()=>settle(workEl.dataset.view))});
     /* PHONES: the way you hold it picks the view (her 2026-10-26: "maybe on mobile, horizontal scrolling is for when you turn
        your phone. and vertical scrolling is for when it's upright"): upright = the vertical list, turned sideways = the
        swipe deck, switching as you turn it. The toggles step aside on phones, since turning the phone IS the toggle */
@@ -2190,7 +2218,7 @@ function makeJS() {
       const FULL='inset(0% 0% round 999px)',DOT=14;
       const parts=t=>{const w=t.offsetWidth||1,h=t.offsetHeight||1;
         if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
-        return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,btns:[...t.querySelectorAll('.view-btn')]}};
+        return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,btns:[...t.querySelectorAll('.view-btn,.vt-knob')]}};   // the knob resolves with the icons
       const run=(t,show)=>{
         (t._a||[]).forEach(a=>a.cancel());t._a=null;
         if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
