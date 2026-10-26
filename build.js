@@ -2409,13 +2409,14 @@ function makeJS() {
          horizontally": a second swipe made during the first one's momentum was swallowed as more tail). Momentum only
          decays, so once the tail is decaying (below 60% of its peak), deltas climbing sharply off its floor for two
          events in a row (> max(8, 2.2 x floor)) are a fresh push; a single bump in a bumpy tail isn't. Also new: a
-         reversal, or a pause (event timestamps, so jank can't fake one) that was a real rest (400ms+) or is followed
-         by deltas growing twice in a row (a stalled tail resumes shrinking; a bump in it grows only once). A new swipe retargets from wherever the glide is, still one card. */
+         reversal, or a pause (event timestamps, so jank can't fake one) that was a real rest (600ms+) or is followed
+         by deltas growing twice in a row (a stalled tail resumes shrinking; a bump in it grows only once) or by the
+         same big step again (a mouse's sideways wheel clicks in equal steps; a trackpad tail never holds 8px+). A new swipe retargets from wherever the glide is, still one card. */
       const gap=e.timeStamp-wT;wT=e.timeStamp;if(wLock&&gap>180)wGap=gap;
       if(wLock){wPeak=Math.max(wPeak,ax);if(wFloor||ax<wPeak*.6)wFloor=Math.min(wFloor||ax,ax);
         wRise=wFloor&&ax>Math.max(8,2.2*wFloor)?wRise+1:0}
       wGrow=ax>wPrev?wGrow+1:0;
-      if(wLock&&(dir!==wDir&&ax>6||wRise>=2||wGap&&(wGap>400||wGrow>=2))){wLock=false;wAcc=0;wGap=0}
+      if(wLock&&(dir!==wDir&&ax>6||wRise>=2||wGap&&(wGap>600||wGrow>=2||ax===wPrev&&ax>=8))){wLock=false;wAcc=0;wGap=0}
       wPrev=ax;
       wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
       clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock&&wAcc)settle(home,false,0);wAcc=0;wPts=[]},180);   // a push too small to commit eases back
