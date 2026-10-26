@@ -50,10 +50,22 @@
       '.rz-bar :focus{outline:none}.rz-bar :focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}' +
       /* her throw, standing in for her, and the flying plane: above the page, below the resume layer */
       '.rz-her{position:fixed;z-index:2147482990;pointer-events:none;background-repeat:no-repeat}' +
-      /* the spotlight on her while she folds and throws: the page dims, a soft pool of light holds her */
-      '.rz-spot{position:fixed;inset:0;z-index:2147482985;pointer-events:none;opacity:0;transition:opacity .35s ease;' +
-      'background:radial-gradient(circle var(--r) at var(--x) var(--y),rgba(255,240,205,.22),rgba(255,240,205,.12) 45%,rgba(255,240,205,.03) 70%,rgba(5,6,8,.74) 100%)}' +
-      '.rz-spot.on{opacity:1}' +
+      /* THE SPOTLIGHT on her for the whole sequence (her 2026-10-26: "always a spotlight on her"; then "the spotlight looks
+         weird. can you try different spotlight styles"). Four to choose from, ?spot=beam|iris|glow|pool (or
+         localStorage mk-spot): --x/--y = her middle, --f = her feet, --r = the light's radius */
+      '.rz-spot{position:fixed;inset:0;z-index:2147482985;pointer-events:none;opacity:0;transition:opacity .45s ease}' +
+      '.rz-spot.on{opacity:1}.rz-spot::before{content:"";position:absolute;inset:0}' +
+      /* beam: a theatre light from above: a soft cone down to her and a warm pool at her feet, the stage dark around it */
+      '.rz-spot.beam{background:radial-gradient(ellipse calc(var(--r)*1.1) calc(var(--r)*.32) at var(--x) var(--f),rgba(255,236,190,.34),rgba(255,236,190,.12) 55%,transparent 75%),rgba(6,7,10,.7)}' +
+      '.rz-spot.beam::before{background:linear-gradient(rgba(255,240,205,.0),rgba(255,240,205,.16) 70%,rgba(255,240,205,.22));' +
+      'clip-path:polygon(calc(var(--x) - 26px) 0,calc(var(--x) + 26px) 0,calc(var(--x) + var(--r)*1.05) var(--f),calc(var(--x) - var(--r)*1.05) var(--f));filter:blur(6px)}' +
+      /* iris: the old-cartoon iris, a crisp circle of light, everything else nearly black */
+      '.rz-spot.iris{background:radial-gradient(circle calc(var(--r)*.95) at var(--x) var(--y),transparent 97%,rgba(4,5,7,.9) 100%)}' +
+      /* glow: no edge at all, the page simply dims a little and she glows warm */
+      '.rz-spot.glow{background:radial-gradient(circle calc(var(--r)*1.6) at var(--x) var(--y),rgba(255,236,196,.2),rgba(255,236,196,.06) 40%,rgba(6,7,10,.45) 100%)}' +
+      /* pool: the first version, a soft round pool of light */
+      '.rz-spot.pool{background:radial-gradient(circle var(--r) at var(--x) var(--y),rgba(255,240,205,.22),rgba(255,240,205,.12) 45%,rgba(255,240,205,.03) 70%,rgba(5,6,8,.74) 100%)}' +
+      '.rz-walk{position:fixed;z-index:2147482990;pointer-events:none}' +
       '.rz-plane{position:fixed;left:0;top:0;z-index:2147482995;pointer-events:none;will-change:transform;transform-origin:50% 50%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35))}';
     document.head.appendChild(c);
   }
@@ -149,15 +161,7 @@
       'background-image:url("' + THROW + '");background-size:' + (SP.cols * w) + 'px auto';
     document.body.appendChild(d);
     S && S.hide && S.hide(true);
-    /* ALWAYS a spotlight on her for the throw (her 2026-10-26); it lifts as the plane gets away, so the flight reads */
-    var spot = document.createElement('div');
-    spot.className = 'rz-spot';
-    spot.style.cssText = '--x:' + her.x + 'px;--y:' + (her.y - her.h * .5) + 'px;--r:' + Math.round(her.h * 1.15) + 'px';
-    document.body.appendChild(spot);
-    requestAnimationFrame(function () { spot.classList.add('on'); });
-    var unspot = function () { spot.classList.remove('on'); setTimeout(function () { spot.remove(); }, 400); };
-    /* not on screen (scrolled away, or a page she doesn't live on): she pops up in the bottom-right corner first */
-    if (her.pop && window.gsap) gsap.fromTo(d, { y: h * .9, scaleY: .8, transformOrigin: '50% 100%' }, { y: 0, scaleY: 1, duration: .45, ease: 'back.out(1.4)' });
+    var spot = her.spot || spotOn(her), unspot = function () { spot.off(); };
     /* from frame 8: the clip opens with her just holding the page */
     var i = 8, show = function () { d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
     show();
@@ -167,7 +171,48 @@
       if (i >= SP.n) { clearInterval(iv); d.remove(); S && S.hide && S.hide(false); return; }
       show();
     };
-    setTimeout(function () { iv = setInterval(tick, 1000 / SP.fps); }, her.pop ? 550 : 0);   // a popped-up her lands before she starts folding
+    iv = setInterval(tick, 1000 / SP.fps);
+  }
+
+  /* the spotlight (see .rz-spot): follows her while she walks in, lifts once the plane is away */
+  function spotStyle() {
+    var q = (location.search.match(/[?&]spot=(\w+)/) || [])[1], ls = null;
+    try { if (q) localStorage.setItem('mk-spot', q); ls = localStorage.getItem('mk-spot'); } catch (e) {}
+    var v = q || ls || 'beam'; return /^(beam|iris|glow|pool)$/.test(v) ? v : 'beam';
+  }
+  function spotOn(her) {
+    var el = document.createElement('div'); el.className = 'rz-spot ' + spotStyle(); document.body.appendChild(el);
+    var move = function (x, y, h) { el.style.cssText = '--x:' + x + 'px;--y:' + (y - h * .5) + 'px;--f:' + y + 'px;--r:' + Math.round(h * 1.15) + 'px'; };
+    move(her.x, her.y, her.h);
+    requestAnimationFrame(function () { el.classList.add('on'); });
+    return { move: move, off: function () { el.classList.remove('on'); setTimeout(function () { el.remove(); }, 500); } };
+  }
+  /* WALKING IN (her 2026-10-26: "I don't like the way she pops up on the right corner. can you walk in"): when she isn't on
+     screen, she walks in from the left edge along the bottom of the screen in her own clay walk cycle, under the spotlight,
+     and stops to fold and throw. Frames: assets/clay/walk-x3-*.png (they face right), scaled to her height; the cycle is
+     paced to the distance covered so her feet don't skate */
+  var clayJ = null;
+  function walkIn(her, done) {
+    var CL = base + 'assets/clay/';
+    (clayJ ? Promise.resolve(clayJ) : fetch(CL + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (j) { return (clayJ = j); }))
+      .then(function (j) {
+        var fr = j['walk-x3'], k = her.h / (j._ref || 252), imgs = fr.map(function (f) { var im = new Image(); im.src = CL + f.f + ver; return im; });
+        return Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; })).then(function () { return { fr: fr, k: k, imgs: imgs }; });
+      })
+      .then(function (w) {
+        var el = document.createElement('img'); el.className = 'rz-walk'; el.alt = ''; document.body.appendChild(el);
+        var x0 = -60 * w.k, x1 = her.x, spot = spotOn({ x: x0, y: her.y, h: her.h }), cyc = 1.25 * her.h, t0 = performance.now();
+        var speed = her.h * .9;   // px/s: one full cycle (two steps) covers ~1.25 body heights
+        (function step(now) {
+          var x = Math.min(x1, x0 + (now - t0) / 1000 * speed), n = Math.floor(((x - x0) / cyc) * w.fr.length) % w.fr.length, f = w.fr[n];
+          el.src = w.imgs[n].src; el.style.width = f.w * w.k + 'px'; el.style.height = f.h * w.k + 'px';
+          el.style.left = (x - f.cx * w.k) + 'px'; el.style.top = (her.y - f.base * w.k) + 'px';
+          spot.move(x, her.y, her.h);
+          if (x < x1) return requestAnimationFrame(step);
+          el.remove(); her.spot = spot; done(her);
+        })(t0);
+      })
+      .catch(function () { done(her); });
   }
 
   /* THE FLIGHT: long gliding curves around the page, nearer and bigger as it goes, then a swift sideways pass across
@@ -216,10 +261,12 @@
     gsapReady().then(function () {
       if (!window.gsap) { showSheet(false); busy = false; return; }
       whenReady(function (her) {
-        /* off screen: she pops up bottom-right, at her own size (or a phone/laptop default where she doesn't live) */
+        /* off screen: she walks in from the left along the bottom, at her own size (or a phone/laptop default where she
+           doesn't live), and throws from there */
         if (!her) { var S = window.__stick, hh = S && S.clayH && S.clayH() || (innerWidth < 760 ? 120 : 160);
-          her = { x: innerWidth - hh * .45 - 16, y: innerHeight - 12, h: hh, pop: true }; }
-        playThrow(her, fly);
+          return walkIn({ x: Math.min(innerWidth * .3, hh * 1.6 + 24), y: innerHeight - 14, h: hh }, function (h2) { playThrow(h2, fly); }); }
+        her.spot = spotOn(her);
+        setTimeout(function () { playThrow(her, fly); }, 350);   // the light comes up on her first
       });
     });
   }
