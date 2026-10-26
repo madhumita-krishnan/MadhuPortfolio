@@ -2929,7 +2929,9 @@ function footerHTML(extra = '') {
 </footer>
 <script src="app.js?v=${BUILD_V}" defer></script>
 <script src="resume-plane.js?v=${BUILD_V}" defer></script>
-<script src="cursor-light.js?v=${BUILD_V}" defer></script>
+<!-- CURSOR LIGHT, saved for later (her 2026-10-26: "remove cursor lighting. save it, I'll use it later. it's very cool though"):
+     cursor-light.js + the .lit-glint / --lx --ly --la CSS are all still here; to bring it back, put this tag back:
+     <script src="cursor-light.js?v=${BUILD_V}" defer></script> (and the same line in walkthrough.js) -->
 </body>
 </html>`;
 }
