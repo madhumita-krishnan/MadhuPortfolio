@@ -1346,14 +1346,20 @@
      where the foot drops lowest after the flight */
   var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
   var sfxWas = null, stepS = null, stepK = 0, fallV = 0, leapt = false;
+  function whoosh() { sfx('jump', 0.26, 0.9 + Math.random() * 0.08); }
+  function touchdown() { sfx('step', 0.2, 1.08); setTimeout(function () { sfx('step', 0.13, 1.14); }, 70); }
+  /* the moves a click on her plays leave the ground too, on their own clock, never through 'air' (her 2026-10-26, #87:
+     "where is the jump and landing sound?", right after the cartwheel and the flip became her first two clicks): the same
+     whoosh as she springs and the same two soft steps as she lands, at the moments the frames leave and meet the floor */
+  var CUES = { backflip: [[.06, whoosh], [.94, touchdown]], star: [[.22, whoosh], [.78, touchdown]], cartwheel: [[.92, touchdown]] };
   function sfxTick() {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (st !== sfxWas) {
-      if (st === 'air' && fig.vy < -300) { sfx('jump', 0.26, 0.9 + Math.random() * 0.08); leapt = true; }   // a launch, not a fall off an edge
+      if (st === 'air' && fig.vy < -300) { whoosh(); leapt = true; }   // a launch, not a fall off an edge
       if (st === 'hang') sfx('grip', 0.4);
       /* a landing, ALWAYS after a jump (her ask: "a sound when I land on something I
          jumped on" — landing up on a ledge comes in slow, near the top of the arc) */
-      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) { sfx('step', 0.2, 1.08); setTimeout(function () { sfx('step', 0.13, 1.14); }, 70); }   // LIGHT ON HER FEET (her 2026-10-24: the landing 'so heavy'): two soft quick footfalls, not the thud;
+      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) touchdown();   // LIGHT ON HER FEET (her 2026-10-24: the landing 'so heavy'): two soft quick footfalls, not the thud;
       if (st !== 'air' && st !== 'mantle') leapt = false;
       sfxWas = st;
     }
@@ -1382,7 +1388,9 @@
     else if (fig.state === 'hang') tickHang(dt);
     else if (fig.state === 'mantle') tickMantle(dt);
     else if (fig.state === 'celeb') {
+      var c0 = fig.celeb.t;
       fig.celeb.t += dt / fig.celeb.dur;
+      (CUES[fig.celeb.name] || []).forEach(function (q) { if (c0 < q[0] && fig.celeb.t >= q[0]) q[1](); });
       if (fig.celeb.name === 'cartwheel') cartwheelTravel();
       if (fig.celeb.t >= 1) { fig.celeb = null; fig.state = 'idle'; }
     }
@@ -2240,6 +2248,7 @@
     fig: fig, bars: function () { return bars; }, step: advance, draw: draw,
     plan: function (x, y) { return planRoute(x, y); },
     clayH: function () { return CLAY.ready ? CLAY.H : 0; },
+    sound: function () { return { ctx: SFX.ctx ? SFX.ctx.state : null, buf: SFX.buf }; },   // QA: is the sound context awake, and the decoded clips (to tell which one played)
     clay: function () { return { f: CLAY.last && CLAY.last.f.f, lean: CLAY.pl || 0 }; },   // QA: the frame drawn last and its tilt
     canvas: function () { return cv; },
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
