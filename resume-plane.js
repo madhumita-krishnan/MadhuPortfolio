@@ -177,10 +177,14 @@
   /* the spotlight (see .rz-spot): follows her while she walks in, lifts once the plane is away */
   function spotStyle() {
     var q = (location.search.match(/[?&]spot=(\w+)/) || [])[1], ls = null;
-    try { if (q) localStorage.setItem('mk-spot', q); ls = localStorage.getItem('mk-spot'); } catch (e) {}
+    try { if (q) localStorage.setItem('mk-spot', q); ls = localStorage.getItem('mk-spot'); } catch (e) {}   // (only reached with ?spot=)
     var v = q || ls || 'beam'; return /^(beam|iris|glow|pool)$/.test(v) ? v : 'beam';
   }
+  /* OFF while we agree the look (her 2026-10-26: "the spotlight thing is super glitchy and done completely wrong. you also
+     never ran it by me" → "turn spotlight off" until the design is agreed). The styles stay below; ?spot=<style> still
+     shows one for review, nothing shows by default */
   function spotOn(her) {
+    if (!/[?&]spot=\w+/.test(location.search)) return { move: function () {}, off: function () {} };
     var el = document.createElement('div'); el.className = 'rz-spot ' + spotStyle(); document.body.appendChild(el);
     var move = function (x, y, h) { el.style.cssText = '--x:' + x + 'px;--y:' + (y - h * .5) + 'px;--f:' + y + 'px;--r:' + Math.round(h * 1.15) + 'px'; };
     move(her.x, her.y, her.h);
