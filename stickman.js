@@ -1879,8 +1879,12 @@
     /* fades the canvas in (see .hero.stick-on in build.js) — he is the last layer of
        the load sequence, arriving after the type he stands on has stopped moving */
     hero.classList.add('stick-on');
-    var btn = hero.querySelector('.hero-cta-row .btn.solid');
-    if (btn) btn.addEventListener('mouseenter', waveHello);
+    /* hover (or tab onto) ANY say hey! and she waves (her 2026-10-26: "the avatar still isn't waving when I hover over say
+       hey"): this used to listen on the hero's own say hey! button, which moved into the nav on 2026-10-24, so it
+       silently listened to nothing. Matched by its Calendly link, wherever the button lives */
+    var sayHey = function (e) { var a = e.target.closest && e.target.closest('a[href*="calendly"]'); if (a && !a.contains(e.relatedTarget)) waveHello(); };
+    document.addEventListener('pointerover', sayHey);
+    document.addEventListener('focusin', sayHey);
   }
   /* 2400ms, up from 350: the load sequence owns the first ~2.3s (buttons settle at
      ~2.27s including the .revealed trigger delay), and he spawns standing on the
