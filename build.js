@@ -893,8 +893,14 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 @media (max-width:600px){.hero .hero-line{line-height:1.3}}
 /* (2026-10-23) a --hang of 136px under every line was tried so clay-her could hang without her legs crossing the next
    line; she called the spacing "insane", so the hero keeps its own rhythm and her legs simply dangle in front */
-.hero-cta-row{opacity:0;transform:translateY(14px);transition:opacity 800ms var(--ease-enter) 1350ms,transform 800ms var(--ease-enter) 1350ms}
-.hero.revealed .hero-cta-row{opacity:1;transform:none}
+/* the clay tiles come LAST, after the bio's final word has landed: top-down, one direction (her 2026-10-26: "have the clay
+   button bounce up and appear into place last on the landing after all the text loads … I like when things load in one
+   direction"). Each one pops up out of the line like squeezed clay, left to right; app.js adds .tiles-in */
+.cta-socials a{opacity:0;transform:translateY(28px) scale(.6)}
+.hero.tiles-in .cta-socials a{animation:tile-pop 640ms cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(var(--i,0) * 120ms)}
+@keyframes tile-pop{0%{opacity:0;transform:translateY(28px) scale(.6)}45%{opacity:1;transform:translateY(-10px) scale(.94,1.1)}
+  70%{transform:translateY(0) scale(1.1,.9)}86%{transform:translateY(-2px) scale(.98,1.03)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cta-socials a,.hero.tiles-in .cta-socials a{opacity:1;transform:none;animation:none}}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
    (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
    because she asked to keep it for the word portfolio. */
@@ -1846,7 +1852,13 @@ function makeJS() {
     const landHero=()=>{if(window.__mkHeroLanded)return;window.__mkHeroLanded=true;dispatchEvent(new Event('mk-hero-landed'))};
     const h1El=hero.querySelector('h1');
     if(h1El)h1El.addEventListener('transitionend',e=>{if(e.target===h1El&&e.propertyName==='transform')landHero()});   // the rise has truly finished: she stands on the d where it stays
-    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
+    /* the tiles land last: once the bio's final word (its own delay + the word's rise) is in */
+    const tilesIn=(tries=0)=>{const ws=[...hero.querySelectorAll('.hero-line .w')];
+      if(!ws.length&&tries<40&&!rmActive())return setTimeout(()=>tilesIn(tries+1),100);   // the words are cut after fonts load: wait for them
+      const last=ws.reduce((m,w)=>Math.max(m,parseFloat(w.style.transitionDelay)||0),0),t0=performance.now()-tries*100;
+      [...hero.querySelectorAll('.cta-socials a')].forEach((a,i)=>a.style.setProperty('--i',i));
+      setTimeout(()=>hero.classList.add('tiles-in'),rmActive()?0:Math.max(0,last+500-(performance.now()-t0)))};
+    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');tilesIn();setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
     /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
        back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
        its final size, so she spawns on the d where it will stay. */
@@ -2803,7 +2815,7 @@ if(t==='night')document.documentElement.setAttribute('data-theme','night');
      waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
      is invisible to a no-JS visitor. It is real text now, so a reader with no JS still gets
      the copy — but it would look like the hero simply has none. -->
-<noscript><style>.w{opacity:1;transform:none;filter:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
+<noscript><style>.w{opacity:1;transform:none;filter:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row,.cta-socials a{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
 <!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
      14kb, so it is worth the early connection rather than waiting on the stylesheet -->
 <link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
