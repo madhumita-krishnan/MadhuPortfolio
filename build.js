@@ -1113,9 +1113,9 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
    left-to-right ripple while the line is hovered, focused or being scrubbed (a finger down on a phone). A tap on a tile
    is a tap on its dash, so the bar's own pointer handling takes it there. The pad below the line keeps the hover alive
    across the gaps between tiles. Real marks where she has them, else the initial on a quiet tile (site.json icon / mark). */
-.sdeck-progress{position:relative;margin-bottom:50px}   /* room for the tiles: .sdeck clips its overflow (her: "logos … are getting cut off") */
+.sdeck-progress{position:relative;margin-bottom:64px}   /* room for the tiles: .sdeck clips its overflow (her: "logos … are getting cut off") */
 .sdeck-progress button{position:relative;z-index:1}
-.sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;top:100%;height:56px}
+.sdeck-progress:hover::after{content:"";position:absolute;left:-8px;right:-8px;top:100%;height:70px}
 .sd-ico{position:absolute;left:50%;top:calc(100% - 4px);width:min(40px,100%);aspect-ratio:1;border-radius:24%;overflow:hidden;
   display:grid;place-items:center;background:#262931;color:#f3f4f6;font:400 1.15rem/1 'Cormorant Garamond',Georgia,serif;
   box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;
@@ -1130,9 +1130,12 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
 .sd-ico::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 42%,rgba(0,0,0,0) 60%,rgba(0,0,0,.14));
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.3)}
-.sdeck-progress button.on .sd-ico{transform:translate(-50%,-4px) scale(1.08)}
-.sdeck-progress:hover button.on .sd-ico,.sdeck-progress.scrub button.on .sd-ico{transform:translate(-50%,-4px) scale(1.08)}
-.sdeck-progress .sd-ico:hover{transform:translate(-50%,3px) scale(1.12);transition-delay:0s}
+/* NOTHING OVERLAPS (her 2026-10-26: "the icon selected is running into and overlapping the nav bar. all the icons need to be
+   lower. I don't like overlapping as a rule"): the icons hang 10px clear below the dashes and never lift into them; the
+   one you're on is full strength and the others are mildly dimmed instead */
+.sdeck-progress .sd-ico{top:calc(100% + 10px)}
+.sdeck-progress:hover button:not(.on) .sd-ico,.sdeck-progress:focus-within button:not(.on) .sd-ico,.sdeck-progress.scrub button:not(.on) .sd-ico{opacity:.55}
+.sdeck-progress .sd-ico:hover{opacity:1!important;transform:translate(-50%,0) scale(1.08);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 .w-chip{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
@@ -2221,6 +2224,7 @@ function makeJS() {
         const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
         const Rs=t>0?d.Rr:d.Rl,x=shift+Math.sign(t)*(a<=1?a*Rs:Rs+(a-1)*R2),y=lane+p*(d.cy-lane),sc=side+(1-side)*p;
         c.style.transform='translate3d('+x.toFixed(2)+'px,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';c.style.zIndex=String(Math.round(p*10));
+        c.style.opacity=(.6+.4*p).toFixed(3);   // the cards out on the sides sit slightly dimmed (her 2026-10-26), full as they reach the centre
       });
       titleEl.classList.toggle('moving',!nudging&&Math.abs(v-Math.round(v))>.02);
       const near=Math.max(0,Math.min(cards.length-1,Math.round(v)));if(near!==active){setTitle(near);segs.forEach((b,k)=>{b.classList.toggle('on',k===near);b.classList.toggle('done',k<near)})}
