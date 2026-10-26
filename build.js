@@ -1045,6 +1045,14 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:.06!important;pointer-ev
    centre that widens into the bar (a clip, so the icons never stretch), then the icons fade in. Once per visit. */
 .work-head .head-toggle{background:rgba(22,27,40,.88);transition:opacity 200ms var(--ease-standard)}
 body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}   /* never two toggles on screen */
+.view-dock.floating.leaving{opacity:1;transition:none}
+.view-toggle.pop{animation:vt-pop 600ms cubic-bezier(.4,0,.2,1) both;pointer-events:none}
+.view-toggle.pop .view-btn{animation:vt-duck 160ms ease-in both}
+@keyframes vt-duck{to{opacity:0;transform:scale(.6)}}
+@keyframes vt-pop{0%{clip-path:inset(0 0 round 999px);transform:none;opacity:1}
+  45%{clip-path:inset(24% 44% round 999px);transform:none}
+  65%{clip-path:inset(24% 44% round 999px);transform:translateY(-10px) scale(1.18)}
+  100%{clip-path:inset(24% 44% round 999px);transform:translateY(-4px) scale(0);opacity:0}}
 .view-toggle.materialize{animation:vt-grow 700ms cubic-bezier(.22,1,.36,1) 150ms both}   /* the pill shows for a beat, then widens */
 .view-toggle.materialize .view-btn{animation:vt-icons 260ms ease-out 820ms both}   /* icons once the bar is whole: ~1.1s in all */
 /* her brief: begin as ONE small dark pill ~12% of the bar's width at its centre (here also ~half its height, so it reads
@@ -2149,7 +2157,15 @@ function makeJS() {
       /* the entrance waits until the bar can actually be SEEN: on laptops it steps aside while the nav is showing
          (nav and toggle take turns), and an entrance played behind that would be wasted */
       const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
-      const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
+      /* leaving (her 2026-10-26: "a cuter animation when the toggle bar disappears"): the icons duck out, the bar pinches back
+         into the little pill it grew from, and the pill hops and pops like a bubble. Only when it leaves for real (you've
+         scrolled out of the projects), not when it steps aside for the nav */
+      let wasOn=false;
+      const sync=()=>{const on=inWork&&headGone;
+        if(wasOn&&!on&&!inWork&&!rmActive()){dock.classList.add('leaving');bar.classList.add('pop');clearTimeout(sync.t);
+          sync.t=setTimeout(()=>{dock.classList.remove('leaving');bar.classList.remove('pop')},620)}
+        if(on){clearTimeout(sync.t);dock.classList.remove('leaving');bar.classList.remove('pop')}
+        wasOn=on;dock.classList.toggle('on',on);
         if(on&&!grown&&(!fineP||!navW||navW.classList.contains('nav-hidden'))){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
       /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
          own padding below the last one doesn't count (her 2026-10-26: "I've basically left the space where the toggle is
