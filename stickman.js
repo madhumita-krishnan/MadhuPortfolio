@@ -454,9 +454,13 @@
       start();
     }
   });
+  /* one wave, then a breather (her 2026-10-26: "sometimes the avatar glitches when I move my mouse near it"): a cursor
+     wobbling on her outline started a fresh wave every time it crossed back in, 14 frames after the last one ended */
+  var waveAt = -1e9;
   function waveHello() {
-    if (rmActive()) return;
+    if (rmActive() || performance.now() - waveAt < 3600) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {
+      waveAt = performance.now();
       fig.prev = fig.state === 'sign' ? 'sign' : 'idle';
       fig.state = 'wave'; fig.wave = 0;
       start();
@@ -480,7 +484,7 @@
     if (!visible && !down) return;
     var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y; CLAY.away = false;
     /* her ask: hover over clay-her and she smiles (the standing frame swaps to its smile twin) */
-    var sm = !touchMode && CLAY.ready && onClay(p);
+    var sm = !touchMode && CLAY.ready && onClay(p, CLAY.smile ? 14 : 0);   // let go 14px further out than it catches: no flicker on her edge
     /* …and as the cursor arrives on her she WAVES with one hand, smiling (her ask 2026-10-24), then keeps smiling
        while you stay; the same wave she gives the say-hey button. Once per arrival. */
     if (sm && !CLAY.smile) waveHello();
@@ -1341,7 +1345,7 @@
       if (m._smile) CLAY.img.smile = [].concat(m._smile).map(function (n) { var sm = new Image(); sm.src = dir + n + ver; return sm; });   // same box as idle-wave-sign-0, only the face differs
     }).catch(function () { CLAY.on = false; });
   }
-  function onClay(p) { return Math.abs(p.x - fig.x) < 34 && p.y > fig.y - CLAY.H - 6 && p.y < fig.y + 6; }
+  function onClay(p, pad) { pad = pad || 0; return Math.abs(p.x - fig.x) < 34 + pad && p.y > fig.y - CLAY.H - 6 - pad && p.y < fig.y + 6 + pad; }
   loadClay();   // at once, not on idle: her standing frame must be in by the time the name rises (the link preload in the hero has it in flight already)
   /* her ask (2026-10-23, "the wave is spazzy. smile and only wave one hand"): frames 2/5 and 3/4 are
      DIFFERENT hands with the body turned opposite ways, so mixing them flipped her back and forth.
