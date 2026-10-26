@@ -1035,6 +1035,9 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
 .view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none}
+/* laptops: top-right corner (her 2026-10-26: "can you move the toggle on laptop to the top right hand corner?"), on the nav's
+   own right edge and line. It only shows while the nav is tucked away, so it takes say hey!'s place and they never meet */
+@media (hover:hover) and (pointer:fine){.view-dock.floating{top:22px;bottom:auto;left:auto;right:clamp(20px,4vw,56px)}}
 /* the toggles' appearing and leaving is ONE materialize timeline in app.js (see vt()): a clip of the bar's own surface
    from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
    there and not clickable; while it dematerializes it can't be clicked either */
@@ -2148,30 +2151,42 @@ function makeJS() {
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
       let inWork=false,headGone=false;
       const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
-      /* MATERIALIZE / DEMATERIALIZE (her Apple reference, 2026-10-26: "replace the current ease in / ease out on my toggle
-         buttons entrance and exit with the materializing entrance … and use its exact reverse for removal"). One timeline
-         per toggle, laid out at its final size the whole time:
-           0     one small dark pill at the centre, ~12% of the bar's width (a clip of the bar's own surface)
-           150   the pill widens from its centre into the full bar, 700ms, settling with no bounce
-           850   the controls resolve inside it (both icons and the selected highlight together, no stagger), 350ms
-         ≈1.2s in all. Removal is that timeline played backwards (reverse()), so it is the exact reverse: controls out, the
-         surface contracts from its edges back into the pill, the pill goes; and a change of mind mid-way turns around
-         from wherever it is, so the silhouette never jumps. Only a clip and opacity move: nothing is stretched. There are
-         no text labels in these toggles, so the label step has nothing to fade. Reduced motion: shown or hidden at once.
+      /* SPRINGY MATERIALIZE (her 2026-10-26: "when the toggle collapses, can it collapse into a circle and then plop down. I
+         want the toggle appearance and disappearance to feel more springy"; before that, the Apple-reference pill-to-bar
+         materialize with its exact reverse). Controls are laid out at full size the whole time; the surface is a clip of the
+         bar itself, so icons are never stretched; the squash/stretch happens only while the icons are hidden.
+           IN   a dark CIRCLE (the bar's height) plops up from below with a springy overshoot (0–380ms) → it widens from its
+                centre into the full bar (380–900ms) → the bar lands with a little squash-and-settle (840–1140ms) → the icons
+                resolve together (930–1190ms)
+           OUT  the icons go (0–180ms) → the bar draws in from both ends into the circle, with a slight springy tuck
+                (160–640ms) → the circle squashes as it lands and PLOPS down out of sight (620–1000ms)
+         A change of mind mid-way starts the other direction straight away. Reduced motion: shown or hidden at once.
          WHEN each toggle shows is unchanged: the floating one while the projects hold the screen (on laptops only while
          the nav is tucked away), the top one whenever the floating one isn't on. */
-      const PILL='inset(24% 44% round 999px)',FULL='inset(0% 0% round 999px)';
+      const FULL='inset(0% 0% round 999px)',SPRING='cubic-bezier(.34,1.7,.5,1)',SETTLE='cubic-bezier(.3,1.35,.5,1)';
       const vt=(t,show)=>{
         if(t._show===show)return;t._show=show;
-        if(rmActive()||!t.animate){(t._a||[]).forEach(a=>a.cancel());t._a=null;t.classList.toggle('vt-hidden',!show);return}
-        if(!t._a){
-          t._a=[t.animate([{clipPath:PILL},{clipPath:FULL}],{duration:700,delay:150,endDelay:350,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'}),   // endDelay: every part ends at 1200, so reversing waits for the controls to go first
-            ...[...t.querySelectorAll('.view-btn')].map(b=>b.animate([{opacity:0},{opacity:1}],{duration:350,delay:850,easing:'ease-out',fill:'both'}))];
-          if(!show)t._a.forEach(a=>{a.finish();a.reverse()});   // it was showing without a timeline (the top toggle at load)
-        }else t._a.forEach(a=>{if(a.playbackRate>0!==show)a.reverse();else a.play()});
+        (t._a||[]).forEach(a=>a.cancel());t._a=null;
+        if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
         t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
-        const run=t._a;Promise.all(run.map(a=>a.finished)).then(()=>{if(t._a!==run||t._show)return;
-          t.classList.add('vt-hidden');t.classList.remove('vt-leaving');run.forEach(a=>a.cancel());t._a=null},()=>{});
+        const w=t.offsetWidth||1,h=t.offsetHeight||1,CIRC='inset(0% '+Math.max(0,(w-h)/2/w*100).toFixed(2)+'% round 999px)';
+        const btns=[...t.querySelectorAll('.view-btn')],A=[];
+        if(show){
+          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.42},{clipPath:FULL}],{duration:900,easing:'linear',fill:'both'}),
+            t.animate([{transform:'translateY(18px) scale(.25)',opacity:0,easing:SPRING},{transform:'none',opacity:1}],{duration:380,fill:'backwards'}),
+            t.animate([{transform:'none'},{transform:'scale(1.035,.95)',offset:.35},{transform:'none'}],{duration:300,delay:840,easing:SETTLE}),
+            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:260,delay:930,easing:'ease-out',fill:'both'})));
+          A[0].effect.updateTiming({easing:'linear'});
+          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.42,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
+        }else{
+          A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-in',fill:'both'})),
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.16,easing:'cubic-bezier(.6,-.25,.4,1)'},{clipPath:CIRC,offset:.64},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
+            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.62},{transform:'translateY(2px) scale(1.16,.84)',opacity:1,offset:.72,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:1000,fill:'both'}));
+        }
+        t._a=A;
+        Promise.all(A.map(a=>a.finished)).then(()=>{if(t._a!==A)return;
+          if(!t._show){t.classList.add('vt-hidden');t.classList.remove('vt-leaving')}
+          A.forEach(a=>a.cancel());t._a=null},()=>{});
       };
       const headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
       const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
