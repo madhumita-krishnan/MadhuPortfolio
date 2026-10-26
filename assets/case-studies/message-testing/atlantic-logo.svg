@@ -2,7 +2,9 @@
   <!-- the Atlantic Health System mark, redrawn as vectors from her logo file (3. 10 logo files): an orange block, a
        lighter fan from its bottom-left corner to the top-right, a navy wedge meeting the right edge 61% down -->
   <rect width="64" height="64" rx="14" fill="#fff"/>
+  <g transform="translate(32 32) scale(0.84) translate(-32 -32)">
   <rect x="15.5" y="11" width="33" height="42" fill="#FE8400"/>
   <polygon points="15.5,53 26.5,11 48.5,11" fill="#FFAA4D"/>
   <polygon points="15.5,53 48.5,36.5 48.5,53" fill="#002B77"/>
+  </g>
 </svg>

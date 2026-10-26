@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <!-- her call 2026-10-24: the Spotify logo for her Spotify case study's tile (the deck's dash-line icons) -->
   <rect width="64" height="64" rx="14" fill="#121212"/>
+  <g transform="translate(32 32) scale(0.86) translate(-32 -32)">
   <circle cx="32" cy="32" r="21" fill="#1ED760"/>
   <g fill="none" stroke="#121212" stroke-linecap="round">
     <path d="M19.5 26.2 Q32 21.8 45.6 27.6" stroke-width="4.1"/>
     <path d="M20.8 33 Q32 29.4 43.6 34.4" stroke-width="3.4"/>
     <path d="M22 39.4 Q32 36.6 41.6 40.6" stroke-width="2.8"/>
+  </g>
   </g>
 </svg>

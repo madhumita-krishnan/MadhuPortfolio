@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- My AI tools' tile (2026-10-26; it was the favicon photo on cream): the slider tweaker she built, as three slider
+       tracks with their knobs, light on the site's deep indigo -->
+  <rect width="64" height="64" rx="14" fill="#2A3557"/>
+  <g stroke="#E9EEFB" stroke-width="3" stroke-linecap="round"><line x1="17" y1="22" x2="47" y2="22"/><line x1="17" y1="32" x2="47" y2="32"/><line x1="17" y1="42" x2="47" y2="42"/></g>
+  <g fill="#2A3557" stroke="#E9EEFB" stroke-width="3"><circle cx="38" cy="22" r="4.5"/><circle cx="24" cy="32" r="4.5"/><circle cx="33" cy="42" r="4.5"/></g>
+</svg>

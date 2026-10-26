@@ -1029,7 +1029,9 @@ ${heroFrameVars()}
 .view-dock{display:flex;justify-content:center;margin-top:calc(var(--space)*4)}
 /* the deck's sideways focus mode (see focusOn): every sibling along the deck's path to <body> fades and can't be clicked */
 html.hfocus .hf-path>*,html.hf-out .hf-path>*{transition:opacity .45s var(--ease-standard)}   /* only while fading, so nobody's own transitions are touched */
-html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:.06!important;pointer-events:none}
+/* GONE, not faint (her: "why can I see selected projects in the back … it reads like noise"): legible type at a few percent
+   collides with whatever is near it; layering only works when the back layer can't be read */
+html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:0!important;pointer-events:none}
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
 .view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:none;   /* no slide up: it materializes in place */
@@ -1120,8 +1122,8 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
 /* phones (.stack): every demo centred in the stage and the headline follows right under whichever one is showing,
    so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
 .sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
-.sdeck.stack .sdeck-progress{margin-top:var(--tres,24px)}
-.sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*2.5) auto 0;touch-action:none}
+.sdeck.stack .sdeck-progress{margin-top:calc(var(--tres,24px) + 24px)}
+.sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*7) auto 0;touch-action:none}   /* clear air under the cards (her: "feels too close to the case studies") */
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
 .sdeck-progress button.done::before{background:var(--text-secondary)}
@@ -1141,7 +1143,16 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   transform:translate(-50%,-10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}
 .sd-ico img{width:100%;height:100%;display:block;-webkit-user-drag:none}
 .sdeck-progress:hover .sd-ico,.sdeck-progress:focus-within .sd-ico,.sdeck-progress.scrub .sd-ico{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
-.sdeck-progress button.on .sd-ico{box-shadow:0 0 0 2px var(--text-primary),0 6px 16px rgba(0,0,0,.4)}
+/* ONE icon system (her 2026-10-26: "the treatment on the app icons feels odd and inconsistent and not premium"): every
+   tile is the same build: brand fill, one light mark at ~56% (the svgs are normalised to that), the same top light, the
+   same hairline edge and the same shadow, laid on by ::after so no file can drift from it. The project you're on lifts
+   instead of wearing a white ring (a ring read as a stray border) */
+.sd-ico{box-shadow:0 1px 2px rgba(0,0,0,.5),0 8px 18px rgba(0,0,0,.35)}
+.sd-ico::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 42%,rgba(0,0,0,0) 60%,rgba(0,0,0,.14));
+  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.3)}
+.sdeck-progress button.on .sd-ico{transform:translate(-50%,-4px) scale(1.08)}
+.sdeck-progress:hover button.on .sd-ico,.sdeck-progress.scrub button.on .sd-ico{transform:translate(-50%,-4px) scale(1.08)}
 .sdeck-progress .sd-ico:hover{transform:translate(-50%,3px) scale(1.12);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
@@ -2334,10 +2345,13 @@ function makeJS() {
        everything else on the page (nav, headings, the other sections, the toggle); the deck stays. Any up/down scroll,
        Esc, or a click outside the deck brings it all back. It only fades: the page's own scroll is never taken over. */
     const root=document.documentElement;let hfY=0;
-    const focusOn=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;sd.classList.add('hf-on');
-      for(let e=sd.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path');root.classList.add('hfocus')};
+    /* what stays: the deck AND the view toggles (her: "I'm in horizontal scroll mode. I should be able to switch to vertical
+       mode. so I don't know why you'd gray that out"): a mode never fades its own way out */
+    const focusOn=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
+      [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
+      root.classList.add('hfocus')};
     const focusOff=()=>{if(!root.classList.contains('hfocus'))return;root.classList.add('hf-out');root.classList.remove('hfocus');
-      clearTimeout(focusOff.t);focusOff.t=setTimeout(()=>{if(root.classList.contains('hfocus'))return;root.classList.remove('hf-out');sd.classList.remove('hf-on');
+      clearTimeout(focusOff.t);focusOff.t=setTimeout(()=>{if(root.classList.contains('hfocus'))return;root.classList.remove('hf-out');document.querySelectorAll('.hf-on').forEach(e=>e.classList.remove('hf-on'));
         document.querySelectorAll('.hf-path').forEach(e=>e.classList.remove('hf-path'))},500)};
     addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX))focusOff()},{passive:true});
     addEventListener('scroll',()=>{if(Math.abs(scrollY-hfY)>30)focusOff()},{passive:true});

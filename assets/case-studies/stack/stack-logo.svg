@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- the budgeting app's tile (2026-10-26; it had a placeholder serif "S"): Stack red with three stacked bars, the
+       top one short, a budget being set aside. Same construction as every deck tile: brand fill, one light mark ~56% -->
+  <rect width="64" height="64" rx="14" fill="#D50000"/>
+  <g fill="#FFF4F2"><rect x="14" y="38" width="36" height="7" rx="3.5"/><rect x="16" y="28.5" width="32" height="7" rx="3.5"/><rect x="22" y="19" width="20" height="7" rx="3.5"/></g>
+</svg>
