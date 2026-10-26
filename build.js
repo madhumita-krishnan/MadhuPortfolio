@@ -1117,6 +1117,14 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .sdeck.side.t3 .sdeck-title{transform:none;height:var(--th,auto)}
 .sdeck.side.t3 .sdeck-title>span{display:flex;flex-direction:column;justify-content:space-between;height:100%}
 .sdeck.side.t3 .sdeck-co{margin:0}
+.sdeck.side.t1 .sdeck-co{font-size:var(--co-fs,clamp(1.9rem,2.7vw,2.75rem))}
+.sdeck.side.t1 .sdeck-name{white-space:nowrap}
+/* ?title=0, the original for comparison: the plain small-capitals name over the big headline, no logo */
+.sdeck.t0 .sdeck-logo{display:none}
+.sdeck.t0 .sdeck-co,.sdeck.side.t0 .sdeck-co{display:block;font-size:inherit;margin:0}
+.sdeck.t0 .sdeck-co .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.75rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;line-height:inherit;color:var(--accent)}
+.sdeck.side.t0 .sdeck-co .sdeck-name{margin-bottom:.7em;font-size:.76rem}
+.sdeck.side.t0 .sdeck-title{font-size:clamp(1.45rem,1.9vw,2.05rem);line-height:1.25}
 @media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
@@ -2359,8 +2367,10 @@ function makeJS() {
     /* WHERE THE COMPANY TITLE SITS (her 2026-10-26: "I like where things are. i just want to explore title placement.
        nothing else"): laptops only, the layout itself is unchanged. ?title=1 (default) the name heads the headline column;
        2 the name sits over the case, on its left edge; 3 the column spans the case's height, the name level with its top
-       and the headline level with its bottom */
-    const tv=+new URLSearchParams(location.search).get('title')||1,coEl=titleEl.querySelector('.sdeck-co'),coHome=coEl.parentElement;sd.classList.add('t'+tv);sd.closest('section')&&sd.closest('section').classList.add('t'+tv);
+       and the headline level with its bottom; 0 the ORIGINAL (small capitals name, no logo) to compare against. Option 1's
+       names share ONE size, the largest at which the longest name fits the column on one line (her: "make all the titles
+       small enough that they're all one line") */
+    const tq=new URLSearchParams(location.search).get('title'),tv=tq===null||isNaN(+tq)?1:+tq,coEl=titleEl.querySelector('.sdeck-co'),coHome=coEl.parentElement;sd.classList.add('t'+tv);sd.closest('section')&&sd.closest('section').classList.add('t'+tv);
     const placeCo=i=>{const side=sd.classList.contains('side'),d=dims[i];
       if(tv===2){if(side&&coEl.parentElement===coHome)titleEl.after(coEl);else if(!side&&coEl.parentElement!==coHome)coHome.prepend(coEl)}
       if(!side||!d)return;
@@ -2424,8 +2434,14 @@ function makeJS() {
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       if(phone){tgNow=tg;sd.classList.add('stack');let thS=0;cards.forEach((c,i)=>{fill(i);thS=Math.max(thS,titleEl.offsetHeight)});   // the headline's tallest height AS LAID OUT on phones (full width), not before
         sd.style.setProperty('--tres',(cyB+Math.max(...dims.map(d=>d.h))/2+tg+thS+16-H)+'px');fill(Math.max(0,active))}   // the bar sits under the headline's lowest reach from the CARD's real bottom (cyB+Ht/2), not the stage's (her 2026-10-26: "move the nav bar … higher so that the icons under never get cut off")
-      titleEl.style.minHeight=th+'px';place(pos);placeCo(Math.max(0,active));
+      titleEl.style.minHeight=th+'px';place(pos);placeCo(Math.max(0,active));fitCo();
     };
+    function fitCo(){
+      sd.style.removeProperty('--co-fs');if(tv!==1||!sd.classList.contains('side'))return;
+      const cs=getComputedStyle(coEl),fs=parseFloat(cs.fontSize),gap=parseFloat(cs.columnGap)||0,lg=titleEl.querySelector('.sdeck-logo').offsetWidth,keep=nameEl.textContent;
+      let worst=0;cards.forEach(c=>{nameEl.textContent=c.dataset.name;worst=Math.max(worst,lg+gap+nameEl.offsetWidth)});nameEl.textContent=keep;
+      if(worst>titleEl.clientWidth)sd.style.setProperty('--co-fs',Math.floor(fs*titleEl.clientWidth/worst)+'px')}
+    document.fonts&&document.fonts.ready.then(fitCo);
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
     /* speed (px/ms, from a swipe) = a GLIDE that CARRIES the swipe's speed (her 2026-10-26: "it feels a little tense"):
        the glide starts exactly as fast as the finger left and eases out on the --sd-ease curve, no constant-speed run
