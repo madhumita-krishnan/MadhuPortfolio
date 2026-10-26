@@ -1024,7 +1024,7 @@ ${heroFrameVars()}
 .view-toggle.has-knob .view-btn[aria-pressed="true"]{background:transparent}
 .view-toggle.has-knob .view-btn{position:relative;z-index:1;transition:color .18s ease}
 .vt-knob{position:absolute;left:0;top:4px;bottom:4px;border-radius:var(--r-pill);background:var(--text-primary);z-index:0;pointer-events:none;
-  transform-origin:50% 50%;will-change:transform}
+  transform-origin:0 50%;will-change:transform,width}
 .view-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}
 .view-btn:focus-visible{outline:2px solid var(--ink-blue);outline-offset:2px}
 .work-sec[data-view="deck"] .view-list,.work-sec[data-view="list"] .view-deck{display:none}
@@ -1052,7 +1052,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .view-toggle{touch-action:none}   /* so a drag across it slides the switch instead of scrolling the page */
 /* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
    there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
-.vt-ring{position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid #8fb2f2;
+.vt-ring{position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:999px;border:1.5px solid #8fb2f2;
   box-sizing:border-box;opacity:0;pointer-events:none}   /* = DOT in app.js */
 .view-toggle.vt-leaving{pointer-events:none}
 .work-head .head-toggle{background:rgba(22,27,40,.88)}
@@ -2163,11 +2163,18 @@ function makeJS() {
     document.querySelectorAll('.view-toggle').forEach(tg=>{
       const bs=[...tg.querySelectorAll('.view-btn')];if(bs.length<2)return;
       const knob=document.createElement('span');knob.className='vt-knob';knob.setAttribute('aria-hidden','true');tg.insertBefore(knob,tg.firstChild);tg.classList.add('has-knob');
-      const at=v=>{const b=bs.find(x=>x.dataset.view===v)||bs[0];return b.offsetLeft};
-      let x=null,vx=0,target=0,raf=0,drag=null,last=0;
-      const size=()=>{knob.style.width=bs[0].offsetWidth+'px'};
-      const paint=()=>{const sx=1+Math.min(.55,Math.abs(vx)/800),sy=1-Math.min(.22,Math.abs(vx)/2200);
-        knob.style.transform='translateX('+x.toFixed(2)+'px) scale('+sx.toFixed(3)+','+sy.toFixed(3)+')'};
+      const at=v=>{const b=bs.find(x=>x.dataset.view===v)||bs[0];return b.offsetLeft};   // where the knob's left edge rests
+      let x=null,vx=0,target=0,raf=0,drag=null,last=0,kw=0;
+      const size=()=>{kw=bs[0].offsetWidth};
+      /* the goo stays INSIDE the toggle's ring (her 2026-10-26: "dont like when the toggle drag extends outside of the bounding
+         lines"): the trailing edge lags behind as a stretched tail, and anything that would cross a wall (a drag past the end,
+         the spring's overshoot) squashes the blob flat against it instead, swelling a touch into the 4px padding */
+      const paint=()=>{const lo=bs[0].offsetLeft,hi=bs[bs.length-1].offsetLeft+kw,s=Math.min(.5,Math.abs(vx)/900)*kw;
+        let L=x,R=x+kw;if(vx>0)L-=s;else R+=s;
+        L=Math.max(lo,L);R=Math.min(hi,R);const min=kw*.6;
+        if(R-L<min){if(L===lo)R=lo+min;else L=hi-min}
+        const sq=1-(R-L)/kw,sy=sq>0?1+Math.min(.12,sq*.35):1-Math.min(.15,s/kw*.3);
+        knob.style.width=(R-L).toFixed(2)+'px';knob.style.transform='translateX('+L.toFixed(2)+'px) scaleY('+sy.toFixed(3)+')'};
       /* a spring with a little overshoot: k pulls to the target, d damps it; the blob's stretch comes from its speed */
       const step=now=>{const dt=Math.min(.032,(now-last)/1000||.016);last=now;
         if(!drag){vx+=((target-x)*520-vx*17)*dt;x+=vx*dt}
@@ -2218,12 +2225,13 @@ function makeJS() {
       const FULL='inset(0% 0% round 999px)',DOT=14;
       const parts=t=>{const w=t.offsetWidth||1,h=t.offsetHeight||1;
         if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
-        return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,btns:[...t.querySelectorAll('.view-btn,.vt-knob')]}};   // the knob resolves with the icons
+        return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,
+          DOTS:{width:DOT+'px',height:DOT+'px'},BAR:{width:w+'px',height:h+'px'},btns:[...t.querySelectorAll('.view-btn,.vt-knob')]}};   // the knob resolves with the icons
       const run=(t,show)=>{
         (t._a||[]).forEach(a=>a.cancel());t._a=null;
         if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
         t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
-        const {CIRC,ring,btns}=parts(t),A=[];
+        const {CIRC,ring,btns,DOTS,BAR}=parts(t),A=[];
         /* the toggle beside "Selected Projects" just eases in and out; the bounce, the dot and the suck are the CORNER one's
            alone (her 2026-10-26: "just do ease in ease out for the normal toggle near selected projects. the animation is only
            for the toggle in the corner") */
@@ -2232,8 +2240,14 @@ function makeJS() {
           /* IN, dramatic (her: "make the toggle bounce into place more dramatic and pronounced"): the dot pops past full size
              and rings down (0–520) → holds (to 800) → widens (800–1080) → lands with a big squash-and-stretch wobble
              (1040–1700) → icons (1080–1280) */
-          A.push(t.animate([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.74,easing:'cubic-bezier(.2,1.3,.35,1)'},{clipPath:FULL,offset:1}],{duration:1080,fill:'both'}),
-            ring.animate([{opacity:1},{opacity:1,offset:.74},{opacity:0,offset:.86},{opacity:0}],{duration:1080,fill:'both'}),
+          /* SMOOTH MORPH (her 2026-10-26: "circle to full toggle and toggle to full circle look more smoother"): the blue line
+             grows WITH the shape on the same curve, so the outline never drops out mid-morph, then hands off to the bar's own
+             ring where they sit on top of each other; the widen eases out without an overshoot (a clip can't show one, it
+             was cut flat into a jolt), the landing wobble carries the bounce */
+          const MO='cubic-bezier(.45,0,.15,1)';
+          A.push(t.animate([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.74,easing:MO},{clipPath:FULL,offset:1}],{duration:1080,fill:'both'}),
+            ring.animate([{...DOTS,opacity:1},{...DOTS,opacity:1,offset:.74,easing:MO},{...BAR,opacity:1,offset:1}],{duration:1080,fill:'both'}),
+            ring.animate([{opacity:1},{opacity:0}],{duration:300,delay:1080,easing:'ease-out',fill:'forwards'}),
             /* it BURSTS up from below (her: "explode/pop in/move in from the bottom. I don't want it to ease in"): no ease-in, it
                leaves at full speed, overshoots high and big, rings down; then the hold is a little heartbeat pulse, not a
                static pause ("the pause should be a mini pulse") */
@@ -2249,8 +2263,10 @@ function makeJS() {
              (220–400) → the dot bounces (400–560) → holds, fully solid, ringed (to 700) → leans in and is SUCKED away,
              accelerating, stretching along the pull (700–1000); it stays solid until it's almost gone */
           A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'both'})),
-            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.22,easing:'cubic-bezier(.8,0,.92,.3)'},{clipPath:CIRC,offset:.4},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
-            ring.animate([{opacity:0},{opacity:0,offset:.37},{opacity:1,offset:.41},{opacity:1}],{duration:1000,fill:'both'}),
+            /* the ring lights on the bar's edge while it breathes out, then draws in WITH it on one curve (slow, then fast, then a
+               short soft landing so the bounce reads as the same motion, not a wall) */
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.22,easing:'cubic-bezier(.7,0,.25,1)'},{clipPath:CIRC,offset:.4},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
+            ring.animate([{...BAR,opacity:0},{...BAR,opacity:1,offset:.18},{...BAR,opacity:1,offset:.22,easing:'cubic-bezier(.7,0,.25,1)'},{...DOTS,opacity:1,offset:.4},{...DOTS,opacity:1}],{duration:1000,fill:'both'}),
             t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.1,easing:'ease-out'},{transform:'scale(1.07,.95)',opacity:1,offset:.22,easing:'ease-in'},{transform:'none',opacity:1,offset:.4},
               {transform:'scale(.75)',opacity:1,offset:.44},{transform:'scale(1.22)',opacity:1,offset:.49},{transform:'scale(.95)',opacity:1,offset:.53},{transform:'none',opacity:1,offset:.56},
               {transform:'scale(1.16)',opacity:1,offset:.63,easing:'ease-in-out'},{transform:'none',opacity:1,offset:.7,easing:'ease-out'},{transform:'translateY(-4px) scale(1.25)',opacity:1,offset:.76,easing:'cubic-bezier(.7,0,.95,.2)'},{transform:'translateY(80px) scale(.1,.55)',opacity:1,offset:.97},{transform:'translateY(90px) scale(0)',opacity:0}],{duration:1000,fill:'both'}));
