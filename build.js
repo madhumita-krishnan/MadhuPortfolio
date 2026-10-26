@@ -2028,7 +2028,7 @@ function makeJS() {
      local tweaker (studies/tweaker-logos/) can drive it; a 'tweak' event updates it and replays. */
   const brandRow=document.querySelector('.brands-row');
   if(brandRow&&!rmActive()&&'IntersectionObserver' in window){
-    const W=window.__wisp=Object.assign({step:3,dot:1.6,scatter:170,curl:36,dur:1.7,stagger:.11,spread:.45,lift:.6},${JSON.stringify(TWEAKS['logo-wisps'] || {})},window.__wisp||{});
+    const W=window.__wisp=Object.assign({step:3,dot:1.6,scatter:170,curl:36,dur:1,stagger:.06,spread:.45,lift:.6},${JSON.stringify(TWEAKS['logo-wisps'] || {})},window.__wisp||{});
     const marks=[...brandRow.querySelectorAll('.brand')],PAD=220;
     const hide=()=>marks.forEach(b=>{b.style.transition='opacity .6s ease';b.style.opacity='0'});
     brandRow.classList.add('gs-roll');
@@ -2076,13 +2076,17 @@ function makeJS() {
     const prep=()=>ready||(ready=vendorJS('gsap.min.js').then(()=>Promise.all(marks.map(sample))).then(d=>{data=d},e=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='');throw e}));
     const near=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){near.disconnect();prep().catch(()=>{})}},{rootMargin:'100% 0px'});
     near.observe(brandRow);
-    /* ...but it PLAYS only once the row is a third of the way up the screen (her 2026-10-24: "the logo
+    /* (2026-10-26, her: "the logo stuff is triggered or starts too slow … people have scrolled past the logos before they load
+       in. that loses all my credibility") it now plays as soon as the whole row is just on screen (its top past the bottom
+       15%), and the whole row lands in ~1.9s instead of ~3s (dur 1.7 -> 1, stagger .11 -> .06). Not at page load: the row
+       is below the hero, so it still waits for a scroll.
+       Before that: it PLAYED only once the row was a third of the way up the screen (her 2026-10-24: "the logo
        animation loads when the page loads, not when I scroll past it"): the row sits just under the hero, so on the
        first pixel it played out while still at the bottom edge, over before she got there */
     const bio=new IntersectionObserver(es=>{
       if(seen||!es.some(e=>e.isIntersecting))return;seen=true;bio.disconnect();
       prep().then(run,()=>{});
-    },{rootMargin:'0px 0px -35% 0px'});
+    },{rootMargin:'0px 0px -15% 0px'});
     bio.observe(brandRow);
     addEventListener('tweak',e=>{Object.assign(W,e.detail.values||{});if(data&&window.gsap){clearTimeout(run.t);run.t=setTimeout(()=>Promise.all(marks.map(sample)).then(d=>{data=d;run()}),250)}});
     addEventListener('tweak-replay',()=>{if(data&&window.gsap)run()});
