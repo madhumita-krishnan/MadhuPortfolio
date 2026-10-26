@@ -1031,7 +1031,7 @@ ${heroFrameVars()}
 html.hfocus .hf-path>*,html.hf-out .hf-path>*{transition:opacity .45s var(--ease-standard)}   /* only while fading, so nobody's own transitions are touched */
 /* GONE, not faint (her: "why can I see selected projects in the back … it reads like noise"): legible type at a few percent
    collides with whatever is near it; layering only works when the back layer can't be read */
-html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:0!important;pointer-events:none}
+html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;pointer-events:none}   /* never the cursor dot (.dc): fading it left her reaching for the toggle with no cursor */
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
 .view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none}
