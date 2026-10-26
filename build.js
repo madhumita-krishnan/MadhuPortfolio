@@ -2353,8 +2353,8 @@ function makeJS() {
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     /* trackpad: the deck follows the fingers 1:1 until the push reaches --sd-wpush px, then COMMITS to the next card and
        glides there, starting at the push's own speed (one push = one project), so the hand-off is seamless. Everything
-       after that, the whole momentum tail however long or bumpy, is swallowed until the wheel has paused (180ms) and the
-       glide has landed, or it reverses; only then can a new swipe start (her: "it should stop at each one"). */
+       after that, the momentum tail however long or bumpy, is swallowed (her: "it should stop at each one"), but a
+       genuinely new swipe is never swallowed with it: see below. */
     /* SIDEWAYS = FOCUS MODE (her 2026-10-26: "when I horizontally scroll through I need all the stuff to fade and I need to
        go into scroll focus mode until I scroll up or down to get out"). A sideways swipe or drag on the deck fades
        everything else on the page (nav, headings, the other sections, the toggle); the deck stays. Any up/down scroll,
@@ -2362,7 +2362,11 @@ function makeJS() {
     const root=document.documentElement;let hfY=0;
     /* what stays: the deck AND the view toggles (her: "I'm in horizontal scroll mode. I should be able to switch to vertical
        mode. so I don't know why you'd gray that out"): a mode never fades its own way out */
-    const focusOn=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
+    /* only when the case is CENTRED on screen (her 2026-10-26: "selected projects shouldn't be hidden at this scroll position.
+       it is only hidden when the cases are centered"): swiping with the deck still low or high on the screen leaves the
+       heading and the page alone */
+    const centred=()=>{const r=stage.getBoundingClientRect();return r.height>0&&Math.abs(r.top+r.height/2-innerHeight/2)<innerHeight*.04};   // the deck's own stage (cards move between lanes mid-swipe; the stage doesn't)
+    const focusOn=()=>{if(root.classList.contains('hfocus')||!centred())return;hfY=scrollY;
       [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
       root.classList.add('hfocus')};
     const focusOff=()=>{if(!root.classList.contains('hfocus'))return;root.classList.add('hf-out');root.classList.remove('hfocus');
@@ -2372,7 +2376,7 @@ function makeJS() {
     addEventListener('scroll',()=>{if(Math.abs(scrollY-hfY)>30)focusOff()},{passive:true});
     addEventListener('keydown',e=>{if(/^(Escape|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key))focusOff()});
     addEventListener('pointerdown',e=>{if(!sd.contains(e.target))focusOff()});
-    let wAcc=0,wLock=false,wDir=0,wPts=[],wT=0,wGap=0,wPrev=0;
+    let wAcc=0,wLock=false,wDir=0,wPts=[],wT=0,wGap=0,wPrev=0,wPeak=0,wFloor=0,wRise=0;
     /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
        where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
        screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
@@ -2387,17 +2391,23 @@ function makeJS() {
       if(!over&&!onScreen)return;
       e.preventDefault();touched=true;focusOn();
       const dir=Math.sign(e.deltaX);
-      /* the pause is read off the events' own timestamps, so page jank can't fake one. A momentum tail that stalls and
-         resumes keeps shrinking; a new push grows, or comes after a real rest (400ms+). Either way the glide lands first. */
+      /* a NEW swipe while locked, never needing a gap (her: "sometimes my mouse is in the center … and I can't scroll
+         horizontally": a second swipe made during the first one's momentum was swallowed as more tail). Momentum only
+         decays, so once the tail is decaying (below 60% of its peak), deltas climbing sharply off its floor for two
+         events in a row (> max(8, 2.2 x floor)) are a fresh push; a single bump in a bumpy tail isn't. Also new: a
+         reversal, or a pause (event timestamps, so jank can't fake one) followed by a real rest (400ms+) or a growing
+         delta (a stalled tail resumes shrinking). A new swipe retargets from wherever the glide is, still one card. */
       const gap=e.timeStamp-wT;wT=e.timeStamp;if(wLock&&gap>180)wGap=gap;
-      if(wLock&&(dir!==wDir&&ax>6||wGap&&!tween&&(wGap>400||ax>wPrev))){wLock=false;wAcc=0;wGap=0}   // reversed (momentum never reverses), or a new swipe
+      if(wLock){wPeak=Math.max(wPeak,ax);if(wFloor||ax<wPeak*.6)wFloor=Math.min(wFloor||ax,ax);
+        wRise=wFloor&&ax>Math.max(8,2.2*wFloor)?wRise+1:0}
+      if(wLock&&(dir!==wDir&&ax>6||wRise>=2||wGap&&(wGap>400||ax>wPrev))){wLock=false;wAcc=0;wGap=0}
       wPrev=ax;
       wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
       clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock&&wAcc)settle(home,false,0);wAcc=0;wPts=[]},180);   // a push too small to commit eases back
       if(wLock)return;
       if(!wAcc&&tween)tween.kill();
       wAcc+=e.deltaX;place(lim(pos+e.deltaX/rAt(dir)));
-      if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wGap=0;wDir=Math.sign(wAcc);
+      if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wGap=0;wPeak=wFloor=wRise=0;wDir=Math.sign(wAcc);
         const wv=Math.abs(wPts.reduce((s,p)=>s+p[1],0))/(e.timeStamp-wPts[0][0]+16);   // px/ms over the last ~70ms
         settle(home+wDir,false,wv)}
     },{passive:false});
