@@ -442,7 +442,7 @@ main{position:relative}
 .sec.past{filter:blur(6px);opacity:.3}
 .editing .sec.past{filter:none;opacity:1}
 #feel{padding-top:0;padding-bottom:0}
-.h2{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;color:var(--blue);letter-spacing:-.01em;margin-bottom:34px}
+.h2{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;color:var(--hi);letter-spacing:-.01em;margin-bottom:34px}
 .sub{font-size:21px;color:var(--hi);font-weight:500;margin:52px 0 18px}
 h3.sub{font-size:24px;margin:72px 0 26px}
 .body{margin:30px 0}
