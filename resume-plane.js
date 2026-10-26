@@ -15,7 +15,10 @@
 (function () {
   var me = document.currentScript && document.currentScript.src || '';
   var base = me.replace(/resume-plane\.js.*$/, ''), ver = (me.match(/\?v=[^&#]*/) || [''])[0];
-  var THROW = base + 'assets/resume-throw.png' + ver, PLANE = base + 'assets/resume-plane.png' + ver;
+  /* the plane is CLAY now (her 2026-10-26: "make the airplane clay in Flora"): two Flora takes (Nano Banana Pro from the old
+     paper plane + her clay resume tile, green-keyed); take 1 by default, ?plane=2 for the other, ?plane=paper for the old one */
+  var pq = (location.search.match(/[?&]plane=(\w+)/) || [])[1];
+  var THROW = base + 'assets/resume-throw.png' + ver, PLANE = base + (pq === 'paper' ? 'assets/resume-plane.png' : 'assets/resume-plane-clay-' + (pq === '2' ? 2 : 1) + '.png') + ver;
   var PAGE = base + 'assets/resume-page.jpg' + ver, PDF = base + 'assets/resume.pdf' + ver;
   /* the throw sheet (clay-character keying, half size): cells, her feet and centre in a cell, where the plane is at
      the release frame, her height in a cell */
@@ -222,7 +225,7 @@
   /* THE FLIGHT: long gliding curves around the page, nearer and bigger as it goes, then a swift sideways pass across
      the glass, huge, which whites out into the resume */
   function fly(x0, y0, w0) {
-    var W = innerWidth, H = innerHeight, p = document.createElement('img'), ar = 1241 / 2059;   // the picture's height/width
+    var W = innerWidth, H = innerHeight, p = document.createElement('img'), ar = pq === 'paper' ? 1241 / 2059 : pq === '2' ? 833 / 1400 : 851 / 1400;   // the picture's height/width
     p.className = 'rz-plane'; p.src = PLANE; p.alt = '';
     document.body.appendChild(p);
     /* the glide: a Catmull-Rom path through these points (viewport fractions), with the plane's width (fraction of W) */

@@ -1014,7 +1014,7 @@ ${heroFrameVars()}
 .work-head{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .work-sec[data-view="deck"] .work-head{padding:0 calc(var(--space)*6)}
 .work-head .section-title{margin:0}
-.view-toggle{display:inline-flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid rgba(169,196,245,.42)}   /* a ring you can see on the night ground (her 2026-10-26: "make the link around the toggle more visible"); was --line, nearly invisible */
+.view-toggle{position:relative;display:inline-flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid rgba(169,196,245,.42)}   /* a ring you can see on the night ground (her 2026-10-26: "make the link around the toggle more visible"); was --line, nearly invisible */
 /* icons, not words (her ask): three cards side by side = swipe, two stacked rows = scroll */
 .view-btn{display:grid;place-items:center;width:44px;height:36px;padding:0;border:0;border-radius:var(--r-pill);
   background:transparent;color:var(--text-secondary);cursor:pointer;transition:background var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -1042,6 +1042,10 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
    from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
    there and not clickable; while it dematerializes it can't be clicked either */
 .view-toggle.vt-hidden{visibility:hidden;pointer-events:none}
+/* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
+   there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
+.vt-ring{position:absolute;top:-1px;bottom:-1px;left:50%;transform:translateX(-50%);border-radius:50%;border:1.5px solid #8fb2f2;
+  box-sizing:border-box;opacity:0;pointer-events:none}
 .view-toggle.vt-leaving{pointer-events:none}
 .work-head .head-toggle{background:rgba(22,27,40,.88)}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
@@ -2155,11 +2159,11 @@ function makeJS() {
          want the toggle appearance and disappearance to feel more springy"; before that, the Apple-reference pill-to-bar
          materialize with its exact reverse). Controls are laid out at full size the whole time; the surface is a clip of the
          bar itself, so icons are never stretched; the squash/stretch happens only while the icons are hidden.
-           IN   a dark CIRCLE (the bar's height) plops up from below with a springy overshoot (0–260ms) → it widens from its
-                centre into the full bar (260–600ms) → the bar lands with a squash-and-settle (520–800ms) → the icons
-                resolve together (560–760ms); the ring arrives lit in the site blue and cools
-           OUT  the icons go (0–120ms) → the bar draws in from both ends into the circle, with a springy tuck
-                (100–390ms) → the circle squashes as it lands and PLOPS down out of sight (390–650ms)
+           IN   a dark CIRCLE with its own blue ring plops up from below with a springy overshoot (0–260ms) → it HOLDS as a
+                circle for a beat (to 610ms) → widens from its centre into the full bar (610–950ms) → squash-and-settle
+                (870–1150ms) → the icons resolve together (910–1110ms); the bar's ring arrives lit in the site blue and cools
+           OUT  the icons go (0–120ms) → the bar draws in from both ends into the blue-ringed circle (100–390ms) → it HOLDS
+                there (to 740ms) → squashes as it lands and PLOPS down out of sight (740–1000ms)
          A change of mind mid-way starts the other direction straight away. Reduced motion: shown or hidden at once.
          WHEN each toggle shows is unchanged: the floating one while the projects hold the screen (on laptops only while
          the nav is tucked away), the top one whenever the floating one isn't on. */
@@ -2171,19 +2175,23 @@ function makeJS() {
         t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
         const w=t.offsetWidth||1,h=t.offsetHeight||1,CIRC='inset(0% '+Math.max(0,(w-h)/2/w*100).toFixed(2)+'% round 999px)';
         const btns=[...t.querySelectorAll('.view-btn')],A=[];
+        if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
+        const ring=t._ring;ring.style.width=h+'px';
         if(show){
-          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.43},{clipPath:FULL}],{duration:600,easing:'linear',fill:'both'}),
+          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.64},{clipPath:FULL}],{duration:950,easing:'linear',fill:'both'}),
+            ring.animate([{opacity:1},{opacity:1,offset:.64},{opacity:0,offset:.8},{opacity:0}],{duration:950,fill:'both'}),
             t.animate([{transform:'translateY(18px) scale(.25)',opacity:0,easing:SPRING},{transform:'none',opacity:1}],{duration:260,fill:'backwards'}),
-            t.animate([{transform:'none'},{transform:'scale(1.06,.9)',offset:.3},{transform:'none'}],{duration:280,delay:520,easing:SETTLE}),
-            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:560,easing:'ease-out',fill:'both'})),
+            t.animate([{transform:'none'},{transform:'scale(1.06,.9)',offset:.3},{transform:'none'}],{duration:280,delay:870,easing:SETTLE}),
+            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:910,easing:'ease-out',fill:'both'})),
             /* "so that people actually notice it enter": the ring arrives lit in the site blue and cools to its resting tint */
             t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:1900,easing:'ease-out'}));
           A[0].effect.updateTiming({easing:'linear'});
-          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.43,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
+          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.64,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
         }else{
           A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'both'})),
-            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.15,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.6},{clipPath:CIRC,offset:1}],{duration:650,fill:'both'}),
-            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.6},{transform:'translateY(2px) scale(1.24,.76)',opacity:1,offset:.7,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:650,fill:'both'}));
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.1,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.39},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
+            ring.animate([{opacity:0},{opacity:0,offset:.33},{opacity:1,offset:.39},{opacity:1}],{duration:1000,fill:'both'}),
+            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.74},{transform:'translateY(2px) scale(1.24,.76)',opacity:1,offset:.81,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:1000,fill:'both'}));
         }
         t._a=A;
         Promise.all(A.map(a=>a.finished)).then(()=>{if(t._a!==A)return;
