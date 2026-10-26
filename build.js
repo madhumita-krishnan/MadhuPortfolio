@@ -743,6 +743,9 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    tiles are ground for clay-her. Laptops: the cloud carries the socials. */
 .cta-socials{display:flex;align-items:center;gap:18px}
 .cta-socials a{display:block;width:48px;height:48px;border-radius:12px}
+.lit-glint{position:absolute;inset:0;pointer-events:none;opacity:0;border-radius:inherit;z-index:4;
+  background:radial-gradient(circle at var(--gx,30%) var(--gy,20%),rgba(255,248,232,.8),rgba(255,248,232,.25) 28%,rgba(255,248,232,0) 58%),radial-gradient(circle at var(--sx,70%) var(--sy,80%),rgba(0,0,0,.62),rgba(0,0,0,0) 65%);
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}   /* cursor-light.js */
 .cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;filter:drop-shadow(calc(var(--lx,0)*4px) calc(var(--ly,1)*4px) 6px rgba(0,0,0,.45))}
 .cta-socials a:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
 @media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}
@@ -1018,6 +1021,9 @@ ${heroFrameVars()}
    in reach; it comes to rest at the end of the section. z-index 45 keeps it ABOVE the phone's bottom edge-fade
    haze (40), which was blurring it (her: "the toggle at the bottom is hidden behind a haze") */
 .view-dock{display:flex;justify-content:center;margin-top:calc(var(--space)*4)}
+/* the deck's sideways focus mode (see focusOn): every sibling along the deck's path to <body> fades and can't be clicked */
+html.hfocus .hf-path>*,html.hf-out .hf-path>*{transition:opacity .45s var(--ease-standard)}   /* only while fading, so nobody's own transitions are touched */
+html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:.06!important;pointer-events:none}
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
 .view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:none;   /* no slide up: it materializes in place */
@@ -1241,7 +1247,7 @@ ${PHONE_CSS}
 
 /* the standalone window: 1280pt wide, 10pt radius. Tab strip + toolbar stay 80u
    total — the 1.7343 SAME-box contract with the landscape cards depends on it. */
-.browser{container-type:inline-size;width:100%;--u:.0781cqw;
+.browser{position:relative;container-type:inline-size;width:100%;--u:.0781cqw;
   border-radius:calc(10*var(--u));overflow:hidden;background:#DEE1E6;
   box-shadow:calc(var(--lx,0)*24*var(--u)) calc(var(--ly,1)*24*var(--u)) calc(54*var(--u)) var(--shadow-mid),
              calc(var(--lx,0)*2*var(--u)) calc(var(--ly,1)*2*var(--u)) calc(6*var(--u)) var(--shadow-soft),
@@ -2129,7 +2135,12 @@ function makeJS() {
       const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
       const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
         if(on&&!grown&&(!fineP||!navW||navW.classList.contains('nav-hidden'))){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
-      new IntersectionObserver(es=>es.forEach(e=>{inWork=e.isIntersecting;sync()}),{rootMargin:'-20% 0px -20% 0px'}).observe(workEl);
+      /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
+         own padding below the last one doesn't count (her 2026-10-26: "I've basically left the space where the toggle is
+         needed. why would I need the toggle still there?"). data-serves names them for device-check's floating-UI rule */
+      const served=[...workEl.querySelectorAll(dock.dataset.serves)],live=new Set();
+      const ioS=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()},{rootMargin:'-45% 0px -45% 0px'});
+      served.forEach(el=>ioS.observe(el));
       if(navW)new MutationObserver(()=>{if(!grown)sync()}).observe(navW,{attributes:true,attributeFilter:['class']});
       /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
       new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
@@ -2218,8 +2229,13 @@ function makeJS() {
        shoot off. Without speed (keys, the progress bar) it eases in as before. */
     const ez=()=>getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out';
     const kOf=e=>{const m=/power([0-9])/.exec(e);return m?+m[1]+1:/expo/.test(e)?6.9:/sine/.test(e)?1.6:3};   // the curve's starting slope
+    /* ONE PROJECT PER GESTURE (her 2026-10-26: "it can scroll over multiple at a time. it should stop at each one"):
+       home is the card the deck rests on, or is gliding to. A drag, flick or trackpad swipe tracks only within
+       home ± 1 and lands on home, home + 1 or home - 1, never further. */
+    let home=0;
+    const lim=v=>Math.max(home-1,Math.min(home+1,edge(v)));
     const settle=(i,instant,speed)=>{
-      const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
+      const to=Math.max(0,Math.min(cards.length-1,i));home=to;if(tween)tween.kill();
       if(nudgeTl){nudgeTl.kill();nudgeTl=null;nudging=false}   // a real move always beats the swipe-hint nudge (it was undoing swipes made during it)
       if(instant||rm||!window.gsap)return place(to);
       const o={v:pos};
@@ -2237,20 +2253,21 @@ function makeJS() {
       /* follows from the first pixel: mostly-sideways moves track straight away; the axis is decided at 4px and a
          vertical one hands the page back (and puts the deck where it was) */
       if(!drag.axis&&(Math.abs(dx)>=4||Math.abs(dy)>=4)){drag.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';
-        if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging')}else{place(drag.p0);return}}
+        if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging');focusOn()}else{place(drag.p0);return}}
       if(drag.axis==='y'||!drag.axis&&Math.abs(dy)>Math.abs(dx))return;
       drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>12)drag.pts.shift();
-      if(!drag.r)drag.r=dx?rAt(-Math.sign(dx)):0;if(drag.r)place(edge(drag.p0-dx/drag.r));
+      if(!drag.r)drag.r=dx?rAt(-Math.sign(dx)):0;if(drag.r)place(lim(drag.p0-dx/drag.r));
     });
-    /* release: a quick flick (--sd-flick px/ms) goes to the next project however short it was; a slow drag commits once
-       it's past --sd-commit of a card, otherwise it eases back. Never more than one card past where you let go. */
+    /* release: a quick flick (--sd-flick px/ms) goes one project on, however short it was; a slow drag commits once it's
+       past --sd-commit of a card (counted from home, in the way it moved), otherwise it eases back. Either way it's home
+       ± 1: a flick never skips, and catching a glide mid-way counts from the card it was gliding to. */
     const end=e=>{
       if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');
       if(d.axis!=='x'){if(pos!==Math.round(pos))settle(Math.round(pos),false,0);return}   // a tap that caught a glide finishes it
       const now=e.timeStamp,pts=d.pts.filter(p=>now-p[0]<100),a=pts[0];
       const v=pts.length>1?(pts[pts.length-1][1]-a[1])/Math.max(16,now-a[0]):0;   // px per ms, measured to the release
       const fwd=-Math.sign(v),cm=num('--sd-commit')||.22;
-      const to=Math.abs(v)>=(num('--sd-flick')||.3)?(fwd>0?Math.floor(pos)+1:Math.ceil(pos)-1):pos>d.p0?Math.floor(pos+1-cm):Math.ceil(pos-1+cm);
+      const off=pos-home,to=Math.abs(v)>=(num('--sd-flick')||.3)?home+fwd:pos>d.p0?home+(off>cm?1:0):home-(off<-cm?1:0);
       settle(to,false,Math.sign(to-pos)===fwd?Math.abs(v):0);suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
@@ -2277,9 +2294,24 @@ function makeJS() {
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     /* trackpad: the deck follows the fingers 1:1 until the push reaches --sd-wpush px, then COMMITS to the next card and
-       glides there, starting at the push's own speed (one push = one project), so the hand-off is seamless. The
-       trackpad's own momentum after that is swallowed until the wheel goes quiet, so it never drags the glide down. */
-    let wAcc=0,wFrom=0,wLock=false,wLast=0,wDir=0,wPts=[];
+       glides there, starting at the push's own speed (one push = one project), so the hand-off is seamless. Everything
+       after that, the whole momentum tail however long or bumpy, is swallowed until the wheel has been quiet for 180ms
+       or reverses; only then can a new swipe start (her: "it should stop at each one"). */
+    /* SIDEWAYS = FOCUS MODE (her 2026-10-26: "when I horizontally scroll through I need all the stuff to fade and I need to
+       go into scroll focus mode until I scroll up or down to get out"). A sideways swipe or drag on the deck fades
+       everything else on the page (nav, headings, the other sections, the toggle); the deck stays. Any up/down scroll,
+       Esc, or a click outside the deck brings it all back. It only fades: the page's own scroll is never taken over. */
+    const root=document.documentElement;let hfY=0;
+    const focusOn=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;sd.classList.add('hf-on');
+      for(let e=sd.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path');root.classList.add('hfocus')};
+    const focusOff=()=>{if(!root.classList.contains('hfocus'))return;root.classList.add('hf-out');root.classList.remove('hfocus');
+      clearTimeout(focusOff.t);focusOff.t=setTimeout(()=>{if(root.classList.contains('hfocus'))return;root.classList.remove('hf-out');sd.classList.remove('hf-on');
+        document.querySelectorAll('.hf-path').forEach(e=>e.classList.remove('hf-path'))},500)};
+    addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX))focusOff()},{passive:true});
+    addEventListener('scroll',()=>{if(Math.abs(scrollY-hfY)>30)focusOff()},{passive:true});
+    addEventListener('keydown',e=>{if(/^(Escape|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key))focusOff()});
+    addEventListener('pointerdown',e=>{if(!sd.contains(e.target))focusOff()});
+    let wAcc=0,wLock=false,wDir=0,wPts=[];
     /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
        where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
        screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
@@ -2292,17 +2324,17 @@ function makeJS() {
       const r=sd.getBoundingClientRect(),over=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
       const onScreen=Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>Math.min(r.height,innerHeight)*.45;
       if(!over&&!onScreen)return;
-      e.preventDefault();touched=true;
+      e.preventDefault();touched=true;focusOn();
       const dir=Math.sign(e.deltaX);
-      if(wLock&&(ax>wLast*1.8&&ax>6||dir!==wDir&&ax>6)){wLock=false;wAcc=0}   // a fresh push mid-momentum: a new swipe
-      wLast=ax;wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
-      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,0);wLock=false;wAcc=0;wLast=0;wPts=[]},180);
+      if(wLock&&dir!==wDir&&ax>6){wLock=false;wAcc=0}   // reversed: a new swipe (momentum never reverses)
+      wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
+      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(home,false,0);wLock=false;wAcc=0;wPts=[]},180);
       if(wLock)return;
-      if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
-      wAcc+=e.deltaX;place(edge(pos+e.deltaX/rAt(dir)));
-      if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wDir=dir;
+      if(!wAcc&&tween)tween.kill();
+      wAcc+=e.deltaX;place(lim(pos+e.deltaX/rAt(dir)));
+      if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wDir=Math.sign(wAcc);
         const wv=Math.abs(wPts.reduce((s,p)=>s+p[1],0))/(e.timeStamp-wPts[0][0]+16);   // px/ms over the last ~70ms
-        settle(Math.round(pos)+(Math.round(pos)===wFrom?dir:0),false,wv)}
+        settle(home+wDir,false,wv)}
     },{passive:false});
     /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
        and back, once, unless you've already touched it. The headline stays put for the nudge. */
@@ -3068,7 +3100,7 @@ function renderHome() {
   <div class="view-deck">${sdeckHTML}</div>
   <div class="view-list">${listHTML}</div>
   <!-- the toggle floats at the bottom of the screen the whole time the projects are on screen (her ask: "should always be visible") -->
-  <div class="view-dock">
+  <div class="view-dock" data-serves=".view-list,.sdeck">
     <div class="view-toggle" role="group" aria-label="How to browse the projects">
       <button type="button" class="view-btn" data-view="list" aria-pressed="true" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
       <button type="button" class="view-btn" data-view="deck" aria-pressed="false" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
