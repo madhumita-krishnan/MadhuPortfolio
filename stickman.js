@@ -343,7 +343,8 @@
     drag: null,
     flip: null,
     fallFrom: 0,
-    landT: 0, slideT: 0,
+    landT: 0, land0: 0, slideT: 0,
+    loadT: 0, load0: 0, loadV: null,   // the crouch before a launch: its timer and the launch it holds
     hang: null,
     mantle: null,
     flipQueued: false,     // one landing-prediction per airtime — reset on the ground
@@ -493,7 +494,7 @@
      wobbling on her outline started a fresh wave every time it crossed back in, 14 frames after the last one ended */
   var waveAt = -1e9;
   function waveHello() {
-    if (rmActive() || performance.now() - waveAt < 3600) return;
+    if (rmActive() || fig.loadT || performance.now() - waveAt < 3600) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {
       waveAt = performance.now();
       fig.prev = fig.state === 'sign' ? 'sign' : 'idle';
@@ -861,6 +862,23 @@
     return Math.sign(dx) * (WALK + (RUN - WALK) * Math.max(0, Math.min((Math.abs(dx) - 80) / 160, 1)));
   }
 
+  function brace(t) { fig.landT = fig.land0 = t; }
+  /* she LOADS before she jumps (her 2026-10-26, #76: "athletes load up before they jump"): a launch from her feet is held
+     back for a crouch, longer for a bigger jump, then goes off with the same speed it was planned with */
+  function crouchFirst(was, x0) {
+    if (fig.state !== 'air' || fig.vy > -150 || fig.loadV || (was !== 'move' && was !== 'idle')) return;
+    fig.loadV = { vx: fig.vx, vy: fig.vy };
+    fig.loadT = fig.load0 = 0.07 + 0.11 * Math.min(1, -fig.vy / 1000);
+    fig.state = was; fig.vx = 0; fig.vy = 0;
+    if (x0 != null) fig.x = x0;   // the hop's first step waits for the crouch too: no slide while she bends
+  }
+  function tickLoad(dt) {
+    if (fig.state !== 'move' && fig.state !== 'idle') { fig.loadT = 0; fig.loadV = null; return; }   // something else took her (a drop, a wave)
+    fig.loadT = Math.max(0, fig.loadT - dt);
+    if (fig.loadT) return;
+    fig.vx = fig.loadV.vx; fig.vy = fig.loadV.vy; fig.loadV = null;
+    fig.fallFrom = fig.y; fig.state = 'air';
+  }
   function tickGround(dt) {
     fig.flipQueued = false;
     if (fig.landT > 0 && !fig.drag) { fig.vx = 0; return; }   // the landing crouch holds still, then she sets off
@@ -1100,10 +1118,13 @@
           if (fig.target) fig.target.avoid = 0;
         }
         fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
-        if (fig.vy > 620 || drop > 130) { fig.landT = 0.18; puff(fig.x, fig.y, 4); }
+        /* she BRACES (her 2026-10-26, #76: "athletes ... brace impact"): every landing that comes down with any speed bends
+           the knees and stands back up, longer the harder she hit; a frame-deep gap between letters is still a walk */
+        if (fig.vy > 150) brace(0.09 + 0.2 * Math.min(1, (fig.vy - 150) / 900));
+        if (fig.vy > 620 || drop > 130) puff(fig.x, fig.y, 4);
         /* the SLAM: a long crouch, a bigger puff, and the cloud hears it. ANY landing on the cloud counts, not only the
            jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
-        if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.36; puff(fig.x, fig.y, 11); }   // the SLAM: deep crouch, big puff
+        if (fig.boxJump) { fig.boxJump = null; brace(0.36); puff(fig.x, fig.y, 11); }   // the SLAM: deep crouch, big puff
         fig.dropping = false;
         /* she LANDS: no skid on into the next spot (her: "when it lands it keeps moving … it slides"). Not off a gap
            between two letters a frame deep: that is still a walk, and stopping dead there stuttered every word */
@@ -1184,7 +1205,7 @@
   var raf = 0, last = 0;
   var rideT = 0;   // seconds of rAF kept alive so a CSS-only glyph wave still animates him
   function needsLoop() {
-    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0 || rideBusy;
+    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.loadT > 0 || fig.slideT > 0 || CLAY.lean !== 0 || rideT > 0 || rideBusy;
   }
   /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
      across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
@@ -1194,7 +1215,7 @@
       var jr = localRect(jbEl, cv.getBoundingClientRect());
       on = fig.x >= jr.x1 + 4 && fig.x <= jr.x2 - 4 && Math.abs(fig.y - (jr.y1 + jr.h * .12)) < 6;
     }
-    if (on && !fig.onCloud) { if (!fig.landT) { fig.landT = 0.32; puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
+    if (on && !fig.onCloud) { if (!fig.landT) { brace(0.32); puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
     fig.onCloud = on;
   }
   /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a soft FOOTSTEP on the very
@@ -1276,14 +1297,17 @@
     stepS = sh; stepK = k;
   }
 
+  var stWas = 'idle';
   function advance(dt) {
+    crouchFirst(stWas);   // a launch set outside the tick (the JUMP! box) loads first too, before the whoosh can hear it
     sfxTick();   // first: a launch set by a click or last frame's hop still has its full upward speed
     cloudMagnet();
     cloudCheck();
     rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
     fig.slideT = Math.max(0, fig.slideT - dt);
-    if (fig.state === 'move' || fig.state === 'idle') tickGround(dt);
+    if (fig.loadT > 0) tickLoad(dt);
+    else if (fig.state === 'move' || fig.state === 'idle') { var w = fig.state, wx = fig.x; tickGround(dt); crouchFirst(w, wx); }
     else if (fig.state === 'air') tickAir(dt);
     else if (fig.state === 'hang') tickHang(dt);
     else if (fig.state === 'mantle') tickMantle(dt);
@@ -1297,6 +1321,7 @@
       if (fig.wave >= 1) { fig.state = fig.prev || 'idle'; fig.prev = null; }
     }
     puffs = puffs.filter(function (p) { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.t > 0; });
+    stWas = fig.state;
   }
   function frame(now) {
     raf = 0;
@@ -1437,7 +1462,7 @@
      dictated by the points of contact"). Measured off each frame's lowest pixels: of the contacts that carry over from
      the frame before, the one that keeps her from going backwards is the planted one. */
   var CW_DX = [0,0,58,58,77,77,161,161,218,218,228,228,228,257,257,257,264,265,270,331,352,352,352,362,362,419,419,503,503,522,522,580,580];
-  var RUN_LEAN = 0.2;   // radians (~11°) the clay runner tips forward from her feet
+  var RUN_LEAN = 0.2, WALK_LEAN = 0.07;   // radians (~11°, ~4°) she tips forward from her feet: running, walking somewhere
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
@@ -1445,13 +1470,19 @@
        distance, so every change of pace snapped her legs to an unrelated frame. The phase carries over (run frame =
        walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
     CLAY.run = sp > (CLAY.run ? 200 : 260);
-    CLAY.lean += ((st === 'move' && CLAY.run ? RUN_LEAN : 0) - CLAY.lean) * .18;   // tips into the run over a few frames, not in one
+    /* tips into the pace over a few frames, not in one, and stands back up straight the same way when she stops */
+    var lt = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT ? (CLAY.run ? RUN_LEAN : WALK_LEAN * Math.min(1, sp / WALK)) : 0;
+    CLAY.lean += (lt - CLAY.lean) * .18; if (Math.abs(lt - CLAY.lean) < .002) CLAY.lean = lt;   // (settles exactly, so the loop can stop on a straight stand)
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
-    if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide-x3', k: 12 };
+    /* the sheet's own crouch (0-3: sink, arms back, rise onto the toes) and landing (10-14: feet reach, knees take it,
+       stand back up, 22: tall again), stepped through by the time left, so a quick hop is a quick dip and a slam is a deep one */
+    if (fig.loadT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide-x3', k: [0, 1, 2, 3][Math.min(3, Math.floor((1 - fig.loadT / fig.load0) * 4))] };
+    if (fig.landT > 0 && (st === 'move' || st === 'idle')) { var LS = fig.land0 < .15 ? [11, 12, 13, 14] : [10, 11, 12, 12, 13, 14, 22];
+      return { s: 'jump-land-slide-x3', k: LS[Math.min(LS.length - 1, Math.floor((1 - fig.landT / fig.land0) * LS.length))] }; }
     if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
-        if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
+        if (sp < 12) return { s: 'idle-wave-sign', k: 0, lean: CLAY.lean };
         if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };   // her ask: tilted forward more when she runs
         return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
@@ -1504,7 +1535,7 @@
         }
         return { s: 'idle-wave-sign', k: 0 }; }
     }
-    return { s: 'idle-wave-sign', k: 0 };
+    return { s: 'idle-wave-sign', k: 0, lean: CLAY.lean };   // standing: rights itself from the lean over a few frames
   }
   /* THE RUN'S BODY MOVES AT ONE SPEED (2026-10-26, "spazzy … like it's jumping frames"): the run frames' anchors drift
      her head ~28 clay px back over each half-stride and snap it forward again at frames 1 and 25, a lurch every step.
@@ -2130,6 +2161,7 @@
     fig: fig, bars: function () { return bars; }, step: advance, draw: draw,
     plan: function (x, y) { return planRoute(x, y); },
     clayH: function () { return CLAY.ready ? CLAY.H : 0; },
+    clay: function () { return { f: CLAY.last && CLAY.last.f.f, lean: CLAY.lean }; },   // QA: the frame drawn last and the lean
     canvas: function () { return cv; },
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
