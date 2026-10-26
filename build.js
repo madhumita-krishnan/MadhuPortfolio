@@ -286,7 +286,7 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
    ink-blue is a light value, so the dark bg-base label on the pill still reads. */
 [data-theme="night"] .dc-body{background:var(--ink-blue)}
 .dc-body span{opacity:0;transition:opacity .16s linear;padding:0 16px;
-  font-family:var(--font-utility);font-weight:500;font-size:.62rem;letter-spacing:.16em;
+  font-family:var(--font-utility);font-weight:500;font-size:.75rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--bg-base)}
 /* the pill animates width, so it can't be auto — the cursor code measures the label
    at hover time and pins the target width in --dc-pill-w (140px is "I'm curious") */
@@ -408,7 +408,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opa
 .btn.teal:active{background:var(--bg-deep);border-color:var(--bg-deep);color:var(--text-on-deep)}
 
 /* SIZES */
-.btn.sm{min-height:38px;padding:0 20px;font-size:.68rem;letter-spacing:.12em}
+.btn.sm{min-height:38px;padding:0 20px;font-size:.75rem;letter-spacing:.12em}
 nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
 .btn.lg{min-height:62px;padding:0 40px;font-size:.9rem;letter-spacing:.16em}
 
@@ -423,7 +423,7 @@ nav.bar .btn.sm{min-height:42px;padding:0 22px;font-size:.76rem}
      .chip        taxonomy — the three tags under a case study title
      .chip.live   status   — "OPEN TO WORK", where the dot is the point
    A dot on every case-study tag would read as three bullet points in a row. */
-.chip{font-family:var(--font-utility);font-weight:500;font-size:.72rem;letter-spacing:.13em;
+.chip{font-family:var(--font-utility);font-weight:500;font-size:.75rem;letter-spacing:.13em;
   text-transform:uppercase;display:inline-flex;align-items:center;gap:10px;
   padding:0 20px;min-height:40px;border-radius:var(--r-pill);
   border:1.5px solid var(--teal-baby);color:var(--ink-blue)}
@@ -945,7 +945,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .brands{padding-top:0;padding-bottom:calc(var(--space)*6)}
 .brands-head{border-top:1px solid var(--line);padding-top:calc(var(--space)*4);
   display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--space)*4);flex-wrap:wrap}
-.brands-head p{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary)}
+.brands-head p{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary)}
 .brands-row{margin-top:calc(var(--space)*6);display:grid;
   grid-template-columns:repeat(auto-fit,minmax(80px,1fr));align-items:center;
   gap:calc(var(--space)*5) calc(var(--space)*3.5)}
@@ -1060,9 +1060,9 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
   background:linear-gradient(to top,rgba(10,10,12,.94) 55%,rgba(10,10,12,0));opacity:0;transform:translateY(10px);
   transition:opacity 220ms var(--ease-standard),transform 220ms var(--ease-standard);pointer-events:none}
 .scard.held .scard-stack{opacity:1;transform:none}
-.scard-stack-label{display:block;margin-bottom:.7em;font-family:var(--font-utility);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+.scard-stack-label{display:block;margin-bottom:.7em;font-family:var(--font-utility);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .scard-stack ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-.scard-stack li{font-family:var(--font-utility);font-size:.74rem;line-height:1.2;color:var(--text-primary);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-pill);padding:5px 11px}
+.scard-stack li{font-family:var(--font-utility);font-size:.75rem;line-height:1.2;color:var(--text-primary);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-pill);padding:5px 11px}
 @media (prefers-reduced-motion:reduce){.scard-stack{transition:none}}
 .scard-media>*{max-width:100%;max-height:100%}
 .scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
@@ -1077,7 +1077,7 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
    it is gone the moment the deck moves and comes back once a project has clicked into place */
 .sdeck-title.moving>span{opacity:0;transform:translateY(10px);transition-duration:110ms}
 /* the project name, plain, over its full-sentence headline */
-.sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.72rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+.sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.75rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .sdeck-line{display:block}
 @media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
@@ -1125,7 +1125,7 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
 .sdeck-progress .sd-ico:hover{transform:translate(-50%,3px) scale(1.12);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
-.w-chip{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+.w-chip{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
   padding:9px 16px;border-radius:var(--r-pill);color:var(--text-primary)}
 /* The nav reads as glass because content scrolls under it; these chips sit in the flat
    cream gutter, where the shared .glass fill (white up to .50) has nothing to frost and
@@ -1146,11 +1146,11 @@ body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}  
     0 6px 16px var(--shadow-soft),
     0 1px 3px rgba(30,54,52,.10)}
 .w-chip.glass::after{opacity:1}
-.w-tags{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
+.w-tags{font-family:var(--font-utility);font-size:.875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-primary)}   /* the subtext under each project: 14px in the brighter grey (her 2026-10-26: "hard to read") */
 /* the tech stack (her ask 2026-10-23: "a tech stack of all the things I used, the language it was coded
    in, if I used GitHub"), from site.json work.projects[].stack — only what the repos and case studies verify */
 .w-stack{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:calc(var(--space)*2) 0 0;padding:0}
-.w-stack li{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.02em;line-height:1.2;color:var(--text-secondary);
+.w-stack li{font-family:var(--font-utility);font-size:.8125rem;letter-spacing:.02em;line-height:1.2;color:var(--text-primary);
   border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 11px}
 @media (max-width:760px){.wproject{grid-template-columns:1fr;gap:calc(var(--space)*4);margin-bottom:calc(var(--space)*9)}
   .wproject .project-media-wrap{order:-1}}
@@ -1317,13 +1317,13 @@ ${PHONE_CSS}
    playback can't start (Low Power Mode, reduced motion, data saver) */
 .panel.has-video.v-live video{opacity:1}
 .panel-collapsed-label{position:absolute;bottom:calc(var(--space)*3);left:50%;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;
-  font-family:var(--font-utility);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-deep);white-space:nowrap;z-index:2;opacity:.9;
+  font-family:var(--font-utility);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-on-deep);white-space:nowrap;z-index:2;opacity:.9;
   transition:opacity var(--motion-base) var(--ease-standard);text-shadow:0 1px 6px var(--shadow-strong)}
 .panel.active .panel-collapsed-label{opacity:0;pointer-events:none}
 .panel-content{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:calc(var(--space)*4);opacity:0;transform:translateY(12px);
   transition:opacity var(--motion-base) var(--ease-enter) 120ms,transform var(--motion-base) var(--ease-enter) 120ms;pointer-events:none}
 .panel.active .panel-content{opacity:1;transform:none}
-.p-org{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:calc(var(--space)*1)}
+.p-org{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:calc(var(--space)*1)}
 .p-title{font-family:var(--font-display);font-weight:400;color:var(--text-on-deep);font-size:clamp(1.3rem,2.2vw,1.9rem);line-height:1.2;margin-bottom:calc(var(--space)*1);max-width:24ch}
 .p-desc{color:var(--text-on-deep-secondary);font-size:.98rem;line-height:1.5;max-width:52ch}
 @media (max-width:760px){.panels{flex-direction:column;height:auto}
@@ -1452,7 +1452,7 @@ footer a{color:var(--text-primary);text-decoration:none;font-size:.92rem;transit
 footer a:hover{color:var(--accent)}
 .foot-links{display:flex;align-items:center;gap:calc(var(--space)*3);flex-wrap:wrap;justify-content:center}
 .foot-mark{font-family:var(--font-display);font-size:1.3rem}
-.foot-note{font-family:var(--font-utility);font-size:.7rem;letter-spacing:.08em;color:var(--text-secondary)}
+.foot-note{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;color:var(--text-secondary)}
 @media (max-width:640px){footer{flex-direction:column;gap:10px;text-align:center;
   /* the fixed Night/Day pill lives in the bottom-left corner — without this the last
      footer line scrolls in underneath it */
@@ -1548,7 +1548,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .cs-intro p{font-size:clamp(1.05rem,1.7vw,1.25rem);line-height:1.65;margin-bottom:calc(var(--space)*3);max-width:62ch}
 .cs-meta{max-width:900px;margin:0 auto;padding:calc(var(--space)*5) calc(var(--space)*6);display:flex;flex-wrap:wrap;gap:calc(var(--space)*6) calc(var(--space)*8)}
 .cs-meta div{min-width:120px}
-.cs-meta dt{font-family:var(--font-utility);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px}
+.cs-meta dt{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px}
 .cs-meta dd{font-size:.95rem}
 .cs-meta a{color:var(--accent-deep)}
 /* The tags under a case study title are the button sheet's chip — same shape, same rank, so
@@ -1563,7 +1563,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .stat-label{font-size:.88rem;line-height:1.45;color:var(--text-secondary)}
 
 .cs-row{max-width:1100px;margin:0 auto;padding:calc(var(--space)*10) calc(var(--space)*6) 0;display:grid;grid-template-columns:220px 1fr;gap:calc(var(--space)*6)}
-.cs-label{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);position:sticky;top:96px;align-self:start;padding-top:6px}
+.cs-label{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);position:sticky;top:96px;align-self:start;padding-top:6px}
 /* the case-study equivalent of .section-title, so it takes the same reference blue.
    .cs-title is deliberately NOT blue — it sits on the deep teal band, where the blue goes
    muddy; on that band the light cream is the display colour. */
@@ -1577,7 +1577,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .cs-body p{color:var(--text-secondary);line-height:1.65;font-size:1.02rem;margin-bottom:calc(var(--space)*2.5);max-width:62ch}
 .cs-quote{border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:calc(var(--space)*3) 0}
 .cs-quote p{font-family:var(--font-display);font-size:clamp(1.2rem,2vw,1.6rem);line-height:1.35;color:var(--text-primary);margin-bottom:8px}
-.cs-quote cite{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);font-style:normal}
+.cs-quote cite{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);font-style:normal}
 @media (max-width:820px){.cs-row{grid-template-columns:1fr;gap:calc(var(--space)*2)}.cs-label{position:static}}
 
 /* width:100% because the auto side-margins switch off flex-stretch inside .cs-section,
@@ -1618,7 +1618,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .cmp-col{border-radius:var(--r-card);padding:clamp(18px,2.6vw,30px)}
 .cmp-col.before{background:var(--bg-raised);border:1px solid var(--line)}
 .cmp-col.after{background:var(--accent-wash);border:1px solid var(--line-accent)}
-.cmp-head{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px;color:var(--text-secondary)}
+.cmp-head{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px;color:var(--text-secondary)}
 .cmp-col.after .cmp-head{color:var(--accent-deep)}
 .cmp-item{margin-bottom:20px}
 .cmp-item:last-child{margin-bottom:0}
@@ -1669,7 +1669,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .tp-p{margin-top:calc(var(--space)*1.5);max-width:56ch;font-size:1.05rem;line-height:1.65;color:var(--text-secondary)}
 .tp-tool .mac-media{margin-top:calc(var(--space)*5)}
 @media (max-width:760px){.tools-page{padding:calc(var(--space)*14) calc(var(--space)*3) calc(var(--space)*8)}.tools-page .tp-tool{margin-top:calc(var(--space)*10)}}
-.cs-next-card .k{font-family:var(--font-utility);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
+.cs-next-card .k{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:10px}
 .cs-next-card .t{font-family:var(--font-display);font-size:clamp(1.5rem,3.2vw,2.6rem);line-height:1.15}
 .cs-next-peek{position:absolute;z-index:0;top:100%;right:clamp(28px,6vw,84px);pointer-events:none;
   transition:transform var(--motion-base) var(--ease-standard)}

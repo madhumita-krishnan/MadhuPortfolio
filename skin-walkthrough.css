@@ -23,6 +23,9 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 .btn.outline:hover,.btn.teal:hover{background:var(--accent-deep);border-color:var(--accent-deep);color:#111}
 
 /* type: the walkthrough's bold, tight headings */
+/* titles in the site blue (her 2026-10-26: "there used to be more blue text. like the titles were blue"; night had
+   turned --ink-blue near-white). #8fb2f2 on the night ground is ~9:1 */
+.section-title,.about-title,.p-title,.sdeck.side .sdeck-title{color:var(--accent)}
 .hero h1,.section-title,.w-outcome,.about-title,.p-title,.cs-title{font-weight:600;letter-spacing:-.02em}
 .hero h1{letter-spacing:-.03em;line-height:1.04}
 .eyebrow{font-weight:500;letter-spacing:.12em}
@@ -35,7 +38,7 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 /* company chips: quiet outline, no glass */
 .w-chip.glass{background:transparent;border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--ink-blue)}
 .w-chip.glass::before,.w-chip.glass::after{display:none}
-.w-outcome{color:var(--ink-blue)}
+.w-outcome{color:var(--accent)}
 /* Plus Jakarta runs wider than Cormorant, so the outcome measure widens to keep 2–3 lines */
 .w-outcome{max-width:30ch;font-size:clamp(1.35rem,2.3vw,1.9rem);line-height:1.25}
 
@@ -46,7 +49,7 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
   --glass-cres-side:rgba(255,255,255,.03);--glass-glow:transparent;--glass-prism-o:0;color-scheme:dark}
 .stat-card.glass{background:var(--bg-raised);border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .stat-value{font-weight:600;letter-spacing:-.02em}
-.cs-title,.cs-heading{color:var(--ink-blue);font-weight:600;letter-spacing:-.02em}
+.cs-title,.cs-heading{color:var(--accent);font-weight:600;letter-spacing:-.02em}
 footer .foot-mark{font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink-blue);font-size:1.55rem;letter-spacing:.02em;white-space:nowrap}   /* the same M--K as the nav's (it had been left in the body sans) */
 @media (max-width:520px){nav.bar .btn.sm{font-size:.9rem;padding:0 16px;min-height:38px}.nav-links a{font-size:.9rem;padding-left:10px;padding-right:10px}.wordmark{margin-right:0}}
 
@@ -80,7 +83,7 @@ nav.bar .btn.sm{padding-bottom:4px}
 .cs-tagline,.cs-hero-band.light .cs-tagline{font-weight:300;font-size:clamp(19px,2.4vw,30px);line-height:1.5;color:#f3f4f6;margin:14px auto 0;max-width:1000px}
 .cs-tags{justify-content:center}
 .cs-meta{max-width:820px;padding-left:24px;padding-right:24px}
-.cs-meta dt{font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:#6b6f7a;margin-bottom:0}
+.cs-meta dt{font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;color:#8b909b;margin-bottom:0}
 .cs-meta dd{font-size:16px;line-height:1.5;color:#c3c7cf;margin-top:6px}
 .cs-meta a{color:#a9c4f5}
 .cs-row{max-width:820px;padding:120px 24px 0;display:block}
@@ -90,7 +93,7 @@ nav.bar .btn.sm{padding-bottom:4px}
 .cs-body p,.cs-body li{font-size:18px;font-weight:300;line-height:1.65;color:#a9adb7}
 .cs-body li{font-size:17px}
 .cs-body h3{font-size:24px;font-weight:500;color:#f3f4f6}
-.cs-section figcaption,.cs-media figcaption,.cs-row figcaption{font-size:12px;color:#5f636d}
+.cs-section figcaption,.cs-media figcaption,.cs-row figcaption{font-size:12px;color:#8b909b}
 /* the simple-layout page (My AI tools) on the same scale */
 .tp-title{font-size:clamp(38px,6.2vw,74px);line-height:1.04;font-weight:600;letter-spacing:-.025em;color:#f3f4f6}
 .tp-lead{font-weight:300;font-size:clamp(19px,2.4vw,30px);line-height:1.5;color:#f3f4f6}
