@@ -1042,10 +1042,12 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
    from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
    there and not clickable; while it dematerializes it can't be clicked either */
 .view-toggle.vt-hidden{visibility:hidden;pointer-events:none}
+html.orient-views .view-toggle{display:none!important}   /* phones: turning the phone is the toggle (app.js) */
+.view-toggle{touch-action:none}   /* so a drag across it slides the switch instead of scrolling the page */
 /* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
    there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
-.vt-ring{position:absolute;top:-1px;bottom:-1px;left:50%;transform:translateX(-50%);border-radius:50%;border:1.5px solid #8fb2f2;
-  box-sizing:border-box;opacity:0;pointer-events:none}
+.vt-ring{position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px solid #8fb2f2;
+  box-sizing:border-box;opacity:0;pointer-events:none}   /* = DOT in app.js */
 .view-toggle.vt-leaving{pointer-events:none}
 .work-head .head-toggle{background:rgba(22,27,40,.88)}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
@@ -1108,7 +1110,7 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
 /* phones (.stack): every demo centred in the stage and the headline follows right under whichever one is showing,
    so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
 .sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
-.sdeck.stack .sdeck-progress{margin-top:calc(var(--tres,24px) + 24px)}
+.sdeck.stack .sdeck-progress{margin-top:var(--tres,24px)}
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*7) auto 0;touch-action:none}   /* clear air under the cards (her: "feels too close to the case studies") */
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
@@ -2150,55 +2152,79 @@ function makeJS() {
         .from(extra,{opacity:0,y:12,duration:.4,ease:'power2.out',clearProps:'opacity,transform'},.8);
     };
     btns.forEach(b=>b.addEventListener('click',()=>morph(b.dataset.view)));
+    /* DRAG the toggle (her 2026-10-26: "I can't drag the toggle"): press anywhere on it and slide; the view switches the
+       moment the finger or cursor crosses into the other side, like a switch */
+    document.querySelectorAll('.view-toggle').forEach(tg=>{
+      tg.addEventListener('pointerdown',e=>{if(e.button)return;try{tg.setPointerCapture(e.pointerId)}catch(err){}tg._drag=true});
+      tg.addEventListener('pointermove',e=>{if(!tg._drag)return;
+        const b=[...tg.querySelectorAll('.view-btn')].find(x=>{const r=x.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right});
+        if(b&&b.dataset.view!==workEl.dataset.view)morph(b.dataset.view)});
+      const up=()=>{tg._drag=false};tg.addEventListener('pointerup',up);tg.addEventListener('pointercancel',up)});
+    /* PHONES: the way you hold it picks the view (her 2026-10-26: "maybe on mobile, horizontal scrolling is for when you turn
+       your phone. and vertical scrolling is for when it's upright"): upright = the vertical list, turned sideways = the
+       swipe deck, switching as you turn it. The toggles step aside on phones, since turning the phone IS the toggle */
+    const phoneDev=matchMedia('(pointer: coarse)').matches&&Math.min(screen.width,screen.height)<600;
+    if(phoneDev){document.documentElement.classList.add('orient-views');
+      const land=matchMedia('(orientation: landscape)'),pick=()=>land.matches?'deck':'list';
+      setView(pick(),false);
+      const turn=()=>{const v=pick();if(v!==workEl.dataset.view)morph(v)};
+      land.addEventListener?land.addEventListener('change',turn):land.addListener(turn)}
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
       let inWork=false,headGone=false;
       const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
-      /* SPRINGY MATERIALIZE (her 2026-10-26: "when the toggle collapses, can it collapse into a circle and then plop down. I
-         want the toggle appearance and disappearance to feel more springy"; before that, the Apple-reference pill-to-bar
-         materialize with its exact reverse). Controls are laid out at full size the whole time; the surface is a clip of the
-         bar itself, so icons are never stretched; the squash/stretch happens only while the icons are hidden.
-           IN   a dark CIRCLE with its own blue ring plops up from below with a springy overshoot (0–260ms) → it HOLDS as a
-                circle for a beat (to 610ms) → widens from its centre into the full bar (610–950ms) → squash-and-settle
-                (870–1150ms) → the icons resolve together (910–1110ms); the bar's ring arrives lit in the site blue and cools
-           OUT  the icons go (0–120ms) → the bar draws in from both ends into the blue-ringed circle (100–390ms) → it HOLDS
-                there (to 740ms) → squashes as it lands and PLOPS down out of sight (740–1000ms)
-         A change of mind mid-way starts the other direction straight away. Reduced motion: shown or hidden at once.
-         WHEN each toggle shows is unchanged: the floating one while the projects hold the screen (on laptops only while
-         the nav is tucked away), the top one whenever the floating one isn't on. */
-      const FULL='inset(0% 0% round 999px)',SPRING='cubic-bezier(.3,2.1,.45,1)',SETTLE='cubic-bezier(.3,1.6,.45,1)'   // quicker and bouncier (her 2026-10-26: "the toggle isn't quick enough or bouncy enough"): ~40% shorter, more overshoot;
-      const vt=(t,show)=>{
-        if(t._show===show)return;t._show=show;
+      /* THE TOGGLE'S ARRIVAL AND EXIT (her 2026-10-26, in order: the Apple pill-to-bar materialize; "collapse into a circle and
+         then plop down … more springy"; "quicker and bouncier"; "that circle … visible with that blue line and pause there";
+         then "the two circles should never be on the screen at the same time", "that circle … needs to be way smaller",
+         "it was bouncier before", and "I don't want the circle to squish out of the screen. I want it to get sucked out").
+         Controls stay laid out at full size; the surface is a clip of the bar itself, so icons never stretch; squash and
+         stretch only happen while the icons are hidden.
+           IN   a tiny blue-ringed DOT (DOT px) pops in with a big springy overshoot and a wobble (0–340ms) → holds (to 640)
+                → widens from its centre into the bar (640–940) → the bar lands with an elastic wobble (900–1300) → the icons
+                resolve together (940–1140); the bar's own ring arrives lit and cools
+           OUT  the icons go (0–120) → the bar draws in to the tiny ringed dot (100–400) → holds (to 700) → it leans in and is
+                SUCKED away: accelerating down and off, stretching as it goes, to nothing (700–1000)
+         Only ONE toggle is ever on screen: one that should appear waits until the other has fully gone. Reduced motion: shown
+         or hidden at once. WHEN each toggle shows is unchanged. */
+      const FULL='inset(0% 0% round 999px)',DOT=14;
+      const parts=t=>{const w=t.offsetWidth||1,h=t.offsetHeight||1;
+        if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
+        return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,btns:[...t.querySelectorAll('.view-btn')]}};
+      const run=(t,show)=>{
         (t._a||[]).forEach(a=>a.cancel());t._a=null;
         if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
         t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
-        const w=t.offsetWidth||1,h=t.offsetHeight||1,CIRC='inset(0% '+Math.max(0,(w-h)/2/w*100).toFixed(2)+'% round 999px)';
-        const btns=[...t.querySelectorAll('.view-btn')],A=[];
-        if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
-        const ring=t._ring;ring.style.width=h+'px';
+        const {CIRC,ring,btns}=parts(t),A=[];
         if(show){
-          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.64},{clipPath:FULL}],{duration:950,easing:'linear',fill:'both'}),
-            ring.animate([{opacity:1},{opacity:1,offset:.64},{opacity:0,offset:.8},{opacity:0}],{duration:950,fill:'both'}),
-            t.animate([{transform:'translateY(18px) scale(.25)',opacity:0,easing:SPRING},{transform:'none',opacity:1}],{duration:260,fill:'backwards'}),
-            t.animate([{transform:'none'},{transform:'scale(1.06,.9)',offset:.3},{transform:'none'}],{duration:280,delay:870,easing:SETTLE}),
-            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:910,easing:'ease-out',fill:'both'})),
-            /* "so that people actually notice it enter": the ring arrives lit in the site blue and cools to its resting tint */
-            t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:1900,easing:'ease-out'}));
-          A[0].effect.updateTiming({easing:'linear'});
-          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.64,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
+          A.push(t.animate([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.68,easing:'cubic-bezier(.22,1.25,.36,1)'},{clipPath:FULL,offset:1}],{duration:940,fill:'both'}),
+            ring.animate([{opacity:1},{opacity:1,offset:.68},{opacity:0,offset:.82},{opacity:0}],{duration:940,fill:'both'}),
+            t.animate([{transform:'scale(0)',opacity:0},{transform:'scale(1.45)',opacity:1,offset:.38},{transform:'scale(.82)',offset:.6},{transform:'scale(1.12)',offset:.8},{transform:'none'}],{duration:340,easing:'ease-out',fill:'backwards'}),
+            t.animate([{transform:'none'},{transform:'scale(1.07,.9)',offset:.22},{transform:'scale(.97,1.04)',offset:.5},{transform:'scale(1.015,.99)',offset:.75},{transform:'none'}],{duration:400,delay:900,easing:'ease-out'}),
+            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:940,easing:'ease-out',fill:'both'})),
+            t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:2200,easing:'ease-out'}));
         }else{
           A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'both'})),
-            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.1,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.39},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
-            ring.animate([{opacity:0},{opacity:0,offset:.33},{opacity:1,offset:.39},{opacity:1}],{duration:1000,fill:'both'}),
-            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.74},{transform:'translateY(2px) scale(1.24,.76)',opacity:1,offset:.81,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:1000,fill:'both'}));
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.1,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.4},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
+            ring.animate([{opacity:0},{opacity:0,offset:.34},{opacity:1,offset:.4},{opacity:1}],{duration:1000,fill:'both'}),
+            /* sucked out: a little lean in, then an accelerating pull down and away, stretching along the pull, to nothing */
+            t.animate([{transform:'none',opacity:1},{transform:'none',offset:.7},{transform:'translateY(-3px) scale(1.18)',offset:.76,easing:'cubic-bezier(.55,0,.95,.35)'},{transform:'translateY(90px) scale(.12,.6)',opacity:0}],{duration:1000,fill:'both'}));
         }
         t._a=A;
         Promise.all(A.map(a=>a.finished)).then(()=>{if(t._a!==A)return;
           if(!t._show){t.classList.add('vt-hidden');t.classList.remove('vt-leaving')}
           A.forEach(a=>a.cancel());t._a=null},()=>{});
       };
-      const headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
+      const vt=(t,show)=>{
+        if(t._show===show)return;t._show=show;clearTimeout(t._wait);
+        if(!show)return run(t,false);
+        /* never two on screen: wait while the other one is still on its way out */
+        const other=t===bar?headBar:bar;
+        if(other&&(other._show||other._a)){t.classList.add('vt-hidden');
+          const go=()=>{if(!t._show)return;if(other._show||other._a)t._wait=setTimeout(go,60);else run(t,true)};t._wait=setTimeout(go,60);return}
+        run(t,true);
+      };
+      var headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
       /* in the SWIPE view the floating toggle (bottom right on laptops) is the one, whenever the deck holds the screen (her
          2026-10-26: "on horizontal scroll the toggle isn't in the right place"); it no longer waits for the heading to leave
          or the nav to tuck away there, since bottom-right can't meet the nav */
@@ -2273,7 +2299,7 @@ function makeJS() {
          dial allows. Laptops 1000px+ (.side): the demo's centre sits at 34% of the width, at most 48% wide, and the
          headline takes the column to its right; the neighbours peek in at both screen edges, past that column.
          Dials (studies/tweaker-swipe/): dh, dw, lane, tgap, tw. */
-      const sideM=W>=1000;sd.classList.toggle('side',sideM);sd.classList.remove('stack');
+      const sideM=W>=1000||W>=600&&innerHeight<520&&W>innerHeight*1.4;sd.classList.toggle('side',sideM);sd.classList.remove('stack');   // a phone turned sideways gets the headline BESIDE the case too (it can't stack in ~390px of height)
       const phone=W<761,dh=(num('--sd-dh')||58)/100,dw=sideM?.48:phone?.88:(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?(phone?.2:.28):ln,
         tgap=num('--sd-tgap'),tg=isNaN(tgap)?(phone?18:28):tgap;
       const above=Math.max(.18,lane+side/2-.5),room=above+1,cyF=above+.5;
@@ -2291,7 +2317,8 @@ function makeJS() {
         sd.style.setProperty('--tl',tl+'px');sd.style.setProperty('--tw',Math.max(240,W-tl-peek-40)+'px');
         sd.style.setProperty('--tt',(stage.offsetTop+cyB)+'px')}
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
-      if(phone){tgNow=tg;sd.classList.add('stack');sd.style.setProperty('--tres',(tg+th+16)+'px');fill(Math.max(0,active))}
+      if(phone){tgNow=tg;sd.classList.add('stack');let thS=0;cards.forEach((c,i)=>{fill(i);thS=Math.max(thS,titleEl.offsetHeight)});   // the headline's tallest height AS LAID OUT on phones (full width), not before
+        sd.style.setProperty('--tres',(cyB+Math.max(...dims.map(d=>d.h))/2+tg+thS+16-H)+'px');fill(Math.max(0,active))}   // the bar sits under the headline's lowest reach from the CARD's real bottom (cyB+Ht/2), not the stage's (her 2026-10-26: "move the nav bar … higher so that the icons under never get cut off")
       titleEl.style.minHeight=th+'px';place(pos);
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
