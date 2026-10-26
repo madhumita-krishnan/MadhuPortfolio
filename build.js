@@ -2380,9 +2380,23 @@ function makeJS() {
        it is only hidden when the cases are centered"): swiping with the deck still low or high on the screen leaves the
        heading and the page alone */
     const centred=()=>{const r=stage.getBoundingClientRect();return r.height>0&&Math.abs(r.top+r.height/2-innerHeight/2)<innerHeight*.04};   // the deck's own stage (cards move between lanes mid-swipe; the stage doesn't)
-    const focusOn=()=>{if(root.classList.contains('hfocus')||!centred())return;hfY=scrollY;
+    /* …and if it isn't centred, the first sideways swipe GLIDES it there (her 2026-10-26: "when I start horizontally scrolling
+       can you move my case studies into the center of the screen so it's focused rather than me having to find that scroll
+       position myself?"). One short glide, only ever started by a sideways gesture on the deck: a deliberate exception to
+       the no-scroll-jacking rule. Any up/down scroll or key cancels it and focus mode, as always */
+    let centring=0;
+    const enter=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
       [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
       root.classList.add('hfocus')};
+    const focusOn=()=>{if(root.classList.contains('hfocus')||centring)return;
+      if(centred())return enter();
+      const r=stage.getBoundingClientRect(),to=Math.max(0,scrollY+r.top+r.height/2-innerHeight/2),from=scrollY,t0=performance.now(),D=rm?0:520,id=++centring;
+      const ease=x=>1-Math.pow(1-x,3);
+      const cancel=()=>{if(centring===id)centring=0};
+      addEventListener('wheel',function w(e){if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){cancel();removeEventListener('wheel',w)}},{passive:true});
+      (function step(now){if(centring!==id)return;const q=D?Math.min(1,(now-t0)/D):1;
+        try{scrollTo({top:from+(to-from)*ease(q),behavior:'instant'})}catch(err){scrollTo(0,from+(to-from)*ease(q))}
+        if(q<1)return requestAnimationFrame(step);centring=0;enter()})(t0)};
     const focusOff=()=>{if(!root.classList.contains('hfocus'))return;root.classList.add('hf-out');root.classList.remove('hfocus');
       clearTimeout(focusOff.t);focusOff.t=setTimeout(()=>{if(root.classList.contains('hfocus'))return;root.classList.remove('hf-out');document.querySelectorAll('.hf-on').forEach(e=>e.classList.remove('hf-on'));
         document.querySelectorAll('.hf-path').forEach(e=>e.classList.remove('hf-path'))},500)};
