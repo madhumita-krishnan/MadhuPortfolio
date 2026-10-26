@@ -98,7 +98,7 @@
           "GitHub",
           "Claude Code"
         ],
-        "icon": "assets/case-studies/driftwood-retention/logo.svg"
+        "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
       },
       {
         "slug": "vantage",
@@ -121,7 +121,7 @@
           "GitHub",
           "Claude Code"
         ],
-        "icon": "assets/case-studies/vantage/vantage-logo.svg"
+        "icon": "assets/case-studies/vantage/vantage-logo-clay.svg"
       },
       {
         "slug": "pratus-kitchen",
@@ -147,7 +147,7 @@
           "GitHub",
           "Claude Code"
         ],
-        "icon": "assets/case-studies/pratus-kitchen/pratus-logo.svg"
+        "icon": "assets/case-studies/pratus-kitchen/pratus-logo-clay.svg"
       },
       {
         "slug": "driftwood",
@@ -171,7 +171,7 @@
           "GitHub",
           "Claude Code"
         ],
-        "icon": "assets/case-studies/driftwood-retention/logo.svg"
+        "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
       },
       {
         "slug": "spotify-mix",
@@ -189,7 +189,7 @@
           "Figma",
           "Miro"
         ],
-        "icon": "assets/case-studies/spotify/spotify-logo.svg"
+        "icon": "assets/case-studies/spotify/spotify-logo-clay.svg"
       },
       {
         "slug": "stack",
@@ -209,7 +209,7 @@
         ],
         "mark": "S",
         "markBg": "#D50000",
-        "icon": "assets/case-studies/stack/stack-logo.svg"
+        "icon": "assets/case-studies/stack/stack-logo-clay.svg"
       },
       {
         "slug": "message-testing",
@@ -225,7 +225,7 @@
         "stack": [
           "Adobe Creative Suite"
         ],
-        "icon": "assets/case-studies/message-testing/atlantic-logo.svg"
+        "icon": "assets/case-studies/message-testing/atlantic-logo-clay.svg"
       },
       {
         "slug": "ai-tools",
@@ -247,7 +247,7 @@
           "Node.js",
           "Claude Code"
         ],
-        "icon": "assets/case-studies/ai-tools/ai-tools-logo.svg"
+        "icon": "assets/case-studies/ai-tools/ai-tools-logo-clay.svg"
       }
     ]
   },

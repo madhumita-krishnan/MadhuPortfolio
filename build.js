@@ -1129,10 +1129,10 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
    tile is the same build: brand fill, one light mark at ~56% (the svgs are normalised to that), the same top light, the
    same hairline edge and the same shadow, laid on by ::after so no file can drift from it. The project you're on lifts
    instead of wearing a white ring (a ring read as a stray border) */
-.sd-ico{box-shadow:0 1px 2px rgba(0,0,0,.5),0 8px 18px rgba(0,0,0,.35)}
-.sd-ico::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 42%,rgba(0,0,0,0) 60%,rgba(0,0,0,.14));
-  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.3)}
+/* the tiles themselves are matte clay objects lit from the upper left (tools/clay-icon.js makes the *-clay.svg files);
+   here only the one soft CONTACT shadow directly beneath: ~18%, blurred, 2px down (≤5% of the tile). No gloss overlay,
+   no hairline rim, no offset silhouette */
+.sd-ico{box-shadow:0 2px 5px rgba(0,0,0,.18);background:transparent;overflow:visible}
 /* NOTHING OVERLAPS (her 2026-10-26: "the icon selected is running into and overlapping the nav bar. all the icons need to be
    lower. I don't like overlapping as a rule"): the icons hang 10px clear below the dashes and never lift into them; the
    one you're on is full strength and the others are mildly dimmed instead */
@@ -2376,7 +2376,7 @@ function makeJS() {
     addEventListener('scroll',()=>{if(Math.abs(scrollY-hfY)>30)focusOff()},{passive:true});
     addEventListener('keydown',e=>{if(/^(Escape|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key))focusOff()});
     addEventListener('pointerdown',e=>{if(!sd.contains(e.target))focusOff()});
-    let wAcc=0,wLock=false,wDir=0,wPts=[],wT=0,wGap=0,wPrev=0,wPeak=0,wFloor=0,wRise=0;
+    let wAcc=0,wLock=false,wDir=0,wPts=[],wT=0,wGap=0,wPrev=0,wPeak=0,wFloor=0,wRise=0,wGrow=0;
     /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
        where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
        screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
@@ -2395,12 +2395,13 @@ function makeJS() {
          horizontally": a second swipe made during the first one's momentum was swallowed as more tail). Momentum only
          decays, so once the tail is decaying (below 60% of its peak), deltas climbing sharply off its floor for two
          events in a row (> max(8, 2.2 x floor)) are a fresh push; a single bump in a bumpy tail isn't. Also new: a
-         reversal, or a pause (event timestamps, so jank can't fake one) followed by a real rest (400ms+) or a growing
-         delta (a stalled tail resumes shrinking). A new swipe retargets from wherever the glide is, still one card. */
+         reversal, or a pause (event timestamps, so jank can't fake one) that was a real rest (400ms+) or is followed
+         by deltas growing twice in a row (a stalled tail resumes shrinking; a bump in it grows only once). A new swipe retargets from wherever the glide is, still one card. */
       const gap=e.timeStamp-wT;wT=e.timeStamp;if(wLock&&gap>180)wGap=gap;
       if(wLock){wPeak=Math.max(wPeak,ax);if(wFloor||ax<wPeak*.6)wFloor=Math.min(wFloor||ax,ax);
         wRise=wFloor&&ax>Math.max(8,2.2*wFloor)?wRise+1:0}
-      if(wLock&&(dir!==wDir&&ax>6||wRise>=2||wGap&&(wGap>400||ax>wPrev))){wLock=false;wAcc=0;wGap=0}
+      wGrow=ax>wPrev?wGrow+1:0;
+      if(wLock&&(dir!==wDir&&ax>6||wRise>=2||wGap&&(wGap>400||wGrow>=2))){wLock=false;wAcc=0;wGap=0}
       wPrev=ax;
       wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
       clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock&&wAcc)settle(home,false,0);wAcc=0;wPts=[]},180);   // a push too small to commit eases back
