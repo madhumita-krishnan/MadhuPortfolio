@@ -50,6 +50,10 @@
       '.rz-bar :focus{outline:none}.rz-bar :focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}' +
       /* her throw, standing in for her, and the flying plane: above the page, below the resume layer */
       '.rz-her{position:fixed;z-index:2147482990;pointer-events:none;background-repeat:no-repeat}' +
+      /* the spotlight on her while she folds and throws: the page dims, a soft pool of light holds her */
+      '.rz-spot{position:fixed;inset:0;z-index:2147482985;pointer-events:none;opacity:0;transition:opacity .35s ease;' +
+      'background:radial-gradient(circle var(--r) at var(--x) var(--y),rgba(255,240,205,.22),rgba(255,240,205,.12) 45%,rgba(255,240,205,.03) 70%,rgba(5,6,8,.74) 100%)}' +
+      '.rz-spot.on{opacity:1}' +
       '.rz-plane{position:fixed;left:0;top:0;z-index:2147482995;pointer-events:none;will-change:transform;transform-origin:50% 50%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35))}';
     document.head.appendChild(c);
   }
@@ -139,21 +143,31 @@
 
   /* her throw, frame by frame in her spot; calls release(x, y, w) at the throw */
   function playThrow(her, release) {
-    var k = her.h / SP.figH, w = SP.fw * k, h = SP.fh * k, d = document.createElement('div');
+    var k = her.h / SP.figH, w = SP.fw * k, h = SP.fh * k, d = document.createElement('div'), S = window.__stick;
     d.className = 'rz-her';
     d.style.cssText += ';width:' + w + 'px;height:' + h + 'px;left:' + (her.x - SP.cx * k) + 'px;top:' + (her.y - SP.feet * k) + 'px;' +
       'background-image:url("' + THROW + '");background-size:' + (SP.cols * w) + 'px auto';
     document.body.appendChild(d);
-    window.__stick.hide(true);
+    S && S.hide && S.hide(true);
+    /* ALWAYS a spotlight on her for the throw (her 2026-10-26); it lifts as the plane gets away, so the flight reads */
+    var spot = document.createElement('div');
+    spot.className = 'rz-spot';
+    spot.style.cssText = '--x:' + her.x + 'px;--y:' + (her.y - her.h * .5) + 'px;--r:' + Math.round(her.h * 1.15) + 'px';
+    document.body.appendChild(spot);
+    requestAnimationFrame(function () { spot.classList.add('on'); });
+    var unspot = function () { spot.classList.remove('on'); setTimeout(function () { spot.remove(); }, 400); };
+    /* not on screen (scrolled away, or a page she doesn't live on): she pops up in the bottom-right corner first */
+    if (her.pop && window.gsap) gsap.fromTo(d, { y: h * .9, scaleY: .8, transformOrigin: '50% 100%' }, { y: 0, scaleY: 1, duration: .45, ease: 'back.out(1.4)' });
     /* from frame 8: the clip opens with her just holding the page */
     var i = 8, show = function () { d.style.backgroundPosition = (-(i % SP.cols) * w) + 'px ' + (-Math.floor(i / SP.cols) * h) + 'px'; };
     show();
-    var iv = setInterval(function () {
+    var iv, tick = function () {
       i++;
-      if (i === SP.release) release(her.x + (SP.plane[0] - SP.cx) * k, her.y + (SP.plane[1] - SP.feet) * k, 70 * k);
-      if (i >= SP.n) { clearInterval(iv); d.remove(); window.__stick.hide(false); return; }
+      if (i === SP.release) { release(her.x + (SP.plane[0] - SP.cx) * k, her.y + (SP.plane[1] - SP.feet) * k, 70 * k); setTimeout(unspot, 350); }
+      if (i >= SP.n) { clearInterval(iv); d.remove(); S && S.hide && S.hide(false); return; }
       show();
-    }, 1000 / SP.fps);
+    };
+    setTimeout(function () { iv = setInterval(tick, 1000 / SP.fps); }, her.pop ? 550 : 0);   // a popped-up her lands before she starts folding
   }
 
   /* THE FLIGHT: long gliding curves around the page, nearer and bigger as it goes, then a swift sideways pass across
@@ -202,8 +216,10 @@
     gsapReady().then(function () {
       if (!window.gsap) { showSheet(false); busy = false; return; }
       whenReady(function (her) {
-        if (her) playThrow(her, fly);
-        else { var r = link.getBoundingClientRect(); fly(r.left + r.width / 2, r.top + r.height / 2, 40); }
+        /* off screen: she pops up bottom-right, at her own size (or a phone/laptop default where she doesn't live) */
+        if (!her) { var S = window.__stick, hh = S && S.clayH && S.clayH() || (innerWidth < 760 ? 120 : 160);
+          her = { x: innerWidth - hh * .45 - 16, y: innerHeight - 12, h: hh, pop: true }; }
+        playThrow(her, fly);
       });
     });
   }
@@ -215,9 +231,9 @@
     if (opener && opener.focus) opener.focus({ preventScroll: true });
   }
 
-  /* only the CLAY resume icon flies (her 2026-10-24: "I only want the airplane claymation thing to happen when you click
-     on the clay icon"); every other resume link (nav, About, footer, case studies) just opens the PDF */
-  var isResume = function (a) { return a && a.classList.contains('cta-resume') && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
+  /* EVERY resume link is her paper plane (her 2026-10-26: "whenever shes on the screen and a resume request is made can she
+     do the airplane thing?" and, off screen, "pop up in the bottom right hand corner with a spotlight on her") */
+  var isResume = function (a) { return a && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
     if (!isResume(a) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

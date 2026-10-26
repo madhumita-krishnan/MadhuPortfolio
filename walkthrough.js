@@ -352,6 +352,7 @@ ${cs.sections.map(section).join('\n')}
 <script>window.__VIEWS=${JSON.stringify(views).replace(/</g, '\\u003c')}</script>
 <script>${JS}</script>
 <script src="${asset('resume-plane.js')}" defer></script>
+<script src="${asset('cursor-light.js')}" defer></script>
 </body>
 </html>`;
 };

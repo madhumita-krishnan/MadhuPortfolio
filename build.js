@@ -132,11 +132,11 @@ const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ------
     inset 0 0 0 calc(var(--rail)*.70) rgb(190,193,198),
     inset 0 0 0 calc(var(--rail)*.86) rgb(160,163,168),
     inset 0 0 0 var(--rail) rgb(112,114,119);
-  filter:drop-shadow(0 1.1cqw 1.9cqw rgba(12,14,20,.28)) drop-shadow(0 2.8cqw 4.7cqw rgba(12,14,20,.20))}
+  filter:drop-shadow(calc(var(--lx,0)*1.1cqw) calc(var(--ly,1)*1.1cqw) 1.9cqw rgba(12,14,20,.28)) drop-shadow(calc(var(--lx,0)*2.8cqw) calc(var(--ly,1)*2.8cqw) 4.7cqw rgba(12,14,20,.20))}   /* --lx/--ly: cursor-light.js */
 /* key light from the upper left, so the frame is not symmetrical and synthetic.
    Only visible over the rail — the glass layer covers the middle. */
 .phone::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
-  background:linear-gradient(152deg,rgba(255,255,255,.34),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 64%,rgba(0,0,0,.18))}
+  background:linear-gradient(var(--la,152deg),rgba(255,255,255,.34),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 64%,rgba(0,0,0,.18))}
 /* black glass, inset by the rail; radius = screen radius + bezel */
 .phone::after{content:"";position:absolute;inset:var(--rail);z-index:2;pointer-events:none;
   border-radius:14.92% / 7.25%;background:#08080A;
@@ -743,7 +743,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    tiles are ground for clay-her. Laptops: the cloud carries the socials. */
 .cta-socials{display:flex;align-items:center;gap:18px}
 .cta-socials a{display:block;width:48px;height:48px;border-radius:12px}
-.cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+.cta-socials img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;filter:drop-shadow(calc(var(--lx,0)*4px) calc(var(--ly,1)*4px) 6px rgba(0,0,0,.45))}
 .cta-socials a:focus-visible{outline:2px solid var(--ink-blue);outline-offset:3px}
 @media (max-width:760px){.cta-socials{display:flex}.hero-cta-row{align-items:center}
   .hero-cta-row .btn.solid{min-height:42px;padding:0 20px 3px;font-size:.95rem}}
@@ -1243,8 +1243,8 @@ ${PHONE_CSS}
    total — the 1.7343 SAME-box contract with the landscape cards depends on it. */
 .browser{container-type:inline-size;width:100%;--u:.0781cqw;
   border-radius:calc(10*var(--u));overflow:hidden;background:#DEE1E6;
-  box-shadow:0 calc(24*var(--u)) calc(54*var(--u)) var(--shadow-mid),
-             0 calc(2*var(--u)) calc(6*var(--u)) var(--shadow-soft),
+  box-shadow:calc(var(--lx,0)*24*var(--u)) calc(var(--ly,1)*24*var(--u)) calc(54*var(--u)) var(--shadow-mid),
+             calc(var(--lx,0)*2*var(--u)) calc(var(--ly,1)*2*var(--u)) calc(6*var(--u)) var(--shadow-soft),
              inset 0 0 0 1px rgba(24,38,32,.10)}
 /* matches the 2880x1480 screen captures, so nothing gets cropped */
 .browser-body{position:relative;aspect-ratio:1.945;background:#fff;overflow:hidden}
@@ -1261,7 +1261,7 @@ ${PHONE_CSS}
    falling to #9EA0A5. Everything is in cqw so one frame serves every width. */
 .mac-media{container-type:inline-size;width:100%}
 .mac{position:relative;aspect-ratio:896/546;
-  filter:drop-shadow(0 1.1cqw 2cqw rgba(12,14,20,.26)) drop-shadow(0 .3cqw .7cqw rgba(12,14,20,.16))}
+  filter:drop-shadow(calc(var(--lx,0)*1.1cqw) calc(var(--ly,1)*1.1cqw) 2cqw rgba(12,14,20,.26)) drop-shadow(calc(var(--lx,0)*.3cqw) calc(var(--ly,1)*.3cqw) .7cqw rgba(12,14,20,.16))}
 .mac-lid{position:absolute;top:0;left:7.59cqw;right:7.59cqw;height:57.48cqw;
   background:#020202;border-radius:1.8cqw 1.8cqw 0 0;
   box-shadow:inset 0 0 0 1px #3A3B3E,inset 0 .16cqw .3cqw rgba(255,255,255,.16)}
@@ -1356,7 +1356,7 @@ ${PHONE_CSS}
 
 /* ------------------------------------------------ about + footer */
 .about-band{display:grid;grid-template-columns:180px 1fr;gap:calc(var(--space)*7);align-items:center}
-.about-band .headshot{width:180px;height:180px;border-radius:50%;object-fit:cover;box-shadow:0 18px 40px var(--shadow-mid)}
+.about-band .headshot{width:180px;height:180px;border-radius:50%;object-fit:cover;box-shadow:calc(var(--lx,0)*18px) calc(var(--ly,1)*18px) 40px var(--shadow-mid)}
 /* display type is the reference blue, same rule as .hero h1 and .section-title — this is
    the architecture/brand sentence, and it is a headline, not body copy */
 .about-title{font-family:var(--font-display);font-weight:400;font-size:clamp(1.5rem,2.9vw,2.3rem);line-height:1.25;margin-bottom:calc(var(--space)*2);max-width:30ch;color:var(--ink-blue)}
@@ -1540,7 +1540,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .cs-hero-media{margin-top:clamp(24px,4vw,44px);border-radius:var(--r-media);overflow:hidden;box-shadow:0 30px 80px var(--shadow-strong)}
 .cs-hero-media img,.cs-hero-media video{width:100%;height:auto}
 .cs-hero-phones{margin-top:clamp(24px,4vw,44px);display:flex;justify-content:center;gap:clamp(16px,3vw,42px);align-items:flex-start}
-.cs-hero-phones>img{width:min(38%,300px);height:auto;filter:drop-shadow(0 24px 44px var(--shadow-mid))}
+.cs-hero-phones>img{width:min(38%,300px);height:auto;filter:drop-shadow(calc(var(--lx,0)*24px) calc(var(--ly,1)*24px) 44px var(--shadow-mid))}
 .cs-hero-phones .phone-media{width:min(38%,218px);max-width:218px}
 .cs-hero-phone-video{margin-top:clamp(24px,4vw,44px);display:flex;justify-content:center}
 .cs-hero-phone-video .phone-media{max-width:225px}
@@ -1592,7 +1592,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .cs-media-frame{border-radius:var(--r-media);overflow:hidden;width:100%;box-shadow:0 24px 60px var(--shadow-mid);position:relative}
 .cs-media-frame img,.cs-media-frame video{width:100%;height:auto}
 .cs-phones{display:flex;justify-content:center;gap:clamp(14px,3vw,40px);width:100%;align-items:flex-start}
-.cs-phones>img{width:min(42%,300px);height:auto;filter:drop-shadow(0 22px 40px var(--shadow-mid))}
+.cs-phones>img{width:min(42%,300px);height:auto;filter:drop-shadow(calc(var(--lx,0)*22px) calc(var(--ly,1)*22px) 40px var(--shadow-mid))}
 .cs-phones .phone-media{width:min(42%,218px);max-width:218px}
 .cs-phone-col{display:flex;flex-direction:column;align-items:center;gap:12px;width:min(42%,218px)}
 .cs-phone-col .phone-media{width:100%;max-width:218px}
@@ -2851,6 +2851,7 @@ function footerHTML(extra = '') {
 </footer>
 <script src="app.js?v=${BUILD_V}" defer></script>
 <script src="resume-plane.js?v=${BUILD_V}" defer></script>
+<script src="cursor-light.js?v=${BUILD_V}" defer></script>
 </body>
 </html>`;
 }
@@ -3450,6 +3451,7 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
 fs.copyFileSync(path.join(ROOT, 'resume-plane.js'), path.join(DIST, 'resume-plane.js'));   // the paper-airplane resume, on every page
+fs.copyFileSync(path.join(ROOT, 'cursor-light.js'), path.join(DIST, 'cursor-light.js'));   // the cursor is the light, on every page
 for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']) {
   const src = path.join(ROOT, 'vendor', f);
   if (!fs.existsSync(src)) throw new Error(`build: vendor/${f} missing (three for fish.js, gsap + ScrollTrigger for the logo wisps and the phone work list)`);
