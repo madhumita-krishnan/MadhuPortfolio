@@ -1105,8 +1105,15 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .sdeck-logo:empty{display:none}
 .sdeck-logo img{width:100%;height:100%;display:block}
 .sdeck.side.t2 .sdeck-co{position:absolute;left:var(--cl,0);top:var(--ct,0);margin:0;justify-content:flex-start;font-size:clamp(1.9rem,2.7vw,2.75rem);
-  transform:translateY(calc(-100% - 20px));transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
-.sdeck.side.t2 .sdeck-title.swap~.sdeck-co,.sdeck.side.t2 .sdeck-title.moving~.sdeck-co{opacity:0;transform:translateY(calc(-100% - 10px))}
+  transform:translateY(calc(-100% - var(--space) * 4));transition:opacity 240ms var(--ease-standard),transform 240ms var(--ease-standard)}
+.sdeck.side.t2 .sdeck-title.swap~.sdeck-co,.sdeck.side.t2 .sdeck-title.moving~.sdeck-co{opacity:0;transform:translateY(calc(-100% - var(--space) * 3))}
+/* option 2, spaced (her 2026-10-26: "can I see 2 without selected projects and better spacing?"): the name stands a clear
+   space-4 over the case, the headline starts level with the case's top edge instead of floating at its middle, and on
+   laptops the swipe view drops the Selected Projects heading (still there for screen readers); the toggle keeps its place */
+.sdeck.side.t2 .sdeck-title{top:var(--ct,50%);transform:none}
+@media (min-width:1000px){
+  .work-sec.t2[data-view="deck"] .work-head .section-title{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .work-sec.t2[data-view="deck"] .work-head .head-toggle{margin-left:auto}}
 .sdeck.side.t3 .sdeck-title{transform:none;height:var(--th,auto)}
 .sdeck.side.t3 .sdeck-title>span{display:flex;flex-direction:column;justify-content:space-between;height:100%}
 .sdeck.side.t3 .sdeck-co{margin:0}
@@ -2353,7 +2360,7 @@ function makeJS() {
        nothing else"): laptops only, the layout itself is unchanged. ?title=1 (default) the name heads the headline column;
        2 the name sits over the case, on its left edge; 3 the column spans the case's height, the name level with its top
        and the headline level with its bottom */
-    const tv=+new URLSearchParams(location.search).get('title')||1,coEl=titleEl.querySelector('.sdeck-co'),coHome=coEl.parentElement;sd.classList.add('t'+tv);
+    const tv=+new URLSearchParams(location.search).get('title')||1,coEl=titleEl.querySelector('.sdeck-co'),coHome=coEl.parentElement;sd.classList.add('t'+tv);sd.closest('section')&&sd.closest('section').classList.add('t'+tv);
     const placeCo=i=>{const side=sd.classList.contains('side'),d=dims[i];
       if(tv===2){if(side&&coEl.parentElement===coHome)titleEl.after(coEl);else if(!side&&coEl.parentElement!==coHome)coHome.prepend(coEl)}
       if(!side||!d)return;
@@ -2511,7 +2518,8 @@ function makeJS() {
        centring the case, headline AND bar left the case itself riding high with empty air above it. Now the case and its
        headline are what's centred, and the bar (plus the icons that hang under it on hover) only has to stay on screen */
     const seenMid=()=>{const c=cards[Math.max(0,active)].getBoundingClientRect(),t=titleEl.getBoundingClientRect(),b=bar?bar.getBoundingClientRect():c;
-      const m=(Math.min(c.top,t.top)+Math.max(c.bottom,t.bottom))/2;
+      const o=tv===2&&sd.classList.contains('side')?coEl.getBoundingClientRect().top:c.top;   // option 2: the name over the case is part of it
+      const m=(Math.min(c.top,t.top,o)+Math.max(c.bottom,t.bottom))/2;
       return Math.max(m,b.bottom+56-innerHeight/2+24)};
     const centred=()=>Math.abs(seenMid()-innerHeight/2)<innerHeight*.04;
     /* …and if it isn't centred, the first sideways swipe GLIDES it there (her 2026-10-26: "when I start horizontally scrolling
