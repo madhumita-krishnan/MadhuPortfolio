@@ -178,7 +178,7 @@ const TWEAKS = (() => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 
 function swipeTweaks() {
   const t = TWEAKS['swipe-deck']; if (!t) return '';
   const u = { aw: '--sd-aw', ah: '--sd-ah', side: '--sd-side', gap: '--sd-gap', peek: '--sd-peek', settle: '--sd-settle', radius: '--sd-radius', bg: '--sd-bg',
-    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease', speed: '--sd-speed' };
+    dh: '--sd-dh', dw: '--sd-dw', lane: '--sd-lane', tgap: '--sd-tgap', tw: '--sd-tw', ease: '--sd-ease', gmax: '--sd-gmax', commit: '--sd-commit', flick: '--sd-flick', wpush: '--sd-wpush' };
   const decl = Object.entries(t).filter(([k, v]) => u[k] && /^[#\w.%-]+$/.test(String(v))).map(([k, v]) => u[k] + ':' + v).join(';');
   return decl ? '.work-sec{' + decl + '}' : '';
 }
@@ -2212,29 +2212,46 @@ function makeJS() {
       titleEl.style.minHeight=th+'px';place(pos);
     };
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
-    /* speed (px/ms) = a GLIDE (her ask: "no matter how strong the horizontal scroll, don't lose speed till it clicks
-       in place"): constant speed, never slower than --sd-speed, no ease-out — it holds its pace and stops dead on the
-       card. Without speed (keys, the progress bar) it eases in as before. */
+    /* speed (px/ms, from a swipe) = a GLIDE that CARRIES the swipe's speed (her 2026-10-26: "it feels a little tense"):
+       the glide starts exactly as fast as the finger left and eases out on the --sd-ease curve, no constant-speed run
+       that stops dead, no overshoot. A slow release still lands within --sd-gmax, on a gentler ease-out so it doesn't
+       shoot off. Without speed (keys, the progress bar) it eases in as before. */
+    const ez=()=>getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out';
+    const kOf=e=>{const m=/power([0-9])/.exec(e);return m?+m[1]+1:/expo/.test(e)?6.9:/sine/.test(e)?1.6:3};   // the curve's starting slope
     const settle=(i,instant,speed)=>{
       const to=Math.max(0,Math.min(cards.length-1,i));if(tween)tween.kill();
       if(nudgeTl){nudgeTl.kill();nudgeTl=null;nudging=false}   // a real move always beats the swipe-hint nudge (it was undoing swipes made during it)
       if(instant||rm||!window.gsap)return place(to);
       const o={v:pos};
-      if(speed){const px=Math.abs(to-pos)*R,sp=Math.min(8,Math.max(num('--sd-speed')||1.6,speed));
-        tween=gsap.to(o,{v:to,duration:Math.max(.08,px/sp/1000),ease:'none',onUpdate:()=>place(o.v),onComplete:()=>{tween=null}});return}
-      tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:getComputedStyle(sd).getPropertyValue('--sd-ease').trim()||'power3.out',onUpdate:()=>place(o.v)});
+      if(speed!==undefined){const px=Math.max(1,Math.abs(to-pos)*R),v=Math.min(8,Math.max(.01,speed)),k0=kOf(ez()),
+          dur=Math.max(.15,Math.min(num('--sd-gmax')||.7,k0*px/v/1000)),k=Math.max(1.6,Math.min(k0,v*dur*1000/px));
+        tween=gsap.to(o,{v:to,duration:dur,ease:t=>1-Math.pow(1-t,k),onUpdate:()=>place(o.v),onComplete:()=>{tween=null}});return}
+      tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:ez(),onUpdate:()=>place(o.v)});
     };
+    /* drag px -> deck units, at the rate the CARD BEING DRAGGED moves (its own left/right reach), so it stays under the
+       finger 1:1 on laptops too, where the two reaches differ. dir +1 = toward the next project */
+    const rAt=dir=>{const d=dims[Math.max(0,Math.min(cards.length-1,Math.round(pos)))];return d?(dir>0?d.Rl:d.Rr):R};
     sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{
       if(!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
-      if(!drag.axis){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;drag.axis=Math.abs(dx)>Math.abs(dy)?'x':'y';if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging')}}
-      if(drag.axis!=='x')return;drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>6)drag.pts.shift();place(edge(drag.p0-dx/R));
+      /* follows from the first pixel: mostly-sideways moves track straight away; the axis is decided at 4px and a
+         vertical one hands the page back (and puts the deck where it was) */
+      if(!drag.axis&&(Math.abs(dx)>=4||Math.abs(dy)>=4)){drag.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';
+        if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging')}else{place(drag.p0);return}}
+      if(drag.axis==='y'||!drag.axis&&Math.abs(dy)>Math.abs(dx))return;
+      drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>12)drag.pts.shift();
+      if(!drag.r)drag.r=dx?rAt(-Math.sign(dx)):0;if(drag.r)place(edge(drag.p0-dx/drag.r));
     });
-    const end=()=>{
-      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');if(d.axis!=='x')return;
-      const a=d.pts[0],b=d.pts[d.pts.length-1],v=(b[1]-a[1])/Math.max(16,b[0]-a[0]);   // px per ms
-      const near=Math.round(pos),pick=Math.round(pos-v*110/R);   // the nearest card; a real flick may carry one further
-      settle(Math.max(near-1,Math.min(near+1,pick)),false,Math.abs(v));suppress=true;setTimeout(()=>{suppress=false},0);
+    /* release: a quick flick (--sd-flick px/ms) goes to the next project however short it was; a slow drag commits once
+       it's past --sd-commit of a card, otherwise it eases back. Never more than one card past where you let go. */
+    const end=e=>{
+      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');
+      if(d.axis!=='x'){if(pos!==Math.round(pos))settle(Math.round(pos),false,0);return}   // a tap that caught a glide finishes it
+      const now=e.timeStamp,pts=d.pts.filter(p=>now-p[0]<100),a=pts[0];
+      const v=pts.length>1?(pts[pts.length-1][1]-a[1])/Math.max(16,now-a[0]):0;   // px per ms, measured to the release
+      const fwd=-Math.sign(v),cm=num('--sd-commit')||.22;
+      const to=Math.abs(v)>=(num('--sd-flick')||.3)?(fwd>0?Math.floor(pos)+1:Math.ceil(pos)-1):pos>d.p0?Math.floor(pos+1-cm):Math.ceil(pos-1+cm);
+      settle(to,false,Math.sign(to-pos)===fwd?Math.abs(v):0);suppress=true;setTimeout(()=>{suppress=false},0);
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
@@ -2254,14 +2271,15 @@ function makeJS() {
       let scrub=false;
       bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;clearTimeout(bar._t);bar.classList.add('scrub');settle(segAt(e.clientX));try{bar.setPointerCapture(e.pointerId)}catch(err){}});
       bar.addEventListener('pointermove',e=>{if(!scrub)return;const i=segAt(e.clientX);if(i!==Math.round(pos))settle(i)});
-      const stop=()=>{scrub=false;bar._t=setTimeout(()=>bar.classList.remove('scrub'),1200)};   // the icons linger a beat after a finger liftsbar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
+      const stop=()=>{scrub=false;bar._t=setTimeout(()=>bar.classList.remove('scrub'),1200)};   // the icons linger a beat after a finger lifts
+      bar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
       bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
-    /* trackpad: the deck follows the fingers 1:1 until the push reaches 40px, then COMMITS to the next card and glides
-       there at the push's speed (one push = one project). The trackpad's own momentum after that is swallowed until
-       the wheel goes quiet, so it never drags the glide down. */
-    let wAcc=0,wFrom=0,wLock=false,wLast=0,wDir=0;
+    /* trackpad: the deck follows the fingers 1:1 until the push reaches --sd-wpush px, then COMMITS to the next card and
+       glides there, starting at the push's own speed (one push = one project), so the hand-off is seamless. The
+       trackpad's own momentum after that is swallowed until the wheel goes quiet, so it never drags the glide down. */
+    let wAcc=0,wFrom=0,wLock=false,wLast=0,wDir=0,wPts=[];
     /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
        where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
        screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
@@ -2277,12 +2295,14 @@ function makeJS() {
       e.preventDefault();touched=true;
       const dir=Math.sign(e.deltaX);
       if(wLock&&(ax>wLast*1.8&&ax>6||dir!==wDir&&ax>6)){wLock=false;wAcc=0}   // a fresh push mid-momentum: a new swipe
-      wLast=ax;
-      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,1);wLock=false;wAcc=0;wLast=0},180);
+      wLast=ax;wPts.push([e.timeStamp,e.deltaX]);wPts=wPts.filter(p=>e.timeStamp-p[0]<70);
+      clearTimeout(wheelT);wheelT=setTimeout(()=>{if(!wLock)settle(Math.round(pos),false,0);wLock=false;wAcc=0;wLast=0;wPts=[]},180);
       if(wLock)return;
       if(!wAcc){if(tween)tween.kill();wFrom=Math.round(pos)}
-      wAcc+=e.deltaX;place(edge(pos+e.deltaX/R));
-      if(Math.abs(wAcc)>=40){wLock=true;wDir=dir;settle(Math.round(pos)+(Math.round(pos)===wFrom?dir:0),false,ax/16)}
+      wAcc+=e.deltaX;place(edge(pos+e.deltaX/rAt(dir)));
+      if(Math.abs(wAcc)>=(num('--sd-wpush')||24)){wLock=true;wDir=dir;
+        const wv=Math.abs(wPts.reduce((s,p)=>s+p[1],0))/(e.timeStamp-wPts[0][0]+16);   // px/ms over the last ~70ms
+        settle(Math.round(pos)+(Math.round(pos)===wFrom?dir:0),false,wv)}
     },{passive:false});
     /* "I'm not sure I realized I can swipe": the first time the deck is well in view it leans toward the next project
        and back, once, unless you've already touched it. The headline stays put for the nudge. */
