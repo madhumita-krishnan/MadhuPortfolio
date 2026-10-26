@@ -2245,7 +2245,10 @@ function makeJS() {
       /* in the SWIPE view the floating toggle (bottom right on laptops) is the one, whenever the deck holds the screen (her
          2026-10-26: "on horizontal scroll the toggle isn't in the right place"); it no longer waits for the heading to leave
          or the nav to tuck away there, since bottom-right can't meet the nav */
-      const sync=()=>{const deck=workEl.dataset.view==='deck',on=inWork&&(headGone||deck);dock.classList.toggle('on',on);
+      /* switching view WITH a toggle never replays the toggles' arrival or exit (her 2026-10-26: "when you drag the toggle it
+         doesn't need to do the circle animation again"): whichever toggle you used stays put until you next scroll yourself */
+      let hold=false;
+      const sync=()=>{if(hold)return;const deck=workEl.dataset.view==='deck',on=inWork&&(headGone||deck);dock.classList.toggle('on',on);
         vt(bar,on&&(deck||!fineP||!navW||navW.classList.contains('nav-hidden')));
         vt(headBar,!on)};
       /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
@@ -2255,7 +2258,11 @@ function makeJS() {
       const ioS=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()},{rootMargin:'-45% 0px -45% 0px'});
       served.forEach(el=>ioS.observe(el));
       if(navW)new MutationObserver(sync).observe(navW,{attributes:true,attributeFilter:['class']});
-      addEventListener('mk-work-view',sync);
+      addEventListener('mk-work-view',()=>{hold=true});
+      const release=()=>{if(hold){hold=false;sync()}};
+      addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX))release()},{passive:true});
+      addEventListener('touchmove',release,{passive:true});
+      addEventListener('keydown',e=>{if(/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key))release()});
       /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
       new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
   }
@@ -2423,7 +2430,12 @@ function makeJS() {
     /* only when the case is CENTRED on screen (her 2026-10-26: "selected projects shouldn't be hidden at this scroll position.
        it is only hidden when the cases are centered"): swiping with the deck still low or high on the screen leaves the
        heading and the page alone */
-    const centred=()=>{const r=stage.getBoundingClientRect();return r.height>0&&Math.abs(r.top+r.height/2-innerHeight/2)<innerHeight*.04};   // the deck's own stage (cards move between lanes mid-swipe; the stage doesn't)
+    /* centred = what you actually SEE (the case, its headline and the progress bar) sits mid-screen, not the stage, whose top
+       lane is empty air (her 2026-10-26: "scroll mode doesn't feel like all the elements are properly centered on the screen.
+       it's too moved down") */
+    const seenMid=()=>{const c=cards[Math.max(0,active)].getBoundingClientRect(),t=titleEl.getBoundingClientRect(),b=bar?bar.getBoundingClientRect():c;
+      return (Math.min(c.top,t.top)+Math.max(c.bottom,t.bottom,b.bottom))/2};
+    const centred=()=>Math.abs(seenMid()-innerHeight/2)<innerHeight*.04;
     /* …and if it isn't centred, the first sideways swipe GLIDES it there (her 2026-10-26: "when I start horizontally scrolling
        can you move my case studies into the center of the screen so it's focused rather than me having to find that scroll
        position myself?"). One short glide, only ever started by a sideways gesture on the deck: a deliberate exception to
@@ -2434,7 +2446,7 @@ function makeJS() {
       root.classList.add('hfocus')};
     const focusOn=()=>{if(root.classList.contains('hfocus')||centring)return;
       if(centred())return enter();
-      const r=stage.getBoundingClientRect(),to=Math.max(0,scrollY+r.top+r.height/2-innerHeight/2),from=scrollY,t0=performance.now(),D=rm?0:520,id=++centring;
+      const to=Math.max(0,scrollY+seenMid()-innerHeight/2),from=scrollY,t0=performance.now(),D=rm?0:520,id=++centring;
       const ease=x=>1-Math.pow(1-x,3);
       const cancel=()=>{if(centring===id)centring=0};
       addEventListener('wheel',function w(e){if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){cancel();removeEventListener('wheel',w)}},{passive:true});
