@@ -228,7 +228,12 @@
     return md[(((y * S) | 0) * W2 + ((x * S) | 0)) * 4 + 3] > 60;
   }
   /* from yStart, find the next surface top at or below it (the y where ink begins) */
+  var gtMemo = null;   // while a route is planned: the same scans recur thousands of times (her feet's samples overlap)
   function groundTop(x, yStart, maxScan) {
+    if (gtMemo) { var mk = (x * 4096 + Math.round(yStart)) * 1024 + (maxScan || 260), v = gtMemo.get(mk); if (v === undefined) gtMemo.set(mk, v = gt(x, yStart, maxScan)); return v; }
+    return gt(x, yStart, maxScan);
+  }
+  function gt(x, yStart, maxScan) {
     var y = Math.round(yStart), n = 0, cap = maxScan || 260;
     while (!solid(x, y) && n < cap) { y++; n++; }
     if (n >= cap) return null;
@@ -273,6 +278,36 @@
     var j = Math.min(n - 1, Math.floor(c.t * n)), nx = c.x0 + fig.dir * CW_DX[j] * sc * c.k;   // per frame, like the clay: contacts hold still
     var gy = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
     if (gy != null && gy >= fig.y - STEP_UP - .5 && gy <= fig.y + STEP_DOWN + .5) { fig.x = nx; fig.y = gy; }
+  }
+  /* A LEVEL WALK ALONG A LINE OF TYPE (her 2026-10-26: "walking on the text looks super glitchy"; her pick, "smooth level
+     walk"): her feet read the ground across their whole span, not one pixel column, and stand on the SHORT letters'
+     tops, the line's x-height, like a floor; an ascender or capital under one foot passes behind her legs, and the gap
+     between two letters or words is spanned. One column snapped her to every glyph top and into every gap (pops of up
+     to 12px, every other frame). A real change of level is still a step: when the ground right under her middle is
+     higher than the level by more than an ascender, or the level is gone under it and lower ground is there. */
+  function levelAt(x, y) {
+    var ts = [], mid = null, low = null, any = false, L = false, R = false;
+    var t0 = groundTop(x, y - STEP_UP, STEP_UP + STEP_DOWN + 4);
+    /* ink taller than a step right where she'd stand, rising from her ground: a wall, not a stem to pass. Ink up there
+       with air below it is the line above's descenders hanging over her (the bio lines sit 36px apart): she walks under
+       them, where she used to read a wall and hop up onto the line above */
+    if (t0 != null && t0 < y - STEP_UP - .5 && solid(x, y - 3)) return null;
+    for (var k = -12; k <= 12; k += 4) {
+      var t = k ? groundTop(x + k, y - STEP_UP, STEP_UP + STEP_DOWN + 4) : t0;
+      if (t == null || t < y - STEP_UP - .5 || t > y + STEP_DOWN + .5 || !openAbove(x + k, t, MIN_CLR - 2)) continue;   // openAbove: clearance() >= MIN_CLR, without counting to 90
+      var c = Math.abs(k) <= 4;
+      if (Math.abs(k) <= 8) any = true;
+      if (t <= y + 6) { ts.push(t); if (c && (mid == null || t < mid)) mid = t; if (k < 0) L = true; if (k > 0) R = true; }
+      else if (c && (low == null || t < low)) low = t;
+    }
+    if (mid != null && mid < y - 8) return mid;                  // a real step up, under her middle
+    if (mid == null && low != null && !(L && R)) return low;     // the level ends under her: a step down (level both sides: a word space)
+    if (ts.some(function (t) { return Math.abs(t - y) <= 2.5; })) return y;   // still on her level: not a pixel of bob
+    /* off it (she landed on an ascender, or a new line's letters start): the height at least two foot samples agree on */
+    var best = null, bn = 1;
+    ts.forEach(function (t) { var n = ts.filter(function (u) { return Math.abs(u - t) <= 1.5; }).length;
+      if (n > bn || (n === bn && best != null && t > best)) { bn = n; best = t; } });
+    return best != null ? best : any ? y : null;   // a gap between letters, or only a stem underfoot: the level carries on (null: an edge)
   }
   function walkEdge(x0, y0, dir) {
     var y = y0;
@@ -553,8 +588,7 @@
       release(Math.sign(p.x - fig.x)); return;
     }
     if (e.target.closest && e.target.closest('a,button')) return;
-    /* the click means: the first ink at or below where you clicked */
-    var ty = groundTop(p.x, p.y - 2, H);
+    var ty = clickGround(p);
     /* a click is a WALK there (her 2026-10-26: "the avatar jumps anytime I click. I don't like that. why can't it just walk
        over"): no hop at the finger any more, even right above her; she only climbs when the spot is on a surface she
        can't walk to */
@@ -564,6 +598,17 @@
     start();
   });
 
+  /* where a click asks her to stand: on the line of type you clicked INSIDE (a tap between two letters used to fall
+     through to the line below), else the first ink at or below the click */
+  function clickGround(p) {
+    for (var i = 0; i < bars.length; i++) { var b = bars[i];
+      if (p.x < b.x1 || p.x > b.x2 || p.y < b.top - 4 || p.y > b.y + 4) continue;
+      var best = null;
+      for (var k = -12; k <= 12; k += 3) { var t = groundTop(p.x + k, b.top - 2, b.y - b.top + 6); if (t != null && t <= b.y + 2 && (best == null || t > best)) best = t; }
+      if (best != null) return best;
+    }
+    return groundTop(p.x, p.y - 2, H);
+  }
   function startFlip(dir) {
     var t = Math.max(2 * Math.abs(fig.vy) / G, 0.45);
     fig.flip = { rot: 0, w: (Math.PI * 2) / t, dir: dir || fig.dir };
@@ -637,6 +682,10 @@
   var PCOL = 12;
   function openAbove(x, y, h) { for (var k = 2; k <= h; k += 2) if (solid(x, y - k)) return false; return true; }   // clearance() stops counting at 92px
   function planRoute(tx, ty, bans) {
+    gtMemo = window.Map ? new Map() : null;
+    try { return planRoute1(tx, ty, bans); } finally { gtMemo = null; }
+  }
+  function planRoute1(tx, ty, bans) {
     var cols = [], nodes = [];
     for (var x = 10, c = 0; x <= W - 10; x += PCOL, c++) {
       var col = [];
@@ -658,18 +707,29 @@
     /* a walk is what tickGround can really do between two points, read pixel by pixel: steps, strides over a gap of a
        few px, little hops over a bump. Linking only neighbouring columns made every word space a jump (her hopping
        along the bio), and could hide a gap she then fell into */
-    var walkTo = function (a, b) {
-      var dc = Math.abs(a.c - b.c), sd = b.x > a.x ? 2 : -2, y = a.y, gap = 0;
-      if (dc > 2 || b.y < a.y - HOP_UP || b.y > a.y + STEP_DOWN) return false;
-      var roomy = function (x, t) { return openAbove(x, t, MIN_CLR - 2); };   // clearance() >= MIN_CLR, without counting to 90
-      for (var x = a.x + sd; sd > 0 ? x <= b.x : x >= b.x; x += sd) {
-        var t = groundTop(x, y - STEP_UP, STEP_UP + STEP_DOWN + 4);
-        if (t != null && t >= y - STEP_UP - .5 && t <= y + STEP_DOWN + .5 && roomy(x, t)) { y = t; gap = 0; continue; }
-        if (t != null && t < y - STEP_UP) { var hp = groundTop(x, y - HOP_UP, HOP_UP);
-          if (hp != null && hp >= y - HOP_UP && roomy(x, hp)) { y = hp; gap = 0; continue; } return false; }
-        if ((gap += 2) > 8) return false;
+    /* up to 3 columns: under the line above's descenders a column can have too little headroom to be a stand point,
+       and her feet carry her under it, so the walk spans it. One scan per node and direction (her feet's own read of the
+       ground, levelAt, so the plan and the walk agree), read by every walk edge out of it */
+    var scans = {}, walkScan = function (a, sd) {
+      var key = a.i * 2 + (sd > 0 ? 1 : 0); if (scans[key]) return scans[key];
+      var ys = scans[key] = {}, y = a.y, gap = 0;
+      for (var x = a.x + sd; Math.abs(x - a.x) <= PCOL * 3; x += sd) {   // sd = 4: the feet's own sample spacing, so the memo hits
+        var lv = levelAt(x, y);
+        if (lv == null) {
+          var t = groundTop(x, y - STEP_UP, STEP_UP + STEP_DOWN + 4);
+          if (t != null && t < y - STEP_UP && solid(x, y - 3)) { var hp = groundTop(x, y - HOP_UP, HOP_UP);
+            if (hp != null && hp >= y - HOP_UP && openAbove(x, hp, MIN_CLR - 2)) lv = hp; else break; }
+          else if ((gap += 4) > 8) break;
+        }
+        if (lv != null) { y = lv; gap = 0; }
+        ys[x] = y;
       }
-      return Math.abs(y - b.y) <= STEP_UP;
+      return ys;
+    };
+    var walkTo = function (a, b) {
+      if (Math.abs(a.c - b.c) > 3 || b.y < a.y - HOP_UP || b.y > a.y + STEP_DOWN) return false;
+      var y = walkScan(a, b.x > a.x ? 4 : -4)[b.x];
+      return y != null && Math.abs(y - b.y) <= STEP_UP;
     };
     var edges = function (a) {
       var out = [], unders = {};
@@ -886,9 +946,12 @@
     if (fig.vx) fig.dir = fig.vx > 0 ? 1 : -1;
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
     /* follow the ink's surface: a step either way is walked, not fallen */
-    var s = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
-    if (s != null && s >= fig.y - STEP_UP - 0.5 && s <= fig.y + STEP_DOWN + 0.5 && clearance(nx, s) >= MIN_CLR) {
-      fig.x = nx; fig.y = s;
+    var s = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4), lv = levelAt(nx, fig.y);
+    /* ink up there with air under it is the line above's descenders, not a wall: what's under her is the ground below
+       (or nothing), never a hop up onto that line */
+    if (s != null && s < fig.y - STEP_UP && !solid(nx, fig.y - 3)) s = groundTop(nx, fig.y - 2, STEP_DOWN + 6);
+    if (lv != null) {
+      fig.x = nx; fig.y = lv;
       fig.phase += Math.abs(fig.vx) * dt * 0.05;
       advGait(dt);
       return;
@@ -1121,7 +1184,7 @@
   var raf = 0, last = 0;
   var rideT = 0;   // seconds of rAF kept alive so a CSS-only glyph wave still animates him
   function needsLoop() {
-    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0;
+    return fig.state !== 'idle' && fig.state !== 'sign' || fig.target || fig.drag || puffs.length || fig.landT > 0 || fig.slideT > 0 || rideT > 0 || rideBusy;
   }
   /* the moment she is STANDING on the cloud — however she got there: its click-jump, a hop, a climb up its edge, a walk
      across — the cloud hears the slam (her: "nothing happens when I jump on the cloud") */
@@ -1924,18 +1987,33 @@
      other math, and the sign-hold stands at the CTA, not on type. */
   /* (2026-10-26) every letter of the bio and eyebrow and the clay tiles too, not just the name, and her HANDS on a
      hang as well as her feet: whatever she touches, she moves with */
-  function rideDy() {
+  /* ONE smoothed offset, never a letter's own (her 2026-10-26: "it was better before we did the contact point thing"):
+     taking the single glyph under her made her drawing jump letter to letter as a hovered line's letters rose on their
+     stagger. Now: the mean lift of every letter under her feet's span, eased over a few frames, and exactly 0 while
+     nothing under her is lifted */
+  var rideS = 0, rideBusy = false;
+  function rideTarget() {
     if (!chRide.length || fig.state === 'air' || fig.state === 'sign') return 0;
     var hg = fig.state === 'hang' && fig.hang, cx = hg ? (hg.hands[0].x + hg.hands[1].x) / 2 : fig.x, cy = hg ? hg.hands[0].y : fig.y;
+    var top = null, sum = 0, n = 0;
     for (var i = 0; i < chRide.length; i++) {
       var c = chRide[i];
-      if (cx < c.x1 - 2 || cx > c.x2 + 2) continue;
+      if (cx + 12 < c.x1 || cx - 12 > c.x2) continue;
       /* feet (fig.y = the glyph's ink top) must sit inside this glyph's own line box, hands around its bottom —
          otherwise she is on the floor or another line, not on this letter */
       if (hg ? cy < c.y1 - 4 || cy > c.y2 + 8 : cy < c.y1 - 10 || cy > c.y2 + 6) continue;
-      return (c.el.getBoundingClientRect().top - cv.getBoundingClientRect().top) - c.y1;
+      if (top == null) top = cv.getBoundingClientRect().top;
+      sum += (c.el.getBoundingClientRect().top - top) - c.y1; n++;
     }
-    return 0;
+    var t = n ? sum / n : 0;
+    return Math.abs(t) < .5 ? 0 : t;
+  }
+  function rideDy() {
+    var t = rideTarget();
+    rideS += (t - rideS) * .25;
+    if (Math.abs(t - rideS) < .1) rideS = t;
+    rideBusy = rideS !== t;
+    return rideS;
   }
 
   /* ------------------------------------------------------------------ boot */
@@ -1957,9 +2035,12 @@
   });
   function spawnIfLost() {
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
-    var t = groundTop(fig.x, fig.y - 3, 8);
-    if (t == null || Math.abs(t - fig.y) > 5) {
-      var l = groundTop(fig.x, 0, H + 40);
+    /* her level read across her feet (over a word space or a stem she is NOT lost), or the old one-column check */
+    var t = levelAt(fig.x, fig.y), c = groundTop(fig.x, fig.y - 3, 8);
+    if ((t == null || Math.abs(t - fig.y) > 5) && (c == null || Math.abs(c - fig.y) > 5)) {
+      /* lost: the nearest ground just around her feet, never the top of the hero (a hover's rebuild once put her on the
+         name from the bio) */
+      var l = groundTop(fig.x, fig.y - 24, H + 40);
       fig.y = l == null ? floorY : l;
     }
   }
