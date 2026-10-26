@@ -1034,34 +1034,13 @@ html.hfocus .hf-path>*,html.hf-out .hf-path>*{transition:opacity .45s var(--ease
 html.hfocus .hf-path>:not(.hf-path):not(.hf-on){opacity:0!important;pointer-events:none}
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
-.view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none;opacity:0;transform:none;   /* no slide up: it materializes in place */
-  transition:opacity 200ms var(--ease-standard),transform 200ms var(--ease-standard)}
-.view-dock.floating.on{opacity:1;transform:none}
-.view-dock.floating.on .view-toggle{pointer-events:auto}
-/* laptop: nav and toggle take turns (her ask) — scrolling up brings the nav back, so the toggle steps away until it hides again */
-@media (hover:hover) and (pointer:fine){body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on{opacity:0;transform:translateY(8px)}
-  body:has(.nav-wrap:not(.nav-hidden)) .view-dock.floating.on .view-toggle{pointer-events:none}}
-/* the toggle STARTS beside the "Selected Projects" title (her ask: "toggle should start next to selected project
-   first and then move — right now it feels in the way"); the floating one at the bottom only appears once that
-   title has scrolled away, and the first time it MATERIALIZES (her Apple reference): one small dark pill at its
-   centre that widens into the bar (a clip, so the icons never stretch), then the icons fade in. Once per visit. */
-.work-head .head-toggle{background:rgba(22,27,40,.88);transition:opacity 200ms var(--ease-standard)}
-body:has(.view-dock.on) .work-head .head-toggle{opacity:0;pointer-events:none}   /* never two toggles on screen */
-.view-dock.floating.leaving{opacity:1;transition:none}
-.view-toggle.pop{animation:vt-pop 600ms cubic-bezier(.4,0,.2,1) both;pointer-events:none}
-.view-toggle.pop .view-btn{animation:vt-duck 160ms ease-in both}
-@keyframes vt-duck{to{opacity:0;transform:scale(.6)}}
-@keyframes vt-pop{0%{clip-path:inset(0 0 round 999px);transform:none;opacity:1}
-  45%{clip-path:inset(24% 44% round 999px);transform:none}
-  65%{clip-path:inset(24% 44% round 999px);transform:translateY(-10px) scale(1.18)}
-  100%{clip-path:inset(24% 44% round 999px);transform:translateY(-4px) scale(0);opacity:0}}
-.view-toggle.materialize{animation:vt-grow 700ms cubic-bezier(.22,1,.36,1) 150ms both}   /* the pill shows for a beat, then widens */
-.view-toggle.materialize .view-btn{animation:vt-icons 260ms ease-out 820ms both}   /* icons once the bar is whole: ~1.1s in all */
-/* her brief: begin as ONE small dark pill ~12% of the bar's width at its centre (here also ~half its height, so it reads
-   as a pill, not a sliver), then widen into the bar */
-@keyframes vt-grow{0%{clip-path:inset(24% 44% round 999px)}100%{clip-path:inset(0 0 round 999px)}}
-@keyframes vt-icons{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.view-toggle.materialize,.view-toggle.materialize .view-btn{animation:none}}
+.view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none}
+/* the toggles' appearing and leaving is ONE materialize timeline in app.js (see vt()): a clip of the bar's own surface
+   from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
+   there and not clickable; while it dematerializes it can't be clicked either */
+.view-toggle.vt-hidden{visibility:hidden;pointer-events:none}
+.view-toggle.vt-leaving{pointer-events:none}
+.work-head .head-toggle{background:rgba(22,27,40,.88)}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
@@ -2164,27 +2143,44 @@ function makeJS() {
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
-      let inWork=false,headGone=false,grown=false;
-      /* the entrance waits until the bar can actually be SEEN: on laptops it steps aside while the nav is showing
-         (nav and toggle take turns), and an entrance played behind that would be wasted */
+      let inWork=false,headGone=false;
       const navW=document.querySelector('.nav-wrap'),fineP=matchMedia('(hover:hover) and (pointer:fine)').matches;
-      /* leaving (her 2026-10-26: "a cuter animation when the toggle bar disappears"): the icons duck out, the bar pinches back
-         into the little pill it grew from, and the pill hops and pops like a bubble. Only when it leaves for real (you've
-         scrolled out of the projects), not when it steps aside for the nav */
-      let wasOn=false;
-      const sync=()=>{const on=inWork&&headGone;
-        if(wasOn&&!on&&!inWork&&!rmActive()){dock.classList.add('leaving');bar.classList.add('pop');clearTimeout(sync.t);
-          sync.t=setTimeout(()=>{dock.classList.remove('leaving');bar.classList.remove('pop')},620)}
-        if(on){clearTimeout(sync.t);dock.classList.remove('leaving');bar.classList.remove('pop')}
-        wasOn=on;dock.classList.toggle('on',on);
-        if(on&&!grown&&(!fineP||!navW||navW.classList.contains('nav-hidden'))){grown=true;if(!rmActive()){bar.classList.add('materialize');bar.querySelector('.view-btn').addEventListener('animationend',()=>bar.classList.remove('materialize'),{once:true})}}};
+      /* MATERIALIZE / DEMATERIALIZE (her Apple reference, 2026-10-26: "replace the current ease in / ease out on my toggle
+         buttons entrance and exit with the materializing entrance … and use its exact reverse for removal"). One timeline
+         per toggle, laid out at its final size the whole time:
+           0     one small dark pill at the centre, ~12% of the bar's width (a clip of the bar's own surface)
+           150   the pill widens from its centre into the full bar, 700ms, settling with no bounce
+           850   the controls resolve inside it (both icons and the selected highlight together, no stagger), 350ms
+         ≈1.2s in all. Removal is that timeline played backwards (reverse()), so it is the exact reverse: controls out, the
+         surface contracts from its edges back into the pill, the pill goes; and a change of mind mid-way turns around
+         from wherever it is, so the silhouette never jumps. Only a clip and opacity move: nothing is stretched. There are
+         no text labels in these toggles, so the label step has nothing to fade. Reduced motion: shown or hidden at once.
+         WHEN each toggle shows is unchanged: the floating one while the projects hold the screen (on laptops only while
+         the nav is tucked away), the top one whenever the floating one isn't on. */
+      const PILL='inset(24% 44% round 999px)',FULL='inset(0% 0% round 999px)';
+      const vt=(t,show)=>{
+        if(t._show===show)return;t._show=show;
+        if(rmActive()||!t.animate){(t._a||[]).forEach(a=>a.cancel());t._a=null;t.classList.toggle('vt-hidden',!show);return}
+        if(!t._a){
+          t._a=[t.animate([{clipPath:PILL},{clipPath:FULL}],{duration:700,delay:150,endDelay:350,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'}),   // endDelay: every part ends at 1200, so reversing waits for the controls to go first
+            ...[...t.querySelectorAll('.view-btn')].map(b=>b.animate([{opacity:0},{opacity:1}],{duration:350,delay:850,easing:'ease-out',fill:'both'}))];
+          if(!show)t._a.forEach(a=>{a.finish();a.reverse()});   // it was showing without a timeline (the top toggle at load)
+        }else t._a.forEach(a=>{if(a.playbackRate>0!==show)a.reverse();else a.play()});
+        t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
+        const run=t._a;Promise.all(run.map(a=>a.finished)).then(()=>{if(t._a!==run||t._show)return;
+          t.classList.add('vt-hidden');t.classList.remove('vt-leaving');run.forEach(a=>a.cancel());t._a=null},()=>{});
+      };
+      const headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
+      const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
+        vt(bar,on&&(!fineP||!navW||navW.classList.contains('nav-hidden')));
+        vt(headBar,!on)};
       /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
          own padding below the last one doesn't count (her 2026-10-26: "I've basically left the space where the toggle is
          needed. why would I need the toggle still there?"). data-serves names them for device-check's floating-UI rule */
       const served=[...workEl.querySelectorAll(dock.dataset.serves)],live=new Set();
       const ioS=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()},{rootMargin:'-45% 0px -45% 0px'});
       served.forEach(el=>ioS.observe(el));
-      if(navW)new MutationObserver(()=>{if(!grown)sync()}).observe(navW,{attributes:true,attributeFilter:['class']});
+      if(navW)new MutationObserver(sync).observe(navW,{attributes:true,attributeFilter:['class']});
       /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
       new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
   }
