@@ -2196,19 +2196,36 @@ function makeJS() {
         if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
         t.classList.remove('vt-hidden');t.classList.toggle('vt-leaving',!show);
         const {CIRC,ring,btns}=parts(t),A=[];
-        if(show){
-          A.push(t.animate([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.68,easing:'cubic-bezier(.22,1.25,.36,1)'},{clipPath:FULL,offset:1}],{duration:940,fill:'both'}),
-            ring.animate([{opacity:1},{opacity:1,offset:.68},{opacity:0,offset:.82},{opacity:0}],{duration:940,fill:'both'}),
-            t.animate([{transform:'scale(0)',opacity:0},{transform:'scale(1.45)',opacity:1,offset:.38},{transform:'scale(.82)',offset:.6},{transform:'scale(1.12)',offset:.8},{transform:'none'}],{duration:340,easing:'ease-out',fill:'backwards'}),
-            t.animate([{transform:'none'},{transform:'scale(1.07,.9)',offset:.22},{transform:'scale(.97,1.04)',offset:.5},{transform:'scale(1.015,.99)',offset:.75},{transform:'none'}],{duration:400,delay:900,easing:'ease-out'}),
-            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:940,easing:'ease-out',fill:'both'})),
-            t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:2200,easing:'ease-out'}));
+        /* the toggle beside "Selected Projects" just eases in and out; the bounce, the dot and the suck are the CORNER one's
+           alone (her 2026-10-26: "just do ease in ease out for the normal toggle near selected projects. the animation is only
+           for the toggle in the corner") */
+        if(t!==bar){A.push(t.animate([{opacity:show?0:1},{opacity:show?1:0}],{duration:260,easing:'ease-in-out',fill:'both'}))}
+        else if(show){
+          /* IN, dramatic (her: "make the toggle bounce into place more dramatic and pronounced"): the dot pops past full size
+             and rings down (0–520) → holds (to 800) → widens (800–1080) → lands with a big squash-and-stretch wobble
+             (1040–1700) → icons (1080–1280) */
+          A.push(t.animate([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.74,easing:'cubic-bezier(.2,1.3,.35,1)'},{clipPath:FULL,offset:1}],{duration:1080,fill:'both'}),
+            ring.animate([{opacity:1},{opacity:1,offset:.74},{opacity:0,offset:.86},{opacity:0}],{duration:1080,fill:'both'}),
+            /* it BURSTS up from below (her: "explode/pop in/move in from the bottom. I don't want it to ease in"): no ease-in, it
+               leaves at full speed, overshoots high and big, rings down; then the hold is a little heartbeat pulse, not a
+               static pause ("the pause should be a mini pulse") */
+            t.animate([{transform:'translateY(70px) scale(.25)',opacity:0,easing:'cubic-bezier(.05,.9,.2,1)'},{transform:'translateY(-12px) scale(1.8)',opacity:1,offset:.2},
+              {transform:'translateY(3px) scale(.7)',opacity:1,offset:.33},{transform:'scale(1.25)',opacity:1,offset:.45},{transform:'scale(.9)',opacity:1,offset:.55},{transform:'none',opacity:1,offset:.64},
+              {transform:'scale(1.18)',opacity:1,offset:.76,easing:'ease-in-out'},{transform:'scale(.96)',opacity:1,offset:.88},{transform:'none',opacity:1}],{duration:800,fill:'backwards'}),
+            t.animate([{transform:'none'},{transform:'scale(1.18,.8)',offset:.15},{transform:'scale(.9,1.12)',offset:.35},{transform:'scale(1.07,.95)',offset:.55},{transform:'scale(.97,1.03)',offset:.75},{transform:'none'}],{duration:660,delay:1040,easing:'ease-out'}),
+            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:1080,easing:'ease-out',fill:'both'})),
+            t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:2400,easing:'ease-out'}));
         }else{
+          /* OUT, exaggerated with a big range of speeds (her: "exaggerate the toggle collapse more. I want a greater variance
+             in speed"): icons go (0–120) → the bar breathes out, slowly (100–220) → SNAPS into the dot, slow then very fast
+             (220–400) → the dot bounces (400–560) → holds, fully solid, ringed (to 700) → leans in and is SUCKED away,
+             accelerating, stretching along the pull (700–1000); it stays solid until it's almost gone */
           A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'both'})),
-            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.1,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.4},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
-            ring.animate([{opacity:0},{opacity:0,offset:.34},{opacity:1,offset:.4},{opacity:1}],{duration:1000,fill:'both'}),
-            /* sucked out: a little lean in, then an accelerating pull down and away, stretching along the pull, to nothing */
-            t.animate([{transform:'none',opacity:1},{transform:'none',offset:.7},{transform:'translateY(-3px) scale(1.18)',offset:.76,easing:'cubic-bezier(.55,0,.95,.35)'},{transform:'translateY(90px) scale(.12,.6)',opacity:0}],{duration:1000,fill:'both'}));
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.22,easing:'cubic-bezier(.8,0,.92,.3)'},{clipPath:CIRC,offset:.4},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
+            ring.animate([{opacity:0},{opacity:0,offset:.37},{opacity:1,offset:.41},{opacity:1}],{duration:1000,fill:'both'}),
+            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.1,easing:'ease-out'},{transform:'scale(1.07,.95)',opacity:1,offset:.22,easing:'ease-in'},{transform:'none',opacity:1,offset:.4},
+              {transform:'scale(.75)',opacity:1,offset:.44},{transform:'scale(1.22)',opacity:1,offset:.49},{transform:'scale(.95)',opacity:1,offset:.53},{transform:'none',opacity:1,offset:.56},
+              {transform:'scale(1.16)',opacity:1,offset:.63,easing:'ease-in-out'},{transform:'none',opacity:1,offset:.7,easing:'ease-out'},{transform:'translateY(-4px) scale(1.25)',opacity:1,offset:.76,easing:'cubic-bezier(.7,0,.95,.2)'},{transform:'translateY(80px) scale(.1,.55)',opacity:1,offset:.97},{transform:'translateY(90px) scale(0)',opacity:0}],{duration:1000,fill:'both'}));
         }
         t._a=A;
         Promise.all(A.map(a=>a.finished)).then(()=>{if(t._a!==A)return;
