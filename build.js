@@ -1035,9 +1035,9 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
 /* app.js lifts the dock out of <main> (whose z-index:1 kept it UNDER the phone's bottom haze however high its own
    z-index went) and floats it at the bottom of the screen while the work section is on screen */
 .view-dock.floating{position:fixed;left:0;right:0;bottom:16px;z-index:45;margin:0;pointer-events:none}
-/* laptops: top-right corner (her 2026-10-26: "can you move the toggle on laptop to the top right hand corner?"), on the nav's
-   own right edge and line. It only shows while the nav is tucked away, so it takes say hey!'s place and they never meet */
-@media (hover:hover) and (pointer:fine){.view-dock.floating{top:22px;bottom:auto;left:auto;right:clamp(20px,4vw,56px)}}
+/* laptops: bottom-right corner, on the nav's right edge (her 2026-10-26: top right, then "put the toggle at the bottom right
+   actually") */
+@media (hover:hover) and (pointer:fine){.view-dock.floating{top:auto;bottom:22px;left:auto;right:clamp(20px,4vw,56px)}}
 /* the toggles' appearing and leaving is ONE materialize timeline in app.js (see vt()): a clip of the bar's own surface
    from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
    there and not clickable; while it dematerializes it can't be clicked either */
