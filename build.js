@@ -1014,7 +1014,7 @@ ${heroFrameVars()}
 .work-head{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .work-sec[data-view="deck"] .work-head{padding:0 calc(var(--space)*6)}
 .work-head .section-title{margin:0}
-.view-toggle{display:inline-flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid var(--line)}
+.view-toggle{display:inline-flex;gap:4px;padding:4px;border-radius:var(--r-pill);border:1px solid rgba(169,196,245,.42)}   /* a ring you can see on the night ground (her 2026-10-26: "make the link around the toggle more visible"); was --line, nearly invisible */
 /* icons, not words (her ask): three cards side by side = swipe, two stacked rows = scroll */
 .view-btn{display:grid;place-items:center;width:44px;height:36px;padding:0;border:0;border-radius:var(--r-pill);
   background:transparent;color:var(--text-secondary);cursor:pointer;transition:background var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
@@ -2155,15 +2155,15 @@ function makeJS() {
          want the toggle appearance and disappearance to feel more springy"; before that, the Apple-reference pill-to-bar
          materialize with its exact reverse). Controls are laid out at full size the whole time; the surface is a clip of the
          bar itself, so icons are never stretched; the squash/stretch happens only while the icons are hidden.
-           IN   a dark CIRCLE (the bar's height) plops up from below with a springy overshoot (0–380ms) → it widens from its
-                centre into the full bar (380–900ms) → the bar lands with a little squash-and-settle (840–1140ms) → the icons
-                resolve together (930–1190ms)
-           OUT  the icons go (0–180ms) → the bar draws in from both ends into the circle, with a slight springy tuck
-                (160–640ms) → the circle squashes as it lands and PLOPS down out of sight (620–1000ms)
+           IN   a dark CIRCLE (the bar's height) plops up from below with a springy overshoot (0–260ms) → it widens from its
+                centre into the full bar (260–600ms) → the bar lands with a squash-and-settle (520–800ms) → the icons
+                resolve together (560–760ms); the ring arrives lit in the site blue and cools
+           OUT  the icons go (0–120ms) → the bar draws in from both ends into the circle, with a springy tuck
+                (100–390ms) → the circle squashes as it lands and PLOPS down out of sight (390–650ms)
          A change of mind mid-way starts the other direction straight away. Reduced motion: shown or hidden at once.
          WHEN each toggle shows is unchanged: the floating one while the projects hold the screen (on laptops only while
          the nav is tucked away), the top one whenever the floating one isn't on. */
-      const FULL='inset(0% 0% round 999px)',SPRING='cubic-bezier(.34,1.7,.5,1)',SETTLE='cubic-bezier(.3,1.35,.5,1)';
+      const FULL='inset(0% 0% round 999px)',SPRING='cubic-bezier(.3,2.1,.45,1)',SETTLE='cubic-bezier(.3,1.6,.45,1)'   // quicker and bouncier (her 2026-10-26: "the toggle isn't quick enough or bouncy enough"): ~40% shorter, more overshoot;
       const vt=(t,show)=>{
         if(t._show===show)return;t._show=show;
         (t._a||[]).forEach(a=>a.cancel());t._a=null;
@@ -2172,16 +2172,18 @@ function makeJS() {
         const w=t.offsetWidth||1,h=t.offsetHeight||1,CIRC='inset(0% '+Math.max(0,(w-h)/2/w*100).toFixed(2)+'% round 999px)';
         const btns=[...t.querySelectorAll('.view-btn')],A=[];
         if(show){
-          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.42},{clipPath:FULL}],{duration:900,easing:'linear',fill:'both'}),
-            t.animate([{transform:'translateY(18px) scale(.25)',opacity:0,easing:SPRING},{transform:'none',opacity:1}],{duration:380,fill:'backwards'}),
-            t.animate([{transform:'none'},{transform:'scale(1.035,.95)',offset:.35},{transform:'none'}],{duration:300,delay:840,easing:SETTLE}),
-            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:260,delay:930,easing:'ease-out',fill:'both'})));
+          A.push(t.animate([{clipPath:CIRC},{clipPath:CIRC,offset:.43},{clipPath:FULL}],{duration:600,easing:'linear',fill:'both'}),
+            t.animate([{transform:'translateY(18px) scale(.25)',opacity:0,easing:SPRING},{transform:'none',opacity:1}],{duration:260,fill:'backwards'}),
+            t.animate([{transform:'none'},{transform:'scale(1.06,.9)',offset:.3},{transform:'none'}],{duration:280,delay:520,easing:SETTLE}),
+            ...btns.map(b=>b.animate([{opacity:0},{opacity:1}],{duration:200,delay:560,easing:'ease-out',fill:'both'})),
+            /* "so that people actually notice it enter": the ring arrives lit in the site blue and cools to its resting tint */
+            t.animate([{borderColor:'rgba(143,178,242,1)'},{borderColor:'rgba(143,178,242,1)',offset:.6},{borderColor:'rgba(169,196,245,.42)'}],{duration:1900,easing:'ease-out'}));
           A[0].effect.updateTiming({easing:'linear'});
-          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.42,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
+          A[0].effect.setKeyframes([{clipPath:CIRC,offset:0},{clipPath:CIRC,offset:.43,easing:'cubic-bezier(.22,1.2,.36,1)'},{clipPath:FULL,offset:1}]);
         }else{
-          A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-in',fill:'both'})),
-            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.16,easing:'cubic-bezier(.6,-.25,.4,1)'},{clipPath:CIRC,offset:.64},{clipPath:CIRC,offset:1}],{duration:1000,fill:'both'}),
-            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.62},{transform:'translateY(2px) scale(1.16,.84)',opacity:1,offset:.72,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:1000,fill:'both'}));
+          A.push(...btns.map(b=>b.animate([{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'both'})),
+            t.animate([{clipPath:FULL,offset:0},{clipPath:FULL,offset:.15,easing:'cubic-bezier(.6,-.35,.4,1)'},{clipPath:CIRC,offset:.6},{clipPath:CIRC,offset:1}],{duration:650,fill:'both'}),
+            t.animate([{transform:'none',opacity:1},{transform:'none',opacity:1,offset:.6},{transform:'translateY(2px) scale(1.24,.76)',opacity:1,offset:.7,easing:'cubic-bezier(.5,0,.9,.4)'},{transform:'translateY(26px) scale(.2)',opacity:0}],{duration:650,fill:'both'}));
         }
         t._a=A;
         Promise.all(A.map(a=>a.finished)).then(()=>{if(t._a!==A)return;
@@ -2189,8 +2191,11 @@ function makeJS() {
           A.forEach(a=>a.cancel());t._a=null},()=>{});
       };
       const headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
-      const sync=()=>{const on=inWork&&headGone;dock.classList.toggle('on',on);
-        vt(bar,on&&(!fineP||!navW||navW.classList.contains('nav-hidden')));
+      /* in the SWIPE view the floating toggle (bottom right on laptops) is the one, whenever the deck holds the screen (her
+         2026-10-26: "on horizontal scroll the toggle isn't in the right place"); it no longer waits for the heading to leave
+         or the nav to tuck away there, since bottom-right can't meet the nav */
+      const sync=()=>{const deck=workEl.dataset.view==='deck',on=inWork&&(headGone||deck);dock.classList.toggle('on',on);
+        vt(bar,on&&(deck||!fineP||!navW||navW.classList.contains('nav-hidden')));
         vt(headBar,!on)};
       /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
          own padding below the last one doesn't count (her 2026-10-26: "I've basically left the space where the toggle is
@@ -2199,6 +2204,7 @@ function makeJS() {
       const ioS=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()},{rootMargin:'-45% 0px -45% 0px'});
       served.forEach(el=>ioS.observe(el));
       if(navW)new MutationObserver(sync).observe(navW,{attributes:true,attributeFilter:['class']});
+      addEventListener('mk-work-view',sync);
       /* the head is "gone" once it has slipped up under the nav band (the top 70px), not before you reach it */
       new IntersectionObserver(es=>es.forEach(e=>{headGone=!e.isIntersecting&&e.boundingClientRect.top<innerHeight/2;sync()}),{rootMargin:'-70px 0px 0px 0px'}).observe(head)}
   }
