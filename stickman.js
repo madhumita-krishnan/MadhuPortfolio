@@ -617,7 +617,7 @@
      target, so anything that clears the target clears the route. */
   var PCOL = 12;
   function openAbove(x, y, h) { for (var k = 2; k <= h; k += 2) if (solid(x, y - k)) return false; return true; }   // clearance() stops counting at 92px
-  function planRoute(tx, ty) {
+  function planRoute(tx, ty, bans) {
     var cols = [], nodes = [];
     for (var x = 10, c = 0; x <= W - 10; x += PCOL, c++) {
       var col = [];
@@ -629,7 +629,29 @@
     for (var k = sc - 1; k <= sc + 1; k++) (cols[k] || []).forEach(function (n) {
       if (Math.abs(n.y - fig.y) < 14 && (!start || Math.abs(n.x - fig.x) < Math.abs(start.x - fig.x))) start = n; });
     if (!start) return null;
-    var walkTo = function (a, b) { return Math.abs(a.c - b.c) === 1 && b.y >= a.y - STEP_UP && b.y <= a.y + STEP_DOWN; };
+    /* a jump whose arc would clip a letter on the way (or already did, on this tap) is never offered again: re-planning
+       kept choosing it, so she went round and tried the same leap until she gave up */
+    bans = bans || [];
+    var banned = function (ax, ay, b) { return bans.some(function (q) { return q.bx === b.x && q.by === b.y && Math.abs(q.ax - ax) <= 18 && Math.abs(q.ay - ay) < 14; }); };
+    /* ink taller than a step right ahead of a drop: the 12px sampling stepped over a letter's stem, so she was sent to
+       walk through it (she stood in the cup of a u, against its far side, until she gave up) */
+    var wall = function (x0, x1, y) { for (var x = x0; Math.abs(x - x1) > 1; x += x1 > x0 ? 2 : -2) if (solid(x, y)) return true; return false; };
+    /* a walk is what tickGround can really do between two points, read pixel by pixel: steps, strides over a gap of a
+       few px, little hops over a bump. Linking only neighbouring columns made every word space a jump (her hopping
+       along the bio), and could hide a gap she then fell into */
+    var walkTo = function (a, b) {
+      var dc = Math.abs(a.c - b.c), sd = b.x > a.x ? 2 : -2, y = a.y, gap = 0;
+      if (dc > 2 || b.y < a.y - HOP_UP || b.y > a.y + STEP_DOWN) return false;
+      var roomy = function (x, t) { return openAbove(x, t, MIN_CLR - 2); };   // clearance() >= MIN_CLR, without counting to 90
+      for (var x = a.x + sd; sd > 0 ? x <= b.x : x >= b.x; x += sd) {
+        var t = groundTop(x, y - STEP_UP, STEP_UP + STEP_DOWN + 4);
+        if (t != null && t >= y - STEP_UP - .5 && t <= y + STEP_DOWN + .5 && roomy(x, t)) { y = t; gap = 0; continue; }
+        if (t != null && t < y - STEP_UP) { var hp = groundTop(x, y - HOP_UP, HOP_UP);
+          if (hp != null && hp >= y - HOP_UP && roomy(x, hp)) { y = hp; gap = 0; continue; } return false; }
+        if ((gap += 2) > 8) return false;
+      }
+      return Math.abs(y - b.y) <= STEP_UP;
+    };
     var edges = function (a) {
       var out = [], unders = {};
       /* per column: the first surface under her if she walked off at her height */
@@ -645,7 +667,7 @@
           if (walkTo(a, b)) out.push({ n: b, how: 'walk', cost: PCOL + Math.max(0, rise) * .5 });
           else if (Math.abs(d) <= 3 && rise > 0 && rise <= HOP_UP && openAbove(a.x, a.y, rise + 24))
             out.push({ n: b, how: 'jump', cost: adx + rise + 25 });   // a little hop up a stair of letters
-          else if (b === under && Math.abs(d) <= 12 && [1, 2].every(function (k) { return !(cols[a.c + k * Math.sign(d)] || []).some(function (m) { return Math.abs(m.y - a.y) <= STEP_DOWN; }); }))   // a real gap (her stride spans a letter gap)
+          else if (b === under && Math.abs(d) <= 12 && !wall(a.x, a.x + Math.sign(d) * 24, a.y - STEP_UP - 2) && [1, 2].every(function (k) { return !(cols[a.c + k * Math.sign(d)] || []).some(function (m) { return Math.abs(m.y - a.y) <= STEP_DOWN; }); }))   // a real gap (her stride spans a letter gap)
             out.push({ n: b, how: 'fall', cost: adx + 25 });   // off an edge (nothing walkable that way), down to the first surface
           else if (rise <= JUMP_MAX + 50 && adx <= 180 && (rise <= 0 || openAbove(a.x, a.y, rise + 30))   // + her reach to a ledge; clear air above the take-off
                    && openAbove(b.x, b.y, b.y - Math.min(a.y, b.y) + 30))   // and she comes down onto it from above: open sky over the landing
@@ -654,23 +676,61 @@
       }
       return out;
     };
-    var dist = {}, prev = {}, done = {}, open = [start];
-    dist[start.i] = 0;
-    while (open.length) {
-      var bi = 0; for (var j = 1; j < open.length; j++) if (dist[open[j].i] < dist[open[bi].i]) bi = j;
-      var a = open.splice(bi, 1)[0]; if (done[a.i]) continue; done[a.i] = true;
-      edges(a).forEach(function (e) { var nd = dist[a.i] + e.cost;
-        if (dist[e.n.i] == null || nd < dist[e.n.i]) { dist[e.n.i] = nd; prev[e.n.i] = { from: a, how: e.how }; open.push(e.n); } });
+    var ec = {}, path;
+    for (var tries = 0; tries < 8; tries++) {
+      var dist = {}, prev = {}, done = {}, open = [start];
+      dist[start.i] = 0;
+      while (open.length) {
+        var bi = 0; for (var j = 1; j < open.length; j++) if (dist[open[j].i] < dist[open[bi].i]) bi = j;
+        var a = open.splice(bi, 1)[0]; if (done[a.i]) continue; done[a.i] = true;
+        (ec[a.i] || (ec[a.i] = edges(a))).forEach(function (e) { var nd = dist[a.i] + e.cost;
+          if (e.how === 'jump' && banned(a === start ? fig.x : a.x, a === start ? fig.y : a.y, e.n)) return;
+          if (dist[e.n.i] == null || nd < dist[e.n.i]) { dist[e.n.i] = nd; prev[e.n.i] = { from: a, how: e.how }; open.push(e.n); } });
+      }
+      /* the click if she can reach it, else the closest spot she can (and the cheaper way there on a tie) */
+      var goal = null, gs = Infinity;
+      nodes.forEach(function (n) { if (dist[n.i] == null) return; var sc2 = Math.hypot(n.x - tx, (n.y - ty) * 1.5) + dist[n.i] * .02;
+        if (sc2 < gs) { gs = sc2; goal = n; } });
+      if (!goal || goal === start) return [];
+      path = [];
+      for (var n2 = goal; n2 !== start; n2 = prev[n2.i].from) path.unshift({ x: n2.x, y: n2.y, how: prev[n2.i].how, dir: Math.sign(n2.x - prev[n2.i].from.x) || 1, from: prev[n2.i].from });
+      /* fly each jump the way tickAir will; the first that would come down anywhere else is banned and the way re-planned */
+      var bad = null;
+      path.some(function (q) { if (q.how !== 'jump') return false;
+        var ax = q.from === start ? fig.x : q.from.x, ay = q.from === start ? fig.y : q.from.y;
+        if (!arcLands(ax, ay, q)) bad = { ax: ax, ay: ay, bx: q.x, by: q.y };
+        return true; });   // only the next jump: those after it start from wherever she really lands
+      if (!bad) break;
+      bans.push(bad);
     }
-    /* the click if she can reach it, else the closest spot she can (and the cheaper way there on a tie) */
-    var goal = null, gs = Infinity;
-    nodes.forEach(function (n) { if (dist[n.i] == null) return; var sc2 = Math.hypot(n.x - tx, (n.y - ty) * 1.5) + dist[n.i] * .02;
-      if (sc2 < gs) { gs = sc2; goal = n; } });
-    if (!goal || goal === start) return [];
-    var path = [];
-    for (var n2 = goal; n2 !== start; n2 = prev[n2.i].from) path.unshift({ x: n2.x, y: n2.y, how: prev[n2.i].how, dir: Math.sign(n2.x - prev[n2.i].from.x) || 1 });
     /* keep only the points where the way of moving changes, plus the end: a walk is one stretch */
     return path.filter(function (q, i) { return i === path.length - 1 || q.how !== 'walk' || path[i + 1].how !== 'walk'; });
+  }
+  /* routeJump's launch, and the flight tickAir gives it (same steering, letter-side stop, mantle and landing), from
+     (ax, ay): does she come down on b? */
+  function jumpV(ax, ay, b) {
+    var rise = ay - b.y, dx = b.x - ax;
+    var up = Math.min(Math.max(rise, 0) + 34 + Math.min(40, Math.abs(dx) * .15), 330);   // ~the old 1210px/s cap
+    var vy0 = Math.sqrt(2 * G * up), T = vy0 / G + Math.sqrt(2 * (up - rise) / G);
+    return { vx: dx / T, vy: -vy0 };
+  }
+  function arcLands(x, y, b) {
+    var v = jumpV(x, y, b), vx = v.vx, vy = v.vy, dt = 1 / 60;
+    var near = function (lx, ly) { return Math.abs(lx - b.x) < 24 && Math.abs(ly - b.y) <= 14; };
+    for (var i = 0; i < 240; i++) {
+      vy = Math.min(vy + G * dt, 1500);
+      vx += (Math.max(-RUN, Math.min(RUN, (b.x - x) * 3)) - vx) * Math.min(1, dt * 2.2);
+      var nx = Math.max(10, Math.min(W - 10, x + vx * dt)), ny = y + vy * dt;
+      if (vx && !(b.y > ny - 10)) { var dirx = vx > 0 ? 1 : -1, py = ny - LEG;
+        if (solid(nx + dirx * 5, py)) { var t = groundTop(nx + dirx * 5, py - 64, 74);
+          if (t != null && t <= py + 10 && t >= py - 64 && clearance(nx + dirx * 5, t) >= MIN_CLR) return near(nx + dirx * 11, t); } }
+      if (solid(nx, Math.min(ny, y) - 6) && !solid(x, Math.min(ny, y) - 6)) { nx = x; vx = 0; }
+      if (vy > 0) { var land = groundTop(nx, y + 0.5, Math.max(2, ny - y + 2));
+        if (land != null && land >= y - 2 && land <= ny + 0.5 && clearance(nx, land) >= MIN_CLR) return near(nx, land); }
+      x = nx; y = Math.min(ny, floorY);
+      if (y >= floorY && vy >= 0) return near(x, y);
+    }
+    return false;
   }
   /* WHERE YOU TAP IS WHERE SHE TRIES TO GO (her ask 2026-10-24: "if I double tap or single tap above the person can you
      make them jump"): a tap remembers the exact spot; once she's as close as walking and climbing get her and the spot
@@ -686,34 +746,51 @@
     start();
   }
   function routeJump(b) {
-    var rise = fig.y - b.y, dx = b.x - fig.x;
-    var up = Math.min(Math.max(rise, 0) + 34 + Math.min(40, Math.abs(dx) * .15), 330);   // ~the old 1210px/s cap
-    var vy0 = Math.sqrt(2 * G * up), T = vy0 / G + Math.sqrt(2 * (up - rise) / G);
-    fig.vy = -vy0; fig.vx = dx / T; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
+    var v = jumpV(fig.x, fig.y, b), dx = b.x - fig.x;
+    fig.vy = v.vy; fig.vx = v.vx; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
+    if (fig.target) fig.target.jumped = { ax: fig.x, ay: fig.y, bx: b.x, by: b.y };
     fig.dir = dx >= 0 ? 1 : -1;   // flips only if it turns out to be a far drop (tickAir)
   }
   /* one tick of following the route; returns the speed she wants, or null when this tick is spent */
   function followRoute(dt) {
     var tg = fig.target, wp = tg.route[0];
     /* a walk point counts within a step's height (she walks the surface between them); a jump/drop must land on it */
-    if (Math.abs(wp.x - fig.x) < 7 && Math.abs(fig.y - wp.y) <= (wp.how === 'walk' ? STEP_UP + 6 : 14)) {
+    /* her 2026-10-26: "it just spazzes back and forth". At walking speed she carries ~15px past a point before she can
+       turn, so a 7px window made her overshoot, turn, overshoot again. A point she has just walked past counts as
+       reached, and a jump or drop counts once she lands on its level within a stride of it */
+    var wdx = wp.x - fig.x, past = fig.vx && Math.sign(wdx) !== Math.sign(fig.vx) && Math.abs(wdx) < 24;
+    /* (a drop's landing x is only roughly where she comes down: on its level is enough, never a walk back to the spot) */
+    var hit = (Math.abs(wdx) < (wp.how === 'walk' ? 7 : wp.how === 'fall' ? 60 : 24) || past) && Math.abs(fig.y - wp.y) <= (wp.how === 'walk' ? STEP_UP + 6 : 14);
+    if (tg.jumped) { var jb = tg.jumped; tg.jumped = null; if (!hit) { (tg.bans = tg.bans || []).push(jb); tg.route = null; return null; } }   // missed it: plan again from here, without that leap
+    if (hit) {
       tg.route.shift(); tg.best = Infinity; tg.stuck = 0;
       if (!tg.route.length) { arrived(); return null; }
       wp = tg.route[0];
-      if (wp.how === 'jump') { routeJump(wp); return null; }
+      if (wp.how === 'jump') {
+        /* fly it first from where she really stands (a stride off the planned spot can clip a letter): no good, plan again */
+        if (!arcLands(fig.x, fig.y, wp)) { (tg.bans = tg.bans || []).push({ ax: fig.x, ay: fig.y, bx: wp.x, by: wp.y }); tg.route = null; return null; }
+        routeJump(wp); return null;
+      }
     }
     fig.waypoint = wp;
-    if (Math.abs(wp.x - fig.x) < 7) {
-      /* a drop: keep walking the way it goes until the ground runs out */
-      if (wp.how === 'fall' && fig.y < wp.y) return wp.dir * WALK;
-      /* right column, wrong level (a missed ledge): plan again from here at once, never shuffle on the spot */
+    /* a drop: she keeps walking the way it goes until the ground runs out (committed: never back toward the landing x) */
+    var falling = wp.how === 'fall' && fig.y < wp.y - STEP_DOWN;
+    /* right column, wrong level (a missed ledge): plan again from here at once, never shuffle on the spot */
+    if (!falling && Math.abs(wp.x - fig.x) < 7) {
+      /* …unless it's a walk point a hop above her (the far side of a letter's cup): walking on into it IS the hop up.
+         Re-planning only found the same way again, four times in four frames, and she gave up */
+      var ahead = groundTop(fig.x + wp.dir * 4, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
+      if (wp.how === 'walk' && wp.y < fig.y && wp.y >= fig.y - HOP_UP - 2 && ahead != null && ahead < fig.y - STEP_UP) return wp.dir * WALK;
       tg.route = null; return null;
     }
     /* no progress toward this point for a while (a bonk, a missed ledge): plan again from here */
-    var d = Math.abs(wp.x - fig.x) + Math.abs(wp.y - fig.y);
+    var d = falling ? -wp.dir * fig.x : Math.abs(wp.x - fig.x) + Math.abs(wp.y - fig.y);
     if (d < tg.best - 4) { tg.best = d; tg.stuck = 0; } else if ((tg.stuck += dt) > .8) { tg.route = null; return null; }
+    if (falling) return wp.dir * WALK;
+    /* a walk for anything short, a run only on a long stretch (it ran most of every leg, then dropped to a walk at each
+       point on the way: walk, run, walk, run) */
     var dx = wp.x - fig.x;
-    return Math.sign(dx) * (WALK + (RUN - WALK) * Math.min(Math.abs(dx) / 120, 1));
+    return Math.sign(dx) * (WALK + (RUN - WALK) * Math.max(0, Math.min((Math.abs(dx) - 80) / 160, 1)));
   }
 
   function tickGround(dt) {
@@ -726,7 +803,7 @@
       var tg = fig.target;
       if (!tg.route) {
         if ((tg.plans = (tg.plans || 0) + 1) > 4) { fig.target = null; fig.waypoint = null; fig.vx = 0; return; }   // she tried; she stops
-        var r = planRoute(tg.x, tg.y);
+        var r = planRoute(tg.x, tg.y, tg.bans || (tg.bans = []));
         if (r == null) tg.manual = true;   // can't place her on the map (mid-step): the old greedy way, this once
         else if (!r.length) { arrived(); return; }   // already as close as she can get
         else { tg.route = r; tg.best = Infinity; tg.stuck = 0; if (r[0].how === 'jump' && Math.abs(r[0].x - fig.x) > 0) { routeJump(r[0]); return; } }
@@ -839,6 +916,10 @@
         }
       }
     }
+    /* ink ahead that is a wall or a too-low gap, not an edge: she stops at it. Treating it as an edge sent her into the
+       air, where the letter's side stopped her and she landed on the same spot: a jump pose flickering every frame while
+       she crept forward (her 2026-10-26: "it just spazzes", "it moves without the walking motion") */
+    if (s != null && s <= fig.y + STEP_DOWN) { fig.vx = 0; return; }
     /* nothing to stand on ahead: walk off the edge and fall */
     fig.x = nx;
     fig.state = 'air'; fig.vy = 0; fig.fallFrom = fig.y;
@@ -849,6 +930,7 @@
     var g = fig.waypoint || fig.target;
     /* steer proportionally, not at full run — the dot of an i is a small landing pad */
     var want = fig.drag ? fig.drag.vx : (g ? Math.max(-RUN, Math.min(RUN, (g.x - fig.x) * 3)) : fig.vx);
+    if (g && g.how === 'fall' && (g.x - fig.x) * g.dir < 0) want = fig.vx;   // a drop she walked off past its spot: no pull back mid-fall (she'd land and turn round)
     fig.vx += (want - fig.vx) * Math.min(1, dt * 2.2);
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
     var ny = fig.y + fig.vy * dt;
@@ -952,8 +1034,10 @@
            jump its click sends (her: "nothing happens when I jump on the cloud" — she'd hopped onto it herself) */
         if (fig.boxJump) { fig.boxJump = null; fig.landT = 0.36; puff(fig.x, fig.y, 11); }   // the SLAM: deep crouch, big puff
         fig.dropping = false;
+        /* she LANDS: no skid on into the next spot (her: "when it lands it keeps moving … it slides"). Not off a gap
+           between two letters a frame deep: that is still a walk, and stopping dead there stuttered every word */
+        if (fig.vy > 250 || drop > STEP_DOWN) fig.vx = 0;
         fig.vy = 0;
-        fig.vx = 0;   // she LANDS: no skid on into the next spot (her: "when it lands it keeps moving … it slides")
         return;
       }
     }
@@ -1113,11 +1197,11 @@
     }
     if (st === 'air') fallV = fig.vy || 0;
     /* the same sheet and frame clayPick draws: each strike frame passed since the last tick is one footstep */
-    var sh = st === 'move' && sp >= 12 && !fig.landT && !fig.slideT ? (sp > 230 ? 'run-x3' : 'walk-x3') : null;
-    var k = sh ? Math.floor(CLAY.dist / (sh === 'run-x3' ? 3 : 1.83)) % 48 : 0;
+    var sh = st === 'move' && sp >= 12 && !fig.landT && !fig.slideT ? (CLAY.run ? 'run-x3' : 'walk-x3') : null;
+    var k = sh ? Math.floor(CLAY.ph + (CLAY.run ? 11 : 0)) % 48 : 0;
     if (sh && sh === stepS)
       for (var j = stepK; j !== k; j = (j + 1) % 48)
-        if (STRIKES[sh].indexOf((j + 1) % 48) >= 0) { sfx('step', sh === 'run-x3' ? 0.32 : 0.22, 0.92 + Math.random() * 0.16); break; }
+        if (STRIKES[sh].indexOf((j + 1) % 48) >= 0) { sfx('step', sh === 'run-x3' ? 0.18 : 0.12, 0.92 + Math.random() * 0.16); break; }
     stepS = sh; stepK = k;
   }
 
@@ -1215,7 +1299,7 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
-  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, dist: 0, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
+  var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
   function loadClay() {
     if (!CLAY.on) return;
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
@@ -1286,14 +1370,18 @@
   function clayPick(o, groundY) {
     var st = fig.state, sp = Math.abs(fig.vx || 0);
     if (CLAY.lastX == null) CLAY.lastX = fig.x;
-    CLAY.dist += Math.abs(fig.x - CLAY.lastX); CLAY.lastX = fig.x;
+    /* ONE stride clock for walk and run (her 2026-10-26: "spazzy"): each sheet used to count its own frames off the same
+       distance, so every change of pace snapped her legs to an unrelated frame. The phase carries over (run frame =
+       walk frame + 11 lines up their heel strikes), and the pace only changes well past the line, not back and forth on it */
+    CLAY.run = sp > (CLAY.run ? 200 : 260);
+    CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     if (fig.landT > 0 && (st === 'move' || st === 'idle')) return { s: 'jump-land-slide-x3', k: 12 };
     if (fig.slideT > 0 && st === 'move') return { s: 'jump-land-slide-x3', k: 18 };
     switch (st) {
       case 'move':
         if (sp < 12) return { s: 'idle-wave-sign', k: 0 };
-        if (sp > 230) return { s: 'run-x3', k: Math.floor(CLAY.dist / 3) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
-        return { s: 'walk-x3', k: Math.floor(CLAY.dist / 1.83) % 48 };   // x3: a frame every third of the old stride step
+        if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: RUN_LEAN };   // her ask: tilted forward more when she runs
+        return { s: 'walk-x3', k: Math.floor(CLAY.ph) };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
