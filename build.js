@@ -2442,7 +2442,7 @@ function makeJS() {
       dims.forEach(d=>{d.cx=sideM?(W-(d.w+G+TW))/2+d.w/2:W/2;const sw=side*d.w/2,min=wMax/2+sw+gap;
         d.Rl=Math.max(min,d.cx-peek+sw);d.Rr=Math.max(min,W-peek-d.cx+sw)});
       shift=dims[Math.max(0,Math.min(dims.length-1,Math.round(pos)))].cx-W/2;
-      R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht+Math.max(0,...dims.map(d=>d.cy+d.h/2-(cyB+Ht/2)));   // the stage makes room under a bigger phonetop=cyB-lane*Ht;bot=cyB+lane*Ht;
+      R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht+Math.max(0,...dims.map(d=>d.cy+d.h/2-(cyB+Ht/2)));top=cyB-lane*Ht;bot=cyB+lane*Ht;   // H: the stage makes room under a bigger phone
       if(sideM){const d=dims[Math.max(0,active)];
         sd.style.setProperty('--tl',(d.cx+d.w/2+G)+'px');sd.style.setProperty('--tw',TW+'px');
         sd.style.setProperty('--tt',(stage.offsetTop+cyB)+'px')}
