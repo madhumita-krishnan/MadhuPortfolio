@@ -1153,6 +1153,13 @@
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
     var ny = fig.y + fig.vy * dt;
     if (fig.flip) {
+      /* the turn always completes before her feet arrive (#99: a flip timed for a lower landing was cut off at ~320° and
+         snapped upright as she touched down): falling, if the ground below comes sooner, the spin speeds up to finish */
+      if (fig.vy > 0) {
+        var fl = groundTop(nx, ny, H), fr = (fl == null ? floorY : fl) - ny;
+        var tl = (Math.sqrt(fig.vy * fig.vy + 2 * G * Math.max(fr, 0)) - fig.vy) / G;
+        fig.flip.w = Math.max(fig.flip.w, (Math.PI * 2 - fig.flip.rot) / Math.max(tl * .85, .03));
+      }
       fig.flip.rot += fig.flip.w * dt;
       if (fig.flip.rot >= Math.PI * 2) fig.flip = null;
     } else if (fig.vy >= 0 && !fig.flipQueued) {   // a tap too: a FAR drop flips (her 2026-10-24: "when it jumps down from far can it do a flip"); hops up and small steps down never reach FLIP_DROP
@@ -1654,7 +1661,10 @@
         return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
-        return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true }; }
+        /* falling, the last 60px to the ground slide the pin from the frame's middle to its feet, so they meet the floor
+           exactly (#99: pinned by the middle all the way, the feet sat 9px off and snapped down as she touched) */
+        var win = Math.max(60, vy * .1), gd = vy > 0 ? groundBelow(fig.x, fig.y, win) : null;   // (a fast fall gets a longer run-in)
+        return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true, feet: gd == null ? 0 : Math.max(0, Math.min(1, 1 - (gd - fig.y) / win)) }; }
       case 'hang': {
         var h = fig.hang, hs = o.hands || [], hx = 0, hy = 0, n = 0;
         hs.forEach(function (q) { if (q) { hx += q.x; hy += q.y; n++; } });
@@ -1764,7 +1774,7 @@
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
-    else if (pk.mid) { ctx.translate(px, groundY - CLAY.H * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5); }
+    else if (pk.mid) { var w = 1 - (pk.feet || 0); ctx.translate(px, groundY - CLAY.H * .5 * w); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5 * w); }
     else { var bo = pk.s === 'run-x3' && bodyOff(pk.s);
       ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx - (bo ? bo[pk.k % bo.length] : 0), -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
@@ -2171,13 +2181,13 @@
     } : b;
     ctx.clearRect(u.x1, u.y1, u.x2 - u.x1, u.y2 - u.y1);
     dirty = b;
-    puffs.forEach(function (p) {
+    /* feet planted a hair below the surface line — contact, not hover */
+    ctx.save(); ctx.translate(0, rd);   // the whole drawing, so a hang's hands ride with her feet's rule
+    puffs.forEach(function (p) {   // (the landing puff rides too: on a lifted line it was 11px under her feet)
       ctx.strokeStyle = ink; ctx.globalAlpha = Math.max(p.t / 0.34, 0) * 0.5; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(p.x - 3, p.y); ctx.lineTo(p.x + 3, p.y); ctx.stroke();
       ctx.globalAlpha = 1;
     });
-    /* feet planted a hair below the surface line — contact, not hover */
-    ctx.save(); ctx.translate(0, rd);   // the whole drawing, so a hang's hands ride with her feet's rule
     figure(fig.x, fig.y - LEG + 0.7, fig.dir, pose());
     ctx.restore();
   }
@@ -2196,9 +2206,19 @@
      stagger. Now: the mean lift of every letter under her feet's span, eased over a few frames, and exactly 0 while
      nothing under her is lifted */
   var rideS = 0, rideBusy = false;
+  /* the nearest thing she could land on within d below her feet: three columns across them, and the floor (#99) */
+  function groundBelow(x, y, d) {
+    var best = null;
+    for (var k = -6; k <= 6; k += 6) { var t = groundTop(x + k, y - 2, d + 2); if (t != null && t >= y - 2 && (best == null || t < best)) best = t; }
+    return best != null ? best : floorY - y <= d ? floorY : null;
+  }
   function rideTarget() {
-    if (!chRide.length || fig.state === 'air' || fig.state === 'sign') return 0;
-    var hg = fig.state === 'hang' && fig.hang, cx = hg ? (hg.hands[0].x + hg.hands[1].x) / 2 : fig.x, cy = hg ? hg.hands[0].y : fig.y;
+    if (!chRide.length || fig.state === 'sign') return 0;
+    /* falling onto a lifted (hovered) line, she takes its lift on the way down, not after she lands (#99: she touched
+       down, then floated up 8px over five frames) */
+    var gl = fig.state === 'air' && fig.vy > 0 ? groundBelow(fig.x, fig.y, 150) : null;
+    if (fig.state === 'air' && gl == null) return 0;
+    var hg = fig.state === 'hang' && fig.hang, cx = hg ? (hg.hands[0].x + hg.hands[1].x) / 2 : fig.x, cy = hg ? hg.hands[0].y : gl != null ? gl : fig.y;
     var top = null, sum = 0, n = 0;
     for (var i = 0; i < chRide.length; i++) {
       var c = chRide[i];
@@ -2212,9 +2232,12 @@
     var t = n ? sum / n : 0;
     return Math.abs(t) < .5 ? 0 : t;
   }
+  var rideAir = false;
   function rideDy() {
     var t = rideTarget();
-    rideS += (t - rideS) * .25;
+    var air = fig.state === 'air';
+    rideS = rideAir && !air ? t : rideS + (t - rideS) * (air ? .5 : .25);   // touching down it's exactly the line's lift: no settling on her feet
+    rideAir = air;
     if (Math.abs(t - rideS) < .1) rideS = t;
     rideBusy = rideS !== t;
     return rideS;
