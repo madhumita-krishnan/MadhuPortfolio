@@ -955,8 +955,8 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .brands-head{border-top:1px solid var(--line);padding-top:calc(var(--space)*4);
   display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--space)*4);flex-wrap:wrap}
 .brands-head p{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary)}
-.brands-row{margin-top:calc(var(--space)*6);display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(80px,1fr));align-items:center;
+.brands-row{margin-top:calc(var(--space)*6);display:grid;--bs:1.25;   /* every mark 25% bigger (her 2026-10-26: "just make the logos a little bigger") */
+  grid-template-columns:repeat(auto-fit,minmax(100px,1fr));align-items:center;
   gap:calc(var(--space)*5) calc(var(--space)*3.5)}
 /* logos are a mixed bag of cream, black and full-colour marks — masking them to one
    ink is the only way a row of nine reads as a set rather than a clip-art pile.
@@ -964,7 +964,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    mark with an opaque dark outline + drop shadow baked in, and an alpha mask can't tell
    mark from shadow, so every glyph doubled and smeared. tools/clean-logos.js rebuilds
    the alpha from luminance to recover just the letterforms. */
-.brand{height:38px;width:100%;background:var(--brand-blue);
+.brand{height:calc(38px * var(--bs,1));width:100%;background:var(--brand-blue);
   -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;
   transition:background var(--motion-base) var(--ease-standard)}
 .brand:hover{background:var(--ink-blue)}
@@ -991,7 +991,7 @@ a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--acc
 .brands-row.gs-roll .brand{opacity:0}
 /* the row carries the observer, not the movement — the logos do that */
 .brands-row.fade{opacity:1;transform:none;transition:none}
-@media (max-width:600px){.brands-row{gap:calc(var(--space)*4)}.brand{height:28px}}
+@media (max-width:600px){.brands-row{gap:calc(var(--space)*4);grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}.brand{height:calc(28px * var(--bs,1))}}
 
 /* ------------------------------------------------ work cards (outcome statements) */
 .wproject{display:grid;grid-template-columns:1fr minmax(0,46%);gap:calc(var(--space)*8);align-items:center;margin-bottom:calc(var(--space)*13);
@@ -3325,7 +3325,7 @@ function renderHome() {
       /* a logo with an href (the same proof link her resume carries for that brand)
          becomes the anchor itself — the slot doubles as the link so the whole mark
          is the target; the rest stay plain spans, not dead links */
-      const mark = `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')${l.h ? `;height:${+l.h}px` : ''}"></span>`;   // h: a mark that needs more room than the row's 38px
+      const mark = `<span class="brand" role="img" aria-label="${esc(l.alt)}" style="--logo:url('${esc(l.src)}')${l.h ? `;height:calc(${+l.h}px * var(--bs,1))` : ''}"></span>`;   // h: a mark that needs more room than the row's 38px
       return l.href
         ? `<a class="brand-slot" style="--i:${i}" href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${esc(l.alt)}">${mark}</a>`
         : `<span class="brand-slot" style="--i:${i}">${mark}</span>`;
