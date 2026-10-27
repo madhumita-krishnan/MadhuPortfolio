@@ -1759,7 +1759,8 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
 .rm-mode .play-btn{display:inline-flex}
 /* the button system brings its own teal focus ring (see .btn:focus-visible); this is the
    catch-all for every other link and control on the site */
-a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+a:focus-visible,button:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+main:focus{outline:none}   /* the skip link's landing spot, not a control */
 
 /* settle fail-safe: nothing ever stays invisible, even if transitions never run */
 .settled .w{opacity:1;transform:none;filter:none}
@@ -2017,7 +2018,7 @@ function makeJS() {
        touch point stands in for the mouse so a tap still tips it away from the finger */
     pot.addEventListener('touchstart',e=>nudge(e.touches&&e.touches[0]),{passive:true});
     pot.addEventListener('focus',()=>nudge());
-    pot.tabIndex=0;
+    pot.tabIndex=0;pot.setAttribute('role','img');pot.setAttribute('aria-label','The pot with the koi (focus wobbles it)');
     /* the koi lands here (fish.js announces its splashdown; detail.x is where it hit,
        so the pot tips away from the impact). A falling fish outranks a passing cursor,
        hence the harder kick — the spring's MAX cap still holds it under tipping. */
@@ -2506,7 +2507,14 @@ function makeJS() {
     };
     sd.addEventListener('pointerup',end);sd.addEventListener('pointercancel',end);
     stage.addEventListener('click',e=>{const c=e.target.closest('.scard');if(!c)return;if(suppress){e.preventDefault();return}const i=+c.dataset.i;if(i!==active){e.preventDefault();settle(i)}});
-    stage.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(c&&+c.dataset.i!==active)settle(+c.dataset.i)});
+    /* keyboard (her 2026-10-26: "make sure people can navigate the site with the keyboard"): Tab onto a case and it glides
+       to the centre, and the page glides so the whole deck is on screen (a tall phone case was left half below it). Focus
+       mode stays off, so the rest of the page is there for the next Tab */
+    /* the deck clips its cards (overflow:hidden), and a browser focusing a card that peeks past the edge SCROLLS that clip
+       sideways to show it, shifting the whole deck off screen; it never scrolls on purpose, so it snaps straight back */
+    sd.addEventListener('scroll',()=>{if(sd.scrollLeft||sd.scrollTop){sd.scrollLeft=0;sd.scrollTop=0}});
+    stage.addEventListener('focusin',e=>{const c=e.target.closest('.scard');if(!c)return;if(+c.dataset.i!==active)settle(+c.dataset.i);
+      if(c.matches(':focus-visible'))setTimeout(()=>{if(document.activeElement===c&&!centred()&&!centring)glide(Math.max(0,scrollY+seenMid()-innerHeight/2),rm?0:420)},520)});
     /* press and hold (~0.45s, without dragging) shows that card's tech stack while held; letting go hides it and
        swallows the click, so only a quick tap opens the case study */
     let holdT=0,held=null;
@@ -3092,6 +3100,9 @@ if(t==='night')document.documentElement.setAttribute('data-theme','night');
 <link rel="preload" href="app.js?v=${BUILD_V}" as="script" fetchpriority="high">
 </head>
 <body>
+<!-- KEYBOARD (her 2026-10-26: "make sure people can navigate the site with the keyboard"): the first Tab offers a jump past
+     the nav straight to the page; it only shows while it has focus -->
+<a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
 ${svgFilters()}
 <div class="atmosphere" aria-hidden="true"></div>
 <div class="dc" id="dc" aria-hidden="true"><div class="dc-spin"><div class="dc-body"><span>I'm curious</span></div></div></div>`;
@@ -3488,7 +3499,7 @@ function renderHome() {
 
   return head(site.title, site.description) + `
 ${navBar('home')}
-<main>
+<main id="main" tabindex="-1">
 ${heroHTML}
 ${brandsHTML}
 ${workHTML}
@@ -3587,7 +3598,7 @@ function csHeroMedia(cs) {
 function renderSimpleCase(cs) {
   return head(`${cs.name} — ${site.title}`, cs.tagline) + `
 ${navBar('case')}
-<main class="tools-page">
+<main id="main" tabindex="-1" class="tools-page">
   <header class="tp-head">
     <h1 class="tp-title">${typo(cs.title)}</h1>
     <p class="tp-lead">${typo(cs.tagline)}</p>
@@ -3681,7 +3692,7 @@ function renderCase(cs) {
 
   return head(`${cs.name} — ${site.title}`, cs.tagline) + `
 ${navBar('case')}
-<main>
+<main id="main" tabindex="-1">
 <header class="cs-hero">
   <div class="cs-hero-band ${tone}">
     ${dsLink}
@@ -3810,7 +3821,7 @@ const edgeArrows = cs => {
 };
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
   cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS })
-    : renderCase(cs).replace(/(<body[^>]*>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
+    : renderCase(cs).replace(/(<a class="skip"[^>]*>[^<]*<\/a><style>[^<]*<\/style>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the resume sheet shows a picture of resume.pdf with its links laid over it: a new PDF needs a new picture */

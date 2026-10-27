@@ -292,6 +292,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 <style>${CSS(asset, bezel ? PHONE_CSS : '')}</style>
 </head>
 <body data-tone="ink"${cs.hero.phone ? ' data-phone' : ''} data-slug="${esc(cs.slug)}" data-dir="${esc(cs.dir)}">
+<a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
 <div class="cursor gone" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="${scallop}"/></svg><span>Click to explore</span></div>
 
 <nav class="pill" aria-label="Main">
@@ -304,7 +305,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 
 <aside class="toc" aria-label="On this page">${toc.map(([id, l], i) => `<a href="#${esc(id)}" data-for="${esc(id)}" style="--i:${i}"><span>${esc(l)}</span></a>`).join('')}</aside>
 
-<main>
+<main id="main" tabindex="-1">
 <header id="top" class="hero sec" data-tone="ink">
   <p class="brand"><img src="${A((cs.brand || {}).logo || 'logo.svg')}" alt="" width="34" height="34">${esc((cs.brand || {}).name || 'driftwood')}</p>
   <h1${E('title')}>${md(cs.title)}</h1>
