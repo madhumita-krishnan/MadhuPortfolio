@@ -1185,6 +1185,9 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .sdeck-progress .sd-ico:hover{opacity:1!important;transform:translate(-50%,0) scale(1.08);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
+/* the project's logo leads its name in the vertical list too (her 2026-10-26: "even the vertical scrolling needs to feature
+   logos somewhere"): the same flat tile the deck uses, one icon set */
+.w-logo{flex:none;width:28px;height:28px;margin-right:-2px;border-radius:24%;display:block}
 .w-chip{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;
   padding:9px 16px;border-radius:var(--r-pill);color:var(--text-primary)}
 /* The nav reads as glass because content scrolls under it; these chips sit in the flat
@@ -3347,7 +3350,7 @@ function renderHome() {
   <a class="wproject fade" href="${esc(p.slug)}.html" data-curious>
     <div class="w-copy">
       <h3 class="w-outcome">${typo(p.outcome)}</h3>
-      <p class="w-chiprow"><span class="w-name">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
+      <p class="w-chiprow">${p.icon ? `<img class="w-logo" src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" width="28" height="28" draggable="false">` : ''}<span class="w-name">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
       ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
     <div class="project-media-wrap">${projectMedia(p)}</div>
