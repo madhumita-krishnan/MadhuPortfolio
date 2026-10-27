@@ -2374,7 +2374,8 @@ function makeJS() {
     const placeCo=i=>{const side=sd.classList.contains('side'),d=dims[i];
       if(tv===2){if(side&&coEl.parentElement===coHome)titleEl.after(coEl);else if(!side&&coEl.parentElement!==coHome)coHome.prepend(coEl)}
       if(!side||!d)return;
-      if(tv===2){sd.style.setProperty('--cl',(W/2+shift-d.w/2)+'px');sd.style.setProperty('--ct',(stage.offsetTop+d.cy-d.h/2)+'px')}
+      sd.style.setProperty('--tl',(d.cx+d.w/2+48)+'px');   // the same gap to every case (G in layout)
+      if(tv===2){sd.style.setProperty('--cl',(d.cx-d.w/2)+'px');sd.style.setProperty('--ct',(stage.offsetTop+d.cy-d.h/2)+'px')}
       if(tv===3){sd.style.setProperty('--tt',(stage.offsetTop+d.cy-d.h/2)+'px');sd.style.setProperty('--th',d.h+'px')}};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
     let pos=0,S=300,H=400,W=400,R=300,R2=200,active=-1,tween=null,drag=null,suppress=false,wheelT=0;
@@ -2389,6 +2390,7 @@ function makeJS() {
     };
     const place=v=>{
       pos=v;if(!dims.length)return;   // not laid out yet (loaded in SCROLL view, the deck hidden): layout() places it once shown
+      {const n=dims.length-1,c=Math.max(0,Math.min(n,v)),i0=Math.floor(c),i1=Math.min(n,i0+1),f=c-i0;shift=dims[i0].cx+(dims[i1].cx-dims[i0].cx)*f-W/2}
       const side=num('--side')||.5;
       cards.forEach((c,i)=>{
         const t=i-v,a=Math.abs(t),p=Math.max(0,1-a),lane=t>0?(i%2?bot:top):(i%2?top:bot),d=dims[i];
@@ -2424,12 +2426,16 @@ function makeJS() {
       dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
         let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
         c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:sideM||phone?cyB:cyB+(Ht-h)/2}});   // under: bottoms aligned so the headline gap never changes; side: centred
-      const cx=sideM?.34*W:W/2;shift=cx-W/2;
-      dims.forEach(d=>{const sw=side*d.w/2,min=wMax/2+sw+gap;
-        d.Rl=Math.max(min,cx-peek+sw);d.Rr=Math.max(min,W-peek-cx+sw)});
+      /* laptops: each case and its text are ONE group, centred on the screen, with the same gap between them for every
+         project (her 2026-10-26: "the distance between the case and the text to the right to be the same. and it needs
+         to be centered together"); the text column keeps one width, so a narrower case simply brings the pair inward */
+      const G=48,TW=sideM?Math.max(240,W-(.34*W+wMax/2+G)-peek-40):0;
+      dims.forEach(d=>{d.cx=sideM?(W-(d.w+G+TW))/2+d.w/2:W/2;const sw=side*d.w/2,min=wMax/2+sw+gap;
+        d.Rl=Math.max(min,d.cx-peek+sw);d.Rr=Math.max(min,W-peek-d.cx+sw)});
+      shift=dims[Math.max(0,Math.min(dims.length-1,Math.round(pos)))].cx-W/2;
       R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
-      if(sideM){const aw=Math.max(...dims.map(d=>d.w)),tl=cx+aw/2+48;
-        sd.style.setProperty('--tl',tl+'px');sd.style.setProperty('--tw',Math.max(240,W-tl-peek-40)+'px');
+      if(sideM){const d=dims[Math.max(0,active)];
+        sd.style.setProperty('--tl',(d.cx+d.w/2+G)+'px');sd.style.setProperty('--tw',TW+'px');
         sd.style.setProperty('--tt',(stage.offsetTop+cyB)+'px')}
       sd.style.setProperty('--S',S+'px');sd.style.setProperty('--stage',H+'px');titleEl.style.setProperty('--S',S+'px');
       if(phone){tgNow=tg;sd.classList.add('stack');let thS=0;cards.forEach((c,i)=>{fill(i);thS=Math.max(thS,titleEl.offsetHeight)});   // the headline's tallest height AS LAID OUT on phones (full width), not before
