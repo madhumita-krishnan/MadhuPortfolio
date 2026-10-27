@@ -1052,7 +1052,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .view-toggle{touch-action:none}   /* so a drag across it slides the switch instead of scrolling the page */
 /* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
    there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
-.vt-ring{position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:999px;border:1.5px solid #8fb2f2;
+.vt-ring{position:absolute;top:50%;left:50%;width:8px;height:8px;transform:translate(-50%,-50%);border-radius:999px;border:1.5px solid #8fb2f2;
   box-sizing:border-box;opacity:0;pointer-events:none}   /* = DOT in app.js */
 .view-toggle.vt-leaving{pointer-events:none}
 .work-head .head-toggle{background:rgba(22,27,40,.88)}
@@ -2254,11 +2254,13 @@ function makeJS() {
                 SUCKED away: accelerating down and off, stretching as it goes, to nothing (700–1000)
          Only ONE toggle is ever on screen: one that should appear waits until the other has fully gone. Reduced motion: shown
          or hidden at once. WHEN each toggle shows is unchanged. */
-      const FULL='inset(0% 0% round 999px)',DOT=14;
+      /* the dot is a small SOLID blue dot (her 2026-10-26: "make the dot a smaller blue dot. I feel like that's more noticeable
+         than the circle"): 8px, filled; the fill fades as it widens, leaving the blue outline round the bar */
+      const FULL='inset(0% 0% round 999px)',DOT=8,BLUE='rgba(143,178,242,1)',CLEAR='rgba(143,178,242,0)';
       const parts=t=>{const w=t.offsetWidth||1,h=t.offsetHeight||1;
         if(!t._ring){t._ring=document.createElement('span');t._ring.className='vt-ring';t._ring.setAttribute('aria-hidden','true');t.appendChild(t._ring)}
         return {CIRC:'inset('+((h-DOT)/2/h*100).toFixed(2)+'% '+((w-DOT)/2/w*100).toFixed(2)+'% round 999px)',ring:t._ring,
-          DOTS:{width:DOT+'px',height:DOT+'px'},BAR:{width:w+'px',height:h+'px'},btns:[...t.querySelectorAll('.view-btn,.vt-knob')]}};   // the knob resolves with the icons
+          DOTS:{width:DOT+'px',height:DOT+'px',backgroundColor:BLUE},BAR:{width:w+'px',height:h+'px',backgroundColor:CLEAR},btns:[...t.querySelectorAll('.view-btn,.vt-knob')]}};   // the knob resolves with the icons
       const run=(t,show)=>{
         (t._a||[]).forEach(a=>a.cancel());t._a=null;
         if(rmActive()||!t.animate){t.classList.remove('vt-leaving');t.classList.toggle('vt-hidden',!show);return}
