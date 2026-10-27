@@ -3329,10 +3329,7 @@ function renderHome() {
     <span class="cta-socials">${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => { const src = asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png'); return `<a href="${esc(l.href)}" style="--tile:url('${src}')" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${src}" alt="" width="48" height="48" draggable="false"></a>`; }).join('')}<a class="cta-resume" href="${esc(h.ctaSecondary.href)}" style="--tile:url('${asset('assets/clay/props/resume.png')}')" target="_blank" rel="noopener" aria-label="Resume"><img src="${asset('assets/clay/props/resume.png')}" alt="" width="48" height="48" draggable="false"></a></span>
   </p>
 </section>
-<!-- the hero's stick figure (see stickman.js at the repo root). Home page only, hero only.
-     defer keeps it after app.js, which must split the headline into .ch spans first —
-     the figure climbs those. -->
-<script src="stick.js?v=${BUILD_V}" defer></script>`;
+<!-- the hero's stick figure (stickman.js) is loaded right AFTER app.js at the foot of the page (see homePage below) -->`;
 
   /* logo wall: masked to a single ink so nine marks in nine different house styles
      read as one row (see .brand). role=img + aria-label keeps the names available. */
@@ -3824,7 +3821,11 @@ function lintIcons(html, page) {
   return html;
 }
 /* locally the home page carries the tweaker receiver for the logo wisps (studies/tweaker-logos/); never on Vercel */
-const homePage = lintIcons(renderHome(), 'index.html');
+/* the hero's figure (stickman.js → stick.js) goes right after app.js: deferred scripts run in PAGE order, and app.js must
+   split the headline into the .ch spans she climbs first. Its tag used to sit in the hero, ABOVE app.js, so it really ran
+   first, and on a slow connection the whole hero (headline included) waited for her 150KB script: the headline showed at
+   ~8s on slow 3G instead of with app.js (device-check, 2026-10-27). She joins the opening late via __mkHero* flags. */
+const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>');
 fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
