@@ -3109,7 +3109,8 @@ function bootJS() {
    the M and K apart: after seeing both styles side by side after many rounds she chose H2 ("the bottom row ones look the
    best" → H2): dead-on, chest-up, her approved closed-teeth smile, soft M and K, at 1200x630. Absolute URL: preview crawlers don't resolve relative ones */
 const OG = { f: 'assets/og/preview.jpg', w: 1200, h: 630, type: 'image/jpeg' };
-function head(title, desc, boot, card) {   // card: {title, line} for the link preview, else the page's own title/description
+function head(title, desc, boot, card) {   // card: {title} for the home link preview: the title ALONE, no second line and no page
+  // description either, or apps fill the empty line from it (her 2026-10-27: "can you remove the second line")
   const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
   return `<!DOCTYPE html>
 <html lang="en">
@@ -3117,10 +3118,9 @@ function head(title, desc, boot, card) {   // card: {title, line} for the link p
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(desc)}">
-<meta property="og:type" content="website">
+${card ? '' : `<meta name="description" content="${esc(desc)}">\n`}<meta property="og:type" content="website">
 <meta property="og:title" content="${esc(card ? card.title : title)}">
-<meta property="og:description" content="${esc(card ? card.line : desc)}">
+${card ? '' : `<meta property="og:description" content="${esc(desc)}">\n`}
 <meta property="og:image" content="${og}">
 <meta property="og:image:type" content="${OG.type}">
 <meta property="og:image:width" content="${OG.w}">
@@ -3617,7 +3617,7 @@ function renderHome() {
   </div>
 </section>`;
 
-  return head(site.title, site.description, true, { title: site.previewTitle, line: site.previewLine }) + `
+  return head(site.title, site.description, true, { title: site.previewTitle }) + `
 ${navBar('home')}
 <main id="main" tabindex="-1">
 ${heroHTML}
