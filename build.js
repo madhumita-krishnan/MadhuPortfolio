@@ -3117,9 +3117,11 @@ html.booted #boot{opacity:0;visibility:hidden}
 html:not(.booted) .wm-load .wm-m,html:not(.booted) .wm-load .wm-k,html:not(.booted) .wm-load .wm-d{animation-play-state:paused}
 @keyframes boot-fill{to{transform:scaleX(.92)}}@keyframes boot-out{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){.boot-dash i{animation:none;transform:scaleX(.6)}#boot{transition:none}}</style>
-<script>(function(){var de=document.documentElement,t0=Date.now(),went=0,res;window.__mkBoot=new Promise(function(r){res=r});
-function lift(){if(went)return;went=1;var wait=Math.max(0,900-(Date.now()-t0));setTimeout(function(){de.classList.add('boot-ready');setTimeout(function(){de.classList.add('booted');window.__mkBootAt=performance.now();res()},220)},wait)}
-setTimeout(lift,1700);
+<script>(function(){var de=document.documentElement,went=0,res,now=function(){return window.performance&&performance.now?performance.now():0};window.__mkBoot=new Promise(function(r){res=r});
+/* times count from the moment the page STARTED loading (performance.now), not from this script, which only runs once the
+   stylesheets have arrived: on a cold first visit that alone was ~0.9s, pushing the lift past 2s */
+function lift(){if(went)return;went=1;var wait=Math.max(0,900-now());setTimeout(function(){de.classList.add('boot-ready');setTimeout(function(){de.classList.add('booted');window.__mkBootAt=now();res()},220)},wait)}
+setTimeout(lift,Math.max(0,1700-now()));
 var dom=new Promise(function(r){document.readyState!=='loading'?r():document.addEventListener('DOMContentLoaded',r)});
 Promise.all([dom,document.fonts&&document.fonts.ready||0]).then(lift,lift)})()</script>` : ''}
 <a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
