@@ -1910,7 +1910,7 @@ function makeJS() {
       const last=ws.reduce((m,w)=>Math.max(m,parseFloat(w.style.transitionDelay)||0),0),t0=performance.now()-tries*100;
       [...hero.querySelectorAll('.cta-socials a')].forEach((a,i)=>a.style.setProperty('--i',i));
       setTimeout(()=>hero.classList.add('tiles-in'),rmActive()?0:Math.max(0,last+500-(performance.now()-t0)))};
-    requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');tilesIn();setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120));   // (fail-safe if no transition fires)
+    Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,2500))]).then(()=>requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');tilesIn();window.__mkHeroAt=performance.now();setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120)));   // (fail-safe if no transition fires)
     /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
        back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
        its final size, so she spawns on the d where it will stay. */
@@ -3016,7 +3016,7 @@ function makeJS() {
 }
 
 /* ---------------------------------------------------------------- shared HTML bits */
-function head(title, desc) {
+function head(title, desc, boot) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3102,6 +3102,26 @@ if(t==='night')document.documentElement.setAttribute('data-theme','night');
 <body>
 <!-- KEYBOARD (her 2026-10-26: "make sure people can navigate the site with the keyboard"): the first Tab offers a jump past
      the nav straight to the page; it only shows while it has focus -->
+${boot ? `
+<!-- THE LOADER (her 2026-10-26: "make a loading animation and give the site like 1-2 seconds to get everything together"):
+     the M--K wordmark, its dash filling in blue while the page settles. At least ~0.9s so it never flashes, lifted the moment
+     fonts and the page are ready, never past ~2s (a slow connection gets the page, not a longer wait). The CSS lifts it on its
+     own at 2.6s if the script never runs. The hero's opening waits for it (window.__mkBoot), so nothing plays unseen. -->
+<div id="boot" aria-hidden="true"><div class="boot-mark">M<span class="boot-dash"><i></i></span>K</div></div>
+<style>#boot{position:fixed;inset:0;z-index:2147483646;background:#0f1013;display:grid;place-items:center;transition:opacity .35s ease,visibility 0s linear .35s;animation:boot-out .35s ease 2.6s forwards}
+.boot-mark{display:flex;align-items:center;gap:.14em;font:500 clamp(40px,7vw,64px)/1 'Cormorant Garamond',Georgia,serif;color:#a9adb7;letter-spacing:.02em}
+.boot-dash{position:relative;width:.95em;height:3px;border-radius:3px;background:rgba(143,178,242,.18);overflow:hidden}
+.boot-dash i{position:absolute;inset:0;background:#8fb2f2;border-radius:3px;transform-origin:left;transform:scaleX(0);animation:boot-fill 1.6s cubic-bezier(.3,.6,.2,1) forwards}
+html.boot-ready .boot-dash i{animation:none;transform:none;transition:transform .2s ease-out}
+html.booted #boot{opacity:0;visibility:hidden}
+html:not(.booted) .wm-load .wm-m,html:not(.booted) .wm-load .wm-k,html:not(.booted) .wm-load .wm-d{animation-play-state:paused}
+@keyframes boot-fill{to{transform:scaleX(.92)}}@keyframes boot-out{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.boot-dash i{animation:none;transform:scaleX(.6)}#boot{transition:none}}</style>
+<script>(function(){var de=document.documentElement,t0=Date.now(),went=0,res;window.__mkBoot=new Promise(function(r){res=r});
+function lift(){if(went)return;went=1;var wait=Math.max(0,900-(Date.now()-t0));setTimeout(function(){de.classList.add('boot-ready');setTimeout(function(){de.classList.add('booted');window.__mkBootAt=performance.now();res()},220)},wait)}
+setTimeout(lift,1700);
+var dom=new Promise(function(r){document.readyState!=='loading'?r():document.addEventListener('DOMContentLoaded',r)});
+Promise.all([dom,document.fonts&&document.fonts.ready||0]).then(lift,lift)})()</script>` : ''}
 <a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
 ${svgFilters()}
 <div class="atmosphere" aria-hidden="true"></div>
@@ -3497,7 +3517,7 @@ function renderHome() {
   </div>
 </section>`;
 
-  return head(site.title, site.description) + `
+  return head(site.title, site.description, true) + `
 ${navBar('home')}
 <main id="main" tabindex="-1">
 ${heroHTML}
