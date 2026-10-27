@@ -150,16 +150,19 @@
   /* ---- one frame ---- */
   function draw() {
     var b = beats(), t = T, fs = M.fs, H = fs * V.her, sc = H / 252, g = M.g, th = g.stroke * V.thick;
-    var ui = rm ? 1 : sys(seg(b.in, t)), rise = (1 - ui) * 28;
+    /* her pixel values (sag, tug, tremble, bounce, dips, drops) were tuned on the 150px laptop logo; on a phone the logo is
+       ~20vw, so they scale with it (her: "the loading animation on the phone looks nothing like the laptop") */
+    var z = fs / V.fs;
+    var ui = rm ? 1 : sys(seg(b.in, t)), rise = (1 - ui) * 28 * z;
     S.svg.style.opacity = ui; S.svg.style.transform = 'translateY(' + rise.toFixed(1) + 'px)';
     var y0 = M.y0, p = rm ? 1 : prog(t);
     var stuck = V.stuck * (M.kL - M.mR) / 2, tb = b.land.s + b.land.d, tt = t - tb;
     var fighting = !rm && p > 0 && t < tb, ts = t / 1000 * V.tempo;
     var shake = fighting ? (Math.sin(ts * 2 * Math.PI * V.shakeHz) + .5 * Math.sin(ts * 2 * Math.PI * V.shakeHz * 1.7 + 1)) * V.shake : 0;
-    var tremble = fighting ? (Math.sin(ts * 2 * Math.PI * V.tugHz) * .7 + Math.sin(ts * 2 * Math.PI * V.tugHz * 2.3 + 2) * .3) * V.tremble : 0;
+    var tremble = fighting ? (Math.sin(ts * 2 * Math.PI * V.tugHz) * .7 + Math.sin(ts * 2 * Math.PI * V.tugHz * 2.3 + 2) * .3) * V.tremble * z : 0;
     var off = stuck * (1 - p) - tremble;
     var su = cast && t >= b.land.s && tt < 0 ? Math.sin(Math.min(1, (t - b.land.s) / Math.max(1, b.land.d)) * Math.PI / 2) : tt >= 0 && cast ? 1 : 0;
-    var sag = V.sag * su, tug = V.tug * su * (tt < 0 ? 1 : 0);
+    var sag = V.sag * z * su, tug = V.tug * z * su * (tt < 0 ? 1 : 0);
     var o = tt > 0 ? spring(tt, V.stiff, V.damp) : 0, w = tt > 0 ? wob(tt, V.wobHz, V.wobDie) : 0;
     if (rm) { tt = 1e5; o = 1; w = 0; }
     var tension = tt > 0 ? -V.recoil * w : (fighting ? V.strain : 0) + su * V.strain * .8 + shake;
@@ -176,9 +179,9 @@
     } else {
       S.strand.style.display = 'none'; S.pL.style.display = S.pR.style.display = '';
       var pinch = rm ? 1 : spring(tt - V.pinch / V.tempo, V.stiff * .8, V.damp), mid = (xa + xb) / 2, dip = sag * (1 - Math.min(1, o));
-      var ldv = cast && t >= b.flipLand.s ? V.landDip * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0;
+      var ldv = cast && t >= b.flipLand.s ? V.landDip * z * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0;
       [[S.pL, M.mR + leanX, M.a.l + th / 2, mid, M.a.r - th / 2], [S.pR, M.kL - leanX, M.b.r - th / 2, mid, M.b.l + th / 2]].forEach(function (h, i) {
-        var dd = i === 1 ? ldv : 0, root = lerp(h[1], h[2], pinch), tip = lerp(h[3], h[4], o), ty = y0 + dip + V.bounce * w + dd, oc = Math.min(1, o);
+        var dd = i === 1 ? ldv : 0, root = lerp(h[1], h[2], pinch), tip = lerp(h[3], h[4], o), ty = y0 + dip + V.bounce * z * w + dd, oc = Math.min(1, o);
         var wr = lerp(se, th, oc), wt = lerp(sw * .7, th, oc);
         h[0].setAttribute('d', taper(root, y0 + dd, (root + tip) / 2, (y0 + dd + ty) / 2, tip, ty, function (u) { return lerp(wr, wt, Math.pow(u, 1 / Math.max(.5, V.taper))); }, pinch < .5));   // flat while it still holds the letter
       });
@@ -187,8 +190,8 @@
     S.drops.forEach(function (c, i) {
       var on = !rm && tt > 0 && tt < 700; if (!on) { c.setAttribute('r', 0); return; }
       var s = tt / 1000, dir = i === 1 ? 0 : i ? 1 : -1;
-      c.setAttribute('cx', ((M.mR + M.kL) / 2 + dir * (60 + i * 20) * s).toFixed(1));
-      c.setAttribute('cy', (y0 + sag + (-120 - i * 40) * s + 900 * s * s).toFixed(1));
+      c.setAttribute('cx', ((M.mR + M.kL) / 2 + dir * (60 + i * 20) * z * s).toFixed(1));
+      c.setAttribute('cy', (y0 + sag + ((-120 - i * 40) * s + 900 * s * s) * z).toFixed(1));
       c.setAttribute('r', (th * (.55 - i * .1) * Math.max(0, 1 - s / .7)).toFixed(2)); c.setAttribute('fill', V.ink);
     });
     var set = tt > 0 ? Math.min(1, Math.max(0, (tt - V.setAfter / V.tempo) / (V.setFor / V.tempo))) : 0;
@@ -209,7 +212,7 @@
     /* her */
     if (!cast) return;
     var top = (t < b.land.s ? y0 - sw / 2 : feetY) + rise, k = null, x = midX, fy = top, spin = 0;
-    var hx = (M.b.l + M.b.r) / 2, hyTop = y0 - th / 2 + rise + (t >= b.flipLand.s ? V.landDip * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0);
+    var hx = (M.b.l + M.b.r) / 2, hyTop = y0 - th / 2 + rise + (t >= b.flipLand.s ? V.landDip * z * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0);
     if (t >= b.flip.s) x = hx;
     if (t >= b.fly.s && t < b.fly.s + b.fly.d) {
       var u = seg(b.fly, t), x0 = midX - V.fromX * fs, sy = M.H + H * .2, fu1 = Math.max(0, Math.min(1, (u - .14) / .7));
@@ -321,9 +324,15 @@
   function cutShort() { if (readyT === null) { herIn = pageIn = true; if (cast && !S.allIn()) { cast = false; V.fly = V.wait = 0; V.breakAt = 140; V.flipT = V.land = V.rise = V.turn = V.crouch = V.exit = 0; V.waves = 0; V.hold = 380; } ready(); } }
   /* a slow connection gets the SHORT loader (her 2026-10-27 pick, after slow 3G measured the headline at 20.5s against 7s
      live): if her frames still aren't all in after C.slow, she sits this one out and M--K goes straight to the dot and
-     drops, so the page shows by ~8s. Fast connections never reach this: her frames are in long before */
-  setTimeout(function () { if (!S.allIn()) cutShort(); }, Math.max(0, C.slow - now()));
+     drops, so the page shows by ~8s. Fast connections never reach this: her frames are in long before.
+     Counted from when the loader starts, not from navigation start (her: "the loading animation on the phone looks nothing
+     like the laptop"): on cellular the page itself can take seconds to arrive, which used the timer up before her frames
+     had a chance, so phones got the short loader on connections that load her fine. Not one frame in by half that is a
+     truly slow link: cut then, so slow 3G stays as quick as before */
+  setTimeout(function () { if (!S.anyIn()) cutShort(); }, C.slow / 2);
+  setTimeout(function () { if (!S.allIn()) cutShort(); }, C.slow);
   setTimeout(cutShort, Math.max(0, 30000 - now()));
+  S.anyIn = function () { for (var k in S.img) if (S.img[k].complete && S.img[k].naturalWidth) return true; return false; };
   S.allIn = function () { for (var k in S.img) if (!S.img[k].complete || !S.img[k].naturalWidth) return false; return true; };
   check();
   function skip() { ready(); var b = beats(); if (T < b.lift.s) T = b.lift.s; }
