@@ -1064,6 +1064,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .view-toggle.vt-leaving{pointer-events:none}
 .work-head .head-toggle{background:rgba(22,27,40,.88)}
 .view-dock .view-toggle{pointer-events:auto;background:rgba(22,27,40,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.view-dock .view-toggle.vt-leaving{pointer-events:none}   /* the rule above re-enabled clicks on the corner toggle mid-exit (device-check: "shown away from" the projects during its 1s exit) */
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
 .sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
