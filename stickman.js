@@ -434,8 +434,14 @@
   var CELEBS = ['cartwheel', 'backflip', 'star', 'bow'];
   function celebrate() {
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
+    /* the trick frames load on idle, or on a slow connection only now (#102): the move plays the moment they're in */
+    var name = CELEBS[fig.celebIdx % CELEBS.length], need = { cartwheel: ['cartwheel-in', 'cartwheel-50'], backflip: ['backflip-x3'], star: ['star-bow-x3'], bow: ['star-bow-x3'] }[name] || [];
+    if (CLAY.ready && CLAY.sheetIn && need.some(function (k) { return !CLAY.sheetIn[k]; })) {
+      CLAY.onSheet = function () { if (need.every(function (k) { return CLAY.sheetIn[k]; })) { CLAY.onSheet = null; celebrate(); } };
+      if (CLAY.tricks) CLAY.tricks(need);
+      return;
+    }
     fig.target = null; fig.waypoint = null; fig.vx = 0;
-    var name = CELEBS[fig.celebIdx % CELEBS.length];
     fig.celeb = { name: name, t: 0, dur: { star: 1.1, backflip: 1.0, dance: 1.5, cartwheel: 1.3, bow: 1.2 }[name] };
     fig.celebIdx++;
     fig.state = 'celeb';
@@ -497,7 +503,7 @@
      wobbling on her outline started a fresh wave every time it crossed back in, 14 frames after the last one ended */
   var waveAt = -1e9;
   function waveHello() {
-    if (rmActive() || fig.loadT || performance.now() - waveAt < 3600) return;
+    if (rmActive() || fig.loadT || (CLAY.ready && !CLAY.moveReady) || performance.now() - waveAt < 3600) return;
     if (fig.state === 'idle' || fig.state === 'sign' || (fig.state === 'move' && !fig.target && !fig.drag)) {
       waveAt = performance.now();
       fig.prev = fig.state === 'sign' ? 'sign' : 'idle';
@@ -546,6 +552,7 @@
     }
   }, { passive: true });
   function dragJump(up, p) {
+    if (CLAY.ready && !CLAY.moveReady) return false;
     if (fig.state !== 'move' && fig.state !== 'idle') return false;
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false;
     var vy = -Math.sqrt(2 * G * (Math.min(up * 1.6, JUMP_MAX) + 20)), vx = Math.max(-RUN, Math.min(RUN, (p.x - fig.x) * 1.5));
@@ -578,6 +585,7 @@
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') fig.state = 'move';
   }
   function keyJump() {
+    if (CLAY.ready && !CLAY.moveReady) return;
     if (fig.state === 'hang') { muscleUp(); return; }
     if ((fig.state !== 'move' && fig.state !== 'idle') || fig.loadT) return;
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false;
@@ -601,6 +609,7 @@
     else if (k === 'ArrowUp') { if (!driving && scrollY > 2) return; if (!e.repeat) keyJump(); }
     else if (!driving || (!e.repeat && !keyDrop())) return;
     keyAt = performance.now(); e.preventDefault(); start();
+    if (CLAY.tricks) CLAY.tricks();
   });
   document.addEventListener('keyup', function (e) { var dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (dir && keys[dir]) { keys[dir] = false; steer(); } });
   addEventListener('blur', function () { keys = {}; steer(); });
@@ -630,6 +639,7 @@
     var p = stagePoint(e);
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
     down = Object.assign(p, { t: performance.now(), moved: false });
+    if (CLAY.tricks) CLAY.tricks();   // someone's playing with her: the trick frames come now (on a slow connection they wait for this)
   }, { passive: true });
   /* a touch the browser reclaims for scrolling ends in pointercancel, not pointerup —
      without this a scroll leaves a stale `down` behind */
@@ -992,6 +1002,7 @@
   function tickGround(dt) {
     fig.flipQueued = false;
     if (fig.landT > 0 && !fig.drag) { fig.vx = 0; return; }   // the landing crouch holds still, then she sets off
+    if (CLAY.ready && !CLAY.moveReady) { fig.vx = 0; return; }   // her walking frames aren't in yet (#102): she waits, then goes
     var want = 0;
     var g = fig.waypoint || fig.target;
     if (fig.drag) { want = fig.drag.vx; }
@@ -1179,7 +1190,7 @@
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
+    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target && (!CLAY.ready || (CLAY.sheetIn && CLAY.sheetIn['hang-swing-climb-x3'] && CLAY.sheetIn['monkey-x3']))) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
       var handY = ny - LEG - HANDUP;
       /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
          her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
@@ -1530,34 +1541,58 @@
     var ver = (base.match(/\?v=[^&#]*/) || [''])[0];   // the build's cache-buster, so a re-rendered frame isn't served stale
     fetch(dir + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (m) {
       CLAY.man = m;
-      /* triple frames (2026-10-23) is ~11MB of clay: she appears once the CORE motions are in, and
-         the celebrations, climb and monkey bars stream in behind; a frame that hasn't arrived yet is
-         covered by her last drawn clay frame (clayFigure), never by the stick figure */
-      var CORE = ['idle-wave-sign', 'walk-x3', 'run-x3', 'jump-land-slide-x3', 'hang-swing-climb-x3'];
-      /* the hover wave's three frames come in WITH her (108KB): streamed later, an early hover froze her on her last
-         frame instead of waving and smiling (her: "when I hover … the smile … plus the wave") */
-      var CORE_FRAMES = (m['idle-wave-sign-x3'] || []).slice(3, 6);
-      function loadSet(keys, done) {
-        var n = 0, total = 0;
-        keys.forEach(function (k) { (Array.isArray(k) ? k : m[k] || []).forEach(function (f) { total++; var im = new Image(); im.decoding = 'async';
-          im.onload = im.onerror = function () { if (++n === total) done(); }; im.src = dir + f.f + ver; CLAY.img[f.f] = im; }); });
-        if (!total) done();
+      /* LIGHT ON DATA (her 2026-10-26, #102: "i can't have slow load or anything. this is a crucial moment"). It was every
+         sheet up front, ~230 PNGs / 6.3MB on a phone's first visit. Now in three steps, as WebP (q.95: side by side at her
+         size it can't be told from the PNG, a third of the bytes):
+           1. her standing frame (the PNG the page preloads) and her resting smile: she appears;
+           2. 1.5s on (6s, or the page's load, on a slow connection), one sheet after another so each is usable as soon as
+              it's in: every third walk frame (the old stride) with the jump and the hover wave, and she can move; then
+              the ledge climb, every third run frame, then the in-between walk and run frames;
+           3. the tricks (cartwheel, backflip, star, bow, hang, monkey bars), one sheet at a time: when the browser is idle,
+              or, on Save-Data or a 2g/3g connection, only once someone plays with her (a trick she's asked for first).
+         A frame not in yet is drawn as the nearest one of the same move that is (clayFigure), running borrows walking,
+         a trick waits for its frames, and a browser without WebP gets the PNG. The unused clips (cartwheel-x3, dance-x3,
+         the rest of idle-wave-sign-x3) are never fetched. */
+      function src(f) { return dir + (f === 'idle-wave-sign-0.png' ? f : f.replace(/\.png$/, '.webp')) + ver; }
+      var pend = {};   // one load per frame, shared: a sheet is "in" only once its images really are, whoever asked first
+      function getImg(f) {
+        return pend[f] || (pend[f] = new Promise(function (res) {
+          var im = new Image(); im.decoding = 'async'; im.onload = res;
+          im.onerror = function () { if (/\.webp/.test(im.src)) im.src = dir + f + ver; else res(); };
+          im.src = src(f); CLAY.img[f] = im;
+        }));
       }
-      /* she APPEARS the moment her standing frame is in (one small file); everything else streams behind her, a frame
-         not yet arrived holding her last drawn one (clayFigure). Waiting for all 4.4MB of core motion first meant on a
-         phone over cellular she simply never showed up (her: "people report … doesn't show up on mobile") */
+      function loadSet(keys, done) {
+        var ps = [];
+        keys.forEach(function (k) { (Array.isArray(k) ? k : m[k] || []).forEach(function (f) { ps.push(getImg(f.f)); }); });
+        Promise.all(ps).then(function () { done(); });
+      }
+      function every3(k, r) { return (m[k] || []).filter(function (f, i) { return i % 3 === r; }); }
+      /* ONE queue, one set at a time, so each is usable the moment it's in; a trick someone asks for goes to the front */
+      var Q = [], busy = false;
+      function pump() { if (busy || !Q.length) return; busy = true; var st = Q.shift(); loadSet(st[0], function () { busy = false; if (st[1]) st[1](); pump(); }); }
+      function queue(st, front) { if (front) Q.unshift(st); else Q.push(st); pump(); }
+      function sheet(k) { return [[k], function () { CLAY.sheetIn[k] = true; if (CLAY.onSheet) CLAY.onSheet(); }]; }
+      var TRICKS = ['cartwheel-in', 'cartwheel-50', 'backflip-x3', 'star-bow-x3', 'hang-swing-climb-x3', 'monkey-x3'];
+      var net = navigator.connection, lean = !!(net && (net.saveData || /2g|3g/.test(net.effectiveType || '')));
+      CLAY.sheetIn = {};
+      CLAY.tricks = function (first) {
+        (first || []).slice().reverse().forEach(function (k) { if (!CLAY.sheetIn[k]) queue(sheet(k), true); });
+        if (CLAY.tricksAsked) return; CLAY.tricksAsked = true;
+        TRICKS.forEach(function (k) { if ((first || []).indexOf(k) < 0) queue(sheet(k)); });
+      };
+      if (m._smile) { var sm = new Image(); sm.src = src([].concat(m._smile)[0]); CLAY.img.smile = [sm]; }   // the soft smile is her resting face (the grin, smile-2, is never shown)
       loadSet(['idle-wave-sign'], function () {
         CLAY.ready = true; draw(performance.now()); start();
-        loadSet(CORE.slice(1).concat([CORE_FRAMES]), function () {
-          /* the rest: what a click shows first (the celebrations) goes first; the dance is out of the rotation, so its
-             frames are never fetched at all */
-          var FIRST = ['cartwheel-x3', 'cartwheel-50', 'star-bow-x3', 'backflip-x3'];
-          loadSet(Object.keys(m).filter(function (k) { return k[0] !== '_' && CORE.indexOf(k) < 0 && k.indexOf('dance') !== 0; })
-            .sort(function (x, y) { return (FIRST.indexOf(x) < 0 ? 9 : FIRST.indexOf(x)) - (FIRST.indexOf(y) < 0 ? 9 : FIRST.indexOf(y)); }), function () {});
-        });
+        var went = false, go = function () {
+          if (went) return; went = true;
+          queue([[every3('walk-x3', 0), 'jump-land-slide-x3', (m['idle-wave-sign-x3'] || []).slice(3, 6)], function () { CLAY.moveReady = true; start(); }]);
+          queue([['climb-x3']]); queue([[every3('run-x3', 0)]]);
+          queue([['walk-x3']]); queue([['run-x3'], function () { if (!lean) (window.requestIdleCallback || setTimeout)(function () { CLAY.tricks(); }, { timeout: 4000 }); }]);
+        };
+        if (!lean) setTimeout(go, 1500);
+        else if (document.readyState === 'complete') go(); else { addEventListener('load', go); setTimeout(go, 6000); }
       });
-      /* the hover smile only exists once clay.json names it (_smile), so the site never asks for a frame that isn't there */
-      if (m._smile) CLAY.img.smile = [].concat(m._smile).map(function (n) { var sm = new Image(); sm.src = dir + n + ver; return sm; });   // same box as idle-wave-sign-0, only the face differs
     }).catch(function () { CLAY.on = false; });
   }
   function onClay(p, pad) { pad = pad || 0; return Math.abs(p.x - fig.x) < 34 + pad && p.y > fig.y - CLAY.H - 6 - pad && p.y < fig.y + 6 + pad; }
@@ -1701,7 +1736,12 @@
     CLAY.pk = pk;
     if (!f) return false;
     var im = CLAY.img[f.f];
-    if (!im || !im.complete || !im.naturalWidth) { if (!CLAY.last) return false; im = CLAY.last.im; f = CLAY.last.f; }   // still streaming in: hold her last frame
+    if ((!im || !im.complete || !im.naturalWidth) && list) {   // not in yet: the nearest earlier frame of the same move that is, else the walk's (for a run)
+      var alt = function (L, k) { for (var j = 0; j < 3; j++) { var g = L && L[(k - j + L.length) % L.length], gi = g && CLAY.img[g.f]; if (gi && gi.complete && gi.naturalWidth) return [g, gi]; } };
+      var a = alt(list, pk.k) || (pk.s === 'run-x3' && alt(CLAY.man['walk-x3'], pk.k));
+      if (a) { f = a[0]; im = a[1]; if (list !== CLAY.man[pk.s] || CLAY.man['walk-x3'].indexOf(f) >= 0) pk.s = CLAY.man['walk-x3'].indexOf(f) >= 0 ? 'walk-x3' : pk.s; }
+    }
+    if (!im || !im.complete || !im.naturalWidth) { if (!CLAY.last) return false; CLAY.miss = (CLAY.miss || 0) + 1; im = CLAY.last.im; f = CLAY.last.f; }   // still streaming in: hold her last frame
     else CLAY.last = { im: im, f: f };
     /* hover smile, stepped like clay on the 12fps clock: neutral → soft smile → eyes-closed grin,
        and back down on leave. Standing frame only; re-tested per draw, so she also smiles when SHE
@@ -2295,7 +2335,7 @@
     plan: function (x, y) { return planRoute(x, y); },
     clayH: function () { return CLAY.ready ? CLAY.H : 0; },
     sound: function () { return { ctx: SFX.ctx ? SFX.ctx.state : null, buf: SFX.buf }; },   // QA: is the sound context awake, and the decoded clips (to tell which one played)
-    clay: function () { var k = CLAY.pk || {}; return { f: CLAY.last && CLAY.last.f.f, lean: k.lean || 0, rot: k.rot || 0, spin: k.spin || 0 }; },   // QA: the frame drawn last and every rotation on it
+    clay: function () { var k = CLAY.pk || {}; return { f: CLAY.last && CLAY.last.f.f, lean: k.lean || 0, rot: k.rot || 0, spin: k.spin || 0, miss: CLAY.miss || 0, moveReady: !!CLAY.moveReady, sheets: Object.keys(CLAY.sheetIn || {}) }; },   // QA: the frame drawn last and every rotation on it
     canvas: function () { return cv; },
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
