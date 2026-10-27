@@ -69,6 +69,9 @@
       /* pool: the first version, a soft round pool of light */
       '.rz-spot.pool{background:radial-gradient(circle var(--r) at var(--x) var(--y),rgba(255,240,205,.22),rgba(255,240,205,.12) 45%,rgba(255,240,205,.03) 70%,rgba(5,6,8,.74) 100%)}' +
       '.rz-walk{position:fixed;z-index:2147482990;pointer-events:none}' +
+      /* BLACK BEHIND HER (her 2026-10-26: "make sure the background behind it is black"): the page goes to black under her
+         from the moment she appears until the resume has opened over it */
+      '.rz-dark{position:fixed;inset:0;z-index:2147482980;background:#000;opacity:0;pointer-events:none;transition:opacity .4s ease}.rz-dark.on{opacity:1}' +
       '.rz-plane{position:fixed;left:0;top:0;z-index:2147482995;pointer-events:none;will-change:transform;transform-origin:50% 50%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35))}';
     document.head.appendChild(c);
   }
@@ -156,8 +159,15 @@
     })();
   }
 
+  var darkEl = null;
+  function dark(on) {
+    if (on) { if (!darkEl) { darkEl = document.createElement('div'); darkEl.className = 'rz-dark'; document.body.appendChild(darkEl); darkEl.offsetWidth; } darkEl.classList.add('on'); }
+    else if (darkEl) { darkEl.remove(); darkEl = null; }
+  }
+
   /* her throw, frame by frame in her spot; calls release(x, y, w) at the throw */
   function playThrow(her, release) {
+    dark(true);
     var k = her.h / SP.figH, w = SP.fw * k, h = SP.fh * k, d = document.createElement('div'), S = window.__stick;
     d.className = 'rz-her';
     d.style.cssText += ';width:' + w + 'px;height:' + h + 'px;left:' + (her.x - SP.cx * k) + 'px;top:' + (her.y - SP.feet * k) + 'px;' +
@@ -194,28 +204,30 @@
     requestAnimationFrame(function () { el.classList.add('on'); });
     return { move: move, off: function () { el.classList.remove('on'); setTimeout(function () { el.remove(); }, 500); } };
   }
-  /* WALKING IN (her 2026-10-26: "I don't like the way she pops up on the right corner. can you walk in"): when she isn't on
-     screen, she walks in from the left edge along the bottom of the screen in her own clay walk cycle, under the spotlight,
-     and stops to fold and throw. Frames: assets/clay/walk-x3-*.png (they face right), scaled to her height; the cycle is
-     paced to the distance covered so her feet don't skate */
+  /* RUNNING IN (her 2026-10-26: "I don't like the way she pops up on the right corner. can you walk in", then "have the
+     resume avatar run in from the right"): when she isn't on screen, she RUNS in from the right edge along the bottom of
+     the screen in her own clay run cycle, facing left, and stops to fold and throw. Frames: assets/clay/run-x3-*.png (they
+     face right, so they're mirrored), scaled to her height; the cycle is paced to the distance covered so her feet don't
+     skate */
   var clayJ = null;
   function walkIn(her, done) {
     var CL = base + 'assets/clay/';
     (clayJ ? Promise.resolve(clayJ) : fetch(CL + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (j) { return (clayJ = j); }))
       .then(function (j) {
-        var fr = j['walk-x3'], k = her.h / (j._ref || 252), imgs = fr.map(function (f) { var im = new Image(); im.src = CL + f.f + ver; return im; });
+        var fr = j['run-x3'], k = her.h / (j._ref || 252), imgs = fr.map(function (f) { var im = new Image(); im.src = CL + f.f + ver; return im; });
         return Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; })).then(function () { return { fr: fr, k: k, imgs: imgs }; });
       })
       .then(function (w) {
-        var el = document.createElement('img'); el.className = 'rz-walk'; el.alt = ''; document.body.appendChild(el);
-        var x0 = -60 * w.k, x1 = her.x, spot = spotOn({ x: x0, y: her.y, h: her.h }), cyc = 1.25 * her.h, t0 = performance.now();
-        var speed = her.h * .9;   // px/s: one full cycle (two steps) covers ~1.25 body heights
+        var el = document.createElement('img'); el.className = 'rz-walk'; el.alt = ''; el.style.transform = 'scaleX(-1)'; document.body.appendChild(el);
+        dark(true);
+        var x0 = innerWidth + 80 * w.k, x1 = her.x, spot = spotOn({ x: x0, y: her.y, h: her.h }), cyc = 2 * her.h, t0 = performance.now();
+        var speed = her.h * 2.8;   // px/s: one full run cycle (two strides) covers ~2 body heights (~450px/s at the hero's size, her RUN)
         (function step(now) {
-          var x = Math.min(x1, x0 + (now - t0) / 1000 * speed), n = Math.floor(((x - x0) / cyc) * w.fr.length) % w.fr.length, f = w.fr[n];
+          var x = Math.max(x1, x0 - Math.max(0, now - t0) / 1000 * speed), n = Math.floor(((x0 - x) / cyc) * w.fr.length) % w.fr.length, f = w.fr[n];
           el.src = w.imgs[n].src; el.style.width = f.w * w.k + 'px'; el.style.height = f.h * w.k + 'px';
-          el.style.left = (x - f.cx * w.k) + 'px'; el.style.top = (her.y - f.base * w.k) + 'px';
+          el.style.left = (x - (f.w - f.cx) * w.k) + 'px'; el.style.top = (her.y - f.base * w.k) + 'px';   // mirrored: her centre is cx from the RIGHT
           spot.move(x, her.y, her.h);
-          if (x < x1) return requestAnimationFrame(step);
+          if (x > x1) return requestAnimationFrame(step);
           el.remove(); her.spot = spot; done(her);
         })(t0);
       })
@@ -246,7 +258,7 @@
     };
     var o = { t: 0, s: 0, white: false };
     place(x0, y0, w0);
-    gsap.timeline({ onComplete: function () { p.remove(); busy = false; } })
+    gsap.timeline({ onComplete: function () { p.remove(); dark(false); busy = false; } })
       /* the glide: unhurried, eased in and out, banking as it turns */
       .to(o, { t: 1, duration: 1.7, ease: 'power1.inOut', onUpdate: function () { var q = seg(o.t); place(q[0], q[1], q[2], 1 - .2 * Math.abs(Math.sin(o.t * Math.PI * 2))); } })
       /* the pass: in from the left edge, right up against the glass, tearing across sideways, huge */
@@ -268,10 +280,10 @@
     gsapReady().then(function () {
       if (!window.gsap) { showSheet(false); busy = false; return; }
       whenReady(function (her) {
-        /* off screen: she walks in from the left along the bottom, at her own size (or a phone/laptop default where she
+        /* off screen: she runs in from the right along the bottom, at her own size (or a phone/laptop default where she
            doesn't live), and throws from there */
         if (!her) { var S = window.__stick, hh = S && S.clayH && S.clayH() || (innerWidth < 760 ? 120 : 160);
-          return walkIn({ x: Math.min(innerWidth * .3, hh * 1.6 + 24), y: innerHeight - 14, h: hh }, function (h2) { playThrow(h2, fly); }); }
+          return walkIn({ x: innerWidth - Math.min(innerWidth * .3, hh * 1.6 + 24), y: innerHeight - 14, h: hh }, function (h2) { playThrow(h2, fly); }); }
         her.spot = spotOn(her);
         setTimeout(function () { playThrow(her, fly); }, 350);   // the light comes up on her first
       });
