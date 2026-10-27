@@ -882,6 +882,13 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 .hero.revealed .hero-flora{opacity:1}
 .hero h1{opacity:0;transform:translateY(16px);transition:opacity 950ms var(--ease-enter) 450ms,transform 950ms var(--ease-enter) 450ms}
 .hero.revealed h1{opacity:1;transform:none}
+/* SLOW-CONNECTION SAFETY NET (2026-10-27, her "i can't have slow load"): the headline needs app.js to appear, and on slow 3G
+   app.js can land seconds after the loader has lifted. If it hasn't started the opening 0.6s after the loader lifts, the
+   headline fades in on its own; app.js then sees it already showing and joins without replaying it (see .instant). On a
+   normal connection the opening starts ~0.15s after the lift, so this never fires */
+html.booted .hero:not(.revealed) h1{animation:mk-late-h1 .5s ease .6s forwards}
+@keyframes mk-late-h1{to{opacity:1;transform:none}}
+.hero.instant,.hero.instant *{transition:none!important}
 /* THE HAND-OFF (her ask 2026-10-23: "once hi I'm Madhu loads in and rises with the blue and falls, it
    should shrink and my bio words would become the big focal"). app.js plays one wave after the
    headline lands, then adds .handoff: the name steps back to a smaller size and the bio grows into
@@ -1849,6 +1856,9 @@ function makeJS() {
   /* hero word-by-word reveal */
   const hero=document.querySelector('.hero');
   if(hero){
+    /* the slow-connection safety net already showed the headline (see mk-late-h1): reveal at once, no replayed entrance */
+    const h1Late=hero.querySelector('h1');
+    if(h1Late&&parseFloat(getComputedStyle(h1Late).opacity)>.3){window.__mkLate=true;hero.classList.add('instant','revealed');requestAnimationFrame(()=>requestAnimationFrame(()=>hero.classList.remove('instant')))}
     /* split into per-word spans, recursing through elements so inline markup
        (the <em> in the hero line) survives the rewrite */
     document.querySelectorAll('.reveal-words').forEach(el=>{
