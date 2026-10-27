@@ -2425,9 +2425,12 @@ function makeJS() {
       const under=sideM?0:th+tg;   // a side headline takes no height
       const Ht=Math.max(phone?220:200,Math.min(innerHeight*dh,(innerHeight-under-bar.offsetHeight-(phone?166:100))/room)),cyB=cyF*Ht;
       let wMax=0;
-      dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),ar=m.classList.contains('phone-media')?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
-        let w=Ht*ar,h=Ht;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
-        c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:sideM||phone?cyB:cyB+(Ht-h)/2}});   // under: bottoms aligned so the headline gap never changes; side: centred
+      /* phones read small beside the laptop screens at the same height (her 2026-10-26: "make the phones a little bigger on
+         the horizontal scroll"): a phone stands --sd-phone (1.15) times as tall as the others */
+      const PH=num('--sd-phone')||1.15;
+      dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),isP=m.classList.contains('phone-media'),ar=isP?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
+        let h=isP?Ht*PH:Ht,w=h*ar;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
+        c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:sideM||phone?cyB+(isP?(h-Ht)/2:0):cyB+(Ht-h)/2}});   // a bigger phone grows DOWN (its top stays put, so nothing above it moves)   // under: bottoms aligned so the headline gap never changes; side: centred
       /* laptops: each case and its text are ONE group, centred on the screen, with the same gap between them for every
          project (her 2026-10-26: "the distance between the case and the text to the right to be the same. and it needs
          to be centered together"); the text column keeps one width, so a narrower case simply brings the pair inward */
@@ -2435,7 +2438,7 @@ function makeJS() {
       dims.forEach(d=>{d.cx=sideM?(W-(d.w+G+TW))/2+d.w/2:W/2;const sw=side*d.w/2,min=wMax/2+sw+gap;
         d.Rl=Math.max(min,d.cx-peek+sw);d.Rr=Math.max(min,W-peek-d.cx+sw)});
       shift=dims[Math.max(0,Math.min(dims.length-1,Math.round(pos)))].cx-W/2;
-      R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht;top=cyB-lane*Ht;bot=cyB+lane*Ht;
+      R=(dims[0].Rl+dims[0].Rr)/2;R2=side*wMax+gap;H=room*Ht+Math.max(0,...dims.map(d=>d.cy+d.h/2-(cyB+Ht/2)));   // the stage makes room under a bigger phonetop=cyB-lane*Ht;bot=cyB+lane*Ht;
       if(sideM){const d=dims[Math.max(0,active)];
         sd.style.setProperty('--tl',(d.cx+d.w/2+G)+'px');sd.style.setProperty('--tw',TW+'px');
         sd.style.setProperty('--tt',(stage.offsetTop+cyB)+'px')}
