@@ -2261,6 +2261,9 @@
     if (!im.complete) im.addEventListener('load', queueRebuild, { once: true });
   });
   function spawnIfLost() {
+    /* the window got narrower and left her past its edge (her 2026-10-27: "when I make the window smaller, my avatar
+       disappears"): back home on the d, whatever she was doing */
+    if (fig.x < 6 || fig.x > W - 6 || fig.y > H + 4) { fig.target = null; fig.waypoint = null; fig.vx = 0; fig.vy = 0; spawn(); return; }
     if (fig.state === 'air' || fig.state === 'hang' || fig.state === 'mantle') return;
     /* her level read across her feet (over a word space or a stem she is NOT lost), or the old one-column check */
     var t = levelAt(fig.x, fig.y), c = groundTop(fig.x, fig.y - 3, 8);
@@ -2338,12 +2341,14 @@
   function bootWhenSettled() {
     if (bootArmed) return; bootArmed = true;
     var go = function () { boot(); rideT = 2.6; start(); };
+    /* RULE (her 2026-10-27: "the avatar is still loading in before the hi im madhu. its weird to see her floating. she
+       should never be floating as a rule"): she appears only once the headline has LANDED, never while it rises and
+       never before it shows; and the fail-safe clock starts when the home page loader lifts, not at page load (the
+       loader holds until the page has loaded, so a clock from page load spawned her over an invisible headline) */
     if (window.__mkHeroLanded || window.__mkHeroSettled) return go();
-    if (window.__mkHeroRising) return go();
-    addEventListener('mk-hero-rising', go, { once: true });   // the name has started its rise: she comes in with it
     addEventListener('mk-hero-landed', go, { once: true });
     addEventListener('mk-hero-settled', go, { once: true });
-    setTimeout(go, 4200);
+    Promise.race([window.__mkBoot || 0, new Promise(function (r) { setTimeout(r, 32000); })]).then(function () { setTimeout(go, 4200); });
   }
   /* never wait on fonts alone: on a slow connection document.fonts.ready can take longer than a visitor stays (device-check
      slow-3g: she never appeared in 20s). Whichever comes first: fonts ready, or 2.5s after this script runs. */

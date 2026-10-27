@@ -4,6 +4,8 @@
    No dependencies. */
 const fs = require('fs');
 const path = require('path');
+const wordmarkSVG = require('./wordmark.js');   // the logo: the stretched goo M~K
+const LOADER = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/loader.json'), 'utf8')).values;   // her loader study numbers
 
 const ROOT = __dirname;
 const DIST = path.join(ROOT, 'dist');
@@ -293,6 +295,14 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
 .dc.pill .dc-body{width:var(--dc-pill-w,140px);height:34px}
 .dc.pill .dc-body span{opacity:1;transition-delay:.1s}
 .dc.go .dc-spin{animation:dcGo .34s var(--ease-standard) forwards}
+/* CASE STUDIES: THE OPEN RING (her 2026-10-27: "on my case studies you have an open mouse so you can circle things youre
+   explaining. the home page is closed dot though"). Every case study gets the walkthrough pages' scalloped ring (same size,
+   colour and stroke); the home page keeps the closed dot. Arriving on a case study, the dot OPENS into the ring: it grows
+   from the dot's size while its fill drains away. The "I'm curious" pill still rolls out of it over a card */
+.cur-open .dc-body{width:42px;height:42px;background:transparent url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M97.2 50.0L96.5 52.4L94.7 54.7L92.5 56.7L90.5 58.6L89.4 60.6L89.4 62.8L90.2 65.4L91.1 68.3L91.5 71.2L90.9 73.6L89.1 75.4L86.4 76.4L83.4 77.1L80.8 77.7L78.8 78.8L77.7 80.8L77.1 83.4L76.4 86.4L75.4 89.1L73.6 90.9L71.2 91.5L68.3 91.1L65.4 90.2L62.8 89.4L60.6 89.4L58.6 90.5L56.7 92.5L54.7 94.7L52.4 96.5L50.0 97.2L47.6 96.5L45.3 94.7L43.3 92.5L41.4 90.5L39.4 89.4L37.2 89.4L34.6 90.2L31.7 91.1L28.8 91.5L26.4 90.9L24.6 89.1L23.6 86.4L22.9 83.4L22.3 80.8L21.2 78.8L19.2 77.7L16.6 77.1L13.6 76.4L10.9 75.4L9.1 73.6L8.5 71.2L8.9 68.3L9.8 65.4L10.6 62.8L10.6 60.6L9.5 58.6L7.5 56.7L5.3 54.7L3.5 52.4L2.8 50.0L3.5 47.6L5.3 45.3L7.5 43.3L9.5 41.4L10.6 39.4L10.6 37.2L9.8 34.6L8.9 31.7L8.5 28.8L9.1 26.4L10.9 24.6L13.6 23.6L16.6 22.9L19.2 22.3L21.2 21.2L22.3 19.2L22.9 16.6L23.6 13.6L24.6 10.9L26.4 9.1L28.8 8.5L31.7 8.9L34.6 9.8L37.2 10.6L39.4 10.6L41.4 9.5L43.3 7.5L45.3 5.3L47.6 3.5L50.0 2.8L52.4 3.5L54.7 5.3L56.7 7.5L58.6 9.5L60.6 10.6L62.8 10.6L65.4 9.8L68.3 8.9L71.2 8.5L73.6 9.1L75.4 10.9L76.4 13.6L77.1 16.6L77.7 19.2L78.8 21.2L80.8 22.3L83.4 22.9L86.4 23.6L89.1 24.6L90.9 26.4L91.5 28.8L91.1 31.7L90.2 34.6L89.4 37.2L89.4 39.4L90.5 41.4L92.5 43.3L94.7 45.3L96.5 47.6L97.2 50.0Z' fill='none' stroke='%238fb2f2' stroke-width='4'/></svg>") center/100% 100% no-repeat;box-shadow:none;
+  transition:width .5s var(--ease-enter),height .5s var(--ease-enter),background-color .45s linear}
+.cur-open .dc:not(.opened) .dc-body{width:13px;height:13px;background-color:var(--accent)}   /* one cursor colour everywhere: the site blue (her 2026-10-27: "make sure the cursors are the same color") */
+.cur-open .dc.pill .dc-body{width:var(--dc-pill-w,140px);height:34px;background:var(--accent)}
 @keyframes dcGo{
   from{transform:translate(-50%,-50%) scale(1);opacity:1}
   to{transform:translate(-50%,-50%) scale(1.35);opacity:0}}
@@ -598,7 +608,10 @@ ${['top', 'bottom'].map(edge => {
    wordmark's own font (measured at 1.35rem Cormorant + .02em tracking); the letters
    meeting exactly is that measurement, so re-measure if the font or tracking changes. */
 .wm-m,.wm-k,.wm-d{display:inline-block}
-.wordmark{--wm-dx:.34em}
+.wordmark{--wm-dx:.576em}   /* half of "--" in Plus Jakarta Sans 600 + .01em (re-measured 2026-10-27 for the gooey M--K: 1.152em) */
+/* the logo is the stretched goo M~K (wordmark.js): an SVG sized like the type it replaced; its strand folds from the centre */
+.wm-svg{height:.92em;width:auto;vertical-align:-.12em;overflow:visible}
+.wm-svg .wm-d{transform-box:fill-box;transform-origin:50% 50%}
 .wm-m,.wm-k{transition:transform .38s var(--ease-enter)}
 .wm-d{transform-origin:50% 50%;transition:transform .38s var(--ease-enter),opacity .28s var(--ease-standard)}
 .wordmark:hover .wm-m{transform:translateX(var(--wm-dx))}
@@ -612,6 +625,10 @@ ${['top', 'bottom'].map(edge => {
 .wm-load .wm-m{animation:wm-in-m .8s var(--ease-enter) .5s backwards}
 .wm-load .wm-k{animation:wm-in-k .8s var(--ease-enter) .5s backwards}
 .wm-load .wm-d{animation:wm-in-d .8s var(--ease-enter) .5s backwards}
+/* the home loader's exit (her 2026-10-27: "collapse into a circle and drop out of the screen and then pop in the upper
+   corner"): once the dot has fallen away, the logo pops in where it lives, from nothing, overshooting and settling */
+@keyframes wm-pop{0%{transform:scale(0);opacity:0}45%{transform:scale(1.22);opacity:1}68%{transform:scale(.9)}84%{transform:scale(1.05)}100%{transform:none}}
+.wm-pop .wm-svg{transform-origin:50% 55%;animation:wm-pop .6s cubic-bezier(.3,.7,.3,1) both}
 
 /* ---- nav labels turn into her hand on hover (same day). The handwritten copy is a
    ::after overlay, absolutely positioned so the pill never changes width — the sans
@@ -724,6 +741,9 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    between the paragraph and anything else. */
 .hero-line span.hs{display:block}
 .hero-line span.hs + span.hs{margin-top:.5em}
+.hero-line .now-co{white-space:nowrap}
+/* the tile is as tall as the capitals plus a hair, centred on them (her: "the driftwood logo feels oddly sized and placed") */
+.hero-line .now-co img{width:var(--now-h,.86em);height:var(--now-h,.86em);border-radius:24%;vertical-align:var(--now-v,-.07em);margin:0 .3em 0 .12em;display:inline-block}
 /* hovering a bio line: hover devices only (a phone tap shouldn't set anything moving) */
 @media (hover:hover){
   /* the bio no longer dims anything when a line is hovered (her call 2026-10-23: "we don't need to do the dimming thing
@@ -1068,7 +1088,8 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 /* the project name, plain (no pill): small capitals over the headline/tags */
 .w-name{font-family:var(--font-utility);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-primary)}
 .sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
-  --settle:var(--sd-settle,.5);--radius:var(--sd-radius,.08);
+  --settle:var(--sd-settle,.42);   /* swipe time a touch shorter (her 2026-10-27: "takes a liiiittle bit too long"): glide cap .7→.56s, keys/bar .5→.42s */
+  --radius:var(--sd-radius,.08);
   position:relative;margin-top:calc(var(--space)*3);overflow:hidden;touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
 .sdeck:focus-visible{box-shadow:inset 0 0 0 2px var(--ink-blue)}
 .sdeck.dragging{cursor:grabbing}
@@ -1157,6 +1178,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
    so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
 .sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
 .sdeck.stack .sdeck-progress{margin-top:var(--tres,24px)}
+.sdeck.low .sdeck-progress{margin-top:20px}   /* a sideways phone (her 2026-10-27: "the ui is all overlapping"): case, headline and bar all fit in ~360px */
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*7) auto 0;touch-action:none}   /* clear air under the cards (her: "feels too close to the case studies") */
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
 .sdeck-progress button::before{content:"";display:block;height:3px;border-radius:2px;background:var(--line);transition:background 200ms var(--ease-standard)}
@@ -1176,7 +1198,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
   box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;
   transform:translate(-50%,-10px) scale(.55);transition:opacity .18s var(--ease-standard) calc(var(--k)*22ms),transform .3s cubic-bezier(.34,1.56,.64,1) calc(var(--k)*22ms)}
 .sd-ico img{width:100%;height:100%;display:block;-webkit-user-drag:none}
-.sdeck-progress:hover .sd-ico,.sdeck-progress:focus-within .sd-ico,.sdeck-progress.scrub .sd-ico{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
+.sdeck-progress:hover .sd-ico,.sdeck-progress:focus-within .sd-ico,.sdeck-progress.scrub .sd-ico,.sdeck-progress.lean .sd-ico{opacity:1;pointer-events:auto;transform:translate(-50%,0) scale(1)}
 /* ONE icon system (her 2026-10-26: "the treatment on the app icons feels odd and inconsistent and not premium"): every
    tile is the same build: brand fill, one light mark at ~56% (the svgs are normalised to that), the same top light, the
    same hairline edge and the same shadow, laid on by ::after so no file can drift from it. The project you're on lifts
@@ -1189,7 +1211,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
    lower. I don't like overlapping as a rule"): the icons hang 10px clear below the dashes and never lift into them; the
    one you're on is full strength and the others are mildly dimmed instead */
 .sdeck-progress .sd-ico{top:calc(100% + 10px)}
-.sdeck-progress:hover button:not(.on) .sd-ico,.sdeck-progress:focus-within button:not(.on) .sd-ico,.sdeck-progress.scrub button:not(.on) .sd-ico{opacity:.55}
+.sdeck-progress:hover button:not(.on) .sd-ico,.sdeck-progress:focus-within button:not(.on) .sd-ico,.sdeck-progress.scrub button:not(.on) .sd-ico,.sdeck-progress.lean button:not(.on) .sd-ico{opacity:.55}
 .sdeck-progress .sd-ico:hover{opacity:1!important;transform:translate(-50%,0) scale(1.08);transition-delay:0s}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
@@ -1886,6 +1908,8 @@ function makeJS() {
               w.style.transitionDelay=(base+seq++*55+hold)+'ms';w.textContent=tok;frag.appendChild(w);
             });
             node.replaceChild(frag,child);
+          }else if(child.nodeType===1&&child.tagName==='IMG'){   // a logo arrives like a word, never ahead of its line
+            const w=document.createElement('span');w.className='w w-img';w.style.transitionDelay=(base+seq++*55+hold)+'ms';node.replaceChild(w,child);w.appendChild(child);
           }else if(child.nodeType===1){
             if(child.classList.contains('hs')&&child.previousElementSibling)hold+=1000;
             walk(child);
@@ -1898,7 +1922,7 @@ function makeJS() {
     /* the bio lines wave like the headline (see .hero-line .hs .ch). Letters go INSIDE the reveal's word spans, so the
        words still arrive the same way and the clay figure still reads each word as one block of ground */
     if(matchMedia('(hover:hover)').matches)hero.querySelectorAll('.hero-line .hs').forEach(hs=>{
-      hs.querySelectorAll('.w').forEach(w=>{const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
+      hs.querySelectorAll('.w').forEach(w=>{if(w.querySelector('img'))return;const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
       const chs=[...hs.querySelectorAll('.ch')],st=Math.min(26,700/Math.max(1,chs.length));   // the whole line rises in ~0.7s, however long it is
       hs.addEventListener('mouseenter',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=(i*st)+'ms');hs.classList.add('waving')});
       hs.addEventListener('mouseleave',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*st)+'ms');hs.classList.remove('waving')});
@@ -1921,21 +1945,23 @@ function makeJS() {
       const last=ws.reduce((m,w)=>Math.max(m,parseFloat(w.style.transitionDelay)||0),0),t0=performance.now()-tries*100;
       [...hero.querySelectorAll('.cta-socials a')].forEach((a,i)=>a.style.setProperty('--i',i));
       setTimeout(()=>hero.classList.add('tiles-in'),rmActive()?0:Math.max(0,last+500-(performance.now()-t0)))};
-    Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,2500))]).then(()=>requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');tilesIn();window.__mkHeroAt=performance.now();setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120)));   // (fail-safe if no transition fires)
+    Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,32000))]).then(()=>requestAnimationFrame(()=>setTimeout(()=>{hero.classList.add('revealed');tilesIn();window.__mkHeroAt=performance.now();setTimeout(()=>{window.__mkHeroRising=true;dispatchEvent(new Event('mk-hero-rising'))},rmActive()?0:450);setTimeout(landHero,rmActive()?0:1700)},120)));   // (fail-safe if no transition fires)
     /* the hand-off (see .handoff): the headline lands ~1.4s in, waves once (rises in the accent, falls
        back), then shrinks while the bio grows. mk-hero-settled tells the clay figure the headline is at
        its final size, so she spawns on the d where it will stay. */
     const settleHero=()=>{window.__mkHeroSettled=true;dispatchEvent(new Event('mk-hero-settled'))};
     const nameEl=hero.querySelector('h1 .lively');
     if(rmActive()||!nameEl){hero.classList.add('handoff');settleHero()}
-    else setTimeout(()=>{
+    /* counted from when the loader lifts, not from page load (2026-10-27): the loader now holds until the page has loaded,
+       and timed from load this whole entrance played out behind it (her: "it used to load in one part at a time before") */
+    else Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,32000))]).then(()=>setTimeout(()=>{
       const chs=[...nameEl.querySelectorAll('.ch')],run=chs.length*26;
       chs.forEach((c,i)=>c.style.transitionDelay=(i*26)+'ms');nameEl.classList.add('waving');
       setTimeout(()=>{
         chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*26)+'ms');nameEl.classList.remove('waving');
         setTimeout(()=>{hero.classList.add('handoff');setTimeout(settleHero,950)},run+350);
       },run+450);
-    },1600);
+    },1720));
   }
 
   /* ---- the damped spring the pot rocks on -----------------------------------------------
@@ -2055,7 +2081,9 @@ function makeJS() {
   }
 
   /* absolute fail-safe: everything visible even if transitions never tick */
-  setTimeout(()=>document.body.classList.add('settled'),1900);
+  /* counted from when the loader lifts (2026-10-27): it now holds until the page has loaded, and timed from here this
+     fail-safe ran the whole hero entrance behind it */
+  Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,32000))]).then(()=>setTimeout(()=>document.body.classList.add('settled'),1900));
 
   /* the hero-frame tweaker (studies/tweaker-hero/, local only) drives the two non-number dials here */
   addEventListener('tweak',e=>{const v=e.detail.values,h=document.querySelector('.hero');if(!h||!v)return;if('accent' in v)h.dataset.accent=v.accent;if('btnLow' in v)h.dataset.btn=v.btnLow?'low':'flow'});
@@ -2138,7 +2166,9 @@ function makeJS() {
     let ready=null,seen=false;
     const prep=()=>ready||(ready=vendorJS('gsap.min.js').then(()=>Promise.all(marks.map(sample))).then(d=>{data=d},e=>{brandRow.classList.remove('gs-roll');marks.forEach(b=>b.style.opacity='');throw e}));
     const near=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){near.disconnect();prep().catch(()=>{})}},{rootMargin:'100% 0px'});
-    near.observe(brandRow);
+    /* not while the home page loader is up (2026-10-27, her: "its loading in super choppy"): sampling every logo into dots
+       was one of the biggest blocks of work on the page, and it ran behind the loader; it starts the moment the loader lifts */
+    Promise.race([window.__mkBoot||0,new Promise(r=>setTimeout(r,32000))]).then(()=>near.observe(brandRow));
     /* (2026-10-26, her: "the logo stuff is triggered or starts too slow … people have scrolled past the logos before they load
        in. that loses all my credibility") it now plays as soon as the whole row is just on screen (its top past the bottom
        15%), and the whole row lands in ~1.9s instead of ~3s (dur 1.7 -> 1, stagger .11 -> .06). Not at page load: the row
@@ -2180,12 +2210,22 @@ function makeJS() {
     const morph=v=>{
       if(v===workEl.dataset.view)return;
       const i=nowIdx(),fromEl=(workEl.dataset.view==='deck'?deckMedia():listMedia)[i],F=fromEl&&fromEl.getBoundingClientRect(),seen=F&&F.bottom>0&&F.top<innerHeight;
+      /* the toggle only switches the view: it never re-centres anything and never starts focus mode (her 2026-10-27: "when I use
+         the toggle next to selected projects it snaps to center the project … focus mode only happens based on scroll
+         behavior. the toggle just maintains the condition"). In focus mode the deck is already centred, so that is kept */
+      const wh=workEl.querySelector('.work-head'),H0=wh&&wh.getBoundingClientRect().top,focused=document.documentElement.classList.contains('hfocus');
       setView(v,true);
       if(v==='deck')dispatchEvent(new CustomEvent('mk-deck-go',{detail:{i}}));
       /* jump so the same project sits where you can see it */
       const toEl=(v==='deck'?deckMedia():listMedia)[i];if(!toEl)return;
+      /* nowhere near the projects (e.g. a phone turned sideways while reading the hero): switch the view and leave the page alone */
+      if(!seen&&!(wh&&H0>-wh.offsetHeight&&H0<innerHeight))return;
       const sd=workEl.querySelector('.sdeck'),anchor=v==='deck'?sd:toEl,ar=anchor.getBoundingClientRect();
-      (o=>{try{scrollTo(o)}catch(e){scrollTo(0,o.top)}})({top:Math.max(0,ar.top+scrollY-(v==='deck'?Math.max(70,(innerHeight-ar.height)/2):Math.max(90,(innerHeight-ar.height)/2))),behavior:'instant'});   // 'instant', not 'auto': the page's own scroll-behavior is smooth, and the flight is measured right after this
+      const keepY=v==='deck'&&!focused?(wh&&H0>-40&&H0<innerHeight*.8?null:F?Math.max(90,Math.min(F.top,innerHeight-Math.min(ar.height,innerHeight*.6))):90):focused?(v==='deck'?Math.max(70,(innerHeight-ar.height)/2):Math.max(90,(innerHeight-ar.height)/2))
+        :wh&&H0>-40&&H0<innerHeight*.8?null:F?Math.max(90,Math.min(F.top,innerHeight-Math.min(ar.height,innerHeight*.6))):90;
+      const top=keepY===null?wh.getBoundingClientRect().top+scrollY-H0:ar.top+scrollY-keepY;   // null: the heading stays exactly where it was
+      (o=>{try{scrollTo(o)}catch(e){scrollTo(0,o.top)}})({top:Math.max(0,top),behavior:'instant'});
+      if(v==='deck')dispatchEvent(new Event('mk-deck-focus'));   // 'instant', not 'auto': the page's own scroll-behavior is smooth, and the flight is measured right after this
       if(!seen||rmActive()||!window.gsap)return;
       const T=toEl.getBoundingClientRect(),big=Math.min(innerWidth*.86/T.width,innerHeight*.8/T.height,2.6);
       /* the flight: F (where it was) -> big in the middle of the screen -> T (its place). transformOrigin 0 0, so x/y
@@ -2284,7 +2324,10 @@ function makeJS() {
         /* the toggle beside "Selected Projects" just eases in and out; the bounce, the dot and the suck are the CORNER one's
            alone (her 2026-10-26: "just do ease in ease out for the normal toggle near selected projects. the animation is only
            for the toggle in the corner") */
-        if(t!==bar){A.push(t.animate([{opacity:show?0:1},{opacity:show?1:0}],{duration:260,easing:'ease-in-out',fill:'both'}))}
+        /* …and it never POPS in (her 2026-10-27: "its just popping into the screen. as a design rule, that should never happen
+           anywhere"): it rises 8px into place as it fades up, slow enough to read as arriving */
+        if(t!==bar){A.push(show?t.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:520,easing:'cubic-bezier(.2,.7,.2,1)',fill:'both'})
+          :t.animate([{opacity:1},{opacity:0}],{duration:300,easing:'ease-in-out',fill:'both'}))}
         else if(show){
           /* IN, dramatic (her: "make the toggle bounce into place more dramatic and pronounced"): the dot pops past full size
              and rings down (0–520) → holds (to 800) → widens (800–1080) → lands with a big squash-and-stretch wobble
@@ -2329,9 +2372,16 @@ function makeJS() {
         if(t._show===show)return;t._show=show;clearTimeout(t._wait);
         if(!show)return run(t,false);
         /* never two on screen: wait while the other one is still on its way out */
+        /* the hand-off is TIGHT (her 2026-10-27: "only after the corner dot drops out should the toggle by selected projects
+           appear … you dont have the toggle on the screen at the same time. so the transition needs to be tight"): the
+           waiting one starts the very frame the other's exit finishes, not on a polling tick */
         const other=t===bar?headBar:bar;
         if(other&&(other._show||other._a)){t.classList.add('vt-hidden');
-          const go=()=>{if(!t._show)return;if(other._show||other._a)t._wait=setTimeout(go,60);else run(t,true)};t._wait=setTimeout(go,60);return}
+          const go=()=>{if(!t._show)return;
+            if(other._a&&!other._show)return Promise.all(other._a.map(a=>a.finished)).then(()=>{if(t._show&&!other._show&&!t._a)run(t,true)},()=>{});
+            if(other._show||other._a){t._wait=setTimeout(go,60);return}
+            run(t,true)};
+          go();return}
         run(t,true);
       };
       var headBar=head.querySelector('.view-toggle');headBar._show=true;bar._show=false;bar.classList.add('vt-hidden');   // the top one is there with its section; the floating one starts away
@@ -2341,7 +2391,7 @@ function makeJS() {
       /* switching view WITH a toggle never replays the toggles' arrival or exit (her 2026-10-26: "when you drag the toggle it
          doesn't need to do the circle animation again"): whichever toggle you used stays put until you next scroll yourself */
       let hold=false;
-      const sync=()=>{if(hold)return;const deck=workEl.dataset.view==='deck',on=inWork&&(headGone||deck);dock.classList.toggle('on',on);
+      const sync=()=>{if(hold)return;const deck=workEl.dataset.view==='deck',on=inWork&&headGone;   // the corner toggle only once the heading (and its own toggle) has scrolled away, in both viewsdock.classList.toggle('on',on);
         vt(bar,on&&(deck||!fineP||!navW||navW.classList.contains('nav-hidden')));
         vt(headBar,!on)};
       /* it serves the PROJECTS, so it is here only while the projects themselves hold the middle of the screen; the section's
@@ -2433,8 +2483,8 @@ function makeJS() {
          dial allows. Laptops 1000px+ (.side): the demo's centre sits at 34% of the width, at most 48% wide, and the
          headline takes the column to its right; the neighbours peek in at both screen edges, past that column.
          Dials (studies/tweaker-swipe/): dh, dw, lane, tgap, tw. */
-      const sideM=W>=1000||W>=600&&innerHeight<520&&W>innerHeight*1.4;sd.classList.toggle('side',sideM);sd.classList.remove('stack');   // a phone turned sideways gets the headline BESIDE the case too (it can't stack in ~390px of height)
-      const phone=W<761,dh=(num('--sd-dh')||58)/100,dw=sideM?.48:phone?.88:(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?(phone?.2:.28):ln,
+      const sideM=W>=1000||W>=600&&innerHeight<520&&W>innerHeight*1.4;sd.classList.toggle('side',sideM);sd.classList.toggle('low',sideM&&innerHeight<520);sd.classList.remove('stack');   // a phone turned sideways gets the headline BESIDE the case too (it can't stack in ~390px of height)
+      const phone=W<761&&!sideM,dh=(num('--sd-dh')||58)/100,dw=sideM?.48:phone?.88:(num('--sd-dw')||80)/100,ln=num('--sd-lane'),lane=isNaN(ln)?(phone?.2:.28):ln,
         tgap=num('--sd-tgap'),tg=isNaN(tgap)?(phone?18:28):tgap;
       const above=Math.max(.18,lane+side/2-.5),room=above+1,cyF=above+.5;
       const under=sideM?0:th+tg;   // a side headline takes no height
@@ -2486,7 +2536,7 @@ function makeJS() {
       if(instant||rm||!window.gsap)return place(to);
       const o={v:pos};
       if(speed!==undefined){const px=Math.max(1,Math.abs(to-pos)*R),v=Math.min(8,Math.max(.01,speed)),k0=kOf(ez()),
-          dur=Math.max(.15,Math.min(num('--sd-gmax')||.7,k0*px/v/1000)),k=Math.max(1.6,Math.min(k0,v*dur*1000/px));
+          dur=Math.max(.15,Math.min(num('--sd-gmax')||.56,k0*px/v/1000)),k=Math.max(1.6,Math.min(k0,v*dur*1000/px));
         tween=gsap.to(o,{v:to,duration:dur,ease:t=>1-Math.pow(1-t,k),onUpdate:()=>place(o.v),onComplete:()=>{tween=null}});return}
       tween=gsap.to(o,{v:to,duration:num('--settle')||.5,ease:ez(),onUpdate:()=>place(o.v)});
     };
@@ -2569,14 +2619,14 @@ function makeJS() {
     const seenMid=()=>{const c=cards[Math.max(0,active)].getBoundingClientRect(),t=titleEl.getBoundingClientRect(),b=bar?bar.getBoundingClientRect():c;
       const o=tv===2&&sd.classList.contains('side')?coEl.getBoundingClientRect().top:c.top;   // option 2: the name over the case is part of it
       const m=(Math.min(c.top,t.top,o)+Math.max(c.bottom,t.bottom))/2;
-      return Math.max(m,b.bottom+56-innerHeight/2+24)};
+      return Math.max(m,b.bottom+(sd.classList.contains('low')?16:80)-innerHeight/2)};   // a sideways phone has no room for the hover icons' 56px under the bar
     const centred=()=>Math.abs(seenMid()-innerHeight/2)<innerHeight*.04;
     /* …and if it isn't centred, the first sideways swipe GLIDES it there (her 2026-10-26: "when I start horizontally scrolling
        can you move my case studies into the center of the screen so it's focused rather than me having to find that scroll
        position myself?"). One short glide, only ever started by a sideways gesture on the deck: a deliberate exception to
        the no-scroll-jacking rule. Any up/down scroll or key cancels it and focus mode, as always */
     let centring=0,exitUntil=0;
-    const glide=(to,D,done)=>{const from=scrollY,t0=performance.now(),id=++centring,ease=x=>1-Math.pow(1-x,3);
+    const glide=(to,D,done,ez)=>{const from=scrollY,t0=performance.now(),id=++centring,ease=ez||(x=>1-Math.pow(1-x,3));
       addEventListener('wheel',function w(e){if(Math.abs(e.deltaY)>4&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){if(centring===id)centring=0;removeEventListener('wheel',w)}},{passive:true});
       (function step(now){if(centring!==id)return;const q=D?Math.min(1,(now-t0)/D):1;
         try{scrollTo({top:from+(to-from)*ease(q),behavior:'instant'})}catch(err){scrollTo(0,from+(to-from)*ease(q))}
@@ -2584,6 +2634,13 @@ function makeJS() {
     const enter=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
       [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
       root.classList.add('hfocus')};
+    /* THE TOGGLE TAKES YOU INTO FOCUS MODE (her 2026-10-27, reversing her earlier ask: "when you toggle you should take them into
+       focus mode actually. just do it smoothly. like slowing down speeding up when reaching motion start and end points"):
+       switching to the swipe view glides the deck to the centre on an ease-in-out (slow off the mark, fast in the middle, slow
+       into place), then focus mode starts */
+    addEventListener('mk-deck-focus',()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(root.classList.contains('hfocus'))return;if(centred())return enter();
+      glide(Math.max(0,scrollY+seenMid()-innerHeight/2),rm?0:850,enter,x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2)})));
     const focusOn=()=>{if(root.classList.contains('hfocus')||centring||performance.now()<exitUntil)return;
       if(centred())return enter();
       glide(Math.max(0,scrollY+seenMid()-innerHeight/2),rm?0:520,enter)};
@@ -2752,7 +2809,7 @@ function makeJS() {
     let tx=innerWidth/2, ty=innerHeight/2, x=tx, y=ty, seen=false, raf=0;
     addEventListener('pointermove',e=>{
       tx=e.clientX;ty=e.clientY;
-      if(!seen){seen=true;x=tx;y=ty;dc.classList.add('live');if(!raf)raf=requestAnimationFrame(tick)}
+      if(!seen){seen=true;x=tx;y=ty;dc.classList.add('live');if(!raf)raf=requestAnimationFrame(tick);setTimeout(()=>dc.classList.add('opened'),180)}   // case studies: the dot opens into the ring (.cur-open)
     },{passive:true});
     /* a little lag, not a lot — enough to feel physical, not enough to feel laggy */
     function tick(){
@@ -2853,7 +2910,10 @@ function makeJS() {
        while the clip is still ~1.5 viewports away; by the time it arrives it can play
        its first frame immediately. preload flips to auto inside arm() because load()
        under preload=none fetches nothing at all. */
-    new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){arm();io.disconnect()}})},
+    /* …but only once the page itself has loaded (2026-10-27 loadability: on slow 3G a 5.5MB clip fetched ahead was competing
+       with the first screen and the loader that waits for it); a clip actually on screen still starts at once via play() */
+    const afterLoad=f=>document.readyState==='complete'?f():addEventListener('load',f,{once:true});
+    new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){afterLoad(arm);io.disconnect()}})},
       {rootMargin:'150% 0px 150% 0px'}).observe(box);
     function play(){arm();vid.play().then(()=>box.classList.add('playing')).catch(()=>{
       /* play() can lose the race with its own metadata on iOS (preload=none + src just
@@ -2923,7 +2983,7 @@ function makeJS() {
       const run=()=>{if(!v.src&&v.dataset.src)v.src=v.dataset.src;v.play().then(()=>p.classList.add('v-live')).catch(()=>{})};
       /* same fetch-ahead as the [data-video] boxes — start the download ~1.5 viewports out */
       new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){
-        if(!v.src&&v.dataset.src){v.preload='auto';v.src=v.dataset.src;v.load()}io.disconnect()}})},
+        const ahead=()=>{if(!v.src&&v.dataset.src){v.preload='auto';v.src=v.dataset.src;v.load()}};document.readyState==='complete'?ahead():addEventListener('load',ahead,{once:true});io.disconnect()}})},   // after the page has loaded, as above
         {rootMargin:'150% 0px 150% 0px'}).observe(p);
       /* a fast scroll can land a stale pause AFTER the entering play resolves — the
          pause listener puts it back: any pause that arrives while the panel is still
@@ -3027,7 +3087,30 @@ function makeJS() {
 }
 
 /* ---------------------------------------------------------------- shared HTML bits */
-function head(title, desc, boot) {
+/* the home page loader (boot-loader.js), with its settings and frame list filled in */
+function bootJS() {
+  const clay = JSON.parse(fs.readFileSync(path.join(__dirname, 'assets/clay/clay.json'), 'utf8'));
+  const frames = {};
+  [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 24].forEach(i => { const e = clay['jump-land-slide-x3'][i]; frames['j' + i] = { f: e.f.replace(/\.png$/, '.webp'), w: e.w, h: e.h, cx: e.cx, base: e.base }; });
+  /* her wave looking straight at you, kind smile, head tipped toward her hand (2026-10-27): frames 27-29 of her wave with
+     a new face; same size and anchors as the originals */
+  [27, 28, 29].forEach(i => { const e = clay['idle-wave-sign-x3'][i]; frames['w' + i] = { f: 'wave-look-' + i + '.webp', w: e.w, h: e.h, cx: e.cx, base: e.base }; });
+  /* her numbers, from the loader study: data/loader.json is the ONE place they live (her 2026-10-27: "whats the point of me
+     giving you instructions if you dont have a system…"). Her pasted Copy values go there, nowhere else. */
+  const v = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/loader.json'), 'utf8')).values;
+  /* every setting the loader reads must be in loader.json (fromX was missing on 2026-10-27, so her jump-on drew at NaN) */
+  const src = fs.readFileSync(path.join(__dirname, 'boot-loader.js'), 'utf8'), missing = [...new Set([...src.matchAll(/V\.([a-zA-Z0-9]+)/g)].map(m => m[1]))].filter(k => !(k in v));
+  if (missing.length) console.error('data/loader.json is missing loader settings: ' + missing.join(', ') + ' (copy them from her loader study)');
+  const cfg = { v, frames, dir: 'assets/clay/', ver: '?v=' + BUILD_V, cap: 15000, slow: 6000 };   // slow: her frames not in by then = the short loader (boot-loader.js)
+  return src.replace('__CFG__', JSON.stringify(cfg)).replace(/<\/script/gi, '<\\/script');
+}
+
+/* the link preview (her 2026-10-27: "the text and the image are wrong for the link to my portfolio"): clay her pulling
+   the M and K apart: after seeing both styles side by side she chose her grinning, waist-up take ("the first image is the
+   best", Flora take 2) over the hands-only ones, at 1200x630. Absolute URL: preview crawlers don't resolve relative ones */
+const OG = { f: 'assets/og/preview.jpg', w: 1200, h: 630, type: 'image/jpeg' };
+function head(title, desc, boot, card) {   // card: {title, line} for the link preview, else the page's own title/description
+  const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3035,6 +3118,15 @@ function head(title, desc, boot) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${esc(card ? card.title : title)}">
+<meta property="og:description" content="${esc(card ? card.line : desc)}">
+<meta property="og:image" content="${og}">
+<meta property="og:image:type" content="${OG.type}">
+<meta property="og:image:width" content="${OG.w}">
+<meta property="og:image:height" content="${OG.h}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${og}">
 <!-- the pot, standing on its line — same object that lives above the footer. Generated
      from her ink drawing by tools/make-favicon.js; the 400px square in assets/favicon/
      is for LinkedIn, not referenced here. -->
@@ -3110,31 +3202,26 @@ if(t==='night')document.documentElement.setAttribute('data-theme','night');
      every poster and logo, and on a slow first visit app.js arrived ~19s in (device-check slow-3g network log, 2026-10-24) -->
 <link rel="preload" href="app.js?v=${BUILD_V}" as="script" fetchpriority="high">
 </head>
-<body>
+<body${boot ? '' : ' class="cur-open"'}>
 <!-- KEYBOARD (her 2026-10-26: "make sure people can navigate the site with the keyboard"): the first Tab offers a jump past
      the nav straight to the page; it only shows while it has focus -->
 ${boot ? `
-<!-- THE LOADER (her 2026-10-26: "make a loading animation and give the site like 1-2 seconds to get everything together"):
-     the M--K wordmark, its dash filling in blue while the page settles. At least ~0.9s so it never flashes, lifted the moment
-     fonts and the page are ready, never past ~2s (a slow connection gets the page, not a longer wait). The CSS lifts it on its
-     own at 2.6s if the script never runs. The hero's opening waits for it (window.__mkBoot), so nothing plays unseen. -->
-<div id="boot" aria-hidden="true"><div class="boot-mark">M<span class="boot-dash"><i></i></span>K</div></div>
-<style>#boot{position:fixed;inset:0;z-index:2147483646;background:#0f1013;display:grid;place-items:center;transition:opacity .35s ease,visibility 0s linear .35s;animation:boot-out .35s ease 2.6s forwards}
-.boot-mark{display:flex;align-items:center;gap:.14em;font:500 clamp(40px,7vw,64px)/1 'Cormorant Garamond',Georgia,serif;color:#a9adb7;letter-spacing:.02em}
-.boot-dash{position:relative;width:.95em;height:3px;border-radius:3px;background:rgba(143,178,242,.18);overflow:hidden}
-.boot-dash i{position:absolute;inset:0;background:#8fb2f2;border-radius:3px;transform-origin:left;transform:scaleX(0);animation:boot-fill 1.6s cubic-bezier(.3,.6,.2,1) forwards}
-html.boot-ready .boot-dash i{animation:none;transform:none;transition:transform .2s ease-out}
-html.booted #boot{opacity:0;visibility:hidden}
+<!-- THE LOADER (her 2026-10-27; boot-loader.js has the story and her rules): the gooey M--K pulled apart while the page
+     loads underneath, held until everything has loaded (capped), clay-her's flip and break on a first visit. Nothing in it
+     is fetched that the page doesn't need anyway. No script: hidden. Script trouble: the CSS lifts it at 32s. The hero's
+     opening waits for it (window.__mkBoot), so nothing plays unseen. -->
+<div id="boot" aria-hidden="true"></div>
+<noscript><style>#boot{display:none}</style></noscript>
+<style>#boot{position:fixed;inset:0;z-index:2147483646;background:#0f1013;animation:boot-out .4s ease 32s forwards;touch-action:none}
+.mk-ld{position:absolute;inset:0;background:#0f1013;overflow:hidden}
+.mk-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;font:600 min(${LOADER.fs}px,20vw)/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.01em;color:transparent}
+.mk-mark span{display:inline-block}.mk-mark .bl{width:0;height:0;vertical-align:baseline}
+.mk-goo{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.mk-her{position:absolute;left:0;top:0;display:none;pointer-events:none;transform-origin:50% 50%}
 html:not(.booted) .wm-load .wm-m,html:not(.booted) .wm-load .wm-k,html:not(.booted) .wm-load .wm-d{animation-play-state:paused}
-@keyframes boot-fill{to{transform:scaleX(.92)}}@keyframes boot-out{to{opacity:0;visibility:hidden}}
-@media (prefers-reduced-motion:reduce){.boot-dash i{animation:none;transform:scaleX(.6)}#boot{transition:none}}</style>
-<script>(function(){var de=document.documentElement,went=0,res,now=function(){return window.performance&&performance.now?performance.now():0};window.__mkBoot=new Promise(function(r){res=r});
-/* times count from the moment the page STARTED loading (performance.now), not from this script, which only runs once the
-   stylesheets have arrived: on a cold first visit that alone was ~0.9s, pushing the lift past 2s */
-function lift(){if(went)return;went=1;var wait=Math.max(0,900-now());setTimeout(function(){de.classList.add('boot-ready');setTimeout(function(){de.classList.add('booted');window.__mkBootAt=now();res()},220)},wait)}
-setTimeout(lift,Math.max(0,1700-now()));
-var dom=new Promise(function(r){document.readyState!=='loading'?r():document.addEventListener('DOMContentLoaded',r)});
-Promise.all([dom,document.fonts&&document.fonts.ready||0]).then(lift,lift)})()</script>` : ''}
+html.boot-swoop .dc{opacity:0!important;transition:none!important}
+@keyframes boot-out{to{opacity:0;visibility:hidden}}</style>
+<script>${bootJS()}</script>` : ''}
 <a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
 ${svgFilters()}
 <div class="atmosphere" aria-hidden="true"></div>
@@ -3180,7 +3267,7 @@ function navBar(kind) {
   const links = `<a href="${pre}#work" data-hand="Work">Work</a><a class="optional" href="${pre}#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="${pre}#about" data-hand="About">About</a><a href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="edge-fade top" aria-hidden="true"></div><div class="edge-fade bottom" aria-hidden="true"></div>
 <div class="nav-wrap"><nav class="bar glass" aria-label="Main">
-  <a class="wordmark${home ? ' wm-load' : ''}" href="index.html">${wordmarkHTML(site.wordmark)}</a>
+  <a class="wordmark${home ? ' wm-load' : ''}" href="index.html" aria-label="M--K, home">${wordmarkSVG('nav')}</a>
   <div class="nav-links">${links}</div>
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="SAY HEY!">say hey!</a>
 </nav></div>
@@ -3202,7 +3289,7 @@ function footerHTML(extra = '') {
   const links = (site.footer.links || []).map(l =>
     `<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('\n    ');
   return `<footer>${extra}
-  <span class="foot-mark">${esc(site.wordmark)}</span>
+  <span class="foot-mark">${wordmarkSVG('foot')}</span>
   <span class="foot-links">
     <a href="mailto:${esc(site.email)}">${esc(site.email)}</a>
     ${links}
@@ -3318,6 +3405,9 @@ function renderHome() {
      them on a word at a time, which is the one thing the old picture could never do and the
      one thing handwriting most obviously should: it arrives the way it was written. */
   const heroLinesHTML = h.lines.map(l => `<span class="hs">${typo(l)}</span>`).join('');
+  /* where she is now (her 2026-10-27: "Can I say currently at Driftwood in my bio? with the logo"): the last line of the bio,
+     written on after it like the others; the company's flat tile (the swipe view's same one) sits before its name */
+  const heroNowHTML = h.now ? `<span class="hs hs-now">${esc(h.now.text)} <span class="now-co"><img src="${esc(h.now.logo)}" alt="" width="64" height="64">${esc(h.now.name)}</span></span>` : '';
 
   const heroHTML = `
 <section class="hero" id="hero" data-accent="${esc(HERO_FRAME.accent)}" data-btn="${HERO_FRAME.btnLow ? 'low' : 'flow'}">
@@ -3334,7 +3424,7 @@ function renderHome() {
   </div>
   <p class="eyebrow reveal-words" data-seq="0">${esc(h.eyebrow)}</p>
   <h1><span class="lively">${esc(h.headline)}</span></h1>
-  <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}</p>
+  <p class="hero-line reveal-words" data-seq="3" data-base="1800">${heroLinesHTML}${heroNowHTML}</p>
   <p class="hero-cta-row">
     <!-- say hey! lives in the nav now, always (her 2026-10-24: "maybe I need a different place for say hey, like that just stays at the top") -->
     <span class="cta-socials">${(site.footer.links || []).filter(l => /linkedin\.com|\/\/(www\.)?x\.com|twitter\.com/i.test(l.href)).map(l => { const src = asset('assets/clay/props/' + (/linkedin/i.test(l.href) ? 'linkedin' : 'x') + '.png'); return `<a href="${esc(l.href)}" style="--tile:url('${src}')" target="_blank" rel="noopener" aria-label="${esc(l.label)}"><img src="${src}" alt="" width="48" height="48" draggable="false"></a>`; }).join('')}<a class="cta-resume" href="${esc(h.ctaSecondary.href)}" style="--tile:url('${asset('assets/clay/props/resume.png')}')" target="_blank" rel="noopener" aria-label="Resume"><img src="${asset('assets/clay/props/resume.png')}" alt="" width="48" height="48" draggable="false"></a></span>
@@ -3527,7 +3617,7 @@ function renderHome() {
   </div>
 </section>`;
 
-  return head(site.title, site.description, true) + `
+  return head(site.title, site.description, true, { title: site.previewTitle, line: site.previewLine }) + `
 ${navBar('home')}
 <main id="main" tabindex="-1">
 ${heroHTML}
@@ -3809,7 +3899,8 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    rather than CDN'd so the site stays a folder of files with no third origin; nobody
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
-fs.copyFileSync(path.join(ROOT, 'resume-plane.js'), path.join(DIST, 'resume-plane.js'));   // the paper-airplane resume, on every page
+fs.copyFileSync(path.join(ROOT, 'resume-plane.js'), path.join(DIST, 'resume-plane.js'));
+fs.copyFileSync(path.join(ROOT, 'lean.js'), path.join(DIST, 'lean.js'));   // her lean on the logo row, the first time someone enters focus mode   // the paper-airplane resume, on every page
 fs.copyFileSync(path.join(ROOT, 'cursor-light.js'), path.join(DIST, 'cursor-light.js'));   // the cursor is the light, on every page
 for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']) {
   const src = path.join(ROOT, 'vendor', f);
@@ -3836,7 +3927,7 @@ function lintIcons(html, page) {
    split the headline into the .ch spans she climbs first. Its tag used to sit in the hero, ABOVE app.js, so it really ran
    first, and on a slow connection the whole hero (headline included) waited for her 150KB script: the headline showed at
    ~8s on slow 3G instead of with app.js (device-check, 2026-10-27). She joins the opening late via __mkHero* flags. */
-const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>');
+const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>\n<script src="lean.js?v=' + BUILD_V + '" defer></script>');   // the first-focus lean (lean.js)
 fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */

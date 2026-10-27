@@ -48,7 +48,10 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
     ...Object.keys(iters).map(k => [`Iterations: ${k}`, `iter/${k}`]), ['Deck screens', 'screens']]
     .map(([label, rel]) => ({ label, files: listDir(rel) })).filter(g => g.files.length);
   /* a /path is the live dashboard; anything else is a prototype shipped with the case study */
-  const liveURL = l => l ? (l.startsWith('/') ? cs.liveBase + l : A(l)) : '';
+  /* the live dashboard is private to the client (her 2026-10-27: "i dont have public links … Im not sure im authorized to make
+     public links"): with liveContact set, every live link becomes her line + say hey! to her Calendly instead */
+  const LC = cs.liveContact || '';
+  const liveURL = l => l ? (LC ? site.calendly : l.startsWith('/') ? cs.liveBase + l : A(l)) : '';
   const views = {};
   for (const [id, v] of Object.entries(cs.views || {})) {
     const strip = (iters[v.iter] || []).map((i, j) => ({ src: asset(i.src), title: i.title || '', why: i.why || '', ask: i.ask || '', screen: i.screen || '', key: `iter:${v.iter}.${j}` }))
@@ -214,7 +217,8 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
            iterations and live link); the wipe compare is the fallback */
         return `<div class="pair">${['a', 'b'].map(k => `<div class="fu"><p class="eyebrow"${E(`${p}.${k}.label`)}>${esc(b[k].label)}</p>${frame(Object.assign({}, b[k], { view: b[k].view || id }), `${p}.${k}`)}</div>`).join('')}</div>
           ${b.caption ? `<p class="pair-cap fu"${E(`${p}.caption`)}>${md(b.caption)}</p>` : ''}
-          ${b.explore ? `<p class="explore fu"><a class="v-live" href="${esc(cs.liveBase + b.explore.href)}" target="_blank" rel="noopener"><span${E(`${p}.explore.label`)}>${esc(b.explore.label)}</span>${ic('external')}</a></p>` : ''}`;
+          ${b.explore ? (LC ? `<p class="explore fu"><span class="live-note">${esc(LC)}</span><a class="v-live" href="${esc(site.calendly)}" target="_blank" rel="noopener"><span>say hey!</span></a></p>`
+            : `<p class="explore fu"><a class="v-live" href="${esc(cs.liveBase + b.explore.href)}" target="_blank" rel="noopener"><span${E(`${p}.explore.label`)}>${esc(b.explore.label)}</span>${ic('external')}</a></p>`) : ''}`;
       }
       case 'outcome': {
         const max = Math.max(...b.items.map(i => i.b));
@@ -296,7 +300,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 <div class="cursor gone" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="${scallop}"/></svg><span>Click to explore</span></div>
 
 <nav class="pill" aria-label="Main">
-  <a class="wm wm-load" href="index.html">${(m => m ? `<span class="wm-m">${esc(m[1])}</span><span class="wm-d">${esc(m[2])}</span><span class="wm-k">${esc(m[3])}</span>` : esc(site.wordmark))(String(site.wordmark).match(/^(.)(-+)(.)$/))}</a>
+  <a class="wm wm-load" href="index.html" aria-label="M--K, home">${require('./wordmark.js')('wt')}</a>
   <span class="pill-links"><a href="index.html#work">Work</a><a class="nav-opt" href="index.html#disciplines">Disciplines</a><a class="nav-opt" href="index.html#about">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a></span>
   <a class="cta" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav>
@@ -335,7 +339,7 @@ ${cs.sections.map(section).join('\n')}
     <button class="v-close" type="button" aria-label="Back to the walkthrough">${ic('back')}<span>Back</span></button>
     <p class="v-title"></p>
     <div class="v-tabs" role="tablist"><span class="v-thumb" aria-hidden="true"></span><button type="button" role="tab" data-tab="clip">Interaction</button><button type="button" role="tab" data-tab="iter">Iterations</button></div>
-    <a class="v-live" target="_blank" rel="noopener"><span>Open live prototype</span>${ic('external')}</a>
+    ${LC ? `<span class="live-note v-live-note">${esc(LC)}</span><a class="v-live" target="_blank" rel="noopener"><span>say hey!</span></a>` : `<a class="v-live" target="_blank" rel="noopener"><span>Open live prototype</span>${ic('external')}</a>`}
   </div>
   <div class="v-stage"><video playsinline muted loop controls preload="none"></video><img alt=""><svg class="mouse v-mouse" viewBox="0 0 18 22" hidden aria-hidden="true"></svg>
     <button class="v-nav prev arrow-btn" type="button" aria-label="Previous">${ic('back')}</button><button class="v-nav next arrow-btn" type="button" aria-label="Next">${ic('arrow')}</button>
@@ -391,8 +395,9 @@ img{display:block;max-width:100%}
 .pill a.cta{display:inline-flex;align-items:center;min-height:42px;padding:0 22px 4px;border-radius:999px;background:#fff;color:#111;font-weight:500}
 @media (max-width:360px){.pill{gap:6px!important;padding-left:14px;padding-right:14px}.pill-links a{padding-left:7px!important;padding-right:7px!important}.pill a.cta{padding:0 12px 3px!important}}
 @media (max-width:520px){.pill{gap:8px}.pill a.wm{padding-right:4px}.pill a.cta{font-size:.9rem;padding:0 16px 3px;min-height:38px}.pill-links a{font-size:.9rem;padding-left:10px;padding-right:10px}}
-/* the wordmark keeps the site's own face — Cormorant Garamond, as in the main nav */
-.pill a.wm{font:400 22px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.02em;color:var(--hi);padding:6px 14px 6px 4px;--wm-dx:.34em}
+/* the wordmark: the gooey M--K from the home page loader, Plus Jakarta Sans 600, as in the main nav */
+.pill a.wm{font:600 20px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.01em;color:var(--hi);padding:6px 14px 6px 4px;--wm-dx:.576em}
+.pill a.wm .wm-svg{height:.92em;width:auto;vertical-align:-.12em;overflow:visible}.pill a.wm .wm-svg .wm-d{transform-box:fill-box;transform-origin:50% 50%}
 /* the home page's wordmark greeting, copied from build.js: M and K start together and ease
    apart as the dashes appear; hovering squishes them back. --wm-dx is half the width of "--" */
 .wm-m,.wm-k,.wm-d{display:inline-block}
@@ -811,12 +816,15 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 @media (hover:hover) and (pointer:fine){
   .js body{cursor:none}.js a,.js button,.js .q{cursor:none}
   .cursor{display:block;position:fixed;left:0;top:0;z-index:60;pointer-events:none;width:42px;height:42px;margin:-21px 0 0 -21px;transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),opacity .3s}
-  .cursor svg{width:100%;height:100%;fill:none;stroke:var(--cy);stroke-width:4;transition:fill .3s,transform 4s linear}
+  .cursor svg{width:100%;height:100%;fill:none;stroke:var(--blue);stroke-width:4;transition:fill .3s,transform 4s linear}
   /* plain words under the ring, as first designed, in the page's blue; a soft dark halo keeps them readable on a bright screenshot */
   .cursor span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:7px;font-size:12px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--blue-soft);text-shadow:0 0 2px rgba(0,0,0,.95),0 1px 5px rgba(0,0,0,.85),0 0 14px rgba(0,0,0,.6);white-space:nowrap;opacity:0;transition:opacity .3s}
-  .cursor.link svg{fill:rgba(95,192,216,.55)}
+  .cursor.link svg{fill:rgba(143,178,242,.55)}   /* the site blue, the same as the home page's dot (her 2026-10-27) */
   .cursor.frame-on{width:64px;height:64px;margin:-32px 0 0 -32px}.cursor.frame-on span{opacity:1}.cursor.frame-on svg{transform:rotate(90deg)}
   .cursor.gone{opacity:0}
+  /* arriving, the closed dot opens into the ring, the same on every case study (her 2026-10-27) */
+  .cursor:not(.opened){width:13px;height:13px;margin:-6.5px 0 0 -6.5px}.cursor:not(.opened) svg{fill:var(--blue)}
+  .cursor svg{transition:fill .45s linear,transform 4s linear}.cursor{transition:width .5s var(--ease),height .5s var(--ease),margin .5s var(--ease),opacity .3s}
   dialog[open]{cursor:auto}dialog[open] *{cursor:auto!important}dialog[open] button,dialog[open] a{cursor:pointer!important}
 }
 
@@ -839,6 +847,7 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 .v-tabs button[hidden],.v-tabs[hidden]{display:none}
 .v-live{font-size:14px;text-decoration:none;color:#111;background:var(--blue-soft);padding:9px 16px;border-radius:999px;font-weight:500}
 .v-live[hidden]{display:none}
+.live-note{color:var(--text-secondary,#9aa0aa);font-size:15px;margin-right:12px}.live-note[hidden]{display:none}.explore .live-note{display:inline}
 .v-close{font-size:14px;padding:9px 16px;border-radius:999px;border:1px solid #333845;color:#e6e8ec}
 .v-close:hover{border-color:#5a6070}
 /* the whole screen fits at once; click it to zoom to full width and scroll */
@@ -1057,7 +1066,8 @@ $$('img[data-gif]').forEach(img => {
 const cur = $('.cursor');
 if (cur && matchMedia('(hover: hover) and (pointer: fine)').matches && !reduce) {
   let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
-  addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; cur.classList.remove('gone');
+  let opened = false;
+  addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; cur.classList.remove('gone'); if (!opened) { opened = true; setTimeout(() => cur.classList.add('opened'), 180); }
     const t = e.target.closest && e.target.closest('[data-view], a, button, .q');
     const scr = !!(t && t.dataset.view !== undefined);
     cur.classList.toggle('frame-on', scr); cur.classList.toggle('link', !!t && !scr);
@@ -1068,7 +1078,7 @@ if (cur && matchMedia('(hover: hover) and (pointer: fine)').matches && !reduce) 
 
 /* viewer: clip / iterations / live; Back (button, Esc or browser) returns to the same spot */
 const V = window.__VIEWS || {}, dlg = $('.viewer'), vid = $('video', dlg), still = $('.v-stage img', dlg);
-const tabBox = $('.v-tabs', dlg), tabs = $$('.v-tabs button', dlg), strip = $('.v-strip', dlg), live = $('.v-live', dlg);
+const tabBox = $('.v-tabs', dlg), tabs = $$('.v-tabs button', dlg), strip = $('.v-strip', dlg), live = $('.v-live', dlg); const liveNote = $('.v-live-note', dlg);
 let cur_ = null, idx = 0, ci = 0, grp = '', mode = 'iter', pushed = false;
 /* the strip under the stage lists clips on the Interaction tab and versions on Iterations */
 function fillStrip(items, label, onPick) {
@@ -1159,7 +1169,7 @@ function special(v) {
   cmpEl.hidden = mode_ !== 'cmp'; sideEl.hidden = mode_ !== 'side'; dlg.classList.toggle('side-mode', mode_ === 'side');
   if (!mode_) return false;
   vid.pause(); vid.hidden = true; still.hidden = true; vMouse.hidden = true; strip.hidden = true; $('.v-groups', dlg).innerHTML = '';
-  $('.v-tabs', dlg).hidden = true; live.hidden = !v.live; if (v.live) live.href = v.live; $('.v-cap', dlg).style.minHeight = ''; cap([]);
+  $('.v-tabs', dlg).hidden = true; live.hidden = !v.live; if (liveNote) liveNote.hidden = !v.live; if (v.live) live.href = v.live; $('.v-cap', dlg).style.minHeight = ''; cap([]);
   if (v.compare) {
     const [ia, ib] = $$('img', cmpEl); ia.src = v.compare.a.src; ib.src = v.compare.b.src;
     $('.la', cmpEl).textContent = v.compare.a.label; $('.lb', cmpEl).textContent = v.compare.b.label;
@@ -1185,7 +1195,7 @@ function open(id, fallback, push = true) {
   $('.v-title', dlg).textContent = v.title;
   const hasClip = v.clips.length > 0;
   tabs[0].hidden = !hasClip; tabs[1].hidden = !v.strip.length; $('.v-tabs', dlg).hidden = !(hasClip && v.strip.length);
-  live.hidden = !v.live; if (v.live) live.href = v.live;
+  live.hidden = !v.live; if (liveNote) liveNote.hidden = !v.live; if (v.live) live.href = v.live;
   if (!dlg.open) { dlg.showModal(); dlg.focus(); }
   fitCap(); show(hasClip && at < 0 ? 'clip' : 'iter');
   if (push) { history.pushState({ view: id }, '', '#view-' + id); pushed = true; }

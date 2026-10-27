@@ -10,7 +10,7 @@ body::after,.atmosphere,.hero-flora{display:none}
 /* nav: the walkthrough's dark pill, not liquid glass */
 nav.bar.glass{background:rgba(22,27,40,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #232a3a;box-shadow:none}
 nav.bar.glass::before,nav.bar.glass::after{display:none}
-.wordmark{font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink-blue)}
+.wordmark{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;letter-spacing:.01em;color:var(--ink-blue)}   /* the gooey M--K the loader settles into (her 2026-10-27: "I like the M--k gooey logo") */
 .nav-links a{font-size:1rem;letter-spacing:0;text-transform:none;color:#9aa0ad}
 .nav-links a:hover{color:var(--ink-blue)}
 
@@ -50,7 +50,7 @@ nav.bar.glass::before,nav.bar.glass::after{display:none}
 .stat-card.glass{background:var(--bg-raised);border:1px solid var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .stat-value{font-weight:600;letter-spacing:-.02em}
 .cs-title,.cs-heading{color:var(--ink-blue);font-weight:600;letter-spacing:-.02em}
-footer .foot-mark{font-family:'Cormorant Garamond',Georgia,serif;color:var(--ink-blue);font-size:1.55rem;letter-spacing:.02em;white-space:nowrap}   /* the same M--K as the nav's (it had been left in the body sans) */
+footer .foot-mark{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;color:var(--ink-blue);font-size:1.4rem;letter-spacing:.01em;white-space:nowrap}   /* the same M--K as the nav's (it had been left in the body sans) */
 @media (max-width:520px){nav.bar .btn.sm{font-size:.9rem;padding:0 16px;min-height:38px}.nav-links a{font-size:.9rem;padding-left:10px;padding-right:10px}.wordmark{margin-right:0}}
 
 /* THE NAV, REIMAGINED (2026-10-24, her pick #1 from the Flora concept board): NO BAR. M--K at the far left, the links as

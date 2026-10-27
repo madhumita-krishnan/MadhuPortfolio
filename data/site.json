@@ -1,5 +1,7 @@
 {
   "title": "Madhu — Product Design Engineer",
+  "previewTitle": "Madhumita Krishnan",
+  "previewLine": "Product Design Engineer",
   "description": "Madhumita Krishnan — product design engineer with a background in architecture and brand strategy. Curious about how design helps our mind process complex workflows.",
   "wordmark": "M--K",
   "email": "kmadhumita@gmail.com",
@@ -13,6 +15,11 @@
       "Brand strategy taught me to study why they believe in that guidance.",
       "As a product designer I combine both disciplines to help people navigate digital complexity with confidence."
     ],
+    "now": {
+      "text": "Currently at",
+      "name": "Driftwood",
+      "logo": "assets/case-studies/driftwood-retention/logo.svg"
+    },
     "ctaPrimary": {
       "label": "say hey!",
       "href": "https://calendly.com/meet-madhu"

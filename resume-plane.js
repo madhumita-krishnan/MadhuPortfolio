@@ -69,9 +69,11 @@
       /* pool: the first version, a soft round pool of light */
       '.rz-spot.pool{background:radial-gradient(circle var(--r) at var(--x) var(--y),rgba(255,240,205,.22),rgba(255,240,205,.12) 45%,rgba(255,240,205,.03) 70%,rgba(5,6,8,.74) 100%)}' +
       '.rz-walk{position:fixed;z-index:2147482990;pointer-events:none}' +
-      /* BLACK BEHIND HER (her 2026-10-26: "make sure the background behind it is black"): the page goes to black under her
-         from the moment she appears until the resume has opened over it */
-      '.rz-dark{position:fixed;inset:0;z-index:2147482980;background:#000;opacity:0;pointer-events:none;transition:opacity .4s ease}.rz-dark.on{opacity:1}' +
+      /* DIMMED AROUND HER, NOT BLACK (her 2026-10-27: "I dont need the entire screen to go black … she should run to a spot
+         where there is black behind her so she can be seen. maybe dimm the screen around her a bit"): the page dims to about
+         half, with a soft clear circle around her (--x/--y her middle, --r its size) that follows her */
+      '.rz-dark{position:fixed;inset:0;z-index:2147482980;pointer-events:none;opacity:0;transition:opacity .4s ease;' +
+        'background:radial-gradient(circle var(--r,260px) at var(--x,50%) var(--y,50%),rgba(0,0,0,0) 30%,rgba(0,0,0,.5) 100%)}.rz-dark.on{opacity:1}' +
       '.rz-plane{position:fixed;left:0;top:0;z-index:2147482995;pointer-events:none;will-change:transform;transform-origin:50% 50%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35))}';
     document.head.appendChild(c);
   }
@@ -160,14 +162,36 @@
   }
 
   var darkEl = null;
-  function dark(on) {
-    if (on) { if (!darkEl) { darkEl = document.createElement('div'); darkEl.className = 'rz-dark'; document.body.appendChild(darkEl); darkEl.offsetWidth; } darkEl.classList.add('on'); }
+  function dark(on, her) {
+    if (on) { if (!darkEl) { darkEl = document.createElement('div'); darkEl.className = 'rz-dark'; document.body.appendChild(darkEl); }
+      if (her) darkAt(her.x, her.y, her.h); darkEl.offsetWidth; darkEl.classList.add('on'); }
     else if (darkEl) { darkEl.remove(); darkEl = null; }
   }
+  function darkAt(x, y, h) { if (!darkEl) return; darkEl.style.setProperty('--x', x + 'px'); darkEl.style.setProperty('--y', (y - h * .5) + 'px'); darkEl.style.setProperty('--r', (h * 1.5) + 'px'); }
+  /* a spot with nothing behind her (no words, pictures or controls), feet at y: scanned from the right edge inward; null if
+     the whole lane is busy */
+  var BUSY = 'p,h1,h2,h3,h4,h5,h6,li,a,button,img,video,canvas,svg,figure,picture,label,input,.phone,.mac,.scard,.wproject,.brand,.view-toggle';
+  function clearAt(x, y, h) {
+    /* the pinned controls count as taken even while hidden: the corner toggle can arrive after she has picked her spot */
+    var fx = document.querySelectorAll('.view-dock .view-toggle,.nav-wrap,.edge-fade');
+    for (var f = 0; f < fx.length; f++) { var r = fx[f].getBoundingClientRect(); if (!r.width || fx[f].classList.contains('edge-fade')) continue;
+      if (x + h * .35 > r.left - 12 && x - h * .35 < r.right + 12 && y > r.top - 12 && y - h < r.bottom + 12) return false; }
+    for (var i = -1; i <= 1; i++) for (var j = 1; j <= 3; j++) {
+      var px = x + i * h * .2, py = y - j * h * .3, e = document.elementFromPoint(px, py);
+      if (px < 0 || px > innerWidth || py < 0 || (e && e.closest(BUSY))) return false;
+    }
+    return true;
+  }
+  /* the clear spot nearest either edge, so the run in is short; she comes in from that side */
+  function darkSpot(y, h) { var m = h * .45 + 16, x, R = null, L = null;
+    for (x = innerWidth - m; x > m; x -= h * .25) if (clearAt(x, y, h)) { R = x; break; }
+    for (x = m; x < innerWidth - m; x += h * .25) if (clearAt(x, y, h)) { L = x; break; }
+    if (R == null && L == null) return null;
+    return R != null && (L == null || innerWidth - R <= L) ? { x: R, from: 1 } : { x: L, from: -1 }; }
 
   /* her throw, frame by frame in her spot; calls release(x, y, w) at the throw */
   function playThrow(her, release) {
-    dark(true);
+    dark(true, her);
     var k = her.h / SP.figH, w = SP.fw * k, h = SP.fh * k, d = document.createElement('div'), S = window.__stick;
     d.className = 'rz-her';
     d.style.cssText += ';width:' + w + 'px;height:' + h + 'px;left:' + (her.x - SP.cx * k) + 'px;top:' + (her.y - SP.feet * k) + 'px;' +
@@ -181,7 +205,7 @@
     var iv, tick = function () {
       i++;
       if (i === SP.release) { release(her.x + (SP.plane[0] - SP.cx) * k, her.y + (SP.plane[1] - SP.feet) * k, 70 * k); setTimeout(unspot, 350); }
-      if (i >= SP.n) { clearInterval(iv); d.remove(); S && S.hide && S.hide(false); return; }
+      if (i >= SP.n) { clearInterval(iv); d.remove(); if (her.from) runOut(her); else { S && S.hide && S.hide(false); } return; }
       show();
     };
     iv = setInterval(tick, 1000 / SP.fps);
@@ -218,20 +242,40 @@
         return Promise.all(imgs.map(function (im) { return im.decode ? im.decode().catch(function () {}) : null; })).then(function () { return { fr: fr, k: k, imgs: imgs }; });
       })
       .then(function (w) {
-        var el = document.createElement('img'); el.className = 'rz-walk'; el.alt = ''; el.style.transform = 'scaleX(-1)'; document.body.appendChild(el);
-        dark(true);
-        var x0 = innerWidth + 80 * w.k, x1 = her.x, spot = spotOn({ x: x0, y: her.y, h: her.h }), cyc = 2 * her.h, t0 = performance.now();
+        var fromL = her.from === -1, el = document.createElement('img'); el.className = 'rz-walk'; el.alt = ''; el.style.transform = fromL ? 'none' : 'scaleX(-1)'; document.body.appendChild(el);
+        dark(true, { x: fromL ? 0 : innerWidth, y: her.y, h: her.h });
+        var x0 = fromL ? -80 * w.k : innerWidth + 80 * w.k, x1 = her.x, spot = spotOn({ x: x0, y: her.y, h: her.h }), cyc = 2 * her.h, t0 = performance.now();
         var speed = her.h * 2.8;   // px/s: one full run cycle (two strides) covers ~2 body heights (~450px/s at the hero's size, her RUN)
         (function step(now) {
-          var x = Math.max(x1, x0 - Math.max(0, now - t0) / 1000 * speed), n = Math.floor(((x0 - x) / cyc) * w.fr.length) % w.fr.length, f = w.fr[n];
+          var run = Math.max(0, now - t0) / 1000 * speed, x = fromL ? Math.min(x1, x0 + run) : Math.max(x1, x0 - run), n = Math.floor((Math.abs(x0 - x) / cyc) * w.fr.length) % w.fr.length, f = w.fr[n];
           el.src = w.imgs[n].src; el.style.width = f.w * w.k + 'px'; el.style.height = f.h * w.k + 'px';
-          el.style.left = (x - (f.w - f.cx) * w.k) + 'px'; el.style.top = (her.y - f.base * w.k) + 'px';   // mirrored: her centre is cx from the RIGHT
-          spot.move(x, her.y, her.h);
-          if (x > x1) return requestAnimationFrame(step);
+          el.style.left = (x - (fromL ? f.cx : f.w - f.cx) * w.k) + 'px'; el.style.top = (her.y - f.base * w.k) + 'px';   // from the right she's mirrored: her centre is cx from the RIGHT
+          spot.move(x, her.y, her.h); darkAt(x, her.y, her.h);
+          if (fromL ? x < x1 : x > x1) return requestAnimationFrame(step);
           el.remove(); her.spot = spot; done(her);
         })(t0);
       })
       .catch(function () { done(her); });
+  }
+
+  /* SHE NEVER JUST VANISHES (her 2026-10-27: "I need [her to] run walk out of the screen not just glitch out for the resume or
+     anything. like she always is doing something to disappear"): once the plane is away, she turns and runs back off the
+     side she came in from, in the same run cycle */
+  function runOut(her) {
+    var CL = base + 'assets/clay/';
+    (clayJ ? Promise.resolve(clayJ) : fetch(CL + 'clay.json' + ver).then(function (r) { return r.json(); }).then(function (j) { return (clayJ = j); }))
+      .then(function (j) {
+        var fr = j['run-x3'], k = her.h / (j._ref || 252), toL = her.from === -1, el = document.createElement('img');
+        el.className = 'rz-walk'; el.alt = ''; el.style.transform = toL ? 'scaleX(-1)' : 'none'; document.body.appendChild(el);
+        var x0 = her.x, x1 = toL ? -120 * k : innerWidth + 120 * k, cyc = 2 * her.h, speed = her.h * 2.8, t0 = performance.now();
+        (function step(now) {
+          var run = Math.max(0, now - t0) / 1000 * speed, x = toL ? Math.max(x1, x0 - run) : Math.min(x1, x0 + run), n = Math.floor((Math.abs(x - x0) / cyc) * fr.length) % fr.length, f = fr[n];
+          el.src = CL + f.f + ver; el.style.width = f.w * k + 'px'; el.style.height = f.h * k + 'px';
+          el.style.left = (x - (toL ? f.w - f.cx : f.cx) * k) + 'px'; el.style.top = (her.y - f.base * k) + 'px';
+          if (toL ? x > x1 : x < x1) return requestAnimationFrame(step);
+          el.remove();
+        })(t0);
+      }).catch(function () {});
   }
 
   /* THE FLIGHT: long gliding curves around the page, nearer and bigger as it goes, then a swift sideways pass across
@@ -283,7 +327,10 @@
         /* off screen: she runs in from the right along the bottom, at her own size (or a phone/laptop default where she
            doesn't live), and throws from there */
         if (!her) { var S = window.__stick, hh = S && S.clayH && S.clayH() || (innerWidth < 760 ? 120 : 160);
-          return walkIn({ x: innerWidth - Math.min(innerWidth * .3, hh * 1.6 + 24), y: innerHeight - 14, h: hh }, function (h2) { playThrow(h2, fly); }); }
+          /* she runs to the first spot along the bottom with nothing behind her (then a lane higher up); the old corner spot if none */
+          /* along the bottom edge only: she runs on the screen's floor, never along a line of air (her rule: never floating) */
+          var fy = innerHeight - 14, sp = darkSpot(fy, hh) || { x: innerWidth - Math.min(innerWidth * .3, hh * 1.6 + 24), from: 1 };
+          return walkIn({ x: sp.x, y: fy, h: hh, from: sp.from }, function (h2) { playThrow(h2, fly); }); }
         her.spot = spotOn(her);
         setTimeout(function () { playThrow(her, fly); }, 350);   // the light comes up on her first
       });
