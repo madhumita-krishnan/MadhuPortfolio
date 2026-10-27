@@ -556,6 +556,54 @@
     puff(fig.x, fig.y, 2); start();
     return true;
   }
+  /* THE ARROW KEYS (her 2026-10-26, #97: "I want to be able to move the character with arrows on the keyboard"): Left/Right
+     run her along whatever she's on (in the air they steer, hanging she goes hand over hand), Up jumps (crouch, whoosh;
+     hanging, a muscle-up), Down drops through what she stands on to the next thing below (hanging, she lets go).
+     Only while she's on screen and focus is on the page or in the hero, never in the deck, a field or a dialog; Up only
+     once you're driving her (or the page is at its top) and Down only then AND when there's somewhere to drop, so the
+     arrows still scroll the page whenever she isn't using them. Each key she uses is the only one preventDefault'd. */
+  var keys = {}, keyAt = -1e9;
+  function keyOK(e) {
+    if (!booted || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || rmActive() || !visible) return false;
+    var a = document.activeElement;
+    if (a && a !== document.body && a !== document.documentElement && (!hero.contains(a) || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return false;
+    var y = cv.getBoundingClientRect().top + fig.y;
+    return y > 0 && y - CLAY.H < innerHeight;   // she's on screen
+  }
+  function steer() {
+    var dir = (keys[1] ? 1 : 0) - (keys[-1] ? 1 : 0);
+    if (!dir) { if (fig.drag && fig.drag.key) fig.drag = null; return; }
+    fig.target = null; fig.waypoint = null; fig.celeb = null; fig.dir = dir;
+    fig.drag = { vx: dir * RUN, key: true };
+    if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') fig.state = 'move';
+  }
+  function keyJump() {
+    if (fig.state === 'hang') { muscleUp(); return; }
+    if ((fig.state !== 'move' && fig.state !== 'idle') || fig.loadT) return;
+    fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false;
+    fig.vy = -Math.sqrt(2 * G * (JUMP_MAX * .6 + 20)); fig.vx = fig.drag ? fig.drag.vx : 0;
+    if (Math.abs(fig.vx) > 240) flipFor(2 * -fig.vy / G);   // a running jump flips
+    fig.fallFrom = fig.y; fig.state = 'air';
+  }
+  function keyDrop() {
+    if (fig.state === 'hang') { release(0); return true; }
+    if ((fig.state !== 'move' && fig.state !== 'idle') || fig.y >= floorY - 4) return false;
+    fig.target = null; fig.waypoint = null; fig.celeb = null;
+    fig.thru = fig.y + 28;   // through the letters under her feet; she lands on whatever comes next
+    fig.state = 'air'; fig.vy = 60; fig.fallFrom = fig.y; fig.hangCool = 0.5;
+    return true;
+  }
+  document.addEventListener('keydown', function (e) {
+    var k = e.key, dir = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : 0;
+    if ((!dir && k !== 'ArrowUp' && k !== 'ArrowDown') || !keyOK(e)) return;
+    var driving = performance.now() - keyAt < 4000;
+    if (dir) { keys[dir] = true; steer(); }
+    else if (k === 'ArrowUp') { if (!driving && scrollY > 2) return; if (!e.repeat) keyJump(); }
+    else if (!driving || (!e.repeat && !keyDrop())) return;
+    keyAt = performance.now(); e.preventDefault(); start();
+  });
+  document.addEventListener('keyup', function (e) { var dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (dir && keys[dir]) { keys[dir] = false; steer(); } });
+  addEventListener('blur', function () { keys = {}; steer(); });
   function follow(p) {
     /* in the air (or crouching to go) the drag waits for her to land, then she follows on from there */
     if (fig.loadT || fig.state === 'air' || fig.state === 'mantle') {
@@ -1176,7 +1224,8 @@
     if (!fig.boxJump && solid(nx, Math.min(ny, fig.y) - 6) && !solid(fig.x, Math.min(ny, fig.y) - 6)) { nx = fig.x; fig.vx = 0; }   // (never the cloud jump: its arc flies through the copy by design)
     if (fig.vy > 0) {
       var land = groundTop(nx, fig.y + 0.5, Math.max(2, ny - fig.y + 2));
-      if (land != null && land >= fig.y - 2 && land <= ny + 0.5 && clearance(nx, land) >= MIN_CLR) {   // never lands ABOVE her feet
+      if (fig.thru && ny > fig.thru) fig.thru = 0;
+      if (land != null && land >= fig.y - 2 && land <= ny + 0.5 && clearance(nx, land) >= MIN_CLR && !(fig.thru && land < fig.thru)) {   // never lands ABOVE her feet (nor on the letters a Down key drops her through)
         fig.x = nx; fig.y = land;
         var drop = fig.y - fig.fallFrom;
         fig.flip = null;
@@ -1206,12 +1255,12 @@
     fig.x = nx; fig.y = Math.min(ny, floorY);
     /* only when coming DOWN: a jump launched from the floor sits on it for its first (zero-length) frame, and this used to
        cancel it on the spot — why a second jump at the cloud, from the floor, sometimes never left the ground */
-    if (fig.y >= floorY && fig.vy >= 0) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; }
+    if (fig.y >= floorY && fig.vy >= 0) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; fig.thru = 0; }
   }
 
   function tickHang(dt) {
     var h = fig.hang, b = h.bar;
-    var mdx = mouse.x - h.hx;
+    var mdx = fig.drag && fig.drag.key ? fig.drag.vx : performance.now() - keyAt < 4000 ? 0 : mouse.x - h.hx;   // the arrow keys move her along the bar (and while you're on the keys, the cursor doesn't)
     /* a person on monkey bars, not a rigid pendulum chasing the cursor (her: "the hanging swinging doesn't look natural"):
        gravity + a firm damping, so an entry swing settles in a couple of passes; never past ~26° */
     h.om += (-(G / 90) * Math.sin(h.th) - 1.8 * h.om) * dt;
@@ -1554,7 +1603,7 @@
     /* the lean goes with her speed, so it has faded to a walk's few degrees by the time she stops (easing down quicker than
        up): straight up from there is a step too small to see as a rotation */
     var lt = st === 'move' && sp >= 12 && !fig.landT && !fig.loadT ? (CLAY.run ? RUN_LEAN * Math.min(1, sp / RUN) : WALK_LEAN * Math.min(1, sp / WALK)) : 0, l0 = CLAY.lean || 0;
-    if (lt) lt *= fig.target ? Math.min(1, Math.abs(fig.target.x - fig.x) / 40) : 0;   // and fades over her last 40px to the spot (let go mid-run: she's stopping)
+    if (lt) lt *= fig.target ? Math.min(1, Math.abs(fig.target.x - fig.x) / 40) : fig.drag ? 1 : 0;   // and fades over her last 40px to the spot (let go mid-run: she's stopping)
     CLAY.lean = lt ? l0 + (lt - l0) * (lt < l0 ? .4 : .18) : 0;
     CLAY.ph = (CLAY.ph + Math.abs(fig.x - CLAY.lastX) / (CLAY.run ? 3 : 1.83)) % 48; CLAY.lastX = fig.x;
     /* the sheet's own crouch (0-3: sink, arms back, rise onto the toes) and landing (10-14: feet reach, knees take it,
