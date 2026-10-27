@@ -3106,8 +3106,8 @@ function bootJS() {
 }
 
 /* the link preview (her 2026-10-27: "the text and the image are wrong for the link to my portfolio"): clay her pulling
-   the M and K apart: after seeing both styles side by side she chose her grinning, waist-up take ("the first image is the
-   best", Flora take 2) over the hands-only ones, at 1200x630. Absolute URL: preview crawlers don't resolve relative ones */
+   the M and K apart: after seeing both styles side by side after many rounds she chose H2 ("the bottom row ones look the
+   best" → H2): dead-on, chest-up, her approved closed-teeth smile, soft M and K, at 1200x630. Absolute URL: preview crawlers don't resolve relative ones */
 const OG = { f: 'assets/og/preview.jpg', w: 1200, h: 630, type: 'image/jpeg' };
 function head(title, desc, boot, card) {   // card: {title, line} for the link preview, else the page's own title/description
   const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
