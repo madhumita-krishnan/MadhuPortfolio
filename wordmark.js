@@ -25,10 +25,11 @@ function strand() {
 }
 const D = strand();
 
-/* id: a unique suffix per copy on a page (nav, footer), so each has its own filter */
-module.exports = function wordmarkSVG(id) {
+/* THE LIVE GOO VERSION: only the source the baked shapes are traced from now (tools/trace-wordmark.mjs).
+   id: a unique suffix per copy on a page, so each has its own filter */
+function liveSVG(id) {
   const font = "font:600 100px 'Plus Jakarta Sans',system-ui,sans-serif";
-  return `<svg class="wm-svg" viewBox="2 -84 276 92" role="img" aria-label="M--K" focusable="false" style="--wm-dx:${((XB - XA) / 2).toFixed(1)}px">` +
+  return `<svg class="wm-svg" viewBox="${module.exports.VIEW.join(' ')}" role="img" aria-label="M--K" focusable="false" style="--wm-dx:${((XB - XA) / 2).toFixed(1)}px">` +
     `<defs><filter id="wm-goo-${id}" x="-10%" y="-20%" width="120%" height="140%" color-interpolation-filters="sRGB">` +
     `<feGaussianBlur in="SourceGraphic" stdDeviation="${L.goo}" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${L.sharp} -${(L.sharp * .45).toFixed(2)}"/></filter></defs>` +
     /* the goo stays on everything; only the empty space inside the M and the K is kept clear of it (her: "dont like the
@@ -40,4 +41,19 @@ module.exports = function wordmarkSVG(id) {
     `<g class="wm-k"><rect x="224.5" y="-74.5" width="45.1" height="74.5" fill="#000"/><text x="${KX}" y="0" style="${font}" fill="#fff" stroke="#fff" stroke-width="3">K</text></g></mask>` +
     `<g mask="url(#wm-in-${id})"><g filter="url(#wm-goo-${id})" fill="currentColor"><text class="wm-m" x="0" y="0" style="${font}">M</text>` +
     `<path class="wm-d" d="${D}"/><text class="wm-k" x="${KX}" y="0" style="${font}">K</text></g></g></svg>`;
-};
+}
+
+/* WHAT THE SITE SHOWS: the same logo with its goo baked into three plain shapes (data/wordmark-paths.json, traced from
+   liveSVG at 16x). Safari paints a live goo filter at one pixel per CSS pixel, soft and blocky at ~23px on every iPhone
+   (her 2026-10-27: "the logo in the corner needs to be the same as well across devices and the logo motion in the corner
+   needs to be the same across devices"); shapes are drawn the same by every browser, sharp at any density, and need no
+   font. The pieces keep wm-m / wm-d / wm-k, so the greeting, hover and pop move them exactly as before */
+let P = null;
+function wordmarkSVG() {
+  P = P || JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'data/wordmark-paths.json'), 'utf8'));
+  return `<svg class="wm-svg" viewBox="${P.viewBox.join(' ')}" role="img" aria-label="M--K" focusable="false" style="--wm-dx:${((XB - XA) / 2).toFixed(1)}px">` +
+    `<g fill="currentColor"><path class="wm-m" d="${P.m}"/><path class="wm-d" d="${P.d}"/><path class="wm-k" d="${P.k}"/></g></svg>`;
+}
+module.exports = wordmarkSVG;
+module.exports.liveSVG = liveSVG;
+module.exports.VIEW = [2, -84, 276, 92];

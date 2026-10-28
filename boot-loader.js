@@ -84,11 +84,22 @@
     var cy = mid.reduce(function (s, p) { return s + p.c; }, 0) / mid.length;
     return { l: cols[0].x - pad, r: cols[n - 1].x + 1 - pad, cy: cy - base, stroke: ths[ths.length >> 1] };
   }
+  /* where a letter's INK is, read from pixels: Safari's measureText gives the advance box for actualBoundingBox*, not the
+     ink, so on iPhones the M ran 6px long, the K started 6px early, the stretch came out short and the goo pockets inside
+     the letters sat in the wrong place (her: "I want the gooeyness to be the same on the laptop and the iPhone") */
+  function ink(font, fs, ch) {
+    var W = Math.ceil(fs * 1.6), H = Math.ceil(fs * 1.4), pad = Math.ceil(fs * .2), base = Math.ceil(fs);
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var x = c.getContext('2d'); x.font = font; x.fillText(ch, pad, base);
+    var d = x.getImageData(0, 0, W, H).data, l = W, r = -1, t = H;
+    for (var j = 0; j < H; j++) for (var i = 0; i < W; i++) if (d[(j * W + i) * 4 + 3] > 127) { if (i < l) l = i; if (i > r) r = i; if (j < t) t = j; }
+    if (r < 0) { var m = x.measureText(ch); return { actualBoundingBoxLeft: 0, actualBoundingBoxRight: m.width, actualBoundingBoxAscent: fs * .72 }; }
+    return { actualBoundingBoxLeft: pad - l, actualBoundingBoxRight: r + 1 - pad, actualBoundingBoxAscent: base - t };
+  }
   function measure() {
     var lr = S.ld.getBoundingClientRect(), base = S.bl.getBoundingClientRect().top - lr.top, cs = getComputedStyle(S.mark);
     var font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily, fs = parseFloat(cs.fontSize), g = glyph(font, fs);
-    var c = document.createElement('canvas').getContext('2d'); c.font = font;
-    var mm = c.measureText('M'), mk = c.measureText('K');
+    var mm = ink(font, fs, 'M'), mk = ink(font, fs, 'K');
     var L = function (e) { return e.getBoundingClientRect().left - lr.left; };
     var mx = L(S.m), kx = L(S.k), h1 = L(S.h1), h2 = L(S.h2);
     M = { fs: fs, base: base, W: lr.width, H: lr.height, g: g, mx: mx, kx: kx,
@@ -295,6 +306,7 @@
   /* ---- running it ---- */
   /* QA only: lets the checks freeze the loader at a moment to compare it with the tweaker frame by frame */
   var held = false; window.__mkBootQA = { seek: function (t) { held = true; T = t; if (readyT === null) readyT = 0; if (T >= beats().end) return finish(); draw(); } };
+  var qs = /[?&]bootseek=(\d+)/.exec(location.search); if (qs) setTimeout(function () { window.__mkBootQA.seek(+qs[1]); }, 3000);   // ?boot&bootseek=1500: freeze there (for comparing devices where no script can be run, iPhone Safari)
   function tick(nw) {
     if (done || held) return;
     var dt = last ? Math.min(nw - last, 100) : 16; last = nw;
@@ -346,4 +358,7 @@
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { if (S.started && !done) measure(); });
   setTimeout(go, 1500);
   addEventListener('resize', function () { if (!done && S.started) measure(); });
+  /* Safari can lay the mark out in her face AFTER the font events above have fired, so it was measured in the fallback
+     face and kept those spacings: M and K sat closer than on the laptop. Any change in the mark's size measures again */
+  if (window.ResizeObserver) new ResizeObserver(function () { if (!done && S.started) measure(); }).observe(S.mark);
 })();
