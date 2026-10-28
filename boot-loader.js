@@ -229,7 +229,12 @@
     var hx = (M.b.l + M.b.r) / 2, hyTop = y0 - th / 2 + rise + (t >= b.flipLand.s ? V.landDip * z * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0);
     if (t >= b.flip.s) x = hx;
     if (t >= b.fly.s && t < b.fly.s + b.fly.d) {
-      var u = seg(b.fly, t), x0 = midX - V.fromX * fs, sy = M.H + H * .2, fu1 = Math.max(0, Math.min(1, (u - .14) / .7));
+      /* her path in, measured from the letters, not the screen edge: it was "from the bottom of the screen", which on a tall
+         phone is twice as far below the letters as on the laptop, so she flew a steeper, different arc (her: "the jump isn't
+         lined up properly"). 3.15 logo-heights below is where the laptop she approved starts (1440x900); a big screen where
+         that point is still on screen starts her below the bottom edge instead, so she never pops in mid-air */
+      var u = seg(b.fly, t), x0 = midX - V.fromX * fs, sy = top + 3.15 * fs, fu1 = Math.max(0, Math.min(1, (u - .14) / .7));
+      if (x0 > 0 && sy < M.H + H * .2) sy = M.H + H * .2;
       x = x0 + (midX - x0) * u; fy = arc(sy, top, top - V.apex * H, u);
       k = u < .14 ? 'j4' : u < .84 ? 'j7' : u < .92 ? 'j8' : 'j9';
       spin = k === 'j7' ? 360 * (1 - Math.pow(1 - fu1, 1.6)) : 0;          // the hero's spinning tuck flip, on the way in
@@ -244,7 +249,8 @@
     else if (t >= b.turn.s && t < b.load.s) { k = seg(b.turn, t) < .5 ? 'w27' : 'j24'; fy = hyTop; }
     else if (t >= b.load.s && t < b.exit.s) { k = seg(b.load, t) < .5 ? 'j3' : 'j0'; fy = hyTop; }
     else if (t >= b.exit.s && t < b.hold.s) {
-      var eu = seg(b.exit, t), x1 = hx + V.toX * fs, ey = M.H + H * 1.3;
+      var eu = seg(b.exit, t), x1 = hx + V.toX * fs, ey = hyTop + 4.61 * fs;   // her path out, the same way: the laptop's, from the letters
+      if (x1 < M.W && ey < M.H + H * 1.3) ey = M.H + H * 1.3;
       x = hx + (x1 - hx) * eu; fy = arc(hyTop, ey, hyTop - V.exitApex * H, eu);
       k = eu < .12 ? 'j4' : eu < .25 ? 'j5' : eu < .42 ? 'j6' : eu < .6 ? 'j7' : 'j8';
     }
@@ -308,7 +314,7 @@
 
   /* ---- running it ---- */
   /* QA only: lets the checks freeze the loader at a moment to compare it with the tweaker frame by frame */
-  var held = false; window.__mkBootQA = { seek: function (t) { held = true; T = t; if (readyT === null) readyT = 0; if (T >= beats().end) return finish(); draw(); } };
+  var held = false; window.__mkBootQA = { M: function () { return M; }, seek: function (t) { held = true; T = t; if (readyT === null) readyT = 0; if (T >= beats().end) return finish(); draw(); } };
   var qs = /[?&]bootseek=(\d+)/.exec(location.search); if (qs) setTimeout(function () { window.__mkBootQA.seek(+qs[1]); }, 3000);   // ?boot&bootseek=1500: freeze there (for comparing devices where no script can be run, iPhone Safari)
   function tick(nw) {
     if (done || held) return;
