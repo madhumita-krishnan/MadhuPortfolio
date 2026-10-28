@@ -14,7 +14,7 @@
    - she performs EVERY time, seamlessly (her: "this can never happen when it runs. the animation needs to be seamless and
      perfect everytime"): the struggle holds until her frames are loaded AND decoded as well as the page, so she never
      arrives as a blank or a half-drawn frame and the logo never snaps on its own;
-   - Reduce Motion: the finished logo, still, until the page has loaded; any tap or key skips;
+   - Reduce Motion: plays the same as everywhere else (her rule, see `rm` below); any tap or key skips;
    - no script: a <noscript> rule hides it; script trouble: a CSS animation lifts it at 16s.
    ES5 only: this runs inline before anything else on old Safari too. build.js fills in the settings and frame list (the CFG placeholder). */
 (function () {
@@ -31,7 +31,10 @@
   var res; window.__mkBoot = new Promise(function (r) { res = r; });
   if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches)
     addEventListener('pointermove', function (e) { S.ptr = { x: e.clientX, y: e.clientY }; }, { passive: true });   // where her cursor dot is (the swoop's target)
-  var rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* SAME ON EVERY DEVICE, Reduce Motion included (her 2026-10-27: "I liked the tilt and the wobbly jitters and stuff that
+     the laptop animation has. I don't know what you don't get about exactly the same"): her iPhone's Reduce Motion gave
+     the still logo and a fade. The full loader plays everywhere; a tap or key still skips it */
+  var rm = false;
   var cast = !rm;
   if (!cast) { V.fly = V.wait = 0; V.breakAt = 140; V.flipT = V.land = V.rise = V.turn = V.crouch = V.exit = 0; V.waves = 0; V.hold = 380; }
   if (rm) { V.liftStyle = 'Fade'; V.lift = 260; }

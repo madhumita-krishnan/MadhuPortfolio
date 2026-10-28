@@ -1800,13 +1800,10 @@ main:focus{outline:none}   /* the skip link's landing spot, not a control */
 .settled .hero h1,.settled .hero-cta-row{opacity:1;transform:none}
 .settled .hero-flora{opacity:1}
 
-/* reduced motion */
+/* reduced motion (the corner logo is left out: it moves the same on every device, her 2026-10-27 "exactly the same") */
 .rm-mode .w,.rm-mode .fade{opacity:1;transform:none;filter:none;transition:none}
 .rm-mode .hero h1,.rm-mode .hero-cta-row{opacity:1;transform:none;transition:none}
 .rm-mode .hero-flora,.rm-mode .stick-cv{opacity:1;transition:none}
-.rm-mode .wm-m,.rm-mode .wm-k,.rm-mode .wm-d{animation:none;transition:none}
-.rm-mode .wordmark:hover .wm-m,.rm-mode .wordmark:hover .wm-k{transform:none}
-.rm-mode .wordmark:hover .wm-d{opacity:1;transform:none}
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
 @media (prefers-reduced-motion:reduce){.hero-line span.hs:hover,.hero-line .hs.waving .ch{transform:none}}
@@ -1815,7 +1812,6 @@ main:focus{outline:none}   /* the skip link's landing spot, not a control */
   .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
   .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
   .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
-  .wm-m,.wm-k,.wm-d{animation:none !important;transition:none !important;transform:none !important;opacity:1 !important}
   .hero-line span.hs{transition:none !important}
   .play-btn{display:flex}
   html{scroll-behavior:auto}
