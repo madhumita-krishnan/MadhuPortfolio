@@ -1076,6 +1076,19 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
    there and not clickable; while it dematerializes it can't be clicked either */
 .view-toggle.vt-hidden{visibility:hidden;pointer-events:none}
 html.orient-views .view-toggle{display:none!important}   /* phones: turning the phone is the toggle (app.js) */
+/* TURN-YOUR-PHONE CUE (her 2026-10-28: "On the phone I need an action prompting icon … so people know that they can move
+   into horizontal swiping mode"): on an upright phone the toggle is gone (turning the phone IS the toggle), so where it
+   stood sits a phone that turns sideways, twice, the first time the projects come into view, then rests upright. Same
+   hairline ring and night fill as the toggle; not a button, since nothing on the page can turn the phone for you */
+.turn-hint{display:none}
+@media (orientation:portrait){html.orient-views .turn-hint{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--r-pill);
+  border:1px solid rgba(169,196,245,.42);background:rgba(22,27,40,.88);color:#a9c4f5}}
+.turn-hint svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;overflow:visible}
+.turn-hint .th-phone{transform-box:fill-box;transform-origin:50% 50%}
+.turn-hint .th-phone rect+rect{fill:currentColor;stroke:none}
+.turn-hint.play .th-phone{animation:th-turn 2.2s cubic-bezier(.65,0,.35,1) 2}
+@keyframes th-turn{0%,12%{transform:rotate(0)}38%,70%{transform:rotate(-90deg)}96%,100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.turn-hint .th-phone{transform:rotate(-90deg)}.turn-hint.play .th-phone{animation:none}}
 .view-toggle{touch-action:none}   /* so a drag across it slides the switch instead of scrolling the page */
 /* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
    there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
@@ -1090,7 +1103,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .sdeck{--aw:var(--sd-aw,73);--ah:var(--sd-ah,75);--side:var(--sd-side,.5);--gap:var(--sd-gap,6);--peek:var(--sd-peek,7);
   --settle:var(--sd-settle,.42);   /* swipe time a touch shorter (her 2026-10-27: "takes a liiiittle bit too long"): glide cap .7→.56s, keys/bar .5→.42s */
   --radius:var(--sd-radius,.08);
-  position:relative;margin-top:calc(var(--space)*3);overflow:hidden;touch-action:pan-y;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
+  position:relative;margin-top:calc(var(--space)*3);overflow:hidden;touch-action:pan-y pinch-zoom;cursor:grab;outline:none;-webkit-user-select:none;user-select:none}
 .sdeck:focus-visible{box-shadow:inset 0 0 0 2px var(--ink-blue)}
 .sdeck.dragging{cursor:grabbing}
 .sdeck-stage{position:relative;height:var(--stage,60vh)}
@@ -1178,6 +1191,12 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
    so a short landscape demo doesn't leave a tall empty gap above it; the bar below keeps room for the longest */
 .sdeck.stack .sdeck-title{position:absolute;left:16px;right:16px;width:auto;top:var(--tt,100%);margin:0;min-height:0 !important}
 .sdeck.stack .sdeck-progress{margin-top:var(--tres,24px)}
+/* a sideways phone reads the headline as a short, calm column (her 2026-10-28: "the composition of this doesn't feel
+   balanced and easy to read"): it ran 8 lines of ~25 characters at 18px, a taller, heavier block than the case beside
+   it. Now ~16px in a wider column (~40 characters a line, about 5 lines), the name still leading but never outweighing
+   the case, and the column centred on the CASE's middle (layout(): --tt from the active card) */
+.sdeck.side.low .sdeck-title{font-size:1rem;line-height:1.4}
+.sdeck.side.low .sdeck-co,.sdeck.side.low.t1 .sdeck-co{font-size:min(var(--co-fs,1.4rem),1.4rem);margin-bottom:.5em}
 .sdeck.low .sdeck-progress{margin-top:20px}   /* a sideways phone (her 2026-10-27: "the ui is all overlapping"): case, headline and bar all fit in ~360px */
 .sdeck-progress{display:flex;gap:6px;width:min(72vw,380px);margin:calc(var(--space)*7) auto 0;touch-action:none}   /* clear air under the cards (her: "feels too close to the case studies") */
 .sdeck-progress button{flex:1;padding:10px 0;margin:0;border:0;background:none;cursor:pointer}
@@ -2286,7 +2305,9 @@ function makeJS() {
       const land=matchMedia('(orientation: landscape)'),pick=()=>land.matches?'deck':'list';
       setView(pick(),false);
       const turn=()=>{const v=pick();if(v!==workEl.dataset.view)morph(v)};
-      land.addEventListener?land.addEventListener('change',turn):land.addListener(turn)}
+      land.addEventListener?land.addEventListener('change',turn):land.addListener(turn);
+      const hint=workEl.querySelector('.turn-hint');   // the cue plays once, when the projects are well in view
+      if(hint&&'IntersectionObserver'in window)new IntersectionObserver((es,io)=>{if(!es.some(e=>e.isIntersecting))return;io.disconnect();hint.classList.add('play')},{threshold:1}).observe(hint)}
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
       const head=workEl.querySelector('.work-head'),bar=dock.querySelector('.view-toggle');
@@ -2438,6 +2459,7 @@ function makeJS() {
       if(tv===2){if(side&&coEl.parentElement===coHome)titleEl.after(coEl);else if(!side&&coEl.parentElement!==coHome)coHome.prepend(coEl)}
       if(!side||!d)return;
       sd.style.setProperty('--tl',(d.cx+d.w/2+48)+'px');   // the same gap to every case (G in layout)
+      if(sd.classList.contains('low'))sd.style.setProperty('--tt',(stage.offsetTop+d.cy)+'px');   // a sideways phone: level with this case's own middle (a phone case grows down, so the band's middle sat high)
       if(tv===2){sd.style.setProperty('--cl',(d.cx-d.w/2)+'px');sd.style.setProperty('--ct',(stage.offsetTop+d.cy-d.h/2)+'px')}
       if(tv===3){sd.style.setProperty('--tt',(stage.offsetTop+d.cy-d.h/2)+'px');sd.style.setProperty('--th',d.h+'px')}};
     const rm=rmActive(),num=n=>parseFloat(getComputedStyle(sd).getPropertyValue(n));
@@ -2495,7 +2517,7 @@ function makeJS() {
       /* laptops: each case and its text are ONE group, centred on the screen, with the same gap between them for every
          project (her 2026-10-26: "the distance between the case and the text to the right to be the same. and it needs
          to be centered together"); the text column keeps one width, so a narrower case simply brings the pair inward */
-      const G=48,TW=sideM?Math.max(240,W-(.34*W+wMax/2+G)-peek-40):0;
+      const G=48,TW=sideM?Math.max(240,W-(.34*W+wMax/2+G)-peek-40,innerHeight<520?Math.min(.4*W,360):0):0;   // a sideways phone: a column wide enough for ~40 characters a line
       dims.forEach(d=>{d.cx=sideM?(W-(d.w+G+TW))/2+d.w/2:W/2;const sw=side*d.w/2,min=wMax/2+sw+gap;
         d.Rl=Math.max(min,d.cx-peek+sw);d.Rr=Math.max(min,W-peek-d.cx+sw)});
       shift=dims[Math.max(0,Math.min(dims.length-1,Math.round(pos)))].cx-W/2;
@@ -2539,13 +2561,27 @@ function makeJS() {
     /* drag px -> deck units, at the rate the CARD BEING DRAGGED moves (its own left/right reach), so it stays under the
        finger 1:1 on laptops too, where the two reaches differ. dir +1 = toward the next project */
     const rAt=dir=>{const d=dims[Math.max(0,Math.min(cards.length-1,Math.round(pos)))];return d?(dir>0?d.Rl:d.Rr):R};
-    sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
+    /* ONE WAY PER SWIPE (her 2026-10-28: "if the swiping is mostly horizontal but not perfectly horizontal, still move it
+       horizontally. if it's mostly vertical, move up and down"): the first move of a touch decides. A sideways one stops
+       the page scrolling for the rest of that swipe (the deck has touch-action:pan-y, so the browser used to scroll the
+       up-down part of a diagonal swipe while the deck took the sideways part: the case drifted on the swipe's angle) */
+    let tAx=null,tx0=0,ty0=0;
+    sd.addEventListener('touchstart',e=>{tAx=null;tx0=e.touches[0].clientX;ty0=e.touches[0].clientY},{passive:true});
+    sd.addEventListener('touchmove',e=>{if(e.touches.length!==1)return;
+      if(!tAx){const ax=Math.abs(e.touches[0].clientX-tx0),ay=Math.abs(e.touches[0].clientY-ty0);if(ax<2&&ay<2)return;tAx=ax>=ay?'x':'y'}
+      if(tAx==='x'&&e.cancelable)e.preventDefault()},{passive:false});
+    /* a second finger means a pinch (her 2026-10-28: "people can't zoom in on the horizontal mode"): the swipe lets go and
+       the deck goes back to where it was, so the zoom isn't fighting a drag */
+    sd.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(drag&&drag.id!==e.pointerId){const d=drag;drag=null;sd.classList.remove('dragging');place(d.p0);return}
+      if(tween)tween.kill();drag={sx:e.clientX,sy:e.clientY,p0:pos,axis:null,pts:[[e.timeStamp,e.clientX]],id:e.pointerId}});
     sd.addEventListener('pointermove',e=>{
-      if(!drag)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+      if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
       /* follows from the first pixel: mostly-sideways moves track straight away; the axis is decided at 4px and a
          vertical one hands the page back (and puts the deck where it was) */
-      if(!drag.axis&&(Math.abs(dx)>=4||Math.abs(dy)>=4)){drag.axis=Math.abs(dx)>=Math.abs(dy)?'x':'y';
-        if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging');focusOn()}else{place(drag.p0);return}}
+      if(!drag.axis&&(Math.abs(dx)>=4||Math.abs(dy)>=4)){drag.axis=e.pointerType==='touch'&&tAx||(Math.abs(dx)>=Math.abs(dy)?'x':'y');   // a touch keeps the touch's decision
+        /* a finger waits to centre the deck until it lets go: gliding the page while the finger moves sideways sent the
+           case off on a diagonal (her 2026-10-28: "it makes things hard to focus on and read") */
+        if(drag.axis==='x'){sd.setPointerCapture(drag.id);sd.classList.add('dragging');if(e.pointerType==='touch')drag.focus=1;else focusOn()}else{place(drag.p0);return}}
       if(drag.axis==='y'||!drag.axis&&Math.abs(dy)>Math.abs(dx))return;
       drag.pts.push([e.timeStamp,e.clientX]);if(drag.pts.length>12)drag.pts.shift();
       if(!drag.r)drag.r=dx?rAt(-Math.sign(dx)):0;if(drag.r)place(lim(drag.p0-dx/drag.r));
@@ -2554,7 +2590,7 @@ function makeJS() {
        past --sd-commit of a card (counted from home, in the way it moved), otherwise it eases back. Either way it's home
        ± 1: a flick never skips, and catching a glide mid-way counts from the card it was gliding to. */
     const end=e=>{
-      if(!drag)return;const d=drag;drag=null;sd.classList.remove('dragging');
+      if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;sd.classList.remove('dragging');if(d.focus)focusOn();
       if(d.axis!=='x'){if(pos!==Math.round(pos))settle(Math.round(pos),false,0);return}   // a tap that caught a glide finishes it
       const now=e.timeStamp,pts=d.pts.filter(p=>now-p[0]<100),a=pts[0];
       const v=pts.length>1?(pts[pts.length-1][1]-a[1])/Math.max(16,now-a[0]):0;   // px per ms, measured to the release
@@ -3509,6 +3545,7 @@ function renderHome() {
       <button type="button" class="view-btn" data-view="list" aria-pressed="true" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
       <button type="button" class="view-btn" data-view="deck" aria-pressed="false" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
     </div>
+    <span class="turn-hint" role="img" aria-label="Turn your phone sideways to swipe through the projects"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="th-phone"><rect x="7.5" y="3" width="9" height="18" rx="2.2"/><rect x="10.6" y="10" width="2.8" height="4" rx=".8"/></g></svg></span>
   </div>
   <div class="view-deck">${sdeckHTML}</div>
   <div class="view-list">${listHTML}</div>
