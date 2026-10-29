@@ -665,7 +665,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* Full viewport height so the flora's clip edge lands exactly on the fold. At any shorter
    height the bottom bloom gets sliced by a visible horizontal line partway up the screen,
    which reads as the edge of a box rather than as art running off the page. */
-.hero{padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:100vh;
+.hero{touch-action:manipulation;/* a double tap jumps her (stickman.js tapJump), never zooms the page; pinch still zooms */padding-top:calc(var(--space)*24);padding-bottom:calc(var(--space)*10);min-height:100vh;
   display:flex;flex-direction:column;justify-content:center;isolation:isolate}
 /* The copy sits in a clear column between the two blooms — no longer over them.
    The overlap used to be defended as "on thin petal tips only", but at 1440 it put the rust
@@ -2090,8 +2090,8 @@ function makeJS() {
       at.setAttribute('aria-expanded',String(open));
       const label=open?at.dataset.less:at.dataset.more;
       at.textContent=label;
-      /* data-hand only carries glyphs Madhu Hand covers — same filter as the CTAs */
-      at.setAttribute('data-hand',label.replace(/[^ '!,.A-Za-z\\u2019]/g,'').trim().toUpperCase());
+      /* data-hand only carries glyphs Madhu Hand covers (digits and marks since the 2026-10-28 clean font) — same filter as the CTAs */
+      at.setAttribute('data-hand',label.replace(/[^ '!,.A-Za-z0-9?:;()&@\\/+"#\\u2019-]/g,'').trim().toUpperCase());
     });
   }
 
@@ -2468,7 +2468,7 @@ function makeJS() {
        Laptops: each card its own media's size; R per card so each neighbour, wide or tall, peeks the same slice */
     let dims=[],top=0,bot=0,shift=0,nudging=false,touched=false,nudgeTl=null;
     const setTitle=i=>{
-      active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));
+      active=i;cards.forEach((c,k)=>c.setAttribute('aria-current',k===i?'true':'false'));dispatchEvent(new Event('mk-focus'));
       if(rm||lineEl.textContent===cards[i].dataset.title){fill(i);return}
       titleEl.classList.add('swap');clearTimeout(setTitle.t);
       setTitle.t=setTimeout(()=>{fill(active);titleEl.classList.remove('swap')},130);
@@ -2767,11 +2767,14 @@ function makeJS() {
      the list is .settled once the scroll has been still for a beat. While moving, the neighbours keep the GSAP focus
      dim above (close together, continuous); at rest they fade almost away (--rest-dim) so the centred one stands alone.
      Children carry this opacity, so it multiplies with GSAP's on the card rather than fighting it. */
-  if(phoneList.matches&&cardsM.length){
+  /* .focus is kept on laptops too, with no dimming there: it is what lets only the centred project's clip play
+     (her 2026-10-29, ONLY THE PROJECT IN FOCUS MOVES; see the lazy video block) */
+  if(cardsM.length){
     const listEl=cardsM[0].parentElement;let still=0,raf=0;
     const mark=()=>{raf=0;const mid=innerHeight/2;let best=null,bd=1e9;
       cardsM.forEach(c=>{const r=c.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-mid);if(d<bd){bd=d;best=c}});
-      cardsM.forEach(c=>c.classList.toggle('focus',c===best))};
+      if(best.classList.contains('focus'))return;
+      cardsM.forEach(c=>c.classList.toggle('focus',c===best));dispatchEvent(new Event('mk-focus'))};
     const onScroll=()=>{listEl.classList.remove('settled');clearTimeout(still);still=setTimeout(()=>listEl.classList.add('settled'),160);if(!raf)raf=requestAnimationFrame(mark)};
     addEventListener('scroll',onScroll,{passive:true});mark();listEl.classList.add('settled');
   }
@@ -2933,7 +2936,14 @@ function makeJS() {
     const vid=box.querySelector('video');if(!vid)return;
     const btn=box.querySelector('.play-btn');
     const hoverZone=box.closest('.wproject')||box;
-    let inView=false,userPaused=false;
+    /* ONLY THE PROJECT IN FOCUS MOVES (her 2026-10-29: "It's distracting when the projects that's in the peripherals
+       in my website are moving when they aren't the one I'm looking at on the screen"): a clip in a project card
+       plays only while its card is the one in focus (the deck's centred card, or the list card nearest the middle
+       of the screen); neighbours peeking in at the edges hold still on their poster frame */
+    const card=box.closest('.scard,.wproject');
+    const focused=()=>!card||(card.classList.contains('scard')?card.getAttribute('aria-current')==='true':card.classList.contains('focus'));
+    let inView=false,userPaused=false,onScreen=false;
+    if(card)addEventListener('mk-focus',()=>{if(rmActive()||!onScreen)return;inView=focused();inView&&!userPaused?play():pause()});
     function arm(){if(!vid.src&&vid.dataset.src){vid.preload='auto';vid.src=vid.dataset.src;vid.load()}}
     /* fetch AHEAD of arrival (2026-08-26, "the gifs still aren't playing as I scroll"):
        preload=none + src-on-half-visible meant the mp4's first byte wasn't requested
@@ -2962,7 +2972,7 @@ function makeJS() {
       e.intersectionRect.height>=Math.min(e.boundingClientRect.height||1,innerHeight)*.5;
     /* data-autoplay = behave like a GIF: run whenever it is on screen, on any device */
     if(box.hasAttribute('data-autoplay')){
-      new IntersectionObserver(es=>{es.forEach(e=>{inView=e.isIntersecting;
+      new IntersectionObserver(es=>{es.forEach(e=>{onScreen=e.isIntersecting;inView=onScreen&&focused();
         if(rmActive())return;inView?play():pause()})},{threshold:.15}).observe(box);
       return;
     }
@@ -2971,10 +2981,10 @@ function makeJS() {
       hoverZone.addEventListener('mouseleave',()=>{inView=false;if(!rmActive())pause()});
     }else{
       new IntersectionObserver(es=>{es.forEach(e=>{if(rmActive())return;
-        if(seen(e)){inView=true;if(!userPaused)play()}else{inView=false;pause()}})},
+        onScreen=seen(e);if(onScreen&&focused()){inView=true;if(!userPaused)play()}else{inView=false;pause()}})},
         {threshold:[0,.25,.5,.75,1]}).observe(box);
     }
-    new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting){inView=false;pause()}})},{threshold:0}).observe(box);
+    new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting){onScreen=inView=false;pause()}})},{threshold:0}).observe(box);
   });
 
   /* disciplines panels */
@@ -3137,10 +3147,16 @@ function bootJS() {
   return src.replace('__CFG__', JSON.stringify(cfg)).replace(/<\/script/gi, '<\\/script');
 }
 
-/* the link preview (her 2026-10-27: "the text and the image are wrong for the link to my portfolio"): clay her pulling
-   the M and K apart: after seeing both styles side by side after many rounds she chose H2 ("the bottom row ones look the
-   best" → H2): dead-on, chest-up, her approved closed-teeth smile, soft M and K, at 1200x630. Absolute URL: preview crawlers don't resolve relative ones */
-const OG = { f: 'assets/og/preview.jpg', w: 1200, h: 630, type: 'image/jpeg' };
+/* the link preview, pinned on her LinkedIn (her 2026-10-28 pick, "This is it."): clay her in profile with binoculars and a small
+   clay UX world on her head (her budgeting phone, the Driftwood dashboard, sticky notes, cursor, toggle, flow, HER pot and koi)
+   on the light moon blue; "Product Design Engineer" leads, "staying curious" in her Flora-cleaned hand, "madhumita krishnan"
+   tiny, light and widely spaced; all text in navy, short streaks either side of the hand (2026-10-29). New file name, not a
+   replacement: LinkedIn caches a preview by its image URL. share.jpg is NOT a file: vercel.json rewrites it per app (her
+   2026-10-29: "change the thumbnail based on what platform it's being shared on"): WhatsApp and Telegram, which show a
+   square, get curious-square.jpg, composed for a square; every other app gets the wide curious.jpg. A virtual path because
+   Vercel serves a real file before it ever looks at a rewrite.
+   Absolute URL: preview crawlers don't resolve relative ones */
+const OG = { f: 'assets/og/share.jpg', w: 1200, h: 630, type: 'image/jpeg' };
 function head(title, desc, boot, card) {   // card: {title, line} for the home link preview; never the page description (her old copy), which apps would
   // otherwise show (her 2026-10-27: "can you remove the second line")
   const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
@@ -3643,7 +3659,7 @@ function renderHome() {
       </div>
       <button class="btn-link teal about-toggle" type="button" aria-expanded="false" aria-controls="about-more"
         data-more="${esc(site.about.moreLabel)}" data-less="${esc(site.about.lessLabel)}"
-        data-hand="${esc(site.about.moreLabel.replace(/[^ '!,.A-Za-z’]/g, '').trim().toUpperCase())}">${esc(site.about.moreLabel)}</button>
+        data-hand="${esc(site.about.moreLabel.replace(/[^ '!,.A-Za-z0-9?:;()&@\/+"#’-]/g, '').trim().toUpperCase())}">${esc(site.about.moreLabel)}</button>
       ${eduHTML}
       <a class="btn outline" href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
     </div>

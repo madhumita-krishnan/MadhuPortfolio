@@ -1367,4 +1367,7 @@ function proof(entries, meta) {
   console.log(`  proof: ${path.relative(ROOT, out)}`);
 }
 
-main();
+/* tools/make-clean-hand-font.js (the Flora-cleaned hand, 2026-10-28) reuses the measuring and
+   tracing below; run directly, this still builds the photographed hand. */
+if (require.main === module) main();
+module.exports = { median, inkBox, resample, reweight, penWidth, setBox, contoursOf, UPEM, ASCENDER_UNITS };

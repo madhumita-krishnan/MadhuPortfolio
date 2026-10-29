@@ -513,7 +513,7 @@
   }
 
   /* ------------------------------------------------------------------ input */
-  var down = null;
+  var down = null, lastTap = null;
   /* stage coordinates come from the canvas rect, and the listeners sit on the document:
      the hero ELEMENT is capped at 1240px, so a click in the strip between it and the
      screen edge never reached a hero listener — the one stretch he can run that he could
@@ -593,6 +593,18 @@
     if (Math.abs(fig.vx) > 240) flipFor(2 * -fig.vy / G);   // a running jump flips
     fig.fallFrom = fig.y; fig.state = 'air';
   }
+  function tapJump(p) {
+    if (CLAY.ready && !CLAY.moveReady) return;
+    if (fig.state === 'air' || fig.state === 'mantle' || fig.state === 'hang' || fig.loadT) return;
+    fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false; fig.state = 'idle';
+    var ty = clickGround(p), b = ty != null && ty < fig.y - STEP_UP ? { x: p.x, y: ty } : null;
+    if (b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // a line up there she can reach: onto it
+    else {   // nothing to land on in reach: straight up toward the finger and back down
+      fig.dir = p.x >= fig.x ? 1 : -1;
+      jumpFor(Math.max(40, fig.y - p.y), 0); fig.vx = Math.max(-220, Math.min(220, (p.x - fig.x) * 1.6));
+    }
+    start();
+  }
   function keyDrop() {
     if (fig.state === 'hang') { release(0); return true; }
     if ((fig.state !== 'move' && fig.state !== 'idle') || fig.y >= floorY - 4) return false;
@@ -664,6 +676,13 @@
       if (fig.state === 'hang') release(0);
       celebrate();
       return;
+    }
+    /* DOUBLE TAP ABOVE HER, ON A PHONE (her 2026-10-28: "if I tap above it twice it should jump up on mobile. Even if it
+       can['t] actually land on anything when asked to jump there"): two taps close together above her head and she jumps
+       up toward them, onto the line there if one is in reach, else up and back down. One tap is still a walk there */
+    if (e.pointerType === 'touch' && fig.state !== 'hang') {
+      var tnow = performance.now(), lt = lastTap; lastTap = { t: tnow, x: p.x, y: p.y };
+      if (lt && tnow - lt.t < 400 && Math.hypot(p.x - lt.x, p.y - lt.y) < 70 && p.y < fig.y - (CLAY.ready ? CLAY.H : LEG + TO) + 10) { lastTap = null; tapJump(p); return; }
     }
     if (fig.state === 'hang') {
       /* a click on or above the line she's holding: she MUSCLES UP onto it (her ask 2026-10-24) and then goes on to
@@ -1380,13 +1399,27 @@
       if (s.ctx.state !== 'running') s.ctx.resume();
     };
     ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { addEventListener(t, wake, { passive: true, capture: true }); });
+    /* …except where that iOS bug can't happen: making a context is slow (most of a second on a throttled phone, and it
+       was made by the same tap that sends her walking, so she froze as she set off — her 2026-10-28 "super choppy").
+       Everywhere but iOS it is made while the page is idle (after the loader has lifted and she has landed, never during
+       either), silent until the first touch resumes it */
+    var iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    if (!iOS) Promise.resolve(window.__mkBoot).then(function () {
+      setTimeout(function () {
+        var make = function () {
+          if (s.ctx) return;
+          if (fig.target || fig.state !== 'idle') return setTimeout(make, 1000);   // never while she's on the move
+          try { s.ctx = new AC(); } catch (e) { return; } decode(); };
+        if (window.requestIdleCallback) requestIdleCallback(make, { timeout: 4000 }); else make();
+      }, 3500);
+    });
     return s;
   })();
   function sfx(n, vol, rate) {
     var c = SFX.ctx, d = SFX.buf[n];
     if (!c || !d || c.state !== 'running' || rmActive()) return;
     var src = c.createBufferSource(), g = c.createGain(), t = c.currentTime, len = CLIP[n], tone = TONE[n];
-    src.buffer = d; src.playbackRate.value = rate || 1; g.gain.value = vol;
+    src.buffer = d; src.playbackRate.value = (rate || 1) * PITCH; g.gain.value = vol;
     if (tone) {   // the low-pass takes the edge off, the high-pass drops lows a speaker can't play, the fade-in rounds off the attack
       if (tone.gain) { vol *= tone.gain; g.gain.value = vol; }
       var node = src;
@@ -1408,7 +1441,11 @@
      speakers can't play below ~300Hz, so the low-passed whoosh came out as a faint muddy puff. On a touch device every sound
      loses the lows it can't play (high-pass, so nothing distorts) and the jump keeps more of its middle, a touch louder. */
   var PHONE = matchMedia('(pointer: coarse)').matches;
-  if (PHONE) TONE = { jump: { lp: 2200, hp: 320, attack: 0.05, gain: 1.25 }, step: { hp: 220 }, grip: { hp: 220 } };   // jump 1300 → 800 (her: still "shrill")
+  /* her 2026-10-29: "Her movement sounds on the phone are too airy and too high pitched". The 2200Hz low-pass let the whoosh's
+     hiss through and the 320/220Hz high-passes left only the thin top: now the hiss is cut as on the laptop, only the true
+     rumble below ~150Hz goes, and every phone sound plays a little slower (PITCH), so lower */
+  if (PHONE) TONE = { jump: { lp: 900, hp: 150, attack: 0.06, gain: 1.5 }, step: { lp: 2400, hp: 120, gain: 1.2 }, grip: { lp: 2400, hp: 120 } };
+  var PITCH = PHONE ? 0.88 : 1;
   /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
      where the foot drops lowest after the flight */
   var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
@@ -1564,7 +1601,8 @@
       var pend = {};   // one load per frame, shared: a sheet is "in" only once its images really are, whoever asked first
       function getImg(f) {
         return pend[f] || (pend[f] = new Promise(function (res) {
-          var im = new Image(); im.decoding = 'async'; im.onload = res;
+          var im = new Image(); im.decoding = 'async';
+          im.onload = function () { (im.decode ? im.decode() : Promise.resolve()).then(res, res); };   // decoded off the main thread BEFORE its first draw, or that draw decodes it, mid-move
           im.onerror = function () { if (/\.webp/.test(im.src)) im.src = dir + f + ver; else res(); };
           im.src = src(f); CLAY.img[f] = im;
         }));
@@ -1728,6 +1766,10 @@
   function headX(sheet) {
     if (CLAY.hx[sheet] != null) return CLAY.hx[sheet];
     var list = CLAY.man[sheet], ims = list.map(function (f) { return CLAY.img[f.f]; });
+    /* baked by tools/clay-heads.js: reading the pixels back here froze phones for half a second as she set off (her
+       2026-10-28: "people are complaining that the avatar is super choppy"). The scan below is only for a clay.json
+       without them */
+    if (list.every(function (f) { return f.hx != null; })) return (CLAY.hx[sheet] = list.map(function (f) { return f.hx; }));
     if (ims.some(function (im) { return !im || !im.complete || !im.naturalWidth; })) return null;
     try {
       var c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true });

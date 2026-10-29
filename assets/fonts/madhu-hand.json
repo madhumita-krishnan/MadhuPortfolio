@@ -1,17 +1,19 @@
 {
   "source": [
-    "story-src/alphabet.png",
-    "story-src/paragraph.png"
+    "story-src/clean/lower.png",
+    "story-src/clean/upper.png",
+    "story-src/clean/marks.png",
+    "story-src/clean/word.png"
   ],
   "unitsPerEm": 1000,
   "ascender": 760,
-  "descender": -656,
-  "capHeight": 739,
-  "xHeight": 532,
-  "capRatio": 0.739,
-  "xRatio": 0.532,
-  "wordSpace": 0.592,
-  "sidebearing": 0.037,
-  "characters": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'!’",
-  "glyphs": 59
+  "descender": -557,
+  "capHeight": 721,
+  "xHeight": 486,
+  "capRatio": 0.721,
+  "xRatio": 0.486,
+  "wordSpace": 0.596,
+  "sidebearing": 0.061,
+  "characters": " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,'!?:;-()&@/+\"#–—‘’“”",
+  "glyphs": 86
 }
