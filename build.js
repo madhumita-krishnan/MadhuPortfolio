@@ -3163,7 +3163,7 @@ function bootJS() {
    square, get curious-square.jpg, composed for a square; every other app gets the wide curious.jpg. A virtual path because
    Vercel serves a real file before it ever looks at a rewrite.
    Absolute URL: preview crawlers don't resolve relative ones */
-const OG = { f: 'assets/og/share.jpg?v=3', w: 1200, h: 630, type: 'image/jpeg' };   // ?v=2 (2026-10-29): her clay world now has room above it (an iPhone preview trimmed the top); a new address so apps that cached v1 fetch it again
+const OG = { f: 'assets/og/share.jpg?v=5', w: 1200, h: 607, type: 'image/jpeg' };   // v5 (2026-10-29): her crop (less sky), and the whole composition centred so LinkedIn's Experience box (~1.58:1, cut from the middle) keeps the words and her hair   // ?v=2 (2026-10-29): her clay world now has room above it (an iPhone preview trimmed the top); a new address so apps that cached v1 fetch it again
 function head(title, desc, boot, card) {   // card: {title, line} for the home link preview; never the page description (her old copy), which apps would
   // otherwise show (her 2026-10-27: "can you remove the second line")
   const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
