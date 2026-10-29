@@ -58,6 +58,109 @@ let end = null;                                    // the live flight's teardown
 /* the tweaker cuts the flight in the air so a moved lip line shows on the very next fish */
 export function stop() { if (end) end(); }
 
+
+/* ONE ENGINE FOR EVERY LEAP (her 2026-10-29: "People keep saying the site is laggy"). Each flight used to build a fresh
+   WebGL context, compile both shaders and load + upload fish.png, then throw it all away; the first flight fires as the pot
+   scrolls into view, so all of that landed mid-scroll: 81ms in one frame on a 4x phone, the one hitch that showed on every
+   run. Now the renderer, the fish texture and the compiled programs live for the whole visit, and prewarm() builds them
+   while the page is idle, before the pot is anywhere near the screen. A flight only resizes the canvas and makes its own
+   small geometry. Materials come from the factories below so a flight's shaders are byte-identical to the prewarmed ones
+   (three.js caches programs by their source, so nothing compiles again). */
+const FISH_VS = `
+      uniform float uPhase,uAmp;
+      varying vec2 vUv; varying float vWy;
+      void main(){
+        vUv=uv;
+        vec3 p=position;
+        float s=1.0-uv.x;                        /* head is +x = uv.x 1, so s runs snout 0 -> tail 1 */
+        /* the S, tip to tail (her ask): amplitude opens up along the body but never
+           dies at the nose - 0.25 there, 1.0 at the tail tip. With k=6.6 (one full
+           wavelength ~0.95 body lengths) the whole body always shows one S. This is
+           the anguilliform end of the swimming spectrum; the strict carangiform
+           envelope (0.02-0.08s+0.16s^2) parks the front half and read as a flap. */
+        float env=0.25+0.75*s;
+        /* phase k*s-wt makes the wave TRAVEL head->tail, the direction that pushes
+           water back - tail->head is backwards. */
+        p.y+=uAmp*env*sin(6.6*s-uPhase);
+        vec4 w=modelMatrix*vec4(p,1.0);
+        vWy=w.y;
+        gl_Position=projectionMatrix*viewMatrix*w;
+      }`;
+const FISH_FS = `
+      uniform sampler2D map; uniform float uAlpha,uClip;
+      varying vec2 vUv; varying float vWy;
+      void main(){
+        if(vWy<uClip)discard;                      /* the front-lip line: below it is inside the pot */
+        vec4 c=texture2D(map,vUv);
+        c.a*=uAlpha;
+        if(c.a<0.02)discard;
+        gl_FragColor=c;
+      }`;
+const DROP_VS = `
+        attribute float aSize,aRot; attribute vec2 aCell;
+        varying float vWy,vRot; varying vec2 vCell;
+        void main(){
+          vec4 w=modelMatrix*vec4(position,1.0); vWy=w.y; vRot=aRot; vCell=aCell;
+          gl_Position=projectionMatrix*viewMatrix*w;
+          gl_PointSize=aSize;
+        }`;
+const DROP_FS = `
+        uniform sampler2D map; uniform float uFade,uClip;
+        varying float vWy,vRot; varying vec2 vCell;
+        void main(){
+          if(vWy<uClip)discard;
+          vec2 q=gl_PointCoord-0.5;                /* spin the sprite so the tip trails */
+          float cs=cos(vRot),sn=sin(vRot);
+          q=vec2(cs*q.x-sn*q.y,sn*q.x+cs*q.y)+0.5;
+          if(q.x<0.||q.x>1.||q.y<0.||q.y>1.)discard;
+          vec4 c=texture2D(map,vCell+q*0.5);
+          c.a*=uFade;
+          if(c.a<0.03)discard;
+          gl_FragColor=c;
+        }`;
+let shared = null;
+function engine() {
+  if (shared) return shared;
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+  /* the texture stays in its native sRGB and is written back out untouched — marking it SRGBColorSpace would have the
+     sampler linearise it, and a ShaderMaterial never re-encodes on the way out, so the paint would ship washed-out.
+     Uploaded to the GPU as soon as it arrives, not on the first frame that draws it */
+  const tex = new THREE.TextureLoader().load('assets/about/fish.png', t => { try { renderer.initTexture(t); } catch (e) { } });
+  return (shared = { renderer, tex, keep: null });
+}
+function fishMaterial(tex, L, lipW) {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, depthWrite: false,
+    uniforms: { map: { value: tex }, uPhase: { value: 0 }, uAmp: { value: L * 0.085 },
+                uAlpha: { value: 1 }, uClip: { value: lipW } },
+    vertexShader: FISH_VS, fragmentShader: FISH_FS });
+}
+function dropMaterial(dropTex, clipY) {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, depthWrite: false,
+    uniforms: { map: { value: dropTex }, uFade: { value: 1 }, uClip: { value: clipY } },
+    vertexShader: DROP_VS, fragmentShader: DROP_FS });
+}
+/* build the engine and compile both programs on a 2px stage nobody sees. The two prewarm materials are KEPT, so three.js
+   never releases their programs when a flight disposes its own copies */
+export function prewarm() {
+  if ((shared && shared.keep) || !window.WebGLRenderingContext) return;
+  const { renderer, tex } = engine();
+  renderer.setSize(2, 2);
+  const scene = new THREE.Scene(), cam = new THREE.OrthographicCamera(0, 2, 2, 0, -100, 100);
+  const fm = fishMaterial(tex, 1, 0), dm = dropMaterial(tex, 0);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+  g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(1), 1));
+  g.setAttribute('aCell', new THREE.BufferAttribute(new Float32Array(2), 2));
+  g.setAttribute('aRot', new THREE.BufferAttribute(new Float32Array(1), 1));
+  scene.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 64, 8), fm), new THREE.Points(g, dm));
+  try { renderer.compile(scene, cam); renderer.render(scene, cam); } catch (e) { }
+  shared.keep = [fm, dm];
+}
+
 export function run(opts = {}) {
   if (live) return;
   const phone = !!opts.phone;
@@ -206,10 +309,8 @@ export function run(opts = {}) {
     'pointer-events:none;z-index:4;overflow:hidden';
   document.body.appendChild(wrap);
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  const { renderer, tex } = engine();
   renderer.setSize(ow, oh);
-  renderer.setClearColor(0x000000, 0);
   wrap.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(0, ow, oh, 0, -100, 100);
@@ -221,44 +322,9 @@ export function run(opts = {}) {
   /* the texture stays in its native sRGB and is written back out untouched — marking it
      SRGBColorSpace would have the sampler linearise it, and a ShaderMaterial never
      re-encodes on the way out, so the paint would ship washed-out */
-  const tex = new THREE.TextureLoader().load('assets/about/fish.png', () => {}, undefined, teardown);
   const AR = 243 / 640;                            // sprite is baked 640x243 by lift-fish.js
   const geo = new THREE.PlaneGeometry(L, L * AR, 64, 8);
-  const mat = new THREE.ShaderMaterial({
-    transparent: true, depthTest: false, depthWrite: false,
-    uniforms: { map: { value: tex }, uPhase: { value: 0 }, uAmp: { value: L * 0.085 },
-                uAlpha: { value: 1 }, uClip: { value: lipW } },
-    vertexShader: `
-      uniform float uPhase,uAmp;
-      varying vec2 vUv; varying float vWy;
-      void main(){
-        vUv=uv;
-        vec3 p=position;
-        float s=1.0-uv.x;                        /* head is +x = uv.x 1, so s runs snout 0 -> tail 1 */
-        /* the S, tip to tail (her ask): amplitude opens up along the body but never
-           dies at the nose - 0.25 there, 1.0 at the tail tip. With k=6.6 (one full
-           wavelength ~0.95 body lengths) the whole body always shows one S. This is
-           the anguilliform end of the swimming spectrum; the strict carangiform
-           envelope (0.02-0.08s+0.16s^2) parks the front half and read as a flap. */
-        float env=0.25+0.75*s;
-        /* phase k*s-wt makes the wave TRAVEL head->tail, the direction that pushes
-           water back - tail->head is backwards. */
-        p.y+=uAmp*env*sin(6.6*s-uPhase);
-        vec4 w=modelMatrix*vec4(p,1.0);
-        vWy=w.y;
-        gl_Position=projectionMatrix*viewMatrix*w;
-      }`,
-    fragmentShader: `
-      uniform sampler2D map; uniform float uAlpha,uClip;
-      varying vec2 vUv; varying float vWy;
-      void main(){
-        if(vWy<uClip)discard;                      /* the front-lip line: below it is inside the pot */
-        vec4 c=texture2D(map,vUv);
-        c.a*=uAlpha;
-        if(c.a<0.02)discard;
-        gl_FragColor=c;
-      }`,
-  });
+  const mat = fishMaterial(tex, L, lipW);
   const fish = new THREE.Mesh(geo, mat);
   scene.add(fish);
 
@@ -324,32 +390,7 @@ export function run(opts = {}) {
     g.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
     g.setAttribute('aCell', new THREE.BufferAttribute(cellA, 2));
     g.setAttribute('aRot', new THREE.BufferAttribute(rotA, 1));
-    const m = new THREE.ShaderMaterial({
-      transparent: true, depthTest: false, depthWrite: false,
-      uniforms: { map: { value: dropTex }, uFade: { value: 1 }, uClip: { value: clipY } },
-      vertexShader: `
-        attribute float aSize,aRot; attribute vec2 aCell;
-        varying float vWy,vRot; varying vec2 vCell;
-        void main(){
-          vec4 w=modelMatrix*vec4(position,1.0); vWy=w.y; vRot=aRot; vCell=aCell;
-          gl_Position=projectionMatrix*viewMatrix*w;
-          gl_PointSize=aSize;
-        }`,
-      fragmentShader: `
-        uniform sampler2D map; uniform float uFade,uClip;
-        varying float vWy,vRot; varying vec2 vCell;
-        void main(){
-          if(vWy<uClip)discard;
-          vec2 q=gl_PointCoord-0.5;                /* spin the sprite so the tip trails */
-          float cs=cos(vRot),sn=sin(vRot);
-          q=vec2(cs*q.x-sn*q.y,sn*q.x+cs*q.y)+0.5;
-          if(q.x<0.||q.x>1.||q.y<0.||q.y>1.)discard;
-          vec4 c=texture2D(map,vCell+q*0.5);
-          c.a*=uFade;
-          if(c.a<0.03)discard;
-          gl_FragColor=c;
-        }`,
-    });
+    const m = dropMaterial(dropTex, clipY);
     const p = new THREE.Points(g, m);
     scene.add(p);
     /* lifetime follows 1/√G for the same reason power follows √G: a droplet's whole
@@ -458,8 +499,10 @@ export function run(opts = {}) {
        frame delta, plus 3px for the AABB top corner sitting a hair under the tilted
        lip edge's true rise. Costs ~8px of early vanish behind a rim band thicker
        than that; the alternative was the tail lying ON the lip. */
-    const liveTop = pot.getBoundingClientRect().top + scrollY;
-    const lipRise = Math.max(0, P.top - liveTop);
+    /* read the live rect only while the pot rocks: at rest it stands where P measured it, and a per-frame
+       getBoundingClientRect forced a layout on every frame of the flight (112ms of them across one short scroll) */
+    const rocking = pot.style.transform && pot.style.transform !== 'none';
+    const lipRise = rocking ? Math.max(0, P.top - (pot.getBoundingClientRect().top + scrollY)) : 0;
     /* the guard only ARMS while the pot is actually rocking (2026-08-26 frame-by-frame:
        "doesn't feel like it's coming out between the lips"). The mouth slot — rim top
        down to the front lip line — is only ~8px deep on a phone pot, and the always-on
@@ -480,7 +523,6 @@ export function run(opts = {}) {
        the back lip nor inside the mouth. The cap trades a possible 2–3px of transient
        paint on the lip during the kick frame for the rim overlap that sells the whole
        illusion — the lesser wrong, per her spec. */
-    const rocking = pot.style.transform && pot.style.transform !== 'none';
     const slot = lipY - P.top;
     const guard = rocking
       ? Math.min(3 + (P.w / 2) * 5.2 * Math.max(dt, 1 / 60), slot * 0.45)
@@ -552,8 +594,7 @@ export function run(opts = {}) {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
     bursts.forEach(b => { b.g.dispose(); b.m.dispose(); });
-    geo.dispose(); mat.dispose(); tex.dispose(); dropTex.dispose();
-    renderer.dispose();
+    geo.dispose(); mat.dispose(); dropTex.dispose();   // the renderer and the fish texture are the visit's (see engine())
     wrap.remove();
     live = false;                                  // the pot can launch the next flight
   }

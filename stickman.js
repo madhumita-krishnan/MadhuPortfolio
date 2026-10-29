@@ -84,6 +84,14 @@
   var sign = null;               // {cx, bottom} — the say-hey board he holds up
   var ink = '#3C6B76';
 
+  /* ONLY WHAT SHOWS IS GROUND (her 2026-10-29, "sometimes when I load my page the avatar still doesn't jump in the right
+     place"): the bio writes itself in word by word over ~5s after she arrives, and the clay tiles pop in ~6s after her, but
+     the map took every one of them as solid the moment it was read, so a tap in those first seconds sent her onto a word or
+     a tile nobody could see yet. A piece counts once it is mostly visible; the map is re-read as each one lands */
+  function shown(el) {
+    for (var e = el; e && e !== hero; e = e.parentElement) if (+getComputedStyle(e).opacity < 0.5) return false;
+    return true;
+  }
   function localRect(el, hr) {
     var r = el.getBoundingClientRect(), d = liftOf(el);
     return { x1: r.left - hr.left, x2: r.right - hr.left, y1: r.top - hr.top - d, y2: r.bottom - hr.top - d, w: r.width, h: r.height };
@@ -173,7 +181,7 @@
     });
     var words = hero.querySelectorAll('.eyebrow .w, .hero-line .w');
     if (!words.length) words = hero.querySelectorAll('.eyebrow, .hero-line .hs');
-    words.forEach(function (el) { maskText(g, el, hr); });
+    words.forEach(function (el) { if (shown(el)) maskText(g, el, hr); });
     /* the buttons are solid boards */
     hero.querySelectorAll('.hero-cta-row .btn').forEach(function (b) {
       var r = localRect(b, hr);
@@ -190,6 +198,7 @@
     /* …and on phones the clay tiles beside say hey! (her ask 2026-10-24: "I want to be able to jump on top of
        the claymation icons too") */
     hero.querySelectorAll('.jb-logo.rest, .hero-cta-row .cta-socials a').forEach(function (b) {
+      if (!shown(b)) return;
       var r = localRect(b, hr); if (r.w) g.fillRect(r.x1 + 3, r.y1 + 3, r.w - 6, r.h - 3);
     });
 
@@ -202,14 +211,14 @@
        the words are grouped into visual lines by where they sit, so a wrapped sentence gives two bars */
     var rows = [];
     hero.querySelectorAll('.hero-line .w').forEach(function (w) {
-      var r = localRect(w, hr); if (!r.w || !w.textContent.trim()) return;
+      var r = localRect(w, hr); if (!r.w || !w.textContent.trim() || !shown(w)) return;
       var row = rows.filter(function (q) { return Math.abs(q.y1 - r.y1) < r.h * .5; })[0];
       if (row) { row.x1 = Math.min(row.x1, r.x1); row.x2 = Math.max(row.x2, r.x2); row.y2 = Math.max(row.y2, r.y2); }
       else rows.push({ x1: r.x1, x2: r.x2, y1: r.y1, y2: r.y2 });
     });
     rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2, top: q.y1 }); });   // top: the line box's, for the muscle-up
     var eb = hero.querySelector('.eyebrow');
-    if (eb) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2, top: er.y1 }); }
+    if (eb && shown(eb)) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2, top: er.y1 }); }
     var h1 = hero.querySelector('h1');
     if (h1) { var hb = localRect(h1, hr); bars.push({ x1: hb.x1, x2: hb.x2, y: hb.y2 - 6, top: hb.y1 }); }
 
@@ -219,6 +228,29 @@
       var sr = localRect(btn, hr);
       sign = { cx: sr.x1 + sr.w / 2, bottom: sr.y2 };
     }
+    if (WORLD) showWorld();
+  }
+
+  /* ?world — HER MAP, MADE VISIBLE (her 2026-10-29: "You need figure it out for the avatar", after "sometimes when I load my
+     page the avatar still doesn't jump in the right place", which no Chrome or WebKit run here reproduced). Everything she
+     can stand on is painted red over the real page, with when it was read; on her phone, a screenshot the moment a jump
+     goes wrong shows at once whether her map and the letters disagree. Never on without ?world in the address */
+  var WORLD = /[?&]world\b/.test(location.search), wcv = null, wN = 0, wT0 = performance.now();
+  function showWorld() {
+    if (!wcv) { wcv = document.createElement('canvas'); wcv.setAttribute('aria-hidden', 'true'); hero.appendChild(wcv); }
+    var cr = cv.getBoundingClientRect(), hb = hero.getBoundingClientRect();   // the canvas is centred by a transform: measure, don't read offsets
+    wcv.style.cssText = 'position:absolute;pointer-events:none;z-index:2147483000;left:' + (cr.left - hb.left) + 'px;top:' + (cr.top - hb.top) + 'px;width:' + W + 'px;height:' + H + 'px';
+    wcv.width = Math.round(W * DPR); wcv.height = Math.round(H * DPR);
+    var x = wcv.getContext('2d'); x.setTransform(DPR, 0, 0, DPR, 0, 0);
+    x.globalAlpha = .45; x.drawImage(mk, 0, 0, W, H);
+    x.globalCompositeOperation = 'source-in'; x.fillStyle = '#ff2050'; x.fillRect(0, 0, W, H);
+    x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
+    x.strokeStyle = '#ffd400'; x.lineWidth = 1.5;
+    bars.forEach(function (q) { x.beginPath(); x.moveTo(q.x1, q.y); x.lineTo(q.x2, q.y); x.stroke(); });
+    wN++;
+    x.font = '600 11px -apple-system, system-ui, sans-serif'; x.fillStyle = '#ffd400';
+    x.fillText('map #' + wN + ' read at ' + ((performance.now() - wT0) / 1000).toFixed(1) + 's · fonts ' + (document.fonts ? document.fonts.status : '?') +
+      ' · ' + innerWidth + 'x' + innerHeight + ' · dpr ' + (devicePixelRatio || 1), 8, 14);
   }
 
   /* mask queries — CSS px in, CSS px out. The floor line is solid everywhere. */
@@ -2329,6 +2361,9 @@
      older than the fade: the mask used to be built at boot while the handwriting was
      still ~.45em low in its own reveal. .ch transitions are the wave — skipped, or
      every hover of the headline would re-read the world. */
+  hero.addEventListener('animationend', function (e) {
+    if (e.target && e.target.closest && e.target.closest('.cta-socials')) queueRebuild();   // a clay tile has popped in: it is ground now
+  });
   hero.addEventListener('transitionend', function (e) {
     var t = e.target;
     if (!t || !t.classList) return;

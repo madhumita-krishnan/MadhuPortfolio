@@ -3101,8 +3101,16 @@ function makeJS() {
     const fishOK=('adoptedStyleSheets' in document)&&window.CSS&&CSS.supports&&CSS.supports('selector(:has(a))');
     const fetchIt=()=>mod||(mod=fishOK?import('./fish.js?v=${BUILD_V}'):Promise.reject(new Error('older engine: no koi')));
     const leap=()=>{if(!rmActive())fetchIt().then(m=>m.run({phone})).catch(()=>{})};
+    /* WARM IT EARLY (her 2026-10-29: "People keep saying the site is laggy"): parsing three.js and building the koi's
+       engine cost ~120ms of main thread on a 4x phone, and both used to land MID-SCROLL (the fetch at 900px out, the
+       engine on the first leap as the pot came into view): the one hitch that showed on every run. Now the module is
+       fetched and the engine built (fish.js prewarm: context, both shaders, the texture on the GPU) in idle time a few
+       seconds after the loader lifts, while the reader is still on the hero. The 900px trigger stays as the backstop */
+    const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,200);
+    const warm=()=>{if(!rmActive())fetchIt().then(m=>idle(()=>m.prewarm&&m.prewarm())).catch(()=>{})};
+    Promise.resolve(window.__mkBoot).then(()=>setTimeout(()=>idle(warm),4000));
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting)return;
-      io.disconnect();if(!rmActive())fetchIt()})},{rootMargin:'900px 0px'}).observe(potEl);
+      io.disconnect();warm()})},{rootMargin:'900px 0px'}).observe(potEl);
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting||fired)return;
       fired=true;io.disconnect();leap()})},{threshold:.6}).observe(potEl);
     /* (2026-08-25 her ask) hitting the pot brings the koi back: every click/tap after the
