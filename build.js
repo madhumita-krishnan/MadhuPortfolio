@@ -1230,8 +1230,21 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
    lower. I don't like overlapping as a rule"): the icons hang 10px clear below the dashes and never lift into them; the
    one you're on is full strength and the others are mildly dimmed instead */
 .sdeck-progress .sd-ico{top:calc(100% + 10px)}
-.sdeck-progress:hover button:not(.on) .sd-ico,.sdeck-progress:focus-within button:not(.on) .sd-ico,.sdeck-progress.scrub button:not(.on) .sd-ico,.sdeck-progress.lean button:not(.on) .sd-ico{opacity:.55}
+/* WHICH ONE YOU'RE ON (her 2026-10-29: "In that nav bar it's hard to tell which icon is selected"): .55 was too mild
+   against colourful tiles. The others now drop to a third and lose most of their colour; yours stays in full colour and
+   a size up (no ring: she rejected one 2026-10-26) */
+.sdeck-progress:hover button:not(.on) .sd-ico,.sdeck-progress:focus-within button:not(.on) .sd-ico,.sdeck-progress.scrub button:not(.on) .sd-ico,.sdeck-progress.lean button:not(.on) .sd-ico{opacity:.34;filter:saturate(.25)}
+.sdeck-progress:hover button.on .sd-ico,.sdeck-progress:focus-within button.on .sd-ico,.sdeck-progress.scrub button.on .sd-ico,.sdeck-progress.lean button.on .sd-ico{transform:translate(-50%,0) scale(1.12)}
+.sdeck-progress .sd-ico{transition-property:opacity,transform,filter}
 .sdeck-progress .sd-ico:hover{opacity:1!important;transform:translate(-50%,0) scale(1.08);transition-delay:0s}
+/* a SIDEWAYS PHONE (her 2026-10-29: "On mobile the icons get cut off in horizontal scroll mode in the nav bar. Maybe the nav bar
+   should be lower and the icons come on top?"): ~390pt of height has no room under the dashes, so there the dashes drop lower
+   and the icons rise ABOVE them, into the clear band they leave under the case (still never overlapping) */
+.sdeck.low .sdeck-progress{margin-top:64px;margin-bottom:10px}
+.sdeck.low .sdeck-progress .sd-ico{top:auto;bottom:calc(100% + 8px);transform:translate(-50%,10px) scale(.55)}
+.sdeck.low .sdeck-progress:hover .sd-ico,.sdeck.low .sdeck-progress:focus-within .sd-ico,.sdeck.low .sdeck-progress.scrub .sd-ico,.sdeck.low .sdeck-progress.lean .sd-ico{transform:translate(-50%,0) scale(1)}
+.sdeck.low .sdeck-progress .sd-ico:hover{transform:translate(-50%,0) scale(1.08)}
+.sdeck.low .sdeck-progress:hover::after{top:auto;bottom:100%}
 .w-outcome{font-family:var(--font-display);font-weight:400;font-size:clamp(1.45rem,2.7vw,2.15rem);line-height:1.28;max-width:24ch}
 .w-chiprow{display:flex;align-items:center;gap:12px;margin-top:calc(var(--space)*2.5);flex-wrap:wrap}
 /* the project's logo leads its name in the vertical list too (her 2026-10-26: "even the vertical scrolling needs to feature
@@ -1299,9 +1312,9 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
   .work-sec[data-view="list"] .view-list{margin-top:8px}
   #work .view-list .wproject:first-child{padding-top:12px}   /* #work: outranks the card rule below */
   .work-sec[data-view="list"] .work-head .section-title{font-size:1.25rem}
-  /* focus at rest (see FOCUS AT REST in app.js): neighbours fade almost away once the scroll is still */
-  #work .view-list .wproject>*{transition:opacity .2s ease-out}
-  #work .view-list.settled .wproject:not(.focus)>*{opacity:var(--rest-dim,.12);transition:opacity .45s ease-out}
+  /* no fade-at-rest (her 2026-10-29: "I don't like that when I'm scrolling I have to watch the peripherals dim every
+     time"): the 2026-10-24 rest dim faded the neighbours away each time the scroll stopped and back on each swipe. The
+     GSAP focus above, which follows the finger, is the only dimming now */
 }
 .project-media-wrap{display:flex;justify-content:center}
 
@@ -2744,8 +2757,7 @@ function makeJS() {
   /* PHONES: the work list focuses on one project at a time (her ask 2026-10-23: "make the scroll
      between each selected project more focused, use gsap to make it more fluid"). ScrollTrigger RIDES
      the scroll, it never steers it (her no-scroll-jacking rule): each card is full size and bright as
-     it crosses the middle of the screen, and eases back, smaller and dimmer, on the way in and out.
-     scrub smooths it so the hand-off between projects glides. The card's own .fade entrance is dropped
+     it crosses the middle of the screen, and eases back, smaller and dimmer, on the way in and out. The card's own .fade entrance is dropped
      here, since GSAP owns its opacity and transform. */
   const phoneList=matchMedia('(max-width:760px)');
   const cardsM=[...document.querySelectorAll('.wproject')];
@@ -2754,7 +2766,7 @@ function makeJS() {
       gsap.registerPlugin(ScrollTrigger);
       cardsM.forEach(c=>{
         c.classList.remove('fade');c.style.transition='background var(--motion-base) var(--ease-standard)';
-        gsap.timeline({scrollTrigger:{trigger:c,start:'top bottom',end:'bottom top',scrub:.7}})
+        gsap.timeline({scrollTrigger:{trigger:c,start:'top bottom',end:'bottom top',scrub:true}})   // locked to the scroll, no trailing ease (her 2026-10-29: watching the neighbours dim after she stopped)
           .fromTo(c,{opacity:.28,scale:.9,y:48},{opacity:1,scale:1,y:0,ease:'power2.out',duration:.45})
           .to(c,{opacity:1,scale:1,y:0,duration:.1})
           .to(c,{opacity:.28,scale:.9,y:-48,ease:'power2.in',duration:.45});
@@ -2762,21 +2774,16 @@ function makeJS() {
     }).catch(()=>{});
   }
 
-  /* FOCUS AT REST (her 2026-10-24, phone list: "this feels too crowded… there needs to be focus when I'm scrolling but
-     when I'm scrolling past them they can be close together"). The card nearest the middle of the screen is .focus;
-     the list is .settled once the scroll has been still for a beat. While moving, the neighbours keep the GSAP focus
-     dim above (close together, continuous); at rest they fade almost away (--rest-dim) so the centred one stands alone.
-     Children carry this opacity, so it multiplies with GSAP's on the card rather than fighting it. */
-  /* .focus is kept on laptops too, with no dimming there: it is what lets only the centred project's clip play
-     (her 2026-10-29, ONLY THE PROJECT IN FOCUS MOVES; see the lazy video block) */
+  /* THE CARD IN FOCUS: the one nearest the middle of the screen is .focus, on phones and laptops. Nothing dims by it
+     (the 2026-10-24 fade-at-rest is gone, her 2026-10-29); it is what lets only the centred project's clip play (her
+     2026-10-29, ONLY THE PROJECT IN FOCUS MOVES; see the lazy video block) */
   if(cardsM.length){
-    const listEl=cardsM[0].parentElement;let still=0,raf=0;
+    let raf=0;
     const mark=()=>{raf=0;const mid=innerHeight/2;let best=null,bd=1e9;
       cardsM.forEach(c=>{const r=c.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-mid);if(d<bd){bd=d;best=c}});
       if(best.classList.contains('focus'))return;
       cardsM.forEach(c=>c.classList.toggle('focus',c===best));dispatchEvent(new Event('mk-focus'))};
-    const onScroll=()=>{listEl.classList.remove('settled');clearTimeout(still);still=setTimeout(()=>listEl.classList.add('settled'),160);if(!raf)raf=requestAnimationFrame(mark)};
-    addEventListener('scroll',onScroll,{passive:true});mark();listEl.classList.add('settled');
+    addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(mark)},{passive:true});mark();
   }
 
   /* REELS PAGING (phones, SCROLL view). While the list holds the middle of the screen (html.reels-on), a vertical
@@ -3150,13 +3157,13 @@ function bootJS() {
 /* the link preview, pinned on her LinkedIn (her 2026-10-28 pick, "This is it."): clay her in profile with binoculars and a small
    clay UX world on her head (her budgeting phone, the Driftwood dashboard, sticky notes, cursor, toggle, flow, HER pot and koi)
    on the light moon blue; "Product Design Engineer" leads, "staying curious" in her Flora-cleaned hand, "madhumita krishnan"
-   tiny, light and widely spaced; all text in navy, short streaks either side of the hand (2026-10-29). New file name, not a
+   tiny, light and widely spaced; all text in the dark ink #161a24 (her 2026-10-29: "I like the black better than the blue"), short streaks either side of the hand (2026-10-29). New file name, not a
    replacement: LinkedIn caches a preview by its image URL. share.jpg is NOT a file: vercel.json rewrites it per app (her
    2026-10-29: "change the thumbnail based on what platform it's being shared on"): WhatsApp and Telegram, which show a
    square, get curious-square.jpg, composed for a square; every other app gets the wide curious.jpg. A virtual path because
    Vercel serves a real file before it ever looks at a rewrite.
    Absolute URL: preview crawlers don't resolve relative ones */
-const OG = { f: 'assets/og/share.jpg', w: 1200, h: 630, type: 'image/jpeg' };
+const OG = { f: 'assets/og/share.jpg?v=3', w: 1200, h: 630, type: 'image/jpeg' };   // ?v=2 (2026-10-29): her clay world now has room above it (an iPhone preview trimmed the top); a new address so apps that cached v1 fetch it again
 function head(title, desc, boot, card) {   // card: {title, line} for the home link preview; never the page description (her old copy), which apps would
   // otherwise show (her 2026-10-27: "can you remove the second line")
   const og = 'https://www.m--k.me/' + OG.f;   // DOMAIN is declared further down (used here before it exists)
@@ -4091,7 +4098,10 @@ scan();document.addEventListener('DOMContentLoaded',scan);addEventListener('load
     if (fs.statSync(p).isDirectory()) { if (!/^(studies|vendor)$/.test(f)) walk(p); return; }
     if (!/\.(css|html)$/.test(f)) return;
     let s = fs.readFileSync(p, 'utf8');
-    s = s.replace(/(-?\d*\.?\d+)cqw\b/g, 'calc($1 * var(--cqw, 1cqw))');
+    /* idempotent: the 1cqw inside an already-rewritten var(--cqw, 1cqw) and the measurer's own '1cqw' test are left
+       alone. Files copied unchanged (design-systems) are walked again on every LOCAL build, and the old pattern wrapped
+       them one level deeper each time (found 2026-10-29); Vercel builds once, from clean */
+    s = s.replace(/(?<!var\(--cqw, |')(-?\d*\.?\d+)cqw\b/g, 'calc($1 * var(--cqw, 1cqw))');
     if (f.endsWith('.css')) s = cssCompat(s);
     else {
       s = s.replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (m, a, b) => '<style' + a + '>' + cssCompat(b) + '</style>');
