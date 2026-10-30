@@ -1063,7 +1063,10 @@
         if ((tg.plans = (tg.plans || 0) + 1) > 4) { fig.target = null; fig.waypoint = null; fig.vx = 0; return; }   // she tried; she stops
         var r = planRoute(tg.x, tg.y, tg.bans || (tg.bans = []));
         if (r == null) tg.manual = true;   // can't place her on the map (mid-step): the old greedy way, this once
-        else if (!r.length) { arrived(); return; }   // already as close as she can get
+        /* no way out on the map (she can stand in a pocket between two lines whose spot links to nothing, and then every
+           tap after was "already there": her 2026-10-29 "sometimes I tap and she won't move"): a tap that isn't where she
+           stands goes the old greedy way instead, which walks, drops and hops on what's really there */
+        else if (!r.length) { if (Math.abs(tg.x - fig.x) > 40 || Math.abs(tg.y - fig.y) > 26) tg.manual = true; else { arrived(); return; } }
         else { tg.route = r; tg.best = Infinity; tg.stuck = 0; if (r[0].how === 'jump' && Math.abs(r[0].x - fig.x) > 0) { routeJump(r[0]); return; } }
       }
       if (tg.route) { var rw = followRoute(dt); if (rw === null) return; want = rw; }

@@ -1079,12 +1079,15 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 /* TURN-YOUR-PHONE CUE (her 2026-10-28: "On the phone I need an action prompting icon … so people know that they can move
    into horizontal swiping mode"): on an upright phone the toggle is gone (turning the phone IS the toggle), so where it
    stood sits a phone that turns sideways, twice, the first time the projects come into view, then rests upright. Same
-   hairline ring and night fill as the toggle; not a button, since nothing on the page can turn the phone for you */
+   hairline ring and night fill as the toggle. It IS a button (her 2026-10-29: "I tried tapping the vertical horizontal button
+   but it was unresponsive"): a tap switches the view, and while the swipe view is on, the phone in it rests sideways */
 .turn-hint{display:none}
 @media (orientation:portrait){html.orient-views .turn-hint{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--r-pill);
   border:1px solid rgba(169,196,245,.42);background:rgba(22,27,40,.88);color:#a9c4f5}}
 .turn-hint svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;overflow:visible}
-.turn-hint .th-phone{transform-box:fill-box;transform-origin:50% 50%}
+.turn-hint{padding:0;margin:0;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.turn-hint .th-phone{transform-box:fill-box;transform-origin:50% 50%;transition:transform .45s var(--ease-standard)}
+.turn-hint.on .th-phone{transform:rotate(-90deg)}
 .turn-hint .th-phone rect+rect{fill:currentColor;stroke:none}
 .turn-hint.play .th-phone{animation:th-turn 2.2s cubic-bezier(.65,0,.35,1) 2}
 @keyframes th-turn{0%,12%{transform:rotate(0)}38%,70%{transform:rotate(-90deg)}96%,100%{transform:rotate(0)}}
@@ -2317,9 +2320,11 @@ function makeJS() {
     if(phoneDev){document.documentElement.classList.add('orient-views');
       const land=matchMedia('(orientation: landscape)'),pick=()=>land.matches?'deck':'list';
       setView(pick(),false);
-      const turn=()=>{const v=pick();if(v!==workEl.dataset.view)morph(v)};
+      const hint=workEl.querySelector('.turn-hint'),mark=()=>{if(hint){const on=workEl.dataset.view==='deck';hint.classList.toggle('on',on);hint.setAttribute('aria-pressed',on)}};
+      const turn=()=>{const v=pick();if(v!==workEl.dataset.view)morph(v);mark()};
+      if(hint)hint.addEventListener('click',()=>{hint.classList.remove('play');morph(workEl.dataset.view==='deck'?'list':'deck');mark()});
       land.addEventListener?land.addEventListener('change',turn):land.addListener(turn);
-      const hint=workEl.querySelector('.turn-hint');   // the cue plays once, when the projects are well in view
+      /* the cue plays once, when the projects are well in view */
       if(hint&&'IntersectionObserver'in window)new IntersectionObserver((es,io)=>{if(!es.some(e=>e.isIntersecting))return;io.disconnect();hint.classList.add('play')},{threshold:1}).observe(hint)}
     const dock=workEl.querySelector('.view-dock');
     if(dock){document.body.appendChild(dock);dock.classList.add('floating');
@@ -2677,7 +2682,7 @@ function makeJS() {
         try{scrollTo({top:from+(to-from)*ease(q),behavior:'instant'})}catch(err){scrollTo(0,from+(to-from)*ease(q))}
         if(q<1)return requestAnimationFrame(step);centring=0;done&&done()})(t0)};
     const enter=()=>{if(root.classList.contains('hfocus'))return;hfY=scrollY;
-      [sd,...document.querySelectorAll('.view-toggle')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
+      [sd,...document.querySelectorAll('.view-toggle,.turn-hint')].forEach(k=>{k.classList.add('hf-on');for(let e=k.parentElement;e&&e!==root;e=e.parentElement)e.classList.add('hf-path')});
       root.classList.add('hfocus')};
     /* THE TOGGLE TAKES YOU INTO FOCUS MODE (her 2026-10-27, reversing her earlier ask: "when you toggle you should take them into
        focus mode actually. just do it smoothly. like slowing down speeding up when reaching motion start and end points"):
@@ -3576,7 +3581,7 @@ function renderHome() {
       <button type="button" class="view-btn" data-view="list" aria-pressed="true" aria-label="Scroll through the projects" title="Scroll"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="8" rx="2.2"/><rect x="4" y="13" width="16" height="8" rx="2.2"/></svg></button>
       <button type="button" class="view-btn" data-view="deck" aria-pressed="false" aria-label="Swipe through the projects" title="Swipe"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4.5" width="10" height="15" rx="2.2"/><rect x="1.5" y="8" width="3.6" height="8" rx="1.2"/><rect x="18.9" y="8" width="3.6" height="8" rx="1.2"/></svg></button>
     </div>
-    <span class="turn-hint" role="img" aria-label="Turn your phone sideways to swipe through the projects"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="th-phone"><rect x="7.5" y="3" width="9" height="18" rx="2.2"/><rect x="10.6" y="10" width="2.8" height="4" rx=".8"/></g></svg></span>
+    <button type="button" class="turn-hint" aria-pressed="false" aria-label="Swipe through the projects (or turn your phone sideways)"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="th-phone"><rect x="7.5" y="3" width="9" height="18" rx="2.2"/><rect x="10.6" y="10" width="2.8" height="4" rx=".8"/></g></svg></button>
   </div>
   <div class="view-deck">${sdeckHTML}</div>
   <div class="view-list">${listHTML}</div>
