@@ -28,6 +28,21 @@
           "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
         }
       ]
+    },
+    {
+      "source": "/((?!assets/og/).*)",
+      "has": [
+        {
+          "type": "query",
+          "key": "v"
+        }
+      ],
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ],
   "redirects": [
