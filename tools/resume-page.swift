@@ -1,12 +1,12 @@
-// The resume sheet's page (resume-plane.js): renders page 1 of assets/resume.pdf sharp enough for a 3x phone and pinch
+// The resume sheet's page (resume-plane.js): renders page 1 of assets/Madhumita-Krishnan-Resume.pdf sharp enough for a 3x phone and pinch
 // zoom, and lists its links so the sheet can lay clickable areas over the picture (a JPG of a PDF has no links; someone
-// opening it from the site found it blurry and dead). Rerun whenever resume.pdf changes; build.js warns if you forget.
+// opening it from the site found it blurry and dead). Rerun whenever Madhumita-Krishnan-Resume.pdf changes; build.js warns if you forget.
 //   swift tools/resume-page.swift
 import PDFKit
 import AppKit
 import CryptoKit
 
-let pdfURL = URL(fileURLWithPath: "assets/resume.pdf")
+let pdfURL = URL(fileURLWithPath: "assets/Madhumita-Krishnan-Resume.pdf")
 let data = try! Data(contentsOf: pdfURL)
 let doc = PDFDocument(data: data)!, page = doc.page(at: 0)!   // keep doc alive: PDFKit won't draw an orphaned page
 let box = page.bounds(for: .mediaBox)

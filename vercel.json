@@ -30,6 +30,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/assets/resume.pdf",
+      "destination": "/assets/Madhumita-Krishnan-Resume.pdf",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/assets/og/share.jpg",

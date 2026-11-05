@@ -3111,7 +3111,10 @@ function makeJS() {
        engine on the first leap as the pot came into view): the one hitch that showed on every run. Now the module is
        fetched and the engine built (fish.js prewarm: context, both shaders, the texture on the GPU) in idle time a few
        seconds after the loader lifts, while the reader is still on the hero. The 900px trigger stays as the backstop */
-    const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):setTimeout(f,200);
+    /* idle AND still: iPhones have no requestIdleCallback, so the timer fallback built the engine mid-scroll, a 0.25s stall
+       (her 2026-11-04: "i try to scroll and it keeps stopping and starting"); it now waits for the page to stop moving */
+    let movedAt=0;addEventListener('scroll',()=>{movedAt=performance.now()},{passive:true});
+    const idle=f=>{const go=()=>performance.now()-movedAt<500?setTimeout(go,300):window.requestIdleCallback?requestIdleCallback(f,{timeout:3000}):f();go()};
     const warm=()=>{if(!rmActive())fetchIt().then(m=>idle(()=>m.prewarm&&m.prewarm())).catch(()=>{})};
     Promise.resolve(window.__mkBoot).then(()=>setTimeout(()=>idle(warm),4000));
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(!e.isIntersecting)return;
@@ -3332,7 +3335,7 @@ function navBar(kind) {
   /* the SAME links on every page (her ask 2026-10-24: "the nav bar isn't consistent across the site"); off the home page
      they point back into it. walkthrough.js draws the identical bar for the walkthrough case studies. */
   const pre = home ? '' : 'index.html';
-  const links = `<a href="${pre}#work" data-hand="Work">Work</a><a class="optional" href="${pre}#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="${pre}#about" data-hand="About">About</a><a href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
+  const links = `<a href="${pre}#work" data-hand="Work">Work</a><a class="optional" href="${pre}#disciplines" data-hand="Disciplines">Disciplines</a><a class="optional" href="${pre}#about" data-hand="About">About</a><a href="assets/Madhumita-Krishnan-Resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="Resume">Resume</a>`;
   return `<div class="edge-fade top" aria-hidden="true"></div><div class="edge-fade bottom" aria-hidden="true"></div>
 <div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html" aria-label="M--K, home">${wordmarkSVG('nav')}</a>
@@ -3681,7 +3684,7 @@ function renderHome() {
         data-more="${esc(site.about.moreLabel)}" data-less="${esc(site.about.lessLabel)}"
         data-hand="${esc(site.about.moreLabel.replace(/[^ '!,.A-Za-z0-9?:;()&@\/+"#’-]/g, '').trim().toUpperCase())}">${esc(site.about.moreLabel)}</button>
       ${eduHTML}
-      <a class="btn outline" href="assets/resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
+      <a class="btn outline" href="assets/Madhumita-Krishnan-Resume.pdf?v=${BUILD_V}" target="_blank" rel="noopener" data-hand="${esc(site.about.resumeLabel.toUpperCase())}">${esc(site.about.resumeLabel)}</a>
     </div>
   </div>
 </section>`;
@@ -4018,10 +4021,10 @@ for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lin
     : renderCase(cs).replace(/(<a class="skip"[^>]*>[^<]*<\/a><style>[^<]*<\/style>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
-/* the resume sheet shows a picture of resume.pdf with its links laid over it: a new PDF needs a new picture */
+/* the resume sheet shows a picture of Madhumita-Krishnan-Resume.pdf with its links laid over it: a new PDF needs a new picture */
 try{const rp=JSON.parse(fs.readFileSync(path.join(ROOT,'assets','resume-page.json'),'utf8'));
-  if(rp.pdf!==require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT,'assets','resume.pdf'))).digest('hex'))
-    console.warn('⚠ assets/resume.pdf changed: run  swift tools/resume-page.swift  (the site still shows the old resume page)')}catch(e){console.warn('⚠ resume-page.json missing: run  swift tools/resume-page.swift')}
+  if(rp.pdf!==require('crypto').createHash('sha256').update(fs.readFileSync(path.join(ROOT,'assets','Madhumita-Krishnan-Resume.pdf'))).digest('hex'))
+    console.warn('⚠ assets/Madhumita-Krishnan-Resume.pdf changed: run  swift tools/resume-page.swift  (the site still shows the old resume page)')}catch(e){console.warn('⚠ resume-page.json missing: run  swift tools/resume-page.swift')}
 /* the design-system showcase pages are standalone HTML (their own tokens, their own
    fonts) — copied through as-is, reachable from each case study's ds-link icon.
    The repo README rides along as the folder's "read the rules" link: the hub at

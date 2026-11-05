@@ -19,7 +19,7 @@
      paper plane + her clay resume tile, green-keyed); take 1 by default, ?plane=2 for the other, ?plane=paper for the old one */
   var pq = (location.search.match(/[?&]plane=(\w+)/) || [])[1];
   var THROW = base + 'assets/resume-throw.png' + ver, PLANE = base + (pq === 'paper' ? 'assets/resume-plane.png' : 'assets/resume-plane-clay-' + (pq === '2' ? 2 : 1) + '.png') + ver;
-  var PAGE = base + 'assets/resume-page.jpg' + ver, PDF = base + 'assets/resume.pdf' + ver;
+  var PAGE = base + 'assets/resume-page.jpg' + ver, PDF = base + 'assets/Madhumita-Krishnan-Resume.pdf' + ver;
   /* the throw sheet (clay-character keying, half size): cells, her feet and centre in a cell, where the plane is at
      the release frame, her height in a cell */
   var SP = { n: 62, cols: 8, fw: 119, fh: 175, fps: 18, feet: 170, cx: 50.5, figH: 154, release: 44, plane: [64, 28.5] };   // 18fps: the fold no longer drags (her: "super disjointed")
@@ -95,7 +95,7 @@
     document.body.appendChild(el);
     flash = el.querySelector('.rz-flash'); sheet = el.querySelector('.rz-sheet');
     el.querySelector('.rz-x').addEventListener('click', close);
-    var url = new URL('assets/resume.pdf', base || location.href).href, toast = el.querySelector('.rz-toast');
+    var url = new URL('assets/Madhumita-Krishnan-Resume.pdf', base || location.href).href, toast = el.querySelector('.rz-toast');
     var say = function (t) { toast.textContent = t; toast.classList.add('on'); clearTimeout(say.t); say.t = setTimeout(function () { toast.classList.remove('on'); }, 1600); };
     var sh = el.querySelector('.rz-share');
     if (sh) sh.addEventListener('click', function () { navigator.share({ title: 'Madhumita Krishnan, resume', url: url }).catch(function () {}); });
@@ -273,9 +273,12 @@
           el.src = CL + f.f + ver; el.style.width = f.w * k + 'px'; el.style.height = f.h * k + 'px';
           el.style.left = (x - (toL ? f.w - f.cx : f.cx) * k) + 'px'; el.style.top = (her.y - f.base * k) + 'px';
           if (toL ? x > x1 : x < x1) return requestAnimationFrame(step);
-          el.remove();
+          el.remove(); back();
         })(t0);
-      }).catch(function () {});
+      }).catch(back);
+    /* the stand-in ran off; the real her never left the hero (she was off screen when you asked), so she is simply there
+       again when you scroll back up (her 2026-11-04: "i did my resume thing and then i scrolled up and I cant find my avatar") */
+    function back() { var S = window.__stick; S && S.hide && S.hide(false); }
   }
 
   /* THE FLIGHT: long gliding curves around the page, nearer and bigger as it goes, then a swift sideways pass across
@@ -346,7 +349,7 @@
 
   /* EVERY resume link is her paper plane (her 2026-10-26: "whenever shes on the screen and a resume request is made can she
      do the airplane thing?" and, off screen, "pop up in the bottom right hand corner with a spotlight on her") */
-  var isResume = function (a) { return a && /resume\.pdf/.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
+  var isResume = function (a) { return a && /resume\.pdf/i.test(a.getAttribute('href') || '') && !(el && el.contains(a)); };
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
     if (!isResume(a) || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

@@ -144,14 +144,16 @@
        her up with it meanwhile */
     DPR = Math.min(devicePixelRatio || 1, 2);
     W = hr.width; H = hr.height;
-    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    dirty = null;   /* resizing the bitmap wiped the canvas — nothing left to erase */
+    /* only when the size really changed: a new bitmap is a fresh full-screen GPU buffer, and the bio's write-in asks for
+       a re-read many times at the same size */
+    var cw = Math.round(W * DPR), chh = Math.round(H * DPR);
+    if (cv.width !== cw || cv.height !== chh) { cv.width = cw; cv.height = chh; dirty = null; }   /* resizing the bitmap wiped the canvas — nothing left to erase */
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ink = (getComputedStyle(document.documentElement).getPropertyValue('--ink-blue') || '#3C6B76').trim();
     floorY = H - 14;
 
     W2 = Math.max(1, Math.ceil(W * S)); H2 = Math.max(1, Math.ceil(H * S));
-    mk.width = W2; mk.height = H2;
+    if (mk.width !== W2 || mk.height !== H2) { mk.width = W2; mk.height = H2; }   // same size: the clearRect below empties it
     var g = mk.getContext('2d', { willReadFrequently: true });
     g.setTransform(S, 0, 0, S, 0, 0);
     g.clearRect(0, 0, W, H);
@@ -1433,7 +1435,13 @@
       if (!s.ctx) { try { s.ctx = new AC(); } catch (e) { return; } decode(); }
       if (s.ctx.state !== 'running') s.ctx.resume();
     };
-    ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { addEventListener(t, wake, { passive: true, capture: true }); });
+    /* a finger wakes it on a TAP only (her 2026-11-04: "i try to scroll and it keeps stopping and starting"): on iOS the
+       context is first made here, and making it on the touch that STARTS a scroll froze that scroll for most of a second */
+    var t0 = null, opt = { passive: true, capture: true };
+    addEventListener('pointerdown', function (e) { if (e.pointerType !== 'touch') wake(); }, opt);
+    addEventListener('touchstart', function (e) { var t = e.touches[0]; t0 = t && e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, opt);
+    addEventListener('touchend', function (e) { var t = e.changedTouches[0]; if (t0 && t && Math.hypot(t.clientX - t0.x, t.clientY - t0.y) < 10) wake(); t0 = null; }, opt);
+    addEventListener('keydown', wake, opt);
     /* …except where that iOS bug can't happen: making a context is slow (most of a second on a throttled phone, and it
        was made by the same tap that sends her walking, so she froze as she set off — her 2026-10-28 "super choppy").
        Everywhere but iOS it is made while the page is idle (after the loader has lifted and she has landed, never during
@@ -2321,11 +2329,15 @@
   }
 
   /* ------------------------------------------------------------------ boot */
-  var rebuildT = 0;
+  var rebuildT = 0, rebuildLater = false;
   function queueRebuild() {
     clearTimeout(rebuildT);
     rebuildT = setTimeout(function () {
       if (!booted) return;
+      /* off screen, the re-read waits until the hero is back (her 2026-11-04: "i try to scroll and it keeps stopping and
+         starting"): the bio's word-by-word write-in asked for one every ~1s while she scrolled down the page, and each
+         froze a mid phone for 0.6-1.8s */
+      if (!visible) { rebuildLater = true; return; }
       rebuild(); spawnIfLost(); draw();
     }, 160);
   }
@@ -2353,6 +2365,7 @@
   }
   new IntersectionObserver(function (es) {
     visible = es[0].isIntersecting;
+    if (visible && rebuildLater) { rebuildLater = false; queueRebuild(); }
     if (visible && needsLoop()) start();
   }, { threshold: 0.05 }).observe(hero);
 

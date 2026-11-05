@@ -301,7 +301,7 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
 
 <nav class="pill" aria-label="Main">
   <a class="wm wm-load" href="index.html" aria-label="M--K, home">${require('./wordmark.js')('wt')}</a>
-  <span class="pill-links"><a href="index.html#work">Work</a><a class="nav-opt" href="index.html#disciplines">Disciplines</a><a class="nav-opt" href="index.html#about">About</a><a href="assets/resume.pdf" target="_blank" rel="noopener">Resume</a></span>
+  <span class="pill-links"><a href="index.html#work">Work</a><a class="nav-opt" href="index.html#disciplines">Disciplines</a><a class="nav-opt" href="index.html#about">About</a><a href="assets/Madhumita-Krishnan-Resume.pdf" target="_blank" rel="noopener">Resume</a></span>
   <a class="cta" href="${esc(site.calendly)}" target="_blank" rel="noopener">say hey!</a>
 </nav>
 <a class="edge prev arrow-btn" href="${caseHref(cs.prev)}" aria-label="Previous project">${ic('back')}</a>
