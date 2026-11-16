@@ -2635,15 +2635,23 @@ function makeJS() {
     const unhold=()=>{clearTimeout(holdT);if(held){held.classList.remove('held');held=null;suppress=true;setTimeout(()=>{suppress=false},0)}};
     addEventListener('pointerup',unhold);addEventListener('pointercancel',unhold);
     stage.addEventListener('contextmenu',e=>{if(e.target.closest('.scard'))e.preventDefault()});
-    /* the progress bar: tap a segment to go there, or drag along it to scrub straight to the end (or back) */
+    /* the progress bar: tap a segment to go there, or drag along it to scrub straight to the end (or back).
+       An icon that's already the active one has nowhere left to "go" — so that tap opens its project instead
+       (a second tap on the same icon, mirroring the card itself: the first tap previews, the second commits).
+       tapTarget is only set when the tap lands on the already-active icon AND the finger never drags onto a
+       different one — a real scrub across icons must never also fire a navigation when it happens to end up back
+       on the icon it started from. */
     if(bar){
       const segAt=x=>{const r=bar.getBoundingClientRect();return Math.max(0,Math.min(cards.length-1,Math.floor((x-r.left)/r.width*cards.length)))};
-      let scrub=false;
-      bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;clearTimeout(bar._t);bar.classList.add('scrub');settle(segAt(e.clientX));try{bar.setPointerCapture(e.pointerId)}catch(err){}});
-      bar.addEventListener('pointermove',e=>{if(!scrub)return;const i=segAt(e.clientX);if(i!==Math.round(pos))settle(i)});
+      let scrub=false,tapTarget=null;
+      bar.addEventListener('pointerdown',e=>{e.stopPropagation();scrub=true;clearTimeout(bar._t);bar.classList.add('scrub');
+        const i=segAt(e.clientX);tapTarget=i===active?cards[i]:null;settle(i);try{bar.setPointerCapture(e.pointerId)}catch(err){}});
+      bar.addEventListener('pointermove',e=>{if(!scrub)return;const i=segAt(e.clientX);if(i!==Math.round(pos)){tapTarget=null;settle(i)}});
       const stop=()=>{scrub=false;bar._t=setTimeout(()=>bar.classList.remove('scrub'),1200)};   // the icons linger a beat after a finger lifts
-      bar.addEventListener('pointerup',stop);bar.addEventListener('pointercancel',stop);
-      bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();settle(+b.dataset.i)}});
+      bar.addEventListener('pointerup',e=>{if(tapTarget){const href=tapTarget.href;tapTarget=null;location.href=href;return}stop()});
+      bar.addEventListener('pointercancel',()=>{tapTarget=null;stop()});
+      bar.addEventListener('keydown',e=>{const b=e.target.closest('button');if(!b||(e.key!=='Enter'&&e.key!==' '))return;e.preventDefault();
+        const i=+b.dataset.i;if(i===active)location.href=cards[i].href;else settle(i)});
     }
     sd.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();settle(active+1)}else if(e.key==='ArrowLeft'){e.preventDefault();settle(active-1)}});
     /* trackpad: the deck follows the fingers 1:1 until the push reaches --sd-wpush px, then COMMITS to the next card and

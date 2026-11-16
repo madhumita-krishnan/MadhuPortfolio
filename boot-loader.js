@@ -186,7 +186,10 @@
     var leanX = (M.base - y0) * Math.tan(tension * Math.PI / 180);
     var xa = M.mR + off + tug + leanX, xb = M.kL - off - tug - leanX;
     var sw = th * lerp(V.fat, V.thin, Math.pow(p, .7)) * (1 - .15 * su), se = th * lerp(V.fat, V.endFat, Math.pow(p, .7));
-    var feetY = y0 + sag - sw / 2;
+    /* a few px of deliberate overlap, not just a touch: the sprite's sole anti-aliases/shades off over 2-3px at the
+       scale she renders, so planting her exactly on the strand's top edge still reads as hovering above it */
+    var sink = 3 * z;
+    var feetY = y0 + sag - sw / 2 + sink;
     if (tt <= 0) {
       S.strand.setAttribute('d', taper(xa, y0, (xa + xb) / 2, y0 + sag * 2, xb, y0, function (u) { return lerp(sw, se, Math.pow(Math.abs(2 * u - 1), V.taper)); }, true, true));
       S.strand.style.display = ''; S.pL.style.display = S.pR.style.display = 'none';
@@ -225,8 +228,8 @@
 
     /* her */
     if (!cast) return;
-    var top = (t < b.land.s ? y0 - sw / 2 : feetY) + rise, k = null, x = midX, fy = top, spin = 0;
-    var hx = (M.b.l + M.b.r) / 2, hyTop = y0 - th / 2 + rise + (t >= b.flipLand.s ? V.landDip * z * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0);
+    var top = (t < b.land.s ? y0 - sw / 2 + sink : feetY) + rise, k = null, x = midX, fy = top, spin = 0;
+    var hx = (M.b.l + M.b.r) / 2, hyTop = y0 - th / 2 + sink + rise + (t >= b.flipLand.s ? V.landDip * z * wob(t - b.flipLand.s, V.wobHz * 1.3, V.wobDie) : 0);
     if (t >= b.flip.s) x = hx;
     if (t >= b.fly.s && t < b.fly.s + b.fly.d) {
       /* her path in, measured from the letters, not the screen edge: it was "from the bottom of the screen", which on a tall
