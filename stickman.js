@@ -1411,9 +1411,9 @@
     if (on && !fig.onCloud) { if (!fig.landT) { brace(0.32); puff(fig.x, fig.y, 7); } dispatchEvent(new CustomEvent('mk-box-slam')); }
     fig.onCloud = on;
   }
-  /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a soft FOOTSTEP on the very
-     clay frames where a foot lands (her ask: "the running sound echoes the footsteps"), a push-off WHOOSH whenever she
-     launches upward, a THUD when she lands, a GRIP when her hands catch a bar. Tried and cut, her calls: sneaker squeaks, a boing jump
+  /* her sounds (Flora / ElevenLabs SFX, 2026-10-24, beside the cloud's squish/pop/clonk): a push-off WHOOSH whenever she
+     launches upward, two soft steps when she lands, a GRIP when her hands catch a bar — only on a change of motion, no
+     footstep-per-stride while walking or running. Tried and cut, her calls: sneaker squeaks, a boing jump
      ("makes me think something is bouncing"), a creaky-bar grab. Browsers keep them silent until the visitor's first click. */
   var SFX = (function () {
     var base = (document.querySelector('script[src*="stick.js"]') || {}).src || '';
@@ -1489,10 +1489,7 @@
      rumble below ~150Hz goes, and every phone sound plays a little slower (PITCH), so lower */
   if (PHONE) TONE = { jump: { lp: 900, hp: 150, attack: 0.06, gain: 1.5 }, step: { lp: 2400, hp: 120, gain: 1.2 }, grip: { lp: 2400, hp: 120 } };
   var PITCH = PHONE ? 0.88 : 1;
-  /* the heel strikes, read off the frames themselves: the walk's two widest-stride frames, and the run's two frames
-     where the foot drops lowest after the flight */
-  var STRIKES = { 'walk-x3': [10, 34], 'run-x3': [21, 44] };
-  var sfxWas = null, stepS = null, stepK = 0, fallV = 0, leapt = false;
+  var sfxWas = null, fallV = 0, leapt = false;
   function whoosh() { sfx('jump', 0.26, 0.9 + Math.random() * 0.08); }
   function touchdown() { sfx('step', 0.2, 1.08); setTimeout(function () { sfx('step', 0.13, 1.14); }, 70); }
   /* the moves a click on her plays leave the ground too, on their own clock, never through 'air' (her 2026-10-26, #87:
@@ -1500,7 +1497,7 @@
      whoosh as she springs and the same two soft steps as she lands, at the moments the frames leave and meet the floor */
   var CUES = { backflip: [[.06, whoosh], [.94, touchdown]], star: [[.22, whoosh], [.78, touchdown]], cartwheel: [[.92, touchdown]] };
   function sfxTick() {
-    var st = fig.state, sp = Math.abs(fig.vx || 0);
+    var st = fig.state;
     if (st !== sfxWas) {
       if (st === 'air' && fig.vy < -300) { whoosh(); leapt = true; }   // a launch, not a fall off an edge
       if (st === 'hang') sfx('grip', 0.4);
@@ -1511,13 +1508,6 @@
       sfxWas = st;
     }
     if (st === 'air') fallV = fig.vy || 0;
-    /* the same sheet and frame clayPick draws: each strike frame passed since the last tick is one footstep */
-    var sh = st === 'move' && sp >= 12 && !fig.landT && !fig.slideT ? (CLAY.run ? 'run-x3' : 'walk-x3') : null;
-    var k = sh ? Math.floor(CLAY.ph + (CLAY.run ? 11 : 0)) % 48 : 0;
-    if (sh && sh === stepS)
-      for (var j = stepK; j !== k; j = (j + 1) % 48)
-        if (STRIKES[sh].indexOf((j + 1) % 48) >= 0) { sfx('step', sh === 'run-x3' ? 0.18 : 0.12, 0.92 + Math.random() * 0.16); break; }
-    stepS = sh; stepK = k;
   }
 
   var stWas = 'idle';
