@@ -190,6 +190,10 @@
        scale she renders, so planting her exactly on the strand's top edge still reads as hovering above it */
     var sink = 3 * z;
     var feetY = y0 + sag - sw / 2 + sink;
+    /* her pressing foot sits a bit ahead of the sprite's own anchor, so landing square on the strand's midpoint (its
+       deepest sag, where her weight should be pushing it down) reads as her weight landing just past the dip. A small
+       step back lines the foot up with where the strand is actually caving in under her */
+    var back = 8 * z;
     if (tt <= 0) {
       S.strand.setAttribute('d', taper(xa, y0, (xa + xb) / 2, y0 + sag * 2, xb, y0, function (u) { return lerp(sw, se, Math.pow(Math.abs(2 * u - 1), V.taper)); }, true, true));
       S.strand.style.display = ''; S.pL.style.display = S.pR.style.display = 'none';
@@ -238,10 +242,11 @@
          that point is still on screen starts her below the bottom edge instead, so she never pops in mid-air */
       var u = seg(b.fly, t), x0 = midX - V.fromX * fs, sy = top + 3.15 * fs, fu1 = Math.max(0, Math.min(1, (u - .14) / .7));
       if (x0 > 0 && sy < M.H + H * .2) sy = M.H + H * .2;
-      x = x0 + (midX - x0) * u; fy = arc(sy, top, top - V.apex * H, u);
+      x = x0 + (midX - back - x0) * u; fy = arc(sy, top, top - V.apex * H, u);
       k = u < .14 ? 'j4' : u < .84 ? 'j7' : u < .92 ? 'j8' : 'j9';
       spin = k === 'j7' ? 360 * (1 - Math.pow(1 - fu1, 1.6)) : 0;          // the hero's spinning tuck flip, on the way in
     } else if (t >= b.land.s && t < b.flip.s) {
+      x = midX - back;
       k = ['j10', 'j11', 'j12', 'j13'][Math.min(3, Math.floor(seg(b.land, t) * 4))];
     } else if (t >= b.flip.s && t < b.flipLand.s) {                     // the snap: a hop onto the right hyphen
       var fu = seg(b.flip, t); x = lerp(midX, hx, fu); fy = arc(top, hyTop, Math.min(top, hyTop) - V.hopH * H, fu);
