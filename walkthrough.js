@@ -26,7 +26,7 @@ const ICONS = {
 };
 const ic = (name, cls = '') => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
 
-module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS }) {
+module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS, CHROME_CSS, chromeHTML }) {
   /* app case studies (a phone hero) draw every narrow screen in the site's own iPhone frame,
      the same device the main template uses (build.js phoneFrame + PHONE_CSS) */
   const bezel = !!cs.hero.phone;
@@ -63,7 +63,10 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
   /* every string on the page carries the JSON path it came from, so on localhost the text
      can be edited in place and written back to the case-study file (see server.js /__edit) */
   const E = p => ` data-edit="${p}"`;
-  const chrome = url => `<div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>${esc(url || 'driftwood.sh/dashboard')}</span></div>`;
+  /* the real Chrome rows from build.js (true metrics, scaled to the screenshot), never an invented bar (her 2026-11-19: "all the
+     images use this fake chrome header. that is literally nothing like what chrome header looks like and the scale is waaay
+     too big"). The tab reads "driftwood · <page>" like the home cards */
+  const chrome = (url, tab) => { url = url || 'driftwood.sh/dashboard'; return `<div class="chrome" aria-hidden="true">${chromeHTML({ url, tab: tab || 'driftwood · ' + (url.split('/')[1] || 'home') })}</div>`; };
   /* callouts: a handwritten label joined to a point on the screen. A note whose text was
      deleted is gone. On localhost, Edit text also lets the point (pin) and the label be dragged,
      so a line can be routed clear of the screen's own text; the numbers ride on the label */
@@ -92,7 +95,7 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
       ? `<img src="${A(f.poster)}" data-gif="${A(f.src)}" alt="${esc(f.alt)}" loading="lazy" decoding="async">`
       : `<img src="${A(f.src)}" alt="${esc(f.alt)}" loading="lazy" decoding="async">`;
     return `<div class="frame ${cls}${f.narrow ? ' narrow' : ''}${f.lit ? ' lit' : ''}" role="button" tabindex="0" data-view="${esc(f.view)}" data-src-path="${p}.src" data-src="${esc(f.src)}" aria-label="Explore: ${esc(f.alt)}">
-      ${f.narrow ? '' : chrome(f.url)}<span class="shot">${img}${mouseHTML(f.src)}${notesHTML(f.notes, p)}</span></div>`;
+      ${f.narrow ? '' : chrome(f.url, f.tab)}<span class="shot">${img}${mouseHTML(f.src)}${notesHTML(f.notes, p)}</span></div>`;
   };
 
   /* ASCII ducks for the client cards — driftwood's debugging duck, rubber-duck yellow, each
@@ -293,7 +296,7 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
 /* a refresh always starts at the top of the walkthrough (a #view- link still opens its viewer) */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, '', location.pathname);</script>
-<style>${CSS(asset, bezel ? PHONE_CSS : '')}</style>
+<style>${CSS(asset, bezel ? PHONE_CSS : '')}${CHROME_CSS || ''}</style>
 </head>
 <body data-tone="ink"${cs.hero.phone ? ' data-phone' : ''} data-slug="${esc(cs.slug)}" data-dir="${esc(cs.dir)}">
 <a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
@@ -632,16 +635,16 @@ figcaption{font-size:12px;color:#8b909b;margin-top:20px}
 
 /* frames: dimmed until hovered, then reveal (a "lit" frame stays lit); click opens the viewer */
 .frame{display:block;width:100%;position:relative;cursor:pointer;border-radius:16px;overflow:visible;background:#1a1d24;border:1px solid #2a2e38;text-align:left;box-shadow:0 30px 80px -40px rgba(0,0,0,.8);transition:transform .6s var(--ease),border-color .4s,box-shadow .6s}
-.frame .chrome{display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;background:#1e2129;border-bottom:1px solid #2a2e38;border-radius:15px 15px 0 0}
-.frame .chrome i{width:9px;height:9px;border-radius:50%;background:#3a3e48}
-.frame .chrome span{margin-left:12px;font-size:12px;color:#8b909b;background:#15171c;border-radius:6px;padding:2px 12px}
+.frame{container-type:inline-size;--u:.0781cqw}   /* 1pt of a 1280pt Chrome window, so the bar scales WITH the screenshot */
+.frame .chrome{transition:filter .7s var(--ease);display:flex;flex-direction:column;overflow:hidden;border-radius:calc(10*var(--u)) calc(10*var(--u)) 0 0;
+  --font-utility:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif;--accent:#8fb2f2}   /* Chrome's own UI face on a Mac */
 .shot{position:relative;display:block}
 /* the frame doesn't clip (a callout may hang off the screen), so the screenshot rounds its own corners */
-.frame img{width:100%;border-radius:0 0 15px 15px;transition:filter .7s var(--ease),transform 1.2s var(--ease)}
-.frame.narrow img{border-radius:19px}.frame.bare .chrome{border-radius:17px 17px 0 0}.frame.bare img{border-radius:0 0 3px 3px}
+.frame img{width:100%;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));transition:filter .7s var(--ease),transform 1.2s var(--ease)}
+.frame.narrow img{border-radius:19px}.frame.bare .chrome{border-radius:calc(10*var(--u)) calc(10*var(--u)) 0 0}.frame.bare img{border-radius:0 0 3px 3px}
 @media (hover:hover){
-  .frame img{filter:brightness(.42) saturate(.6)}
-  .frame:hover img,.frame:focus-visible img,.frame.lit img{filter:none}
+  .frame img,.frame .chrome{filter:brightness(.42) saturate(.6)}   /* the bar dims and lights WITH its screenshot: one object */
+  .frame:hover img,.frame:focus-visible img,.frame.lit img,.frame:hover .chrome,.frame:focus-visible .chrome,.frame.lit .chrome{filter:none}
   .frame:hover{border-color:#4a5268;box-shadow:0 40px 100px -40px rgba(95,192,216,.25)}
 }
 .frame:focus-visible{outline:2px solid var(--cy);outline-offset:4px}

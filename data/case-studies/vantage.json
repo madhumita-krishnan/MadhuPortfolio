@@ -2,10 +2,9 @@
   "slug": "vantage",
   "name": "Vantage",
   "order": 0,
-  "title": "Coded prototypes are easy to build now — and weirdly hard to share.",
+  "title": "Coded prototypes are easy to build now — and weirdly hard to share",
   "tagline": "A private, revocable way to share a coded prototype with the exact people you choose — and see how they actually use it.",
   "tags": [
-    "In research",
     "Open source",
     "Built with Claude Code"
   ],

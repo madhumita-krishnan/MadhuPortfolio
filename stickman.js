@@ -589,6 +589,8 @@
     if (CLAY.ready && !CLAY.moveReady) return false;
     if (fig.state !== 'move' && fig.state !== 'idle') return false;
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false;
+    var ab = !fig.loadT && aimBar(p);
+    if (ab && fig.y - ab.y > JUMP_MAX && hangJump(ab, p)) { start(); return true; }   // a line out of a plain jump's reach: aimed
     var vy = -Math.sqrt(2 * G * (Math.min(up * 1.6, JUMP_MAX) + 20)), vx = Math.max(-RUN, Math.min(RUN, (p.x - fig.x) * 1.5));
     if (Math.abs(vx) > 20) fig.dir = Math.sign(vx);
     if (Math.abs(vx) > 240) flipFor(2 * -vy / G);
@@ -629,10 +631,14 @@
   }
   function tapJump(p) {
     if (CLAY.ready && !CLAY.moveReady) return;
-    if (fig.state === 'air' || fig.state === 'mantle' || fig.state === 'hang' || fig.loadT) return;
+    if (fig.state === 'hang') return;
+    if (fig.state === 'air' || fig.state === 'mantle' || fig.loadT) {   // mid-climb from the first tap: stop the climb, jump on landing
+      fig.target = null; fig.waypoint = null; fig.tapQ = { x: p.x, y: p.y, t: performance.now() }; return;
+    }
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false; fig.state = 'idle';
-    var ty = clickGround(p), b = ty != null && ty < fig.y - STEP_UP ? { x: p.x, y: ty } : null;
-    if (b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // a line up there she can reach: onto it
+    var ty = clickGround(p), b = ty != null && ty < fig.y - STEP_UP ? { x: p.x, y: ty } : null, ab;
+    if ((ab = aimBar(p)) && hangJump(ab, p)) { }   // a word double-tapped: up to hang from it (a tap above her then muscles up)
+    else if (b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // a line up there she can reach: onto it
     else {   // nothing to land on in reach: straight up toward the finger and back down
       fig.dir = p.x >= fig.x ? 1 : -1;
       jumpFor(Math.max(40, fig.y - p.y), 0); fig.vx = Math.max(-220, Math.min(220, (p.x - fig.x) * 1.6));
@@ -791,6 +797,32 @@
   }
 
   /* ------------------------------------------------------------------ physics */
+  /* AN AIMED HANG (her 2026-11-19: "avatar need to be able to jump high enough to hang on the word disciplines"): a jump
+     aimed at a line (double tap on a phone, drag-up on a laptop) used to grab the FIRST bar her hands passed, the line
+     under the one she was sent to, so a word two or three lines up was never reachable. Now the line under the pointer
+     is the aim: bars below it are let go by on the way up, and the jump is sized (past JUMP_MAX, up to HANG_MAX) so her
+     raised hands reach it. */
+  var HANG_MAX = 340;
+  function aimBar(p) {
+    var best = null;
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i], d = b.y - p.y;   // the line the pointer is on: its box runs from b.top down to the bar
+      if (p.x < b.x1 - 4 || p.x > b.x2 + 4 || d < -6 || b.y > fig.y - 30) continue;
+      if (b.top != null ? p.y < b.top - 6 : d > 60) continue;
+      if (!best || d < best.y - p.y) best = b;
+    }
+    return best;
+  }
+  function hangJump(b, p) {
+    var rise = fig.y - (b.y + LEG + HANDUP) + 4;   // feet apex that puts her hands just over the bar
+    if (rise > HANG_MAX) return false;
+    fig.aim = b; fig.dir = p.x >= fig.x ? 1 : -1;
+    fig.vy = -Math.sqrt(2 * G * Math.max(rise, 40)); fig.fallFrom = fig.y; fig.state = 'air';
+    var tUp = -fig.vy / G, gx = Math.max(b.x1 + 8, Math.min(b.x2 - 8, p.x));
+    fig.vx = Math.max(-RUN, Math.min(RUN, (gx - fig.x) / tUp));   // arrives under the aim at the top of the jump
+    puff(fig.x, fig.y, 2);
+    return true;
+  }
   function jumpFor(rise, dx) {
     /* the cap must afford JUMP_MAX plus the clearance margin — a lower cap silently
        shaves the apex and a "reachable" ledge never is */
@@ -1252,8 +1284,9 @@
       }
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
+    if (fig.aim && (fig.vy >= 0 || fig.state !== 'air')) fig.aim = null;   // the aim lasts the climb only
     /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target && (!CLAY.ready || (CLAY.sheetIn && CLAY.sheetIn['hang-swing-climb-x3'] && CLAY.sheetIn['monkey-x3']))) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
+    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target && !fig.tapQ && (!CLAY.ready || (CLAY.sheetIn && CLAY.sheetIn['hang-swing-climb-x3'] && CLAY.sheetIn['monkey-x3']))) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
       var handY = ny - LEG - HANDUP;
       /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
          her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
@@ -1263,11 +1296,13 @@
       for (var i = 0; i < bars.length; i++) {
         var b = bars[i], dh = handY - b.y;
         if (nx < b.x1 - 4 || nx > b.x2 + 4 || dh >= 15 || dh <= -70) continue;
+        if (fig.aim && b !== fig.aim && fig.vy < 0) continue;   // rising to an aimed line: the ones below pass by
         if (best && Math.abs(dh) >= Math.abs(best.dh)) continue;
         var gp = grip(nx, b.y, 14);   // a word gap is not a bar
         if (gp) best = { b: b, gp: gp, dh: dh };
       }
       if (best) {
+        fig.aim = null;
         fig.state = 'hang';
         var th0 = Math.max(-.3, Math.min(.3, fig.vx / 700)), om0 = Math.max(-2, Math.min(2, fig.vx / 220));
         fig.hang = { bar: best.b, hx: nx, th: th0, om: om0, la: th0, lw: om0 * 1.4, reach: 0,   // la/lw: the legs' own swing (see tickHang)
@@ -1280,7 +1315,7 @@
        when the goal is BELOW us — mantling up is the opposite of a descent, and it can
        intercept the very landing the route is falling toward. */
     var gA = fig.waypoint || fig.target;
-    if (fig.vx && !fig.boxJump && !(gA && gA.y > ny - 10)) {
+    if (fig.vx && !fig.boxJump && !fig.aim && !(gA && gA.y > ny - 10)) {   // never mid aimed hang: the bar is the goal
       var dirx = fig.vx > 0 ? 1 : -1;
       var py = ny - LEG;
       if (solid(nx + dirx * 5, py)) {
@@ -1519,6 +1554,8 @@
     rideT = Math.max(0, rideT - dt);
     fig.landT = Math.max(0, fig.landT - dt);
     fig.slideT = Math.max(0, fig.slideT - dt);
+    /* a double tap that came while the first tap's climb had her in the air: it fires the moment she's on her feet */
+    if (fig.tapQ && !fig.loadT && (fig.state === 'move' || fig.state === 'idle')) { var q = fig.tapQ; fig.tapQ = null; if (performance.now() - q.t < 1500) tapJump(q); }
     if (fig.loadT > 0) tickLoad(dt);
     else if (fig.state === 'move' || fig.state === 'idle') { var w = fig.state, wx = fig.x; tickGround(dt); crouchFirst(w, wx); }
     else if (fig.state === 'air') tickAir(dt);

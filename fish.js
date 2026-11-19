@@ -146,7 +146,7 @@ function dropMaterial(dropTex, clipY) {
 /* build the engine and compile both programs on a 2px stage nobody sees. The two prewarm materials are KEPT, so three.js
    never releases their programs when a flight disposes its own copies */
 export function prewarm() {
-  if ((shared && shared.keep) || !window.WebGLRenderingContext) return;
+  if ((shared && shared.keep) || live || !window.WebGLRenderingContext) return;   // never mid-flight: its 2px setSize shrank a live jump's canvas to nothing (her 2026-11-19: "the fish disappeared when it jumped up")
   const { renderer, tex } = engine();
   renderer.setSize(2, 2);
   const scene = new THREE.Scene(), cam = new THREE.OrthographicCamera(0, 2, 2, 0, -100, 100);
@@ -214,7 +214,12 @@ export function run(opts = {}) {
      the pot on the way down — so only glyphs in that column matter, and any line
      reaching into it caps the apex below itself. Ultra-cramped fallback: guarantee
      1.1 pot-heights and accept the sliver of shared air. */
-  let jumpTop = P.top - P.h * 2.4;
+  /* WHERE IT LEAVES AND WHERE IT LANDS (her 2026-11-19: "the fish isnt exiting and entering where I want it to"):
+     window.__fishOut / __fishIn are offsets from the mouth's centre in pot widths (0 = dead centre, + = right), and
+     __fishHigh scales the jump's height; her dials in studies/tweaker-fish/, saved in data/tweaks.json 'fish-lip'.
+     The air phase drifts across between them at a constant sideways speed, which is what a real throw does. */
+  const xOut = P.cx + P.w * (window.__fishOut ?? 0), xIn = P.cx + P.w * (window.__fishIn ?? 0);
+  let jumpTop = P.top - P.h * 2.4 * (window.__fishHigh ?? 1);
   if (band) {
     const walker = document.createTreeWalker(band, NodeFilter.SHOW_TEXT);
     const rng = document.createRange();
@@ -230,7 +235,7 @@ export function run(opts = {}) {
       rng.selectNodeContents(node);
       for (const r of rng.getClientRects()) {
         if (!r.width) continue;
-        if (r.right + scrollX > P.cx - hw && r.left + scrollX < P.cx + hw)
+        if (r.right + scrollX > Math.min(xOut, xIn) - hw && r.left + scrollX < Math.max(xOut, xIn) + hw)
           jumpTop = Math.max(jumpTop, r.bottom + scrollY + 24);
       }
     }
@@ -452,7 +457,8 @@ export function run(opts = {}) {
       docY = yLaunch + v0 * te - 0.5 * aE * te * te;
       vy = v0 - aE * te;
     }
-    fish.position.copy(W([P.cx, docY]));
+    const docX = t < TW ? xOut : t < TW + TA ? xOut + (xIn - xOut) * Math.min(tau / (2 * tUp), 1) : xIn;
+    fish.position.copy(W([docX, docY]));
     /* the somersault: 3π total (head-up out → one full roll → head-down in), thrown
        in TWO eased halves (2026-08-26: "the flip feels spazzy, not graceful" — a
        single smoothstep peaks its spin rate at p=0.5, fastest rotation at the exact
@@ -523,17 +529,18 @@ export function run(opts = {}) {
        the back lip nor inside the mouth. The cap trades a possible 2–3px of transient
        paint on the lip during the kick frame for the rim overlap that sells the whole
        illusion — the lesser wrong, per her spec. */
-    const slot = lipY - P.top;
-    const guard = rocking
-      ? Math.min(3 + (P.w / 2) * 5.2 * Math.max(dt, 1 / 60), slot * 0.45)
-      : 1;
-    mat.uniforms.uClip.value = lipW + lipRise + guard;
+    /* THE LINE SHE SETS IS THE LINE (her 2026-11-19: "the fish isnt appearing and disappearing at the line it says …
+       the pixels of the red line are way lower than where the fish pixels start"): hovering the pot both rocks it and
+       launches the fish, so every emergence happened mid-rock, where lipRise + guard lifted the cut ~19px above her
+       line (the two comments above are that guard's history). The cut is now her line exactly (1px for antialiasing);
+       a couple of px of tail over a tilting rim is the price, and the line is hers to move. */
+    mat.uniforms.uClip.value = lipW + 1;
 
     /* breach: the nose crossing the lip on the way UP is the exit splash (the nose
        rides L/2 above the centre while the fish points straight up)… */
     if (!frozen && !exited && docY < lipY + L * 0.2) {
       exited = true;
-      burst(new THREE.Vector3(P.cx, lipW + 2, 0), 16, 240, lipW - 6);
+      burst(new THREE.Vector3(xOut, lipW + 2, 0), 16, 240, lipW - 6);
     }
     /* …but the kick WAITS for the tail to clear (2026-08-26 fourth pass): kicking at
        nose-break set the pot rocking while half the body was still sliding through
@@ -560,8 +567,8 @@ export function run(opts = {}) {
     /* splashdown: falling, and the nose is back at the lip line */
     if (!frozen && exited && !splashed && vy > 0 && docY > lipY - L * 0.18) {
       splashed = true;
-      burst(new THREE.Vector3(P.cx, lipW + 2, 0), 26, 300, lipW - 6);
-      burst(new THREE.Vector3(P.cx, lipW + 2, 0), 8, 170, lipW - 6);
+      burst(new THREE.Vector3(xIn, lipW + 2, 0), 26, 300, lipW - 6);
+      burst(new THREE.Vector3(xIn, lipW + 2, 0), 8, 170, lipW - 6);
       kick(-10);
       endAt = ts + 1100;
     }

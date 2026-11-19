@@ -77,7 +77,7 @@
        "alt": "Spotify's current mixed-playlist screen with BPM and key badges on every song row",
        "narrow": true,
        "view": "today",
-       "title": "Spotify today: every row carries BPM and key data, and nothing in the app explains what any of it means."
+       "title": "Spotify today: every row carries BPM and key data, and nothing in the app explains what any of it means"
       }
      ]
     }
@@ -106,7 +106,7 @@
        "alt": "Redesigned playlist screen: clean song rows with transition data moved out of the main list",
        "narrow": true,
        "view": "redesign",
-       "title": "The same playlist, refocused: BPM and key data move out of the main list and appear where you actually mix."
+       "title": "The same playlist, refocused: BPM and key data move out of the main list and appear where you actually mix"
       }
      ]
     }
@@ -207,7 +207,7 @@
        "alt": "'Making mixing easy' sheet: match the key color, keep BPM close",
        "narrow": true,
        "view": "redesign",
-       "title": "Concepts explain themselves where they appear, and one sheet frames the two rules that matter: match the key color, keep BPM close."
+       "title": "Concepts explain themselves where they appear, and one sheet frames the two rules that matter: match the key color, keep BPM close"
       }
      ]
     }
@@ -331,7 +331,6 @@
   }
  },
  "tags": [
-  "Concept",
   "Interaction design",
   "Research-led"
  ],

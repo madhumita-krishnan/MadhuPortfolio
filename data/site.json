@@ -84,8 +84,8 @@
       {
         "slug": "driftwood-retention",
         "name": "Driftwood onboarding",
-        "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks.",
-        "tags": "Shipped · Web · Product design + code",
+        "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks",
+        "tags": "Web · Product design + code",
         "media": {
           "type": "browser",
           "src": "assets/case-studies/driftwood-retention/home-thumb.mp4",
@@ -110,8 +110,8 @@
       {
         "slug": "vantage",
         "name": "Vantage",
-        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them.",
-        "tags": "In research · Web · Open source",
+        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them",
+        "tags": "Web · Open source",
         "media": {
           "type": "landscape-video",
           "src": "assets/projects/vantage.mp4",
@@ -133,8 +133,8 @@
       {
         "slug": "pratus-kitchen",
         "name": "Pratu’s Kitchen",
-        "outcome": "Directing end-to-end brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand.",
-        "tags": "In progress · Web · Brand + product design + code",
+        "outcome": "Directing E2E brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand",
+        "tags": "Web · Brand + product design + code",
         "media": {
           "type": "browser",
           "src": "assets/case-studies/pratus-kitchen/demo.mp4",
@@ -159,8 +159,8 @@
       {
         "slug": "driftwood",
         "name": "Driftwood",
-        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours.",
-        "tags": "Shipped · Web · Strategy + code",
+        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours",
+        "tags": "Web · Strategy + code",
         "media": {
           "type": "browser",
           "src": "assets/case-studies/driftwood/home.mp4",
@@ -183,8 +183,8 @@
       {
         "slug": "spotify-mix",
         "name": "Spotify Mix redesign",
-        "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it.",
-        "tags": "Concept · Mobile · Interaction design",
+        "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it",
+        "tags": "Mobile · Interaction design",
         "media": {
           "type": "phone-video",
           "src": "assets/projects/spotify-screen.mp4",
@@ -201,7 +201,7 @@
       {
         "slug": "stack",
         "name": "Budgeting app",
-        "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, not reports, to make the product more valuable between paychecks.",
+        "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, to make budgeting guidance more valuable before spending",
         "tags": "Research · Mobile · Usability testing",
         "media": {
           "type": "phone-image",
@@ -221,7 +221,7 @@
       {
         "slug": "message-testing",
         "name": "Atlantic Health",
-        "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment.",
+        "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment",
         "tags": "Healthcare · Brand strategy · Research",
         "media": {
           "type": "landscape-video",
@@ -237,7 +237,7 @@
       {
         "slug": "ai-tools",
         "name": "My AI tools",
-        "outcome": "An in-page editor and a slider tweaker I built so I can change copy and visuals directly instead of describing them to AI.",
+        "outcome": "An in-page editor and a slider tweaker I built so I can change copy and visuals directly instead of describing them to AI",
         "tags": "Tooling · Web · Built with Claude Code",
         "media": {
           "type": "browser",
@@ -260,7 +260,7 @@
   },
   "disciplines": {
     "eyebrow": "Designing across disciplines",
-    "title": "Design in the brand and architecture world",
+    "title": "Architecture & service design",
     "panels": [
       {
         "org": "Michelob Ultra",

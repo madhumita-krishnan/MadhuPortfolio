@@ -22,6 +22,12 @@ const csDir = path.join(ROOT, 'data/case-studies');
 const cases = fs.readdirSync(csDir).filter(f => f.endsWith('.json'))
   .map(f => readJSON(path.join(csDir, f)))
   .sort((a, b) => (a.order || 99) - (b.order || 99));
+/* NO PERIODS IN HEADLINES OR TITLES (her rule, 2026-11-19): a title or a home-page headline that ends in "." is a
+   build warning. Captions, descriptions and subtitles are sentences and keep theirs. */
+[site, ...cases].forEach(d => (function walk(o, p) {
+  if (typeof o === 'string') { if (/(^|\.)(title|outcome|headline)$/.test(p) && /\.$/.test(o.trim())) console.warn(`⚠ headline ends in a period: ${p} "…${o.slice(-50)}"`); return; }
+  if (o && typeof o === 'object') for (const k in o) walk(o[k], p ? p + '.' + k : k);
+})(d, d.slug || 'site'));
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 /* Play / pause are drawn shapes centred on their 24-unit box, never the ▶ / ❚❚ characters —
@@ -86,8 +92,11 @@ function typo(s) {
   // a dangling dash is a deliberate break, not a widow — leave it alone
   if (/^[—–-]$/.test(w[w.length - 2])) return w.join(' ');
   const tail = w.splice(-2).join(' ');
-  return `${w.join(' ')} <span class="nw">${tail}</span>`;
+  return amp(`${w.join(' ')} <span class="nw">${tail}</span>`);
 }
+/* her ampersand (2026-11-19: "use the and symbol that looks like a 3 … with the two ticks"): every & set in display
+   type is the Ɛ-shaped sans one, from the font chosen in studies/tweaker-amp/ (data/tweaks.json 'amp') */
+const amp = h => h.replace(/&amp;/g, '<span class="amp">&amp;</span>');
 
 /* ---------------------------------------------------------------- CSS */
 /* "#F5EAD3" → "245,234,211", for tokens that need an rgba() alpha ramp of a theme hex */
@@ -109,6 +118,37 @@ const easedFade = (dir, peak, end, color = a => `rgba(0,0,0,${a})`) => {
 };
 /* the iPhone frame's CSS, shared with the walkthrough template (walkthrough.js) so
    every phone on the site is the same device */
+/* Chrome's two rows (tab strip + toolbar), real metrics in --u = 1pt of the pretend window; shared with the walkthrough
+   template so EVERY desktop screen on the site wears the same true-scale Chrome (her 2026-11-19: "all the images use this
+   fake chrome header. that is literally nothing like what chrome header looks like and the scale is waaay too big") */
+const CHROME_CSS = `.chrome-tabs{display:flex;align-items:flex-end;height:calc(40*var(--u));background:#DEE1E6;
+  padding-left:calc(14*var(--u));flex:0 0 auto;overflow:hidden}
+.chrome-tabs .lights{display:flex;gap:calc(8*var(--u));align-self:center;margin-right:calc(14*var(--u));flex:0 0 auto}
+.chrome-tabs .lights i{width:calc(12*var(--u));height:calc(12*var(--u));border-radius:50%;display:block}
+.chrome-tabs .lights i:nth-child(1){background:#EC6A5E}
+.chrome-tabs .lights i:nth-child(2){background:#F4BF4F}
+.chrome-tabs .lights i:nth-child(3){background:#61C554}
+.chrome-tabs .tab{display:flex;align-items:center;gap:calc(7*var(--u));background:#fff;
+  border-radius:calc(9*var(--u)) calc(9*var(--u)) 0 0;height:calc(34*var(--u));
+  width:calc(240*var(--u));padding:0 calc(10*var(--u));overflow:hidden;white-space:nowrap;
+  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));letter-spacing:.01em;color:#202124}
+.chrome-tabs .fav{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3*var(--u));background:var(--accent);flex:0 0 auto}
+.chrome-tabs .tab-t{flex:1;overflow:hidden;text-overflow:ellipsis}
+.chrome-tabs .tab-x{color:#5F6368;flex:0 0 auto}
+.chrome-tabs .tab-plus{align-self:center;margin-left:calc(10*var(--u));color:#5F6368;
+  font-family:var(--font-utility);font-size:max(7px,calc(16*var(--u)));line-height:1}
+.chrome-nav{display:flex;align-items:center;gap:calc(10*var(--u));height:calc(40*var(--u));
+  background:#fff;padding:0 calc(14*var(--u));border-bottom:1px solid #DADCE0;flex:0 0 auto}
+.chrome-nav .nav-ic{font-family:var(--font-utility);font-size:max(6px,calc(13*var(--u)));color:#5F6368;flex:0 0 auto}
+.chrome-nav .nav-ic.is-off{opacity:.35}
+.chrome-nav .omni{flex:1;display:flex;align-items:center;gap:calc(7*var(--u));height:calc(28*var(--u));
+  border-radius:999px;background:#F1F3F4;padding:0 calc(12*var(--u));overflow:hidden;white-space:nowrap;
+  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));color:#202124}
+.chrome-nav .lock{width:calc(9*var(--u));height:calc(9*var(--u));border-radius:calc(2*var(--u));
+  border:1px solid #5F6368;opacity:.7;flex:0 0 auto}
+.chrome-nav .prof{width:calc(18*var(--u));height:calc(18*var(--u));border-radius:50%;
+  background:linear-gradient(135deg,#7A9CC6,#4A6B96);flex:0 0 auto}
+`;
 const PHONE_CSS = `/* ---------- iPhone frame (see DEVICE_MOCKUP_SPEC.md) ----------
    Every dimension is a fraction of the screen width SW, so one frame scales to any
    size. Screen is 9:19.5 (0.4615); black glass bezel 0.0305·SW; titanium rail
@@ -187,6 +227,19 @@ function swipeTweaks() {
 /* THE PHONE HERO FRAME (her 2026-10-24: "something about the mobile hero doesn't sit well"): the hero fills the
    first screen, one spacing scale, accent on one thing, wordmark on the copy's left edge. Every number is a dial
    in studies/tweaker-hero/; Save writes data/tweaks.json['hero-frame'] and these become the defaults. */
+/* the Ɛ-shaped ampersands (her "looks like a 3", then "the and with the two ticks, one on top and bottom" and "this
+   doesnt seem to fit the font", 2026-11-19: the italic serifs were out): upright geometric sans at the heading's 600,
+   each an Ɛ with a t whose stem ticks out at the top and bottom. Only the &-glyph is fetched (text=%26, ~2KB). */
+const AMP_FONTS = ['Albert Sans', 'Space Grotesk', 'Archivo', 'Gabarito', 'Syne'];
+const AMP = Object.assign({ font: 'Albert Sans', size: 1, drop: 0, gap: 0 }, TWEAKS['amp'] || {});
+const ampLink = f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@600&text=%26&display=swap" rel="stylesheet">`;
+/* SELECTED WORK HOVER (her 2026-11-19: "If I go to hover over a project in my selected work I dont need the other
+   projects to be visible"; then "i dont like it disappearing in vertical scroll … maybe just blur them out", "The case
+   study hovering this only applies to the vertical scrolling", and "when im still and hovering, the state is on. when i
+   start scrolling the state is off"): the list view only, the others blurred, never while the page moves. The options
+   and dials live in studies/tweaker-hover/; Save writes data/tweaks.json
+   'work-hover' and these become the defaults. */
+const WORK_HOVER = Object.assign({ mode: 'dim', op: 0.45, blur: 0, scale: 1.02, ms: 320, delay: 140, settle: 250, wash: true }, TWEAKS['work-hover'] || {});
 const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'eyebrow', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
 function heroFrameVars() {
   const h = HERO_FRAME, n = k => Number(h[k]) || 0;
@@ -286,7 +339,7 @@ body.dc-on,body.dc-on a,body.dc-on button,body.dc-on [role=tab]{cursor:none}
   transition:width .34s var(--ease-enter),height .34s var(--ease-enter),background .2s linear}
 /* night: the dot trades terracotta for the ink blue (2026-08-19 her ask). Night's
    ink-blue is a light value, so the dark bg-base label on the pill still reads. */
-[data-theme="night"] .dc-body{background:var(--ink-blue)}
+[data-theme="night"] .dc-body{background:var(--accent)}   /* the site blue, day and night (her rule "one cursor colour everywhere: the site blue"; 2026-11-19 "im curious is still white": night's --ink-blue is near-white) */
 .dc-body span{opacity:0;transition:opacity .16s linear;padding:0 16px;
   font-family:var(--font-utility);font-weight:500;font-size:.75rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--bg-base)}
@@ -1028,6 +1081,29 @@ a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--acc
    read as a cold sheet laid over the warm cream */
 .wproject:hover{background:var(--accent-wash)}
 .wproject:last-of-type{margin-bottom:0}
+/* the hover spotlight (WORK_HOVER above): app.js marks the section .wh-on and the hovered card .wh-cur; the others
+   fade to --wh-op (0 = gone). It rides the card's CHILDREN and uses filter + scale, never opacity/transform, because
+   the scroll/swipe morph tweens exactly those two with GSAP and a CSS transition on them would smear every frame. */
+.work-sec{--wh-op:${WORK_HOVER.op};--wh-blur:${WORK_HOVER.blur}px;--wh-scale:${WORK_HOVER.scale};--wh-ms:${WORK_HOVER.ms}ms}
+/* the others DIM, with only a touch of blur, and settle slowly (her 2026-11-19, in order: "it moves into blur so
+   dramatically. it can transition in the time that the im curious circle is spinning"; "I dont like how fast the blur
+   transition is. it can be smoother"; "dont just blur, dim. not sure why its hurting my eyes" — a strong blur makes the eye
+   keep trying to focus); then "the unblur is making me super dizzy … why does my head literally hurt": NO BLUR AT ALL —
+   animating a large area in and out of focus makes the eyes chase it, and it re-ran at every pause in a scroll. A plain
+   dim only. 0.9s on a soft ease-out. */
+/* ONE HOVER STATE (her 2026-11-19: "assess all the triggers for all the states … I notice the dimming happening as a
+   separate thing"): the cursor's "I'm curious" pill, the hovered project's wash and the others' dim used to run on three
+   triggers (pointerenter, plain :hover, mousemove held back by scrolls) with three timings. Now app.js sets ONE state —
+   .wh-on on the section, .wh-cur on the project — and the pill, wash and dim all follow it: in together over the wash's
+   320ms (--motion-base, --ease-standard), out together over 200ms, all cleared the moment a scroll starts. */
+.work-sec .wproject:hover{background:none}
+.work-sec .wproject,.wproject>*{transition:background .2s ease-out,filter .2s ease-out,scale .2s ease-out}
+.work-sec[data-wash].wh-on .wproject.wh-cur{background:var(--accent-wash);transition:background var(--wh-ms) var(--ease-standard)}
+.work-sec[data-view="list"].wh-on .wproject:not(.wh-cur)>*{transition:filter var(--wh-ms) var(--ease-standard),scale var(--wh-ms) var(--ease-standard)}   /* the others dim WITH the hovered project's highlight wash (--motion-base 320ms, same curve; her 2026-11-19: "the surrounding cases can dim faster when i hover. it can be at the speed of the highlight thing") */
+.work-sec[data-view="list"].wh-on:not([data-wh="off"]) .wproject:not(.wh-cur)>*{filter:opacity(var(--wh-op))}
+.work-sec[data-view="list"].wh-on[data-wh="blur"] .wproject:not(.wh-cur)>*{filter:opacity(var(--wh-op)) blur(var(--wh-blur))}
+.work-sec[data-view="list"].wh-on[data-wh="lift"] .wproject.wh-cur>.project-media-wrap{scale:var(--wh-scale)}
+@media (prefers-reduced-motion:reduce){.wproject>*{transition:none}}
 /* ------------------------------------------------ the swipe deck (deck.html, see sdeckHTML)
    Her v2 brief, measured from reference-swipe-deck.mov: the active card is ~73% of the width (capped by the
    screen's height so card + headline fit) and centred at 51% of the deck's height; every other card waits at
@@ -1274,7 +1350,11 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
     0 6px 16px var(--shadow-soft),
     0 1px 3px rgba(30,54,52,.10)}
 .w-chip.glass::after{opacity:1}
-.w-tags{font-family:var(--font-utility);font-size:.875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-primary)}   /* the subtext under each project: 14px in the brighter grey (her 2026-10-26: "hard to read") */
+/* ONE LABEL SET PER CARD, AND IT IS THE TOOL STACK (her 2026-11-19, in order: "we dont need both the shipped labels and the
+   type script pills", then "I feel like my tool stack was so important"): the status · platform · discipline line left the
+   cards and the "Built with" pills came back under the name. Same rhythm on every card; the pills wrap on a 6px gap. */
+.w-chiprow{row-gap:10px}
+.w-tags{flex-basis:100%;font-family:var(--font-utility);font-size:.875rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-primary)}   /* the subtext under each project: 14px in the brighter grey (her 2026-10-26: "hard to read") */
 /* the tech stack (her ask 2026-10-23: "a tech stack of all the things I used, the language it was coded
    in, if I used GitHub"), from site.json work.projects[].stack — only what the repos and case studies verify */
 .w-stack{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:calc(var(--space)*2) 0 0;padding:0}
@@ -1339,33 +1419,7 @@ ${PHONE_CSS}
    tab, 12pt traffic lights 8pt apart, 40pt toolbar with the #F1F3F4 omnibox pill,
    ink #202124, icons #5F6368. Hard-coded px or invented tints are the two things
    that give a fake browser away. */
-.chrome-tabs{display:flex;align-items:flex-end;height:calc(40*var(--u));background:#DEE1E6;
-  padding-left:calc(14*var(--u));flex:0 0 auto;overflow:hidden}
-.chrome-tabs .lights{display:flex;gap:calc(8*var(--u));align-self:center;margin-right:calc(14*var(--u));flex:0 0 auto}
-.chrome-tabs .lights i{width:calc(12*var(--u));height:calc(12*var(--u));border-radius:50%;display:block}
-.chrome-tabs .lights i:nth-child(1){background:#EC6A5E}
-.chrome-tabs .lights i:nth-child(2){background:#F4BF4F}
-.chrome-tabs .lights i:nth-child(3){background:#61C554}
-.chrome-tabs .tab{display:flex;align-items:center;gap:calc(7*var(--u));background:#fff;
-  border-radius:calc(9*var(--u)) calc(9*var(--u)) 0 0;height:calc(34*var(--u));
-  width:calc(240*var(--u));padding:0 calc(10*var(--u));overflow:hidden;white-space:nowrap;
-  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));letter-spacing:.01em;color:#202124}
-.chrome-tabs .fav{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3*var(--u));background:var(--accent);flex:0 0 auto}
-.chrome-tabs .tab-t{flex:1;overflow:hidden;text-overflow:ellipsis}
-.chrome-tabs .tab-x{color:#5F6368;flex:0 0 auto}
-.chrome-tabs .tab-plus{align-self:center;margin-left:calc(10*var(--u));color:#5F6368;
-  font-family:var(--font-utility);font-size:max(7px,calc(16*var(--u)));line-height:1}
-.chrome-nav{display:flex;align-items:center;gap:calc(10*var(--u));height:calc(40*var(--u));
-  background:#fff;padding:0 calc(14*var(--u));border-bottom:1px solid #DADCE0;flex:0 0 auto}
-.chrome-nav .nav-ic{font-family:var(--font-utility);font-size:max(6px,calc(13*var(--u)));color:#5F6368;flex:0 0 auto}
-.chrome-nav .nav-ic.is-off{opacity:.35}
-.chrome-nav .omni{flex:1;display:flex;align-items:center;gap:calc(7*var(--u));height:calc(28*var(--u));
-  border-radius:999px;background:#F1F3F4;padding:0 calc(12*var(--u));overflow:hidden;white-space:nowrap;
-  font-family:var(--font-utility);font-size:max(6px,calc(12*var(--u)));color:#202124}
-.chrome-nav .lock{width:calc(9*var(--u));height:calc(9*var(--u));border-radius:calc(2*var(--u));
-  border:1px solid #5F6368;opacity:.7;flex:0 0 auto}
-.chrome-nav .prof{width:calc(18*var(--u));height:calc(18*var(--u));border-radius:50%;
-  background:linear-gradient(135deg,#7A9CC6,#4A6B96);flex:0 0 auto}
+${CHROME_CSS}
 
 /* the standalone window: 1280pt wide, 10pt radius. Tab strip + toolbar stay 80u
    total — the 1.7343 SAME-box contract with the landscape cards depends on it. */
@@ -1431,6 +1485,10 @@ ${PHONE_CSS}
   width:14.5cqw;height:1.15cqw;border-radius:0 0 999px 999px;
   background:linear-gradient(90deg,#9EA0A5,#EDEFF4 14%,#F2F4F9 86%,#9EA0A5)}
 
+/* her ampersand in display type (see amp() in build.js; dials in studies/tweaker-amp/) */
+:root{--amp-font:${AMP.font};--amp-size:${AMP.size};--amp-drop:${AMP.drop};--amp-gap:${AMP.gap}}
+:is(h1,h2,h3,.section-title) .amp{font-family:var(--amp-font),var(--font-display);font-style:normal;font-weight:inherit;font-size:calc(var(--amp-size) * 1em);
+  line-height:0;position:relative;top:calc(var(--amp-drop) * 1em);margin:0 calc(var(--amp-gap) * 1em)}
 /* ------------------------------------------------ disciplines */
 .panels{display:flex;gap:calc(var(--space)*1.5);height:min(72vh,620px)}
 .panel{position:relative;flex:1 1 0;min-width:0;border-radius:var(--r-media);overflow:hidden;cursor:pointer;border:1px solid var(--line);
@@ -1451,6 +1509,11 @@ ${PHONE_CSS}
 .panel-content{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:calc(var(--space)*4);opacity:0;transform:translateY(12px);
   transition:opacity var(--motion-base) var(--ease-enter) 120ms,transform var(--motion-base) var(--ease-enter) 120ms;pointer-events:none}
 .panel.active .panel-content{opacity:1;transform:none}
+/* THE WORDS NEVER RE-FLOW (her 2026-11-19: "the words adjust their layout as the squares expand and contract … it
+   should just appear in the format that it will be finally when it is fully expanded"): the copy is laid out at the
+   OPEN panel's width (--open-w, measured by app.js from the row) from the first frame, and the growing panel simply
+   uncovers it. Phones stack the panels, where only the height moves, so they keep the plain full width. */
+@media (min-width:761px){.panel-content{right:auto;width:var(--open-w,100%)}}
 .p-org{font-family:var(--font-utility);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-bright);margin-bottom:calc(var(--space)*1)}
 .p-title{font-family:var(--font-display);font-weight:400;color:var(--text-on-deep);font-size:clamp(1.3rem,2.2vw,1.9rem);line-height:1.2;margin-bottom:calc(var(--space)*1);max-width:24ch}
 .p-desc{color:var(--text-on-deep-secondary);font-size:.98rem;line-height:1.5;max-width:52ch}
@@ -2220,6 +2283,31 @@ function makeJS() {
      deck (it lays out when shown) and the phone list (snapping, focus) to catch up */
   const workEl=document.querySelector('.work-sec');
   if(workEl){
+    /* hover spotlight (list view): the others blur while a still pointer rests on one project. Any scroll switches it
+       off at once; when the page has been still for 250ms the project under the resting pointer switches it back on.
+       Leaving waits a beat (--delay) so crossing the gap between cards doesn't flash. Mice only; 'off' does nothing. */
+    let whT=0,whDelay=${+WORK_HOVER.delay||0},whSettle=${+WORK_HOVER.settle||250},whScroll=0,whPt=null;
+    let whNow=null;
+    const whTell=c=>{if(c!==whNow){whNow=c;dispatchEvent(new CustomEvent('mk-wh',{detail:c}))}};   // the cursor pill follows this (see [data-curious])
+    const whClear=()=>{workEl.classList.remove('wh-on');workEl.querySelectorAll('.wh-cur').forEach(x=>x.classList.remove('wh-cur'));whTell(null)};
+    /* leaving a project never dims IT (her 2026-11-19: "when I unhover … the thing i was hovering over blurs and then
+       unblurs. I want it to stay unblurred"): it keeps .wh-cur until the whole spotlight clears, and only a NEW project
+       takes the mark away from it */
+    const whCur=c=>{clearTimeout(whT);
+      if(c&&workEl.dataset.view==='list'){workEl.querySelectorAll('.wh-cur').forEach(x=>x!==c&&x.classList.remove('wh-cur'));c.classList.add('wh-cur');workEl.classList.add('wh-on');whTell(c)}
+      else whT=setTimeout(whClear,c?0:whDelay)};
+    /* a REAL mouse move is intent and answers at once, even right after a scroll (her 2026-11-19: "the cursor is taking
+       too long to realize that im hovering"); only a pointer that sits still while the page slides under it waits for
+       the scroll to settle (browsers send a no-distance mousemove when content scrolls under the pointer) */
+    workEl.addEventListener('mousemove',e=>{const moved=!whPt||Math.hypot(e.clientX-whPt[0],e.clientY-whPt[1])>2;whPt=[e.clientX,e.clientY];
+      if(!finePointer.matches)return;if(document.documentElement.classList.contains('pe-on'))return whCur(null);   // editing the page: no hover show (her 2026-11-19: "when Im editing, i dont need to constantly see im curious")
+      if(whScroll){if(!moved)return;clearTimeout(whScroll);whScroll=0}whCur(e.target.closest('.wproject'))});
+    workEl.addEventListener('mouseleave',()=>{whPt=null;whCur(null)});
+    addEventListener('scroll',()=>{if(!finePointer.matches)return;clearTimeout(whT);whClear();clearTimeout(whScroll);
+      whScroll=setTimeout(()=>{whScroll=0;const el=whPt&&document.elementFromPoint(whPt[0],whPt[1]);whCur(el&&workEl.contains(el)?el.closest('.wproject'):null)},whSettle)},{passive:true});   // a real rest, not a pause mid-scroll
+    addEventListener('tweak',e=>{const v=e.detail.values||{};if(v.whMode==null)return;
+      workEl.dataset.wh=v.whMode;workEl.toggleAttribute('data-wash',!!v.whWash);whDelay=v.whDelay;
+      [['--wh-op',v.whOp/100],['--wh-blur',v.whBlur+'px'],['--wh-scale',v.whScale/100],['--wh-ms',v.whMs+'ms']].forEach(([k,x])=>workEl.style.setProperty(k,x))});
     const btns=[...workEl.querySelectorAll('.view-btn')];
     const setView=(v,save)=>{
       workEl.dataset.view=v;btns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
@@ -2433,8 +2521,14 @@ function makeJS() {
          own padding below the last one doesn't count (her 2026-10-26: "I've basically left the space where the toggle is
          needed. why would I need the toggle still there?"). data-serves names them for device-check's floating-UI rule */
       const served=[...workEl.querySelectorAll(dock.dataset.serves)],live=new Set();
-      const ioS=new IntersectionObserver(es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()},{rootMargin:'-45% 0px -45% 0px'});
-      served.forEach(el=>ioS.observe(el));
+      const seen=es=>{es.forEach(e=>e.isIntersecting?live.add(e.target):live.delete(e.target));inWork=live.size>0;sync()};
+      const ioS=new IntersectionObserver(seen,{rootMargin:'-45% 0px -45% 0px'});
+      /* the swipe deck keeps its toggle until it has nearly left the top of the screen (her 2026-11-19: "there was a case
+         where the toggle in the bottom right wasnt there and the top section wasnt visible": scrolled down with the deck's
+         case still filling the top third, the middle-band rule had taken the toggle away while the nav was tucked up, so no
+         way to switch views was on screen). It counts while any of it reaches the band 25–40% down the screen */
+      const ioD=new IntersectionObserver(seen,{rootMargin:'-25% 0px -60% 0px'});
+      served.forEach(el=>(el.classList.contains('sdeck')?ioD:ioS).observe(el));
       if(navW)new MutationObserver(sync).observe(navW,{attributes:true,attributeFilter:['class']});
       addEventListener('mk-work-view',()=>{hold=true});
       const release=()=>{if(hold){hold=false;sync()}};
@@ -2718,6 +2812,14 @@ function makeJS() {
     addEventListener('keydown',e=>{if(/^(Escape|ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key))focusOff()});
     addEventListener('pointerdown',e=>{if(!sd.contains(e.target))focusOff()});
     let wAcc=0,wLock=false,wDir=0,wPts=[],wT=0,wGap=0,wPrev=0,wPeak=0,wFloor=0,wRise=0,wGrow=0;
+    /* ONE GESTURE, ONE AXIS (her 2026-11-19: "im on driftwood onboarding in horizontal scroll. im trying to scroll up but the
+       site wont let me and keeps pulling me down"): a trackpad scroll up is never perfectly straight, and the diagonal bits
+       of it read as a sideways swipe, which blocked the page and glided the deck back to centre. Now a gesture's axis is
+       decided by its first events and kept until the trackpad has been quiet for 220ms, momentum included: a gesture that
+       starts vertical belongs to the page from start to finish. */
+    let wAxis=null,wAxisT=0,wSx=0,wSy=0;
+    addEventListener('wheel',e=>{if(e.timeStamp-wAxisT>220){wAxis=null;wSx=wSy=0}wAxisT=e.timeStamp;
+      if(!wAxis){wSx+=Math.abs(e.deltaX);wSy+=Math.abs(e.deltaY);if(wSx+wSy>=6)wAxis=wSx>wSy?'x':'y'}},{passive:true,capture:true});   // decided on the first ~6px of travel, not one noisy event
     /* on the WINDOW, not the deck, with no dead spots (her: "sometimes I have trouble horizontally scrolling … not sure
        where the dead spots are"). Three were found: (1) it only listened while the deck covered the exact middle of the
        screen — now the cursor being over the deck is always enough, or the deck simply being well on screen; (2) after one
@@ -2726,10 +2828,11 @@ function makeJS() {
        diagonal swipe read as vertical — mostly-sideways (dx > 0.7 dy) now counts. */
     addEventListener('wheel',e=>{
       const ax=Math.abs(e.deltaX),ay=Math.abs(e.deltaY);
-      if(ax<=ay*.7||ax<1||!sd.offsetParent)return;
+      if(wAxis==='y'||ax<=ay*.7||ax<1||!sd.offsetParent)return;
       const r=sd.getBoundingClientRect(),over=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
       const onScreen=Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>Math.min(r.height,innerHeight)*.45;
       if(!over&&!onScreen)return;
+      if(!wAxis){e.preventDefault();return}   // the gesture's first few px, still undecided: hold the browser's own swipe-back, act once it's sideways
       e.preventDefault();touched=true;focusOn();
       const dir=Math.sign(e.deltaX);
       /* a NEW swipe while locked, never needing a gap (her: "sometimes my mouse is in the center … and I can't scroll
@@ -2900,6 +3003,7 @@ function makeJS() {
         dc.classList.remove('turning','pill');
       }
     }
+    addEventListener('mk-wh',e=>{const c=e.detail;c?curious(true,c.dataset.curious):curious(false)});
     document.querySelectorAll('[data-curious]').forEach(card=>{
       /* deck cards: the pill only on the centred demo, and the deck's own code owns the click (drag, peeks) */
       if(card.classList.contains('scard')){
@@ -2908,8 +3012,10 @@ function makeJS() {
         card.addEventListener('pointerdown',()=>curious(false));
         return;
       }
-      card.addEventListener('pointerenter',()=>curious(true,card.dataset.curious));
-      card.addEventListener('pointerleave',()=>curious(false));
+      /* a list project's pill is part of the ONE hover state (mk-wh, see .wh-on): it opens and closes with the wash and
+         the dim, never on its own; other [data-curious] links and touch keep plain enter/leave */
+      const inList=card.classList.contains('wproject')&&finePointer.matches;
+      if(!inList){card.addEventListener('pointerenter',()=>curious(true,card.dataset.curious));card.addEventListener('pointerleave',()=>curious(false))}
       card.addEventListener('click',e=>{
         if(e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;   // let people open in a new tab
         if(card.target==='_blank'){curious(false);return}           // new-tab links keep their default
@@ -3011,6 +3117,11 @@ function makeJS() {
   const panels=[...document.querySelectorAll('#panels .panel')];
   if(panels.length){
     function activate(target){panels.forEach(p=>{const on=p===target;p.classList.toggle('active',on);p.setAttribute('aria-selected',String(on))})}
+    /* the open panel's final width, so its copy is set once at that width (see .panel-content): flex-grow 8 against
+       1 for each closed panel, after the gaps and each panel's 1px border */
+    const row=panels[0].parentElement;
+    new ResizeObserver(()=>{const gap=parseFloat(getComputedStyle(row).columnGap)||0,n=panels.length;
+      row.style.setProperty('--open-w',((row.clientWidth-gap*(n-1)-2*n)*8/(8+n-1))+'px')}).observe(row);
     panels.forEach(p=>{
       p.addEventListener('click',()=>activate(p));
       p.addEventListener('mouseenter',()=>{if(finePointer.matches)activate(p)});
@@ -3146,9 +3257,10 @@ function makeJS() {
     /* the disappear-line dial (studies/tweaker-fish/, local only): moves the front-lip line, can draw it on the
        pot, slows the flight down, and re-launches the fish after each change */
     window.__fishLip=${JSON.stringify((TWEAKS['fish-lip'] || {}).lip ?? 10.5)}/100;
+    window.__fishOut=${+((TWEAKS['fish-lip'] || {}).out ?? 0)}/100;window.__fishIn=${+((TWEAKS['fish-lip'] || {}).in ?? 0)}/100;window.__fishHigh=${+((TWEAKS['fish-lip'] || {}).high ?? 100)}/100;
     let guide=null,again=0;
     addEventListener('tweak',e=>{const v=e.detail.values||{};if(v.lip==null)return;
-      window.__fishLip=v.lip/100;window.__fishSlow=v.slow||1;
+      window.__fishLip=v.lip/100;window.__fishSlow=v.slow||1;if(v.out!=null){window.__fishOut=v.out/100;window.__fishIn=v.in/100;window.__fishHigh=v.high/100}
       if(v.showLine){potEl.style.position='relative';   // the line rides on the pot, rocking and all
         guide=guide||potEl.appendChild(Object.assign(document.createElement('i'),{style:'position:absolute;left:-24px;right:-24px;height:1px;background:#ff3b6b;pointer-events:none'}));
         guide.style.top=v.lip+'%'}
@@ -3217,6 +3329,7 @@ ${card ? (card.line ? `<meta property="og:description" content="${esc(card.line)
 <!-- Google Fonts load WITHOUT blocking the page (media=print, then all): a slow or blocked fonts host used to leave the page
      blank until it timed out; now it shows in the fallback font and swaps (device-check blocked-third-party / slow-3g) -->
 <link href="${theme.fonts['google-css']}" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="${theme.fonts['google-css']}" rel="stylesheet"></noscript>
+${process.env.VERCEL ? ampLink(AMP.font) : AMP_FONTS.map(ampLink).join('')}
 <!-- a RELOAD always starts at the top (her 2026-10-24: it reopened on Selected Projects); back/forward and a Work link from a case study still land where they should -->
 <script>(function(){var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0],r=n&&n.type==='reload';
 if('scrollRestoration' in history)history.scrollRestoration=r?'manual':'auto';
@@ -3560,7 +3673,7 @@ function renderHome() {
   <a class="wproject fade" href="${esc(p.slug)}.html" data-curious>
     <div class="w-copy">
       <h3 class="w-outcome">${typo(p.outcome)}</h3>
-      <p class="w-chiprow">${p.icon ? `<img class="w-logo" src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" width="28" height="28" draggable="false">` : ''}<span class="w-name">${esc(p.name)}</span><span class="w-tags">${esc(p.tags)}</span></p>
+      <p class="w-chiprow">${p.icon ? `<img class="w-logo" src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" width="28" height="28" draggable="false">` : ''}<span class="w-name">${esc(p.name)}</span></p>
       ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
     <div class="project-media-wrap">${projectMedia(p)}</div>
@@ -3585,7 +3698,7 @@ function renderHome() {
   const workHTML = `
 <!-- the vertical list is the primary view (her 2026-10-24: "the vertical scroll should be the primary one"); the swipe deck is
      the alternative, and a visitor who picked it keeps it (localStorage) -->
-<section id="work" class="work-sec" data-view="list">
+<section id="work" class="work-sec" data-view="list" data-wh="${esc(WORK_HOVER.mode)}"${WORK_HOVER.wash ? ' data-wash' : ''}>
   <div class="work-head">
     <h2 class="section-title fade">${typo(site.work.title)}</h2>
     <div class="view-toggle head-toggle" role="group" aria-label="How to browse the projects (top)">
@@ -4007,8 +4120,10 @@ function lintIcons(html, page) {
    split the headline into the .ch spans she climbs first. Its tag used to sit in the hero, ABOVE app.js, so it really ran
    first, and on a slow connection the whole hero (headline included) waited for her 150KB script: the headline showed at
    ~8s on slow 3G instead of with app.js (device-check, 2026-10-27). She joins the opening late via __mkHero* flags. */
+/* the localhost tweaker dock, only where its files exist (a checkout without studies/ would serve a 404 on every page) */
+const DEV_TOOLS = fs.existsSync(path.join(ROOT, 'studies', 'tweaker-deck', 'tweak-dock.js'));
 const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>\n<script src="lean.js?v=' + BUILD_V + '" defer></script>');   // the first-focus lean (lean.js)
-fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n</body>'));
+fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL || !DEV_TOOLS ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n<script src="studies/tweaker-deck/tweak-dock.js"></script>\n</body>'));
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
 const renderWalkthrough = require('./walkthrough.js');
@@ -4024,9 +4139,11 @@ const edgeArrows = cs => {
   return `<a class="cs-edge prev" href="${esc(prev)}.html" aria-label="Previous project">${ARROW('M19 12 L5 12 M11 6 L5 12 L11 18')}</a>`
     + `<a class="cs-edge next" href="${esc(next)}.html" aria-label="Next project">${ARROW('M5 12 L19 12 M13 6 L19 12 L13 18')}</a>`;
 };
+/* on localhost the tweaker dock on case studies too */
+const caseTail = process.env.VERCEL || !DEV_TOOLS ? '' : '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n<script src="studies/tweaker-deck/tweak-dock.js"></script>';
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
-  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS })
-    : renderCase(cs).replace(/(<a class="skip"[^>]*>[^<]*<\/a><style>[^<]*<\/style>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`));
+  cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS, CHROME_CSS, chromeHTML })
+    : renderCase(cs).replace(/(<a class="skip"[^>]*>[^<]*<\/a><style>[^<]*<\/style>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`).replace('</body>', caseTail + '\n</body>'));
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the resume sheet shows a picture of Madhumita-Krishnan-Resume.pdf with its links laid over it: a new PDF needs a new picture */
