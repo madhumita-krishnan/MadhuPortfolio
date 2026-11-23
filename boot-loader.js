@@ -20,13 +20,19 @@
 (function () {
   var de = document.documentElement, B = document.getElementById('boot'); if (!B) return;
   var C = __CFG__, V = C.v, FR = C.frames, ORDER = Object.keys(FR), NS = 'http://www.w3.org/2000/svg';
+  /* DAY (2026-11-22, the home page's day look): her loader values are the night look (white goo on near-black); by day the same
+     loader runs in the day inks — dark goo on the light ground, the tide blue where night uses her moon blue. Her values stay as set. */
+  var DAY = document.documentElement.getAttribute('data-theme') !== 'night', GROUND = DAY ? '250,250,248' : '15,16,19', HI = DAY ? '#3a62ab' : '#8fb2f2';
+  if (DAY) V = Object.assign({}, V, { ink: '#161a24' });
   var now = function () { return performance.now(); };
   /* WHEN IT PLAYS (her 2026-10-27, first "only when the site is loading the first time", then "i want the loading animation
      everytime I reload the site from the home page but not when I go to the home page from another page"): it plays on a
      fresh arrival and on every reload; coming to the home page from another page of the site (a link, or back/forward)
      goes straight to the page. ?boot shows it anyway (for checking) */
   var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0], how = nav ? nav.type : '';
-  var fromSite = false; try { fromSite = !!document.referrer && new URL(document.referrer).origin === location.origin && new URL(document.referrer).pathname !== location.pathname; } catch (e) {}
+  /* same HOST, any port (her 2026-11-23: "when I click the M-K logo to go back home... are we really reloading everything"): the
+     local case-study drafts run on another port (:4191), which made the home page treat them as another site and replay the loader */
+  var fromSite = false; try { var rf = document.referrer && new URL(document.referrer); fromSite = !!rf && rf.hostname === location.hostname && (rf.port !== location.port || rf.pathname !== location.pathname); } catch (e) {}
   if (how !== 'reload' && (how === 'back_forward' || fromSite) && !/[?&]boot\b/.test(location.search)) { B.parentNode.removeChild(B); de.classList.add('booted'); window.__mkBootAt = now(); window.__mkBoot = Promise.resolve(); return; }
   var res; window.__mkBoot = new Promise(function (r) { res = r; });
   if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches)
@@ -311,12 +317,12 @@
           cx2 = ax, cy2 = Math.max(ay, S.ptr.y) + Math.min(160, M.H * .2), bx = S.ptr.x, by = S.ptr.y;   // a curve that dips under, then rises into the pointer
         X = (1 - e) * (1 - e) * ax + 2 * e * (1 - e) * cx2 + e * e * bx; Y = (1 - e) * (1 - e) * ay + 2 * e * (1 - e) * cy2 + e * e * by;
         var z = d.R + (6.5 - d.R) * e; w = h = 2 * z;                                            // to the cursor dot's 13px
-        S.line.setAttribute('fill', e > .5 ? '#8fb2f2' : V.ink); S.line.style.transition = 'fill .25s linear'; }
+        S.line.setAttribute('fill', e > .5 ? HI : V.ink); S.line.style.transition = 'fill .25s linear'; }
     }
     S.line.setAttribute('x', (X - w / 2).toFixed(2)); S.line.setAttribute('width', w.toFixed(2));
     S.line.setAttribute('y', (Y - h / 2).toFixed(2)); S.line.setAttribute('height', h.toFixed(2));
     S.line.setAttribute('rx', (Math.min(w, h) / 2).toFixed(2)); S.line.style.opacity = hand.toFixed(3);
-    S.ld.style.background = 'rgba(15,16,19,' + (1 - u4 * u4).toFixed(3) + ')';
+    S.ld.style.background = 'rgba(' + GROUND + ',' + (1 - u4 * u4).toFixed(3) + ')';
     return true;
   }
 

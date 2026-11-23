@@ -15,3 +15,6 @@ node_modules/
 # Contact sheets from tools/make-hand-font.js --proof/--glyphs. Development output, kept
 # out of assets/ so build.js does not ship them to Pages.
 font-proofs/
+
+# local-only review links to the case-study drafts (build.js): never ship
+data/*.local.json

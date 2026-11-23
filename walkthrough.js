@@ -296,7 +296,11 @@ module.exports = function renderWalkthrough(cs, { esc, asset, site, cases, ROOT,
 /* a refresh always starts at the top of the walkthrough (a #view- link still opens its viewer) */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, '', location.pathname);</script>
-<style>${CSS(asset, bezel ? PHONE_CSS : '')}${CHROME_CSS || ''}</style>
+<style>${CSS(asset, bezel ? PHONE_CSS : '')}${CHROME_CSS || ''}
+/* the hero FILM (2026-11-22, her rule: the home card and the case-study hero are always the same film; render-teaser.sh writes both) */
+.stage-film{display:flex;justify-content:center;margin-top:48px}
+.hero-film{display:block;width:min(960px,100%);height:auto;aspect-ratio:1840/880;border-radius:20px;background:#fff;box-shadow:0 0 0 1px rgba(22,26,36,.06),0 10px 24px -14px rgba(20,40,60,.24)}
+</style>
 </head>
 <body data-tone="ink"${cs.hero.phone ? ' data-phone' : ''} data-slug="${esc(cs.slug)}" data-dir="${esc(cs.dir)}">
 <a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
@@ -318,14 +322,14 @@ if (location.hash && !/^#view-/.test(location.hash)) history.replaceState(null, 
   <h1${E('title')}>${md(cs.title)}</h1>
   <p class="sub"${E('subtitle')}>${md(cs.subtitle)}</p>
   ${cs.designSystem ? `<p class="ds-row"><a class="btn-o" href="${esc(cs.designSystem)}" target="_blank" rel="noopener"><span>View design system</span></a></p>` : ''}
-  <div class="stage">
+  ${cs.hero.film ? `<div class="stage stage-film"><video class="hero-film" src="${A(cs.hero.film.video)}" poster="${A(cs.hero.film.poster)}" muted loop playsinline autoplay preload="auto" aria-label="${esc(cs.hero.film.alt)}"></video></div>` : `<div class="stage">
     ${cs.hero.phone ? `<div class="hero-phone">${phoneFrame(cs.hero.phone.video
       ? `<video src="${A(cs.hero.phone.video)}" poster="${A(cs.hero.phone.poster)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(cs.hero.phone.alt)}"></video>`
       : `<img src="${A(cs.hero.phone.src)}" alt="${esc(cs.hero.phone.alt)}" fetchpriority="high">`, { island: cs.hero.phone.island !== false })}</div>` : `
     <div class="mac"><div class="screen frame bare" role="button" tabindex="0" data-view="${esc(cs.hero.main.view)}" data-src-path="hero.main.src" data-src="${esc(cs.hero.main.src)}" aria-label="Explore: ${esc(cs.hero.main.alt)}">
       <span class="shot"><img src="${A(cs.hero.main.src)}" alt="${esc(cs.hero.main.alt)}" fetchpriority="high">${mouseHTML(cs.hero.main.src)}</span></div><span class="base" aria-hidden="true"></span></div>`}
     ${(cs.hero.floats || []).map(f => `<img class="float ${f.pos}" src="${A(f.src)}" alt="${esc(f.alt)}">`).join('')}
-  </div>
+  </div>`}
 </header>
 
 
@@ -334,7 +338,7 @@ ${cs.sections.map(section).join('\n')}
 
 <footer class="foot">
   <a class="foot-next" href="${caseHref(cs.next)}"><span class="eyebrow">Next project</span><span class="foot-name">${esc((cases.find(c => c.slug === cs.next) || {}).name || 'All work')}<span class="arrow-btn" aria-hidden="true">${ic('arrow')}</span></span></a>
-  <p><a href="mailto:${esc(site.email)}">${esc(site.email)}</a>${(site.footer.links || []).map(l => ` · <a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</p>   <!-- the main footer's LinkedIn / Twitter too (her: "linkedin is not linked") -->
+  <p><a href="mailto:${esc(site.email)}">${esc(site.email)}</a>${(site.footer.links || []).map(l => ` · <a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</p>   <!-- the main footer's LinkedIn / X too (her: "linkedin is not linked") -->
 </footer>
 
 <dialog class="viewer" aria-label="Explore this screen" tabindex="-1">
@@ -451,7 +455,8 @@ main{position:relative}
 .sec.past{filter:blur(6px);opacity:.3}
 .editing .sec.past{filter:none;opacity:1}
 #feel{padding-top:0;padding-bottom:0}
-.h2{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;color:var(--hi);letter-spacing:-.01em;margin-bottom:34px}
+/* titles a size down (her 2026-11-22: "the case study titles in spotify are really massive … even like font wise") */
+.h2{font-size:clamp(24px,2.6vw,32px);line-height:1.25;font-weight:600;color:var(--hi);letter-spacing:-.01em;margin-bottom:34px}
 .sub{font-size:21px;color:var(--hi);font-weight:500;margin:52px 0 18px}
 h3.sub{font-size:24px;margin:72px 0 26px}
 .body{margin:30px 0}
@@ -461,7 +466,7 @@ h3.sub{font-size:24px;margin:72px 0 26px}
 .hero{max-width:none;padding:118px 24px 0;text-align:center;overflow:hidden}
 .brand{display:inline-flex;align-items:center;gap:10px;font:600 24px 'Plus Jakarta Sans';color:var(--hi);letter-spacing:-.01em}
 .brand img{border-radius:9px}
-.hero h1{font-size:clamp(38px,6.2vw,74px);line-height:1.04;font-weight:600;color:var(--hi);letter-spacing:-.025em;margin:46px auto 0;max-width:1080px}
+.hero h1{font-size:clamp(32px,4vw,52px);line-height:1.08;font-weight:600;color:var(--hi);letter-spacing:-.025em;margin:46px auto 0;max-width:1080px}
 .hero .sub{font-weight:300;font-size:clamp(19px,2.4vw,30px);margin:14px 0 0}
 .hero h1,.hero .sub,.brand{animation:rise 1s var(--ease) both}.hero .sub{animation-delay:.12s}.hero h1{animation-delay:.06s}
 .stage{position:relative;max-width:1000px;margin:70px auto 0;--p:0}
@@ -643,8 +648,7 @@ figcaption{font-size:12px;color:#8b909b;margin-top:20px}
 .frame img{width:100%;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));transition:filter .7s var(--ease),transform 1.2s var(--ease)}
 .frame.narrow img{border-radius:19px}.frame.bare .chrome{border-radius:calc(10*var(--u)) calc(10*var(--u)) 0 0}.frame.bare img{border-radius:0 0 3px 3px}
 @media (hover:hover){
-  .frame img,.frame .chrome{filter:brightness(.42) saturate(.6)}   /* the bar dims and lights WITH its screenshot: one object */
-  .frame:hover img,.frame:focus-visible img,.frame.lit img,.frame:hover .chrome,.frame:focus-visible .chrome,.frame.lit .chrome{filter:none}
+  /* screens are ALWAYS bright (her 2026-11-22: "i was to remove that and have them always be bright"): no dim-until-hover */
   .frame:hover{border-color:#4a5268;box-shadow:0 40px 100px -40px rgba(95,192,216,.25)}
 }
 .frame:focus-visible{outline:2px solid var(--cy);outline-offset:4px}
@@ -695,8 +699,7 @@ figcaption{font-size:12px;color:#8b909b;margin-top:20px}
 @media (max-width:640px){.nrow{grid-template-columns:1fr auto;row-gap:8px}.nrow .dots{display:none}}
 .vote-shots{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:6px -60px 30px}
 .vshot{margin:0}.vimg{position:relative;display:block}
-.vimg>img:first-child{width:100%;border-radius:12px;border:1px solid #2a2e38;filter:brightness(.7) saturate(.7);transition:filter .5s var(--ease)}
-.vshot:hover .vimg>img:first-child{filter:none}
+.vimg>img:first-child{width:100%;border-radius:12px;border:1px solid #2a2e38}   /* always bright (her) */
 .vshot.win .vimg>img:first-child{border-color:#3d5c8f;filter:none}
 .vimg .face-loop{position:absolute;aspect-ratio:1;border-radius:50%;object-fit:cover}
 .vshot figcaption{margin-top:14px;display:flex;flex-direction:column;gap:10px}
@@ -734,9 +737,7 @@ figcaption{font-size:12px;color:#8b909b;margin-top:20px}
    SVG filter under the dimming filter painted the screens black */
 .frame.phoned img,.hero-phone img{border-radius:0;filter:none!important}
 .frame.phoned .phone-screen{transition:filter .7s var(--ease)}
-@media (hover:hover){.frame.phoned .phone-screen{filter:brightness(.42) saturate(.6)}
-  .frame.phoned:hover .phone-screen,.frame.phoned:focus-visible .phone-screen,.frame.phoned.lit .phone-screen{filter:none}
-  .frame.phoned:hover{box-shadow:none}}
+@media (hover:hover){.frame.phoned:hover{box-shadow:none}}   /* phone screens always bright too */
 body[data-phone] .v-side figure{justify-items:center}
 body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100%}
 .pair-cap{margin:-26px auto 64px;max-width:640px;text-align:center;font-size:16px;color:var(--dim)}
@@ -977,7 +978,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
    Measured in the page, since the label's size depends on its words and the font */
 function fitNotes(root = document) {
   $$('.shot', root).forEach(shot => {
-    const sr = shot.getBoundingClientRect(); if (!sr.width || !sr.height) return;   // an image not loaded yet has no height: wait for it
+    const sr = shot.getBoundingClientRect(), unsized = !sr.width || !sr.height;   // a lazy image not loaded yet has no height: its LINES wait for it, but its labels are still kept on screen now
     $$('.note', shot).forEach(lab => {
       const i = lab.dataset.i, path = $('path[data-i="' + i + '"]', shot); if (!path) return;
       const x = +lab.dataset.x, y = +lab.dataset.y, pad = 6;
@@ -985,6 +986,7 @@ function fitNotes(root = document) {
       lab.style.translate = ''; let lr = lab.getBoundingClientRect(); const vw = document.documentElement.clientWidth, m = 8;
       let shift = lr.right > vw - m ? vw - m - lr.right : 0; if (lr.left + shift < m) shift = m - lr.left;
       if (shift) { lab.style.translate = shift + 'px 0'; lr = lab.getBoundingClientRect(); }
+      if (unsized) return;   // (the line to the pin is drawn once the picture has its size)
       const cx = lr.left + lr.width / 2 - sr.left, cy = lr.top + lr.height / 2 - sr.top;
       const px = x / 100 * sr.width, py = y / 100 * sr.height, dx = px - cx, dy = py - cy;
       const t = Math.min(dx ? (lr.width / 2 + pad) / Math.abs(dx) : Infinity, dy ? (lr.height / 2 + pad) / Math.abs(dy) : Infinity);
@@ -998,7 +1000,7 @@ function fitNotes(root = document) {
 window.__fitNotes = fitNotes;
 fitNotes(); addEventListener('load', () => fitNotes()); document.fonts && document.fonts.ready.then(() => fitNotes());
 addEventListener('resize', () => fitNotes());
-$$('.frame img').forEach(img => img.addEventListener('load', () => fitNotes(img.closest('.frame'))));
+$$('.shot img').forEach(img => img.addEventListener('load', () => fitNotes(img.closest('.shot').parentElement)));   // every picture that carries notes, framed or not (a late, unframed one left a note 11-19px past the page on iPad: device-check 2026-11-23)
 
 /* the AI section: the quote you point at (or tap, or tab to) opens its detail */
 $$('[data-ovr]').forEach(box => { const qs = $$('.ovr-q', box), ds = $$('.ovr-d', box);

@@ -76,7 +76,7 @@
   /* ------------------------------------------------------------------ the ink mask
      Half-resolution alpha of everything visible in the hero that is not the page itself.
      One mask pixel = 2 CSS px, which is exactly the granularity a 60px figure needs. */
-  var W = 0, H = 0, DPR = 1, floorY = 0;
+  var W = 0, H = 0, DPR = 1, floorY = 0, floorX1 = null, floorX2 = null;   // floorX1/2: where the divider she runs on is drawn
   var S = 0.5, W2 = 0, H2 = 0, md = null;
   var mk = document.createElement('canvas');
   var bars = [];
@@ -148,9 +148,16 @@
        a re-read many times at the same size */
     var cw = Math.round(W * DPR), chh = Math.round(H * DPR);
     if (cv.width !== cw || cv.height !== chh) { cv.width = cw; cv.height = chh; dirty = null; }   /* resizing the bitmap wiped the canvas — nothing left to erase */
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';   /* her clay, crisp (2026-11-22: "I want it to be crystal"): the default 'low' downscale softened every frame; set after every resize, which resets it */
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ink = (getComputedStyle(document.documentElement).getPropertyValue('--ink-blue') || '#3C6B76').trim();
     floorY = H - 14;
+    /* SHE RUNS ON THE DIVIDER (her 2026-11-22: "i wish the avatar ran directly on the divider. not like hovering over it"): the
+       hairline under the hero (the next section's first border-top, .brands-head) is her floor, measured where it rests; the
+       floor used to be 14px above it, so she ran on air over the line */
+    var nxs = hero.nextElementSibling, rule = nxs && [nxs].concat([].slice.call(nxs.querySelectorAll('*'), 0, 12)).filter(function (e) { return parseFloat(getComputedStyle(e).borderTopWidth) > 0; })[0];
+    floorX1 = floorX2 = null;
+    if (rule) { var rr = localRect(rule, hr), rt = rr.y1; if (rt > H - 40 && rt <= H + 1) { floorY = Math.min(H, Math.round(rt)); floorX1 = rr.x1; floorX2 = rr.x2; } }
 
     W2 = Math.max(1, Math.ceil(W * S)); H2 = Math.max(1, Math.ceil(H * S));
     if (mk.width !== W2 || mk.height !== H2) { mk.width = W2; mk.height = H2; }   // same size: the clearRect below empties it
@@ -211,18 +218,17 @@
     bars = [];
     /* a bar under EVERY line of the bio, not just under the block (her ask 2026-10-23: hang under all the words):
        the words are grouped into visual lines by where they sit, so a wrapped sentence gives two bars */
+    /* EVERY VISIBLE LINE OF TYPE is a bar (her 2026-11-22: "the avatar should be able to monkey bar jump up to any text
+       directly above it"): the name, the eyebrow and the bio, grouped into the lines they really wrap into, so a name or
+       eyebrow that wraps on a phone gives a bar per line. Her hands hold the TOPS of the letters (glyphTop) */
     var rows = [];
-    hero.querySelectorAll('.hero-line .w').forEach(function (w) {
+    hero.querySelectorAll('h1 .ch, .eyebrow .w, .hero-line .w').forEach(function (w) {
       var r = localRect(w, hr); if (!r.w || !w.textContent.trim() || !shown(w)) return;
-      var row = rows.filter(function (q) { return Math.abs(q.y1 - r.y1) < r.h * .5; })[0];
-      if (row) { row.x1 = Math.min(row.x1, r.x1); row.x2 = Math.max(row.x2, r.x2); row.y2 = Math.max(row.y2, r.y2); }
+      var row = rows.filter(function (q) { return Math.abs(q.y1 + q.y2 - r.y1 - r.y2) / 2 < Math.min(r.h, q.y2 - q.y1) * .5; })[0];   // same line: centres within half the smaller line's height
+      if (row) { row.x1 = Math.min(row.x1, r.x1); row.x2 = Math.max(row.x2, r.x2); row.y1 = Math.min(row.y1, r.y1); row.y2 = Math.max(row.y2, r.y2); }
       else rows.push({ x1: r.x1, x2: r.x2, y1: r.y1, y2: r.y2 });
     });
-    rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2, top: q.y1 }); });   // top: the line box's, for the muscle-up
-    var eb = hero.querySelector('.eyebrow');
-    if (eb && shown(eb)) { var er = localRect(eb, hr); bars.push({ x1: er.x1, x2: er.x2, y: er.y2 - 2, top: er.y1 }); }
-    var h1 = hero.querySelector('h1');
-    if (h1) { var hb = localRect(h1, hr); bars.push({ x1: hb.x1, x2: hb.x2, y: hb.y2 - 6, top: hb.y1 }); }
+    rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2, top: q.y1 }); });   // top..y: the line box
 
     var btn = hero.querySelector('.hero-cta-row .btn.solid');
     sign = null;
@@ -241,7 +247,7 @@
   function showWorld() {
     if (!wcv) { wcv = document.createElement('canvas'); wcv.setAttribute('aria-hidden', 'true'); hero.appendChild(wcv); }
     var cr = cv.getBoundingClientRect(), hb = hero.getBoundingClientRect();   // the canvas is centred by a transform: measure, don't read offsets
-    wcv.style.cssText = 'position:absolute;pointer-events:none;z-index:2147483000;left:' + (cr.left - hb.left) + 'px;top:' + (cr.top - hb.top) + 'px;width:' + W + 'px;height:' + H + 'px';
+    wcv.style.cssText = 'position:absolute;pointer-events:none;z-index:2147483000;max-width:none;margin:0;transform:none;left:'   /* (the hero's copy-column cap squeezed the map to ~2/3 size) */ + (cr.left - hb.left) + 'px;top:' + (cr.top - hb.top) + 'px;width:' + W + 'px;height:' + H + 'px';
     wcv.width = Math.round(W * DPR); wcv.height = Math.round(H * DPR);
     var x = wcv.getContext('2d'); x.setTransform(DPR, 0, 0, DPR, 0, 0);
     x.globalAlpha = .45; x.drawImage(mk, 0, 0, W, H);
@@ -256,8 +262,11 @@
   }
 
   /* mask queries — CSS px in, CSS px out. The floor line is solid everywhere. */
+  /* the floor is the divider, only where it is drawn (her 2026-11-23: "the avatar should just stop at the ends of the
+     divider … she can never fall directly in that space") */
+  function onFloor(x) { return floorX1 == null || (x >= floorX1 && x <= floorX2); }
   function solid(x, y) {
-    if (y >= floorY) return true;
+    if (y >= floorY) return onFloor(x);
     if (x < 0 || y < 0 || x >= W || y >= H) return false;
     return md[(((y * S) | 0) * W2 + ((x * S) | 0)) * 4 + 3] > 60;
   }
@@ -296,6 +305,48 @@
       }
     }
     return null;
+  }
+  /* the top of the letter in this column of a line (her hands hold the TOPS, the way a hand closes over a bar), or null
+     where the column is a gap or the ink starts above the line */
+  function glyphTop(x, b) {
+    var y0 = Math.round(b.top) - 6, y1 = Math.round(b.y) + 4;
+    for (var y = y0; y <= y1; y++) if (solid(x, y)) return y > y0 ? y : null;
+    return null;
+  }
+  /* a hold for a hand: the column near x (between lo and hi, when given) whose letter top is nearest the other hand's
+     height, so she goes hand over hand along the x-height, not up and down every capital */
+  /* the UNDERSIDE of the letter in this column of a line: the edge just under its lowest ink (her 2026-11-23: "I want her
+     to do monkey bars at the bottom of the words, not at the top of the words"), or null for a gap */
+  function glyphBottom(x, b) {
+    var y0 = Math.round(b.top), y1 = Math.round(b.y) + 4;
+    for (var y = y1; y >= y0; y--) if (solid(x, y)) return y < y1 ? y + 1 : null;
+    return null;
+  }
+  /* the line's baseline: the commonest letter bottom along it, so her hands take the baseline, not a descender (y, g, p) */
+  function baseOf(b) {
+    if (b.base != null) return b.base;
+    var a = []; for (var x = Math.round(b.x1); x <= b.x2; x += 2) { var t = glyphBottom(x, b); if (t != null) a.push(t); }
+    a.sort(function (p, q) { return p - q; });
+    return (b.base = a.length ? a[a.length >> 1] : Math.round(b.y));
+  }
+  /* the top of the word near x: the commonest letter top within ±30px (the x-height, not the top of a bowl inside a letter) */
+  function wordTop(x, b) {
+    var a = []; for (var dx = -30; dx <= 30; dx += 2) { var t = glyphTop(Math.round(x + dx), b); if (t != null) a.push(t); }
+    a.sort(function (p, q) { return p - q; });
+    return a.length ? a[a.length >> 1] : null;
+  }
+  function topGrip(x, b, rad, nearY, lo, hi, under) {
+    if (under && nearY == null) nearY = baseOf(b);
+    var best = null;
+    for (var dx = 0; dx <= rad; dx += 2) for (var s = -1; s <= 1; s += 2) {
+      if (!dx && s > 0) continue;
+      var cx = Math.round(x + s * dx);
+      if (cx < b.x1 - 2 || cx > b.x2 + 2 || (lo != null && cx < lo) || (hi != null && cx > hi)) continue;
+      var t = under ? glyphBottom(cx, b) : glyphTop(cx, b); if (t == null) continue;
+      var sc = dx + (nearY == null ? 0 : Math.abs(t - nearY) * 1.5);
+      if (!best || sc < best.sc) best = { x: cx, y: t, sc: sc };
+    }
+    return best;
   }
   /* march along the surface the way the walker would — steps, hops over ascender bumps,
      strides over glyph gaps — until it truly ends WITH a drop below. An ascender is a
@@ -637,13 +688,30 @@
     }
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false; fig.state = 'idle';
     var ty = clickGround(p), b = ty != null && ty < fig.y - STEP_UP ? { x: p.x, y: ty } : null, ab;
-    if ((ab = aimBar(p)) && hangJump(ab, p)) { }   // a word double-tapped: up to hang from it (a tap above her then muscles up)
+    if (canHang() && (ab = aimBar(p) || overheadBar(p)) && hangJump(ab, p, false)) { }   // a word double-tapped: up to hang from it (her 2026-11-23: never an automatic muscle-up)
     else if (b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // a line up there she can reach: onto it
     else {   // nothing to land on in reach: straight up toward the finger and back down
       fig.dir = p.x >= fig.x ? 1 : -1;
       jumpFor(Math.max(40, fig.y - p.y), 0); fig.vx = Math.max(-220, Math.min(220, (p.x - fig.x) * 1.6));
     }
     start();
+  }
+  /* THE DOUBLE JUMP (her 2026-11-23, #965): a second push from the air, once per flight, toward the second click: up to hang
+     from the line there if her hands can reach it from here (no flip: her hands are for the letters), else a tuck flip over
+     the top of it. The swish as she comes down; the boing only if it lifts her more than her own height (the sound rule) */
+  function doubleJump(p) {
+    if (fig.dbl || fig.state !== 'air' || fig.wall || fig.parkour || fig.boxJump) return;
+    fig.dbl = true;
+    var ab = canHang() && aimBar(p), hr = ab && hangRise(ab, Math.max(ab.x1 + 8, Math.min(ab.x2 - 8, p.x)), fig.y), rise;
+    if (hr && hr.rise <= JUMP_MAX) { fig.aim = ab; fig.hangGoal = p.x; rise = hr.rise + 4; }
+    else { fig.aim = null; hr = null; rise = Math.max(80, Math.min(JUMP_MAX * .6, fig.y - p.y)); }
+    var v = -Math.sqrt(2 * G * rise), tUp = -v / G;
+    fig.vy = v; fig.vx = Math.max(-RUN, Math.min(RUN, ((hr ? hr.g.x : p.x) - fig.x) / tUp));
+    if (Math.abs(fig.vx) > 20) fig.dir = Math.sign(fig.vx);
+    fig.fallFrom = fig.y; fig.target = null; fig.waypoint = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = !!hr;
+    if (!hr) flipFor(2 * tUp);
+    fig.shhV = v; if (rise >= herH()) once('jump', function () { springJump(v, 'rise'); });
+    puff(fig.x, fig.y, 2);
   }
   function keyDrop() {
     if (fig.state === 'hang') { release(0); return true; }
@@ -671,10 +739,9 @@
       var dw = down; if (dw) { clearTimeout(dw.tt); dw.tt = setTimeout(function () { if (down === dw) follow(dw.p || p); }, 120); }
       return;
     }
-    /* hanging: she goes hand over hand after the pointer (tickHang), climbs up if you drag above the line, lets go below */
+    /* hanging: she goes hand over hand after the pointer (tickHang); dragged well below her, she lets go */
     if (fig.state === 'hang') {
-      if (p.y < fig.hang.bar.y - 20) muscleUp();
-      else if (p.y > fig.y + 30) release(Math.sign(p.x - fig.x));
+      if (p.y > fig.y + 60) release(Math.sign(p.x - fig.x)); else fig.hang.goal = p.x;
       return;
     }
     var ty = groundTop(p.x, p.y - 2, H);
@@ -685,6 +752,8 @@
   }
   /* cursor left the window: forget where it was, or she keeps smiling at nobody */
   document.addEventListener('pointerout', function (e) { if (!e.relatedTarget) { CLAY.away = true; CLAY.smile = false; if (!raf && CLAY.ready) draw(performance.now()); } });
+  /* her muscle-up is a double click above her hands: it must not also select the word under it */
+  document.addEventListener('mousedown', function (e) { if (e.detail > 1 && (fig.state === 'hang' || fig.state === 'mantle') && e.target.closest && e.target.closest('.hero')) e.preventDefault(); });
   document.addEventListener('pointerdown', function (e) {
     if (e.button !== 0 || rmActive()) return;
     if (e.target.closest && e.target.closest('a,button,nav')) return;
@@ -712,34 +781,55 @@
     var pelY = fig.y - LEG * (1 - fig.crawl * 0.6);
     /* the clay figure is bigger than the stick one, so tapping anywhere on her body counts */
     var onHer = CLAY.ready ? onClay(p) : Math.hypot(p.x - fig.x, p.y - (pelY - TO / 2)) < 46;
-    if (onHer) {
-      if (fig.state === 'hang') release(0);
+    if (onHer && fig.state !== 'hang') {   // (hanging, a click on her is a monkey-bar click: never a drop, her 2026-11-23)
       celebrate();
       return;
     }
-    /* DOUBLE TAP ABOVE HER, ON A PHONE (her 2026-10-28: "if I tap above it twice it should jump up on mobile. Even if it
-       can['t] actually land on anything when asked to jump there"): two taps close together above her head and she jumps
-       up toward them, onto the line there if one is in reach, else up and back down. One tap is still a walk there */
-    if (e.pointerType === 'touch' && fig.state !== 'hang') {
-      var tnow = performance.now(), lt = lastTap; lastTap = { t: tnow, x: p.x, y: p.y };
-      if (lt && tnow - lt.t < 400 && Math.hypot(p.x - lt.x, p.y - lt.y) < 70 && p.y < fig.y - (CLAY.ready ? CLAY.H : LEG + TO) + 10) { lastTap = null; tapJump(p); return; }
-    }
+    var tnow = performance.now(), lt = lastTap; lastTap = { t: tnow, x: p.x, y: p.y };
+    var dbl = lt && tnow - lt.t < 400 && Math.hypot(p.x - lt.x, p.y - lt.y) < 70;
+    var reach = CLAY.ready ? CLAY.H : 90, herTop = fig.y - (CLAY.ready ? CLAY.H : LEG + TO), grounded = /^(idle|move|sign|wave)$/.test(fig.state) && !fig.loadT;
     if (fig.state === 'hang') {
-      /* a click on or above the line she's holding: she MUSCLES UP onto it (her ask 2026-10-24) and then goes on to
-         where you clicked; anywhere else she lets go toward it */
-      if (p.y < fig.hang.bar.y && muscleUp()) {
-        var gy = groundTop(p.x, p.y - 2, H);
-        if (gy != null && gy <= fig.mantle.y1 + 4) fig.target = { x: p.x, y: gy, tries: 0 };
+      /* MONKEY BARS (her 2026-11-23: "I can't get her to monkey bar … every time I click up, she does a muscle up and goes
+         over … if I click another place, she goes down and then comes back up"): a click or tap anywhere along the line she
+         holds sends her there hand over hand; only a click well below her lets her drop and walk there.
+         ABOVE the line she holds (her 2026-11-23, #962: "I click above her, she should still try to go there. I shouldn't have
+         to double click to like the muscle up to then move up"): ONE click, and she muscles up onto it and goes on to the spot
+         (a route), or, with nothing to stand on there, jumps for it once she's up (#965) */
+      var hb = fig.hang.bar, G0 = fig.hang.G;
+      if (p.y < (hb.top != null ? hb.top : G0.y - 30) - 6) {
+        lastTap = null;
+        if (muscleUp()) { var gy = clickGround(p);
+          if (gy != null && Math.abs(gy - fig.mantle.y1) <= 8) { if (Math.abs(p.x - fig.mantle.x1) > 12) fig.target = { x: p.x, y: gy, tries: 0 }; }   // on top of the line she held: she walks there
+          else fig.tapQ = { x: p.x, y: p.y, t: performance.now() + 1100 }; }   // higher: once up, she jumps for it (counted from when she's up: the muscle-up takes ~1s)
         return;
       }
-      release(Math.sign(p.x - fig.x)); return;
+      /* A CLICK NEAR HER = STOP (her 2026-11-23: "If I click near her, that means I just want her to stop swinging ... there's a
+         difference when I'm ... trying to click to get her to go somewhere and click to just be like, okay, you can stop moving"):
+         within ~60% of her height of her hands she settles where she is (the gentle beside-pose stop if travelling, the swing dies
+         down) and the cursor no longer pulls her until it moves well away from that spot. Further along the line = go there. */
+      if (p.y < fig.y + 60 && Math.abs(p.x - G0.x) < (CLAY.ready ? CLAY.H : 120) * .6) { fig.hang.goal = G0.x; fig.hang.pin = { x: p.x }; fig.hang.settle = true; fig.hang.auto = null; start(); return; }
+      if (p.y < fig.y + 60 && p.x > hb.x1 - 40 && p.x < hb.x2 + 40) { fig.hang.goal = p.x; fig.hang.pin = null; fig.hang.settle = false; fig.hang.auto = null; start(); return; }
+      release(Math.sign(p.x - fig.x));
+      var dy = clickGround(p); fig.target = { x: p.x, y: dy == null ? floorY : dy, tries: 0 };
+      return;
     }
     if (e.target.closest && e.target.closest('a,button')) return;
+    /* ABOVE HER IS A JUMP (her 2026-11-23, #965: "If I click above her, she should jump. If I click twice ... above her, she should
+       like double jump"): one click over her head and she jumps for it (tapJump: hangs from the line there if there is one, her
+       2026-11-22 "monkey bar jump up to any text directly above it"; else onto a line in reach, else up and back down); the second
+       click of a double click, while that jump is still going up, is a second jump from the air at the top of the first
+       (doubleJump); a double click or tap anywhere above her head is a jump too (her 2026-10-28 phone ask) */
+    if (!fig.wall && !fig.parkour) {
+      if (dbl && (fig.state === 'air' || fig.loadT) && p.y < fig.y && Math.abs(p.x - fig.x) < reach * 1.6) { lastTap = null; fig.dblQ = { x: p.x, y: p.y }; start(); return; }
+      if (grounded && p.y < herTop && (Math.abs(p.x - fig.x) < reach * .8 || dbl)) { if (dbl) lastTap = null; tapJump(p); return; }
+    }
     var ty = clickGround(p);
     /* a click is a WALK there (her 2026-10-26: "the avatar jumps anytime I click. I don't like that. why can't it just walk
        over"): no hop at the finger any more, even right above her; she only climbs when the spot is on a surface she
        can't walk to */
     fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0 };
+    /* a click out past the divider's end, beside it: she goes to that end and does the wall jump (wallJump) */
+    if (ty == null && floorX1 != null && (p.x < floorX1 || p.x > floorX2)) { var ws = p.x < floorX1 ? -1 : 1; fig.target = { x: ws < 0 ? floorX1 : floorX2, y: floorY, tries: 0, wall: ws }; }
     fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -764,8 +854,8 @@
     if (!fig.hang) return;
     var b = fig.hang;
     fig.state = 'air';
-    fig.x = b.hx;   /* fig.y already tracks the grips — reassigning it here would pop */
-    fig.vx = dirX * 220 + b.om * 40;
+    /* fig.x/fig.y already track her body and feet under the hands — reassigning them here would pop */
+    fig.vx = dirX * 220 + (b.L ? b.om * b.L * Math.cos(b.th) : b.om * 40);   // the swing's speed goes with her
     fig.vy = -320;
     fig.fallFrom = fig.y;
     fig.hang = null; fig.hangCool = 0.6; fig.flipQueued = false;
@@ -778,20 +868,23 @@
   function muscleUp() {
     var h = fig.hang;
     if (!h) return false;
-    /* the top of the ink of the line she holds, nearest her hands: scanned down from the line box's top (the stroke
-       right above a hand can be a broken fragment of a small letter, so "the top of that stroke" isn't the top) */
+    /* (her 2026-11-23: "she might grab the bottom of a word and then reach up to the top of the word and then get both
+       hands at the top of the word and then have to jump up"): from the underside she holds, one hand goes up to the top of
+       that word, then the other joins it there, then she pulls and steps up onto it (tickMantle / clayPick) */
     var b = h.bar, hy = Math.min(h.hands[0].y, h.hands[1].y), cx = (h.hands[0].x + h.hands[1].x) / 2, hx = null, top = null;
     if (b.top == null) return false;
-    for (var k = 0; k <= 24 && hx == null; k++) {
-      var x = cx + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 2, t = groundTop(x, b.top, Math.max(1, hy - b.top));
-      if (t != null && t < hy - 8 && clearance(x, t) >= MIN_CLR) { hx = x; top = t; }
+    var wt = wordTop(cx, b); if (wt == null) return false;
+    for (var k = 0; k <= 24 && hx == null; k++) {   // the nearest column whose letter top is the word's top (never a stroke inside a letter)
+      var x = Math.round(cx + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 2), t = glyphTop(x, b);
+      if (t != null && t <= wt + 2 && t < hy && hy - t < 140 && clearance(x, t) >= MIN_CLR) { hx = x; top = t; }
     }
     if (hx == null) return false;
     fig.state = 'mantle';
-    fig.mantle = { t: 0, x0: fig.x, y0: fig.y, x1: hx, y1: top, dur: 0.85, hy0: hy };
+    fig.mantle = { t: 0, x0: fig.x, y0: fig.y, x1: hx, y1: top, dur: 1.05, hy0: hy, hx0: cx, up: true };
+    fig.mantle.d0 = Math.max(0, Math.min(12, fig.y - muFeet(fig.mantle)));   // the reach starts with her feet where the hang had them (it popped her up ~5px): the reaching hand leaves the edge from that low
     fig.hang = null; fig.hangCool = 0.6; fig.vx = 0; fig.vy = 0; fig.flip = null;
     fig.target = null; fig.waypoint = null; fig.celeb = null;
-    sfx('jump', 0.3, 1.05);
+    // no sound for a muscle-up (her 2026-11-23: "I don't think there needs to be a sound for the muscle up.")
     start();
     return true;
   }
@@ -813,15 +906,37 @@
     }
     return best;
   }
-  function hangJump(b, p) {
-    var rise = fig.y - (b.y + LEG + HANDUP) + 4;   // feet apex that puts her hands just over the bar
-    if (rise > HANG_MAX) return false;
-    fig.aim = b; fig.dir = p.x >= fig.x ? 1 : -1;
-    fig.vy = -Math.sqrt(2 * G * Math.max(rise, 40)); fig.fallFrom = fig.y; fig.state = 'air';
-    var tUp = -fig.vy / G, gx = Math.max(b.x1 + 8, Math.min(b.x2 - 8, p.x));
-    fig.vx = Math.max(-RUN, Math.min(RUN, (gx - fig.x) / tUp));   // arrives under the aim at the top of the jump
+  /* the jump that puts her hands on the TOPS of line b's letters at x: the apex is where her hanging body's feet will be,
+     so the catch is a change of grip, not a jump of the drawing. null when she can reach it standing (no hang there) or
+     it's out of a jump */
+  function hangRise(b, x, y0) {
+    var g = topGrip(x, b, 24, null, null, null, true); if (!g) return null;   // she hangs from the underside of the letters
+    var rise = y0 - (g.y + rig().soles) + 2;
+    return rise >= 8 && rise <= HANG_MAX ? { rise: rise, g: g } : null;
+  }
+  /* auto: she muscles up onto the line once she has it (a tap or a click above her, her route): her 2026-11-22 ask */
+  function hangJump(b, p, auto) {
+    var gx = Math.max(b.x1 + 8, Math.min(b.x2 - 8, p.x)), hr = hangRise(b, gx, fig.y);
+    if (!hr) return false;
+    fig.aim = b; fig.autoUp = auto ? { x: p.x, y: p.y } : null; fig.hangGoal = p.x; fig.dir = p.x >= fig.x ? 1 : -1;
+    /* a touch over the catch height (a frame-stepped rise comes up a few px short of the formula's), so her hands reach
+       the letters while she is still rising, slowly */
+    var v0 = Math.sqrt(2 * G * hr.rise);
+    fig.vy = -Math.sqrt(2 * G * (hr.rise + rig().soles * .03 + v0 / 90)); fig.fallFrom = fig.y; fig.state = 'air';
+    var tUp = -fig.vy / G;
+    fig.vx = Math.max(-RUN, Math.min(RUN, (hr.g.x - fig.x) / tUp));   // arrives under the aim at the top of the jump
     puff(fig.x, fig.y, 2);
     return true;
+  }
+  /* a line straight over her head she can hang from (the one nearest the pointer's height) */
+  function overheadBar(p) {
+    var best = null;
+    for (var i = 0; i < bars.length; i++) { var b = bars[i];
+      if (fig.x < b.x1 + 4 || fig.x > b.x2 - 4 || b.y > fig.y - 20 || !hangRise(b, fig.x, fig.y)) continue;
+      var d = Math.abs((b.top + b.y) / 2 - p.y);
+      if (!best || d < best.d) best = { b: b, d: d };
+    }
+    return best && best.b;
   }
   function jumpFor(rise, dx) {
     /* the cap must afford JUMP_MAX plus the clearance margin — a lower cap silently
@@ -928,6 +1043,24 @@
       }
       return out;
     };
+    /* A LINE STRAIGHT OVERHEAD (her 2026-11-22): a jump up to hang from it and a muscle-up onto it, from right under it;
+       only where she can't just step up (it's above her reach) and with her hang frames in */
+    var hangs = canHang(), R = rig();
+    var hangTo = function (a) {
+      var out = [];
+      if (!hangs) return out;
+      for (var d = -1; d <= 1; d++) (cols[a.c + d] || []).forEach(function (b) {
+        if (b.y >= a.y - 30) return;
+        for (var i = 0; i < bars.length; i++) { var q = bars[i];
+          if (a.x < q.x1 + 4 || a.x > q.x2 - 4 || b.y < q.top - 6 || b.y > q.y + 4) continue;
+          var gb = glyphBottom(b.x, q); if (gb == null) return;
+          var rise = a.y - (gb + R.soles) + 2;   // she hangs from the underside of that line's letters
+          if (rise >= 8 && rise <= HANG_MAX) out.push({ n: b, how: 'hang', cost: rise + 60, bar: q });
+          return;
+        }
+      });
+      return out;
+    };
     var ec = {}, path;
     for (var tries = 0; tries < 8; tries++) {
       var dist = {}, prev = {}, done = {}, open = [start];
@@ -935,9 +1068,9 @@
       while (open.length) {
         var bi = 0; for (var j = 1; j < open.length; j++) if (dist[open[j].i] < dist[open[bi].i]) bi = j;
         var a = open.splice(bi, 1)[0]; if (done[a.i]) continue; done[a.i] = true;
-        (ec[a.i] || (ec[a.i] = edges(a))).forEach(function (e) { var nd = dist[a.i] + e.cost;
-          if (e.how === 'jump' && banned(a === start ? fig.x : a.x, a === start ? fig.y : a.y, e.n)) return;
-          if (dist[e.n.i] == null || nd < dist[e.n.i]) { dist[e.n.i] = nd; prev[e.n.i] = { from: a, how: e.how }; open.push(e.n); } });
+        (ec[a.i] || (ec[a.i] = edges(a).concat(hangTo(a)))).forEach(function (e) { var nd = dist[a.i] + e.cost;
+          if ((e.how === 'jump' || e.how === 'hang') && banned(a === start ? fig.x : a.x, a === start ? fig.y : a.y, e.n)) return;
+          if (dist[e.n.i] == null || nd < dist[e.n.i]) { dist[e.n.i] = nd; prev[e.n.i] = { from: a, how: e.how, bar: e.bar }; open.push(e.n); } });
       }
       /* the click if she can reach it, else the closest spot she can (and the cheaper way there on a tie) */
       var goal = null, gs = Infinity;
@@ -945,7 +1078,7 @@
         if (sc2 < gs) { gs = sc2; goal = n; } });
       if (!goal || goal === start) return [];
       path = [];
-      for (var n2 = goal; n2 !== start; n2 = prev[n2.i].from) path.unshift({ x: n2.x, y: n2.y, how: prev[n2.i].how, dir: Math.sign(n2.x - prev[n2.i].from.x) || 1, from: prev[n2.i].from });
+      for (var n2 = goal; n2 !== start; n2 = prev[n2.i].from) path.unshift({ x: n2.x, y: n2.y, how: prev[n2.i].how, bar: prev[n2.i].bar, dir: Math.sign(n2.x - prev[n2.i].from.x) || 1, from: prev[n2.i].from });
       /* fly each jump the way tickAir will; the first that would come down anywhere else is banned and the way re-planned */
       var bad = null;
       path.some(function (q) { if (q.how !== 'jump') return false;
@@ -985,7 +1118,52 @@
     return false;
   }
   /* there: she stops (the 2026-10-24 hop up at a tap above her is gone, her 2026-10-26 call) */
-  function arrived() { fig.target = null; fig.waypoint = null; fig.vx = 0; }
+  function arrived() { var ws = fig.target && fig.target.wall; fig.target = null; fig.waypoint = null; fig.vx = 0;
+    if (ws && floorX1 != null && fig.y >= floorY - .5 && Math.abs(fig.x - (ws < 0 ? floorX1 : floorX2)) < 24) wallJump(ws); }
+  /* PARKOUR OFF THE SIDE WALL (her 2026-11-23: "if I click outside the divider line, her goal is that she jumps on the wall like
+     Spider-Man and then jumps back. Like it's like a parkour sort of thing"): from the divider's end she leaps out over the gap,
+     at the top of the leap her feet plant on the side of the page (a crouch turned flat against it, tickAir), a beat, and she
+     kicks back onto the divider. The click is used up at take-off, so nothing re-triggers it */
+  function wallJump(side) {
+    var wx = side < 0 ? 2 : W - 2, ta = 600 / G;
+    fig.target = null; fig.waypoint = null; fig.celeb = null; fig.flip = null; fig.flipQueued = true;
+    fig.state = 'air'; fig.vy = -600; fig.fallFrom = fig.y; fig.dir = side;
+    fig.vx = side * Math.max(20, Math.abs(wx - fig.x) - WALL_GX()) / ta;   // her hand meets the wall at the top of the leap
+    fig.parkour = { side: side, wx: wx };
+    puff(fig.x, fig.y, 3); start();
+  }
+  /* ON THE WALL LIKE SPIDER-MAN (her 2026-11-23: "she needs to have one hand on the wall, one leg on the wall ... slide down,
+     jump off"; "Right now she's like defying gravity"): facing the wall in her climb frame 6, the raised fist and the bent
+     knee both touching it (WALL_GX: the column of her frame they share), the rest of her hanging. Gravity still works: friction
+     on her hand and knee only takes some of it, so she slows (or rises on a little if she hit it going up) and slides down, then
+     pushes off, turning away from the wall, back onto the divider */
+  var WALL_F = 6, WALL_GY = 12;
+  function wallF() { var L = CLAY.man && CLAY.man['climb-x3']; return L && L[WALL_F] || { cx: 39, base: 263 }; }
+  function wallSc() { return (CLAY.ready ? CLAY.H : 113) / (CLAY.man ? CLAY.man._ref : 252); }
+  function WALL_GX() { return (68 - wallF().cx) * wallSc(); }   // her middle → the wall, in px
+  function wallOn(side, wx, nx) {
+    var f = wallF(), sc = wallSc(), mid = fig.y - (CLAY.ready ? CLAY.H : 113) * .5;   // her airborne frame is pinned by its middle: the cling frame's middle goes there
+    var v = Math.hypot(fig.vx, fig.vy);
+    fig.wall = { t: 0, side: side, hx: wx, hy: mid - ((f.base + WALL_GY) / 2 - WALL_GY) * sc };
+    fig.parkour = null; fig.vx = 0; fig.vy = Math.min(fig.vy, 0) * .5; fig.flip = null; fig.flipQueued = true; fig.dir = side;
+    fig.x = wx - side * WALL_GX(); fig.y = fig.wall.hy + (f.base - WALL_GY) * sc;
+    once('grip', function () { squeeze(v); });   // her hand and knee meet the wall
+  }
+  function tickWall(dt) {
+    var Wl = fig.wall, f = wallF(), sc = wallSc();
+    Wl.t += dt;
+    fig.vy = Math.min(150, fig.vy + (fig.vy < 0 ? G : G * .3) * dt);   // going up, gravity and the rub both stop her; coming down, the rub takes 70% of it
+    Wl.hy += fig.vy * dt;
+    fig.y = Wl.hy + (f.base - WALL_GY) * sc; fig.x = Wl.hx - Wl.side * WALL_GX(); fig.vx = 0;
+    var low = fig.y >= floorY - 2;
+    if (low) { fig.y = floorY - 2; Wl.hy = fig.y - (f.base - WALL_GY) * sc; }
+    if (Wl.t < .55 && !low) return;
+    /* the push: off the wall, turned away from it, onto the divider a stride past its end */
+    var into = -Wl.side, end = into > 0 ? floorX1 : floorX2, lx = (end == null ? fig.x + into * 80 : end + into * 40), vy = -560;
+    var T = (-vy + Math.sqrt(vy * vy + 2 * G * Math.max(0, floorY - fig.y))) / G;
+    fig.wall = null; fig.endFix = true; fig.vy = vy; fig.vx = (lx - fig.x) / T; fig.dir = into; fig.fallFrom = fig.y; fig.shhV = vy;   // (a swish as she comes down: the kick lifts her less than her height)
+    puff(Wl.hx, fig.y - 10, 2);
+  }
   function routeJump(b) {
     var v = jumpV(fig.x, fig.y, b), dx = b.x - fig.x;
     fig.vy = v.vy; fig.vx = v.vx; fig.fallFrom = fig.y; fig.state = 'air'; fig.waypoint = b;
@@ -997,6 +1175,14 @@
     var drop = b.y - fig.y;
     if (drop > 90 || Math.abs(dx) > FLIP_DX) flipFor((-v.vy + Math.sqrt(v.vy * v.vy + 2 * G * Math.max(drop, 0))) / G);
   }
+  /* her route's way up onto a line straight over her head: jump, hang from its letters, muscle up (tickHang keeps the route) */
+  function routeHang(wp) {
+    var tg = fig.target;
+    var last = !tg || !tg.route || tg.route[tg.route.length - 1] === wp;   // the line she was sent to: she stays on the bars there
+    if (wp.bar && hangJump(wp.bar, { x: last && tg ? tg.x : wp.x, y: wp.y }, !last)) { fig.waypoint = wp; if (last) { fig.target = null; fig.waypoint = null; } return true; }
+    if (tg) { (tg.bans = tg.bans || []).push({ ax: fig.x, ay: fig.y, bx: wp.x, by: wp.y }); tg.route = null; }
+    return false;
+  }
   function pace(d) {   // a walk within ~45px of where she's going (~25px in the phone's smaller hero), else a run
     var ph = CLAY.H < 100;
     return WALK + (RUN - WALK) * Math.max(0, Math.min((d - (ph ? 8 : 20)) / (ph ? 28 : 50), 1));
@@ -1006,6 +1192,7 @@
   /* one tick of following the route; returns the speed she wants, or null when this tick is spent */
   function followRoute(dt) {
     var tg = fig.target, wp = tg.route[0];
+    if (wp.how === 'hang' && Math.abs(wp.x - fig.x) <= 14) { routeHang(wp); return null; }   // under the line she goes up by: up she goes
     /* a walk point counts within a step's height (she walks the surface between them); a jump/drop must land on it */
     /* her 2026-10-26: "it just spazzes back and forth". At walking speed she carries ~15px past a point before she can
        turn, so a 7px window made her overshoot, turn, overshoot again. A point she has just walked past counts as
@@ -1017,8 +1204,9 @@
     var onWp = wp.how === 'walk' ? Math.abs(fig.y - wp.y) <= STEP_UP : wp.how === 'fall' && Math.abs(fig.y - wp.y) <= 14;   // (a drop: already landed on its level)
     var beyond = nw && (nw.x - fig.x) * (nw.x - wp.x) > 0 && Math.abs(nw.x - fig.x) < Math.abs(nw.x - wp.x);
     if (onWp && nw && (nw.how === 'walk' ? beyond && Math.abs(nw.y - fig.y) <= STEP_UP : nw.how === 'fall' ? beyond && Math.sign(nw.x - fig.x) === nw.dir :
-        (beyond || Math.abs(wp.x - fig.x) < 40) && arcLands(fig.x, fig.y, nw))) {   // a jump she can already make from here: no running on past and back
+        nw.how === 'hang' ? Math.abs(nw.x - fig.x) <= 14 : (beyond || Math.abs(wp.x - fig.x) < 40) && arcLands(fig.x, fig.y, nw))) {   // a jump she can already make from here: no running on past and back
       tg.route.shift(); wp = nw; tg.best = Infinity; tg.stuck = 0;
+      if (wp.how === 'hang') { routeHang(wp); return null; }
       if (wp.how === 'jump') { routeJump(wp); return null; }   // (from here: it was just flown and lands)
     }
     var wdx = wp.x - fig.x, past = fig.vx && Math.sign(wdx) !== Math.sign(fig.vx) && Math.abs(wdx) < 24;
@@ -1029,6 +1217,7 @@
       tg.route.shift(); tg.best = Infinity; tg.stuck = 0;
       if (!tg.route.length) { arrived(); return null; }
       wp = tg.route[0];
+      if (wp.how === 'hang') { routeHang(wp); return null; }
       if (wp.how === 'jump') {
         /* fly it first from where she really stands (a stride off the planned spot can clip a letter): no good, plan again */
         if (!arcLands(fig.x, fig.y, wp)) {
@@ -1052,6 +1241,7 @@
          Re-planning only found the same way again, four times in four frames, and she gave up */
       var ahead = groundTop(fig.x + wp.dir * 4, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4);
       if (wp.how === 'walk' && wp.y < fig.y && wp.y >= fig.y - HOP_UP - 2 && ahead != null && ahead < fig.y - STEP_UP) return wp.dir * WALK;
+      if (wp.how === 'hang') (tg.bans = tg.bans || []).push({ ax: fig.x, ay: fig.y, bx: wp.x, by: wp.y });   // she went for that line and missed it: another way
       tg.route = null; return null;
     }
     /* no progress toward this point for a while (a bonk, a missed ledge): plan again from here */
@@ -1101,7 +1291,7 @@
            tap after was "already there": her 2026-10-29 "sometimes I tap and she won't move"): a tap that isn't where she
            stands goes the old greedy way instead, which walks, drops and hops on what's really there */
         else if (!r.length) { if (Math.abs(tg.x - fig.x) > 40 || Math.abs(tg.y - fig.y) > 26) tg.manual = true; else { arrived(); return; } }
-        else { tg.route = r; tg.best = Infinity; tg.stuck = 0; if (r[0].how === 'jump' && Math.abs(r[0].x - fig.x) > 0) { routeJump(r[0]); return; } }
+        else { tg.route = r; tg.best = Infinity; tg.stuck = 0; if (r[0].how === 'jump' && Math.abs(r[0].x - fig.x) > 0) { routeJump(r[0]); return; } if (r[0].how === 'hang') { routeHang(r[0]); return; } }
       }
       if (tg.route) { var rw = followRoute(dt); if (rw === null) return; want = rw; }
     }
@@ -1171,6 +1361,13 @@
     }
     if (fig.vx) fig.dir = fig.vx > 0 ? 1 : -1;
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
+    if (fig.y >= floorY - .5 && floorX1 != null && !onFloor(nx)) {   // the divider's end
+      var side = nx < floorX1 ? -1 : 1, tgo = fig.target;
+      if (tgo && (tgo.wall === side || (side < 0 ? tgo.x < floorX1 - 1 : tgo.x > floorX2 + 1))) { wallJump(side); return; }   // sent past it: the wall jump and back
+      /* else she stops at it. (It clamped to 2px inside the end while her stride was allowed right up to it, so with a click out
+         past the end she flicked between the two every frame, walking and standing at once: her "tweaks and glitches") */
+      nx = Math.max(floorX1, Math.min(floorX2, nx)); fig.vx = 0; if (Math.abs(nx - fig.x) < .5) { if (fig.target) arrived(); fig.x = nx; return; }
+    }
     /* follow the ink's surface: a step either way is walked, not fallen */
     var s = groundTop(nx, fig.y - STEP_UP, STEP_UP + STEP_DOWN + 4), lv = levelAt(nx, fig.y);
     /* ink up there with air under it is the line above's descenders, not a wall: what's under her is the ground below
@@ -1224,6 +1421,7 @@
     /* …or, off a HIGH edge, spring off it and flip down (her #77/#79): walking off, a fall in the hero is over before a
        turn fits, so she hops out, slower across than her run so she still comes down near where the route meant */
     var dd = g && g.how === 'fall' ? g.y - fig.y : 0;   // only a drop her route means to take (a word space is a step across, not a dive)
+    fig.dropSnd = dd > 60 ? dd : 0;   // a real drop: its sound is the shh alone, when she starts coming down (sfxTick)
     if (dd > 90 && openAbove(nx, fig.y - 4, 90) && openAbove(nx + fig.dir * 30, fig.y - 4, 90)) {   // (never with a line just above: she'd hop up onto it)
       var T = 560 / G + Math.sqrt(2 * (560 * 560 / (2 * G) + dd) / G);
       fig.vy = -560; fig.vx = fig.vx * Math.sqrt(2 * dd / G) / T;   // across no further than walking off would have taken her
@@ -1232,14 +1430,32 @@
   }
 
   function tickAir(dt) {
+    if (fig.wall) { tickWall(dt); return; }
     fig.vy = fig.boxJump && fig.boxJump.g ? Math.min(fig.vy + fig.boxJump.g * dt, 2600) : Math.min(fig.vy + G * dt, 1500);
+    if (fig.dblQ && fig.vy > -220) { var dq = fig.dblQ; fig.dblQ = null; doubleJump(dq); }   // a double click: the second jump comes off the top of the first
     var g = fig.waypoint || fig.target;
     /* steer proportionally, not at full run — the dot of an i is a small landing pad */
     var want = fig.drag ? fig.drag.vx : (g ? Math.max(-RUN, Math.min(RUN, (g.x - fig.x) * 3)) : fig.vx);
     if (g && g.how === 'fall' && (g.x - fig.x) * g.dir < 0) want = fig.vx;   // a drop she walked off past its spot: no pull back mid-fall (she'd land and turn round)
+    if (fig.parkour || fig.endFix) want = fig.vx;   // headed for the wall, or back over the divider: her leap is already aimed
     fig.vx += (want - fig.vx) * Math.min(1, dt * 2.2);
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
     var ny = fig.y + fig.vy * dt;
+    /* PAST THE DIVIDER'S END SHE NEVER JUST FALLS (her 2026-11-23: "she can never fall directly in that space"): the moment she
+       starts coming down out there, nearer the side of the screen she goes for it (hand and knee on it, slide, kick back: tickWall),
+       nearer the divider's end her fall is aimed back onto it */
+    if (floorX1 != null && !fig.parkour && !fig.endFix && fig.vy > 0 && !onFloor(nx)) {
+      var sW = nx < floorX1 ? -1 : 1, wX = sW < 0 ? 2 : W - 2, eX = sW < 0 ? floorX1 + 24 : floorX2 - 24;
+      var Tf = (-fig.vy + Math.sqrt(fig.vy * fig.vy + 2 * G * Math.max(8, floorY - 2 - fig.y))) / G;
+      if (Math.abs(wX - nx) < Math.abs(nx - eX)) { fig.parkour = { side: sW, wx: wX }; fig.vx = sW * Math.max(Math.abs(fig.vx) * (fig.vx * sW > 0 ? 1 : 0), (Math.abs(wX - nx) - WALL_GX()) / Tf); }
+      else { fig.endFix = true; fig.vx = Math.max(-900, Math.min(900, (eX - nx) / Tf)); }
+      nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
+    }
+    if (fig.endFix && onFloor(nx)) fig.endFix = false;
+    if (fig.parkour) {   // her hand reaches the wall: on it
+      var P = fig.parkour;
+      if (P.side * (P.wx - nx) <= WALL_GX() + 1 || (ny >= floorY - 2 && !onFloor(nx))) { fig.y = ny; wallOn(P.side, P.wx, nx); return; }
+    } else if (floorX1 != null && ny >= floorY - 2 && !onFloor(nx)) nx = Math.max(floorX1, Math.min(floorX2, nx));   // (a fall aimed back that comes up short: onto the end)
     if (fig.flip) {
       /* the turn always completes before her feet arrive (#99: a flip timed for a lower landing was cut off at ~320° and
          snapped upright as she touched down): falling, if the ground below comes sooner, the spin speeds up to finish */
@@ -1284,30 +1500,34 @@
       }
     }
     fig.hangCool = Math.max(0, fig.hangCool - dt);
-    if (fig.aim && (fig.vy >= 0 || fig.state !== 'air')) fig.aim = null;   // the aim lasts the climb only
-    /* monkey-bar grab — never while chasing a click; bars serve free-form leaps */
-    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.target && !fig.tapQ && (!CLAY.ready || (CLAY.sheetIn && CLAY.sheetIn['hang-swing-climb-x3'] && CLAY.sheetIn['monkey-x3']))) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
-      var handY = ny - LEG - HANDUP;
-      /* hands within 15px below a bar, or up to 70px above it: clay-her is taller than the gaps in the hero, so on "Hi"
-         her hands already start above the eyebrow, and on the second bio sentence they start ~54px above the first
-         one's underside (2026-10-23 "my claymation isn't hanging on the top text"; 2026-10-24 "hang off the top
-         sentence as well"). Of the bars in reach, the one nearest her hands wins; it must have real ink to hold. */
-      var best = null;
+    if (fig.aim && (fig.vy >= 0 || fig.state !== 'air')) fig.aim = fig.autoUp = null;   // the aim lasts the climb only
+    /* monkey-bar grab — free-form leaps, and a jump aimed at a line (a click or tap above her, her route); never while
+       chasing a click otherwise */
+    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && (!fig.target || fig.aim) && !fig.tapQ && canHang()) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
+      /* THE CATCH IS A CHANGE OF GRIP, NOT A JUMP OF HER DRAWING: her hands close on a letter top at the moment her
+         hanging body's feet would be where her feet are now. Of the lines in reach, the one nearest her hands wins */
+      var R = rig(), handY = ny - R.soles, win = R.soles * .03, best = null;
       for (var i = 0; i < bars.length; i++) {
-        var b = bars[i], dh = handY - b.y;
-        if (nx < b.x1 - 4 || nx > b.x2 + 4 || dh >= 15 || dh <= -70) continue;
-        if (fig.aim && b !== fig.aim && fig.vy < 0) continue;   // rising to an aimed line: the ones below pass by
+        var b = bars[i];
+        if (nx < b.x1 - 4 || nx > b.x2 + 4) continue;
+        if (fig.aim && b !== fig.aim) continue;   // rising to an aimed line: the ones below pass by
+        var g0 = topGrip(nx, b, 12, null, null, null, true);
+        if (!g0) continue;
+        var dh = handY - g0.y;
+        if (dh < -win || dh > Math.max(1.5, -fig.vy / 60)) continue;   // within a frame's rise of the exact height: her feet stay put
         if (best && Math.abs(dh) >= Math.abs(best.dh)) continue;
-        var gp = grip(nx, b.y, 14);   // a word gap is not a bar
-        if (gp) best = { b: b, gp: gp, dh: dh };
+        best = { b: b, g: g0, dh: dh };
       }
       if (best) {
         fig.aim = null;
         fig.state = 'hang';
-        var th0 = Math.max(-.3, Math.min(.3, fig.vx / 700)), om0 = Math.max(-2, Math.min(2, fig.vx / 220));
-        fig.hang = { bar: best.b, hx: nx, th: th0, om: om0, la: th0, lw: om0 * 1.4, reach: 0,   // la/lw: the legs' own swing (see tickHang)
-                     hands: [{ x: best.gp.x - 2, y: best.gp.y + 1.75 }, { x: best.gp.x + 2, y: best.gp.y + 1.75 }] };
-        fig.vx = 0; fig.vy = 0; fig.flip = null;
+        /* her momentum carries into the swing: what was her sideways speed is now the pendulum's (θ' = v / L) */
+        var g = { x: best.g.x, y: best.g.y };
+        fig.hang = { bar: best.b, G: g, hands: [g, g], th: 0, om: Math.max(-2.2, Math.min(2.2, fig.vx / R.L)), t: 0, rest: 0, k: 0, L: R.L, auto: fig.autoUp,
+                     i: 0, u: 0, mode: 'idle', r: 0, off: { x: 0, y: 0 }, goal: fig.autoUp ? null : fig.hangGoal };
+        if (!fig.autoUp) { fig.target = null; fig.waypoint = null; }   // a hang she was sent to is where she was going: from here the bars
+        fig.autoUp = null; fig.hangGoal = null;
+        fig.x = nx; fig.y = ny; fig.vx = 0; fig.vy = 0; fig.flip = null;
         return;
       }
     }
@@ -1361,54 +1581,198 @@
         return;
       }
     }
-    fig.x = nx; fig.y = Math.min(ny, floorY);
+    fig.x = nx; fig.y = onFloor(nx) ? Math.min(ny, floorY) : ny;
     /* only when coming DOWN: a jump launched from the floor sits on it for its first (zero-length) frame, and this used to
        cancel it on the spot — why a second jump at the cloud, from the floor, sometimes never left the ground */
-    if (fig.y >= floorY && fig.vy >= 0) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; fig.thru = 0; }
+    if (fig.y >= floorY && fig.vy >= 0 && onFloor(fig.x)) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; fig.thru = 0; }
   }
 
-  function tickHang(dt) {
-    var h = fig.hang, b = h.bar;
-    var mdx = fig.drag && fig.drag.key ? fig.drag.vx : performance.now() - keyAt < 4000 ? 0 : mouse.x - h.hx;   // the arrow keys move her along the bar (and while you're on the keys, the cursor doesn't)
-    /* a person on monkey bars, not a rigid pendulum chasing the cursor (her: "the hanging swinging doesn't look natural"):
-       gravity + a firm damping, so an entry swing settles in a couple of passes; never past ~26° */
-    h.om += (-(G / 90) * Math.sin(h.th) - 1.8 * h.om) * dt;
-    h.th = Math.max(-.45, Math.min(.45, h.th + h.om * dt));
-    /* THE BODY ISN'T RIGID (her: "the hanging swinging still doesn't move organically the way our shoulders and our back
-       would move if we were monkey bar-ing"): the legs ride their own softer spring toward the body's line, so they lag
-       as the swing sets off (back arches) and carry on past it at the turn (hips pike), then settle. clayPick turns
-       the difference into a bend down her back and legs, and the swing's height into a shoulder shrug. */
-    if (h.la == null) { h.la = h.th; h.lw = h.om; }
-    h.lw += (55 * (h.th - h.la) - 6.5 * h.lw) * dt;
-    h.la += h.lw * dt;
-    var tv = Math.abs(mdx) < 26 ? 0 : Math.max(-170, Math.min(170, mdx * 2.4));
-    h.hx += tv * dt;
-    h.reach = tv ? (h.reach + dt * 6) % (Math.PI * 2) : 0;
-    if (h.hx < b.x1 - 4 || h.hx > b.x2 + 4) {
-      var dir = tv > 0 || h.om > 0 ? 1 : -1;
-      var next = null;
-      bars.forEach(function (nb) {
-        if (nb === b || Math.abs(nb.y - b.y) > 16) return;
-        var gap = dir > 0 ? nb.x1 - b.x2 : b.x1 - nb.x2;
-        if (gap > -30 && gap < 52 && (!next || gap < next.gap)) next = { bar: nb, gap: gap };
-      });
-      if (next) { h.bar = next.bar; b = h.bar; }
-      else { release(dir); return; }
+  /* ------------------------------------------------------------------ the hang: a pendulum
+     (her 2026-11-22, on the rigged hand-over-hand: "super weird and disjointed … it looks like the elbows are getting
+     dislocated because you're just manipulating the pictures"; and "gravity should work for her, so she like is down,
+     but like she needs momentum to swing … use the laws of physics"). No cut-out limbs and no bending of her pictures:
+     she is a WHOLE clay frame turned about the fist on the letter, and the turn is a real pendulum,
+       θ'' = −(g/L)·sin θ − c·θ'      L = grip → her centre of mass, g scaled so one swing takes PERIOD s at any size,
+     so at rest her centre of mass hangs straight under her hands, any lean comes from the swing and passes back through
+     vertical, and the speed peaks at the bottom and dies at each end. Driven (the arrows, or the cursor off to one side)
+     she PUMPS: a small hip kick each time she passes the bottom going that way, the swing builds and turns at each end
+     (her: "I do like the swinging, like when it changes directions"); let go, and the swing's speed carries her. Which
+     whole frame shows is read off the swing (HANGF + SWING.front/back), so new frames slot in by angle and phase.
+     Hand over hand waits for whole frames made for it (Flora); the rigged version is retired. */
+  /* the old hang frame, in its own pixels: where the fists close (gx, gy) — the muscle-up's climb frames are pinned the same way */
+  var HANGF = { 0: { gx: 29.5, gy: 13, cx: 28.7, cy: 131.1 } };
+  var SWING = { period: 1.25, rest: 1.6, drive: .25, amp: .32, kick: .7 };   // s; damping /s idle and driven; rad (the clip's own swing); rad/s
+  /* THE TARZAN CLIP (Flora, 2026-11-23, her "think about Tarzan … gravity should work for her … she needs momentum to swing"):
+     75 whole frames of her going hand over hand along a bar (MiniMax i2v from her own clay, keyed, the bar taken out, sized to
+     her clay). Each frame is pinned to the fist she hangs from (ox, oy) and carries its centre of mass (mx, my) and swing
+     angle (th), measured off the clip with the camera's pan taken out. Holds A (the dead hang, then the first reach), B, C, D;
+     the next hold is a step further on (TZ.step), and D runs back into B at the pose that matches (raw 148 → 66). */
+  var TZ = null, TZQ = 272 / 688, TZ_FLIGHT = [36, 38, 80, 82, 122, 124];   // clip px → clay px; the frames with neither hand on the bar
+  function tz() {
+    if (TZ) return TZ;
+    var L = CLAY.man && CLAY.man['tarzan-x3']; if (!L || !L.length) return null;
+    var at = function (raw) { for (var i = 0; i < L.length; i++) if (L[i].raw === raw) return i; return 0; };
+    TZ = { L: L, loopFrom: at(148), loopTo: at(66), step: { B: (726.5 - 476) * TZQ, C: (963 - 726.5) * TZQ, D: (1213.5 - 963) * TZQ } };
+    /* HAND OVER HAND (her 2026-11-23: "if she's continuously moving, one hand reaches out and the other hand extends and swings
+       past where the one hand is reaching out … The only time that the following hand reaches and grabs the bar at the same place
+       is when she is stopping"). A second Flora clip (alternate-2, 12 poses/s like the first) is a true hand-over-hand: S (from a
+       dead hang the far arm reaches out and catches), H1 (the near hand lets go behind and swings PAST it to the next letter),
+       H2 (the far hand swings past), H3 (the near hand again), and H3's catch is H2's first pose, so it runs on and on, the hands
+       taking turns to lead. Each frame is pinned to the leading hand. TRAVELLING, every catch is a pass; on the LAST catch she
+       stops: the trailing hand only comes up beside the leading one (its beside pose, T.hoh.stop) and she cross-fades into the
+       first clip's dead hang (C 100), both hands together, straight under them. A single step from a dead hang is the first clip's
+       reach she loved, which ends in exactly that match. */
+    var first = {}, last = {}; L.forEach(function (g, q) { if (/^(S|H[123])$/.test(g.seg)) { if (first[g.seg] == null) first[g.seg] = q; last[g.seg] = q; } });
+    var rawAt = function (raw) { for (var q = 0; q < L.length; q++) if (L[q].raw === raw) return q; return -1; };
+    if (first.S != null && first.H1 != null && first.H2 != null && first.H3 != null) {
+      var Q2 = 272 / 975;
+      TZ.hoh = { first: first, last: last, catchTo: { S: 'H1', H1: 'H2', H2: 'H3', H3: 'H2' }, stop: { H1: rawAt(1050), H2: rawAt(1094), H3: rawAt(1136) }, rest: at(100) };
+      TZ.step.S = (902.5 - 682) * Q2; TZ.step.H1 = (1058 - 902.5) * Q2; TZ.step.H2 = (1267 - 1058) * Q2; TZ.step.H3 = (1440 - 1267) * Q2;   // the catch that ends each
     }
-    /* the hands hold LETTERS, not the line box: resolve each to the nearest real ink.
-       Crossing a word gap, the trailing hand keeps the last letter while the leading one
-       reaches for the next — and if neither can find ink, there is nothing to hold. */
-    var spread = 5 + (h.reach ? 3 * Math.sin(h.reach) : 0);
-    var gl = grip(h.hx - spread, b.y, 30), gr = grip(h.hx + spread, b.y, 30);
-    if (!gl && !gr) { release((tv || h.om) > 0 ? 1 : -1); return; }
-    /* one hand found nothing (a word gap): both hands share the one real hold */
-    if (!gl) gl = gr;
-    if (!gr) gr = gl;
-    h.hands = [{ x: gl.x, y: gl.y + 1.75 }, { x: gr.x, y: gr.y + 1.75 }];
-    fig.x = h.hx;
-    /* body hangs from the grips themselves, so it rides up under tall glyphs */
-    fig.y += ((gl.y + gr.y) / 2 + HANG_L + LEG - fig.y) * Math.min(1, dt * 10);
-    fig.dir = (tv || h.om) > 0 ? 1 : -1;
+    TZ.after = { A: 'B', B: 'C', C: 'D', D: 'B' };   // the first clip's reaches: the hold each lands on
+    return TZ;
+  }
+  function hohSeg(g) { return !!TZ.hoh && /^(S|H[123])$/.test(g.seg); }
+  function tzNext(i) { var H = TZ.hoh, g = TZ.L[i]; if (H && hohSeg(g) && i === H.last[g.seg]) return H.first[H.catchTo[g.seg]]; return i === TZ.loopFrom ? TZ.loopTo : Math.min(i + 1, TZ.L.length - 1); }
+  function tzSame(i) { return i === TZ.loopFrom; }   // the next pose is on the same hold: a change of pose, not a catch
+  function rig() {
+    var H0 = CLAY.ready ? CLAY.H : 113, sc = H0 / (CLAY.man ? CLAY.man._ref : 252), T = tz(), f = T && T.L[0];
+    return f ? { h: H0, sc: sc, soles: (f.oy + f.base) * sc, L: Math.hypot(f.mx, f.my) * sc } : { h: H0, sc: sc, soles: 272 * sc, L: 118 * sc };
+  }
+  function canHang() {
+    if (!CLAY.ready) return true;
+    if (CLAY.sheetIn && CLAY.sheetIn['tarzan-x3']) return true;
+    if (CLAY.tricks) CLAY.tricks(['tarzan-x3']);   // asked for: it comes next
+    return false;
+  }
+  /* the next hold a step on: the underside of a letter at the same height (±6px), the nearest to where her hand lands in the clip */
+  function tzHold(h, seg) {
+    var R = rig(), d = fig.dir, want = h.G.x + d * TZ.step[seg] * R.sc, best = null;
+    for (var dx = 0; dx <= 10; dx++) for (var s2 = -1; s2 <= 1; s2 += 2) {
+      var x = Math.round(want + s2 * dx), t = glyphBottom(x, h.bar);
+      if (t != null && Math.abs(t - h.G.y) <= 6 && (!best || dx + Math.abs(t - h.G.y) * .5 < best.sc)) best = { x: x, y: t, sc: dx + Math.abs(t - h.G.y) * .5 };
+      if (!dx) break;
+    }
+    return best && { x: best.x, y: best.y, dx: best.x - want, dy: best.y - h.G.y };
+  }
+  function ofs2(h, q) { var z = TZ_FLIGHT.indexOf(TZ.L[q].raw); return h.next && z >= 0 ? (z % 2 + 1) / 2 : 0; }   // how much of the gap to the next letter is taken up by pose q (in the air, halves)
+  function tickHang(dt) {
+    var h = fig.hang, R = rig(), T = tz(), sc = R.sc;
+    h.t += dt; h.L = R.L;
+    if (h.turn && (h.turn.t += dt) >= .32) h.turn = null;   // turning on her arm (clayPick)
+    if (!T) { fig.x = h.G.x; fig.y = h.G.y + R.soles; return; }
+    var L = T.L;
+    /* where she's going: the arrows; else the click or tap along the line; else, on a laptop, the cursor */
+    if (h.pin && Math.abs(mouse.x - h.pin.x) > 2 * (CLAY.ready ? CLAY.H : 120)) { h.pin = null; h.settle = false; }   // the cursor has moved well away: following again
+    var gx = fig.drag && fig.drag.key ? (fig.drag.vx > 0 ? 1e6 : -1e6) : h.goal != null ? h.goal : !touchMode && performance.now() - keyAt > 4000 && !CLAY.away && !h.pin ? mouse.x : null;
+    if (gx != null) gx = Math.max(h.bar.x1, Math.min(h.bar.x2, gx));
+    var near = T.step.B * sc * .55, want = h.auto || gx == null || Math.abs(gx - h.G.x) < near ? 0 : gx > h.G.x ? 1 : -1;
+    if (!want && h.goal != null && h.mode === 'idle') h.goal = null;   // there
+    h.rest = want ? 0 : h.rest + dt;
+    var w0 = 2 * Math.PI / SWING.period, f = L[h.i];
+    if (h.mode === 'go') {
+      /* TRAVELLING: the clip's own swing, played on her pendulum's clock (its swing took ~1.67s; hers takes SWING.period) */
+      /* RUN, NOT ALWAYS WALK (her 2026-11-23, #960: "she could probably move a little bit faster ... kind of like running versus
+         walking. She's like almost always walking"): with more than a couple of reaches to go the clip plays up to ~2x faster (a
+         catch every ~1.1s, not ~2.2s), easing back to the walk for the last reaches so the stop is still the gentle one */
+      var stepPx = (T.step.H2 || T.step.B) * sc, togo = gx == null ? 0 : Math.abs(gx - h.G.x);
+      var tp = 1.2 + 1.2 * Math.max(0, Math.min(1, (togo - 2 * stepPx) / (3 * stepPx)));
+      h.pace = (h.pace || 1.2) + (tp - (h.pace || 1.2)) * Math.min(1, dt * 3);
+      if (!h.fade) h.u += dt * 12 * (1.67 / SWING.period) * h.pace;   // (stopping: held on the beside pose while she cross-fades into the dead hang)
+      while (h.u >= 1) {
+        h.u -= 1;
+        var n = tzNext(h.i), fn = L[n], loop = tzSame(h.i);
+        /* leaving the hold for the reach: only if the next hold is there and she still wants to go that way */
+        if (h.stop && h.i === T.hoh.stop[f.seg]) { h.fade = { t: 0 }; h.u = 0; break; }   // the trailing hand is up beside the leading one: settle
+        if (!hohSeg(f) && f.hang && !fn.hang && !loop && fn.seg === f.seg) {
+          var nh = want === fig.dir && tzHold(h, T.after[f.seg]);
+          if (!nh) { h.mode = 'idle'; h.th = fig.dir * f.th - h.r - (h.ri || 0); h.u = 0; h.ri = 0; h.mix = null; break; }   // (from where the swing has her, at the speed it has her: no hitch)
+          h.next = nh;
+        }
+        if (fn.seg !== f.seg && !loop && h.next) {   // the catch: the reaching hand closes on the next letter
+          h.G = { x: h.next.x, y: h.next.y }; h.hands = [h.G, h.G]; h.next = null; h.off = { x: 0, y: 0 };
+          if (hohSeg(fn)) { var nx = want === fig.dir && tzHold(h, fn.seg); if (nx) h.next = nx; else h.stop = true; }   // more to go: the trailing hand will swing past; else this was the last catch
+        }
+        h.i = n; f = fn;
+        /* the next letter is never exactly a clip's step away: the difference is taken up in the air (neither hand on) */
+        if (h.next && TZ_FLIGHT.indexOf(f.raw) >= 0) { var k = TZ_FLIGHT.indexOf(f.raw) % 2 + 1; h.off = { x: h.next.dx * k / 2, y: h.next.dy * k / 2 }; }
+        if (f.hang && want !== fig.dir) { h.mode = 'idle'; h.th = fig.dir * f.th - h.r; h.u = 0; h.ri = 0; h.mix = null; break; }   // stopped (or turned): she swings on from here, with the swing's own speed
+      }
+      if (h.mode === 'go') {
+        var fn2 = L[tzNext(h.i)], th1 = fig.dir * f.th, th2 = fig.dir * fn2.th;
+        h.om = (th2 - th1) * 12 * (1.67 / SWING.period) * (h.pace || 1);   // the clip's swing speed, for when she stops and swings on by herself
+        h.r *= Math.exp(-dt / .15);   // whatever lean the pendulum had going in eases out into the clip's own
+      }
+    }
+    if (h.mode === 'idle') {
+      /* HANGING: a pendulum. At rest her centre of mass is straight under her hand; she swings only with momentum */
+      var th0 = h.th, c = want ? SWING.drive : h.settle ? SWING.rest * 5 : SWING.rest;   // told to stop: the swing dies down quickly, never a freeze
+      for (var s3 = 0; s3 < 2; s3++) { h.om += (-w0 * w0 * Math.sin(h.th) - c * h.om) * dt / 2; h.th += h.om * dt / 2; }
+      if (want && want !== fig.dir && Math.abs(h.th) < .08 && Math.abs(L[h.i].th) < .25) { fig.dir = want; }   // (the 0.32s squeeze-'turn' is off: her 2026-11-23 "looks like you did some picture stuff"; a real turn needs new frames, her call)   // she turns as she passes under her hand, where facing the other way changes the least
+      if (want && (th0 < 0) !== (h.th < 0) && h.om * want > 0 && Math.abs(h.om) / w0 < SWING.amp) h.om += want * Math.min(SWING.kick, (SWING.amp - Math.abs(h.om) / w0) * w0);   // the end of the line: she pumps the swing instead
+      /* the frame from the same hold whose angle and direction of swing match hers */
+      var best = h.i, bs = 1e9;
+      for (var i = 0; i < L.length; i++) { var g = L[i];
+        if (!g.hang || g.seg !== f.seg) continue;
+        var gn = L[tzNext(i)], dirOk = (gn.th - g.th) * fig.dir * h.om >= 0 ? 0 : .08;
+        var sc2 = Math.abs(fig.dir * g.th - h.th) + dirOk + Math.abs(i - h.i) * .012   // and near the frame she's in: never a jump to another pose at the same angle
+          + Math.abs(g.oy + g.base - f.oy - f.base) * .0025;   // nor to legs at another height (stopping mid-reach popped her feet up 23px); light enough that she still settles into the upright pose (heavier, she stayed in a tilted one and never turned)
+        if (sc2 < bs) { bs = sc2; best = i; } }
+      if (best !== h.i) h.xf = { k: h.i, t: 0 };   // a change of pose while she swings: the last one fades out over 0.2s, never a pop
+      h.i = best; f = L[h.i];
+      h.r = fig.dir * f.th - h.th;   // turned so her centre of mass is exactly where the swing has it
+      /* set off: a kick from where she hangs, then the clip carries her on */
+      /* ALWAYS THE SMOOTH ONE (her 2026-11-23: "when I click up ... and then just move my cursor to the side ... She does the really choppy one. I want her to do the smooth one that ... happens when I ... drag"): following the cursor, the gap grows a little at a time, so it used to start with single reach-and-stop moves (the choppy one) and only went hand over hand once a drag put the goal >1.3 reaches away. Any travel is now the continuous hand-over-hand clip; it ends in its own gentle beside-pose stop */
+      var far = T.hoh && gx != null && want !== 0;
+      var onward = want === fig.dir && tzHold(h, far ? 'S' : T.after[f.seg]);   // only with a letter to reach for: at the end of the line she just swings (it used to flick go/idle every frame and freeze her)
+      if (onward && Math.abs(h.th - fig.dir * f.th) < .12) { h.mode = 'go'; h.u = 0; h.stop = false; h.fade = null;
+        if (far) { h.xf = { k: h.i, t: 0 }; h.i = T.hoh.first.S; f = L[h.i]; h.r = fig.dir * f.th - h.th; h.next = onward; } }   // from her dead hang into the clip's own (cross-faded)
+      else if (onward && Math.abs(h.th) < .03 && Math.abs(h.om) < .15) h.om += want * SWING.kick;
+      if (h.auto && h.t > .5 && (Math.abs(h.th) < .12 && Math.abs(h.om) < .8 || h.t > 1.6)) {   // her route climbs on through this line
+        var tg0 = fig.target, wp0 = fig.waypoint; h.auto = null;
+        if (muscleUp()) { if (tg0) { fig.target = tg0; fig.waypoint = wp0; } return; }
+      }
+    }
+    f = L[h.i];
+    /* SMOOTH, NOT STEPPED (her 2026-11-23: "She almost doesn't like swing smoothly"): the clip is ~16 poses a second, so between
+       two poses of the same hold her body is turned about the fist along the swing's line from one to the next (it used to sit
+       still for 4 screen frames, then jump up to 12px), the next pose fades in over the second half (drawn 'lighter', a true
+       cross-fade), and the in-air drift to the next letter is eased the same way */
+    h.ri = 0; h.mix = null;
+    if (h.mode === 'go' && h.fade) {   // STOPPING: the beside pose cross-fades into the dead hang, both hands together, then she just hangs and swings
+      h.fade.t += dt; var fa = Math.min(1, h.fade.t / .45); fa = fa * fa * (3 - 2 * fa);
+      if (h.fade.t >= .45) { h.i = T.hoh.rest; f = L[h.i]; h.mode = 'idle'; h.r = fig.dir * f.th - h.th; h.fade = null; h.stop = false; h.xf = null; }
+      else h.mix = { k: T.hoh.rest, a: fa, rot: fig.dir * L[T.hoh.rest].th - h.th };
+    } else if (h.mode === 'go' && h.xf) { h.xf.t += dt; var xg = 1 - h.xf.t / .25; if (xg <= 0) h.xf = null; else h.mix = { k: h.xf.k, a: xg * xg * (3 - 2 * xg), rot: fig.dir * L[h.xf.k].th - h.th }; }
+    else if (h.mode === 'go') {
+      var nI = tzNext(h.i), fN = L[nI];
+      if (fN.seg === f.seg || tzSame(h.i)) {
+        var e = Math.min(1, h.u), dth = fN.th - f.th, ofs = function (q) { return ofs2(h, q); };
+        h.ri = -fig.dir * e * dth;
+        if (h.next) { var o0 = ofs(h.i), o1 = ofs(nI), ok = o0 + (o1 - o0) * e; h.off = { x: h.next.dx * ok, y: h.next.dy * ok }; }
+        var a = Math.max(0, Math.min(1, (e - .5) / .5)); a = a * a * (3 - 2 * a);
+        if (a > .01) h.mix = { k: nI, a: a, rot: h.r + fig.dir * (1 - e) * dth };
+      } else if (h.next) {
+        /* THE CATCH, eased too: in the air her drawing drifts from where this pose has her centre of mass to where the catching
+           pose (pinned at the next letter) has it, so the hand-off is a glide, not the 13px jump it was */
+        var e2 = Math.min(1, h.u), o2 = ofs2(h, h.i), A0 = { x: h.G.x + h.next.dx * o2, y: h.G.y + h.next.dy * o2 }, c0 = Math.cos(h.r), s0 = Math.sin(h.r), dd = fig.dir;
+        var P0 = { x: A0.x + dd * f.mx * sc * c0 - f.my * sc * s0, y: A0.y + dd * f.mx * sc * s0 + f.my * sc * c0 };
+        var P1 = { x: h.next.x + dd * fN.mx * sc * c0 - fN.my * sc * s0, y: h.next.y + dd * fN.mx * sc * s0 + fN.my * sc * c0 };
+        var dP = { x: P1.x - P0.x, y: P1.y - P0.y };
+        h.off = { x: A0.x - h.G.x + e2 * dP.x, y: A0.y - h.G.y + e2 * dP.y };
+        var a2 = Math.max(0, Math.min(1, (e2 - .5) / .5)); a2 = a2 * a2 * (3 - 2 * a2);
+        if (a2 > .01) h.mix = { k: nI, a: a2, rot: h.r, tx: h.next.x - A0.x - dP.x, ty: h.next.y - A0.y - dP.y };
+      }
+    }
+    if (h.mode === 'idle' && h.xf) { h.xf.t += dt; var xa = 1 - h.xf.t / .2; if (xa <= 0) h.xf = null; else h.mix = { k: h.xf.k, a: xa * xa * (3 - 2 * xa), rot: fig.dir * L[h.xf.k].th - h.th }; }
+    else h.xf = null;
+    var rr = h.r + h.ri;
+    var d = fig.dir, cr = Math.cos(rr), sr = Math.sin(rr), ax = h.G.x + h.off.x, ay = h.G.y + h.off.y;
+    var mx = d * f.mx * sc, my = f.my * sc, fy = (f.oy + f.base) * sc;
+    h.P = { x: ax + mx * cr - my * sr, y: ay + mx * sr + my * cr };
+    h.th = h.mode === 'go' ? Math.atan2(h.P.x - ax, h.P.y - ay) : h.th;
+    fig.x = h.hx = h.P.x;
+    fig.y = ay + mx * sr + fy * cr;   // her feet
   }
 
   function tickMantle(dt) {
@@ -1421,8 +1785,29 @@
       return;
     }
     var e = m.t * m.t * (3 - 2 * m.t);
+    if (m.up) {
+      /* the muscle-up: first the pull, drawn from her hands on the letters (clayPick), her feet where that frame puts them;
+         then the press and step up, drawn from her feet, which carry on from exactly there up onto the line (it used to
+         start them half a body higher: she popped up ~60px at the hand-over) */
+      var fy = muFeet(m);
+      if (m.t < MU_PULL) { fig.x = m.x1; fig.y = fy; return; }
+      if (m.ya == null) m.ya = fy;
+      var u = (m.t - MU_PULL) / (1 - MU_PULL), eu = u * u * (3 - 2 * u);
+      fig.x = m.x1; fig.y = m.ya + (m.y1 - m.ya) * eu;
+      return;
+    }
     fig.x = m.x0 + (m.x1 - m.x0) * e;
     fig.y = m.y0 + (m.y1 - m.y0) * e - Math.sin(m.t * Math.PI) * 14;
+  }
+  var MU_PULL = .5, MU_REACH = .2, CLIMB_FIST = { 7: 53.5, 9: 47.5, 10: 33, 11: 32.5, 12: 34, 13: 33.5, 14: 35.5 };   // the climb frames' fists (x, their own px): pinned there, on the edge   // of the climb: the one-hand reach up to the top edge, then both hands there and the pull
+  /* one arm up (climb 7) while that hand travels up to the top edge; then both hands on it (climb 9..14) as she pulls */
+  function muFrame(m) { return m.t < MU_REACH ? 7 : 9 + Math.min(5, Math.floor((m.t - MU_REACH) / (MU_PULL - MU_REACH) * 6)); }
+  function muHandX(m) { var u = Math.min(1, m.t / MU_REACH); return m.hx0 == null ? m.x1 : m.hx0 + (m.x1 - m.hx0) * u * u * (3 - 2 * u); }
+  function muHand(m) { var u = Math.min(1, m.t / MU_REACH), e = u * u * (3 - 2 * u); return m.hy0 + (m.y1 - m.hy0) * e + (m.d0 || 0) * (1 - e); }   // her reaching hand: from the underside up to the word's top, then there
+  /* where the pull frame drawn from her hands puts her feet */
+  function muFeet(m) {
+    var L = CLAY.man && CLAY.man['climb-x3'], f = L && L[muFrame(m)];
+    return muHand(m) + ((f ? f.base : 256) - HANGF[0].gy) * (CLAY.ready ? CLAY.H : 113) / (CLAY.man ? CLAY.man._ref : 252);
   }
 
   function puff(x, y, n) {
@@ -1460,7 +1845,7 @@
        jumping up sound sounds super weird now"). The files download at load; they decode once the context exists. */
     var AC = window.AudioContext || window.webkitAudioContext, raw = {};
     if (!AC) return s;
-    ['step', 'jump', 'grip'].forEach(function (n) {   // land.mp3 is retired: landings are two soft steps
+    ['step', 'jump-springy'].forEach(function (n) {   // land.mp3 is retired: landings are two soft steps. HER PICKS 2026-11-23 ("FJ2 · Springy jump, G4 · Squeeze ship these"): jump = jump-springy.mp3 (Flora/ElevenLabs FJ2, played as recorded); grab = the browser-made squeeze below; landing = the two muffled steps (B)
       fetch(dir + n + '.mp3' + ver).then(function (r) { return r.arrayBuffer(); }).then(function (ab) { raw[n] = ab; decode(); }).catch(function () {});
     });
     function decode() {
@@ -1495,7 +1880,7 @@
   })();
   function sfx(n, vol, rate) {
     var c = SFX.ctx, d = SFX.buf[n];
-    if (!c || !d || c.state !== 'running' || rmActive()) return;
+    if (!c || !d || c.state !== 'running' || rmActive() || document.documentElement.dataset.mute === 'on') return;   // the site's mute button
     var src = c.createBufferSource(), g = c.createGain(), t = c.currentTime, len = CLIP[n], tone = TONE[n];
     src.buffer = d; src.playbackRate.value = (rate || 1) * PITCH; g.gain.value = vol;
     if (tone) {   // the low-pass takes the edge off, the high-pass drops lows a speaker can't play, the fade-in rounds off the attack
@@ -1505,9 +1890,23 @@
       if (tone.attack) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + tone.attack); }
       node.connect(g);
     } else src.connect(g);
-    g.connect(c.destination);
+    g.connect(muffle(c));   // every sound through the pillow (her: muffled, "not like beans in a rain stick")
     if (len) { g.gain.setValueAtTime(vol, t + len - 0.06); g.gain.linearRampToValueAtTime(0, t + len); src.start(t, 0, len); }
     else src.start();
+  }
+  /* A PILLOW OVER THE MIC (her 2026-11-22: "a more muffle sound for the movements of the avatar? like a pillow is over the mic" →
+     "you never fixed the sounds … I want it to sound muffled. not like beans in a rain stick"): every one of her sounds ends in this ONE
+     bus, the same on phone and laptop. Two gentle low-passes (a soft, steep roll-off of the hiss and grain, no ringing) and a little warm
+     body under 250Hz; gain keeps each as loud as before (measured in the preview build: step .0056→.0071, grip .018→.022 RMS) */
+  var MUFFLE = { lp: 750, body: 3, gain: 0.9 };
+  function muffle(c) {
+    if (c.__muffle) return c.__muffle;
+    var a = c.createBiquadFilter(), b = c.createBiquadFilter(), w = c.createBiquadFilter(), g = c.createGain();
+    a.type = b.type = 'lowpass'; a.frequency.value = b.frequency.value = MUFFLE.lp; a.Q.value = b.Q.value = 0.6;
+    w.type = 'lowshelf'; w.frequency.value = 250; w.gain.value = MUFFLE.body;
+    g.gain.value = MUFFLE.gain;
+    a.connect(b); b.connect(w); w.connect(g); g.connect(c.destination);
+    return (c.__muffle = a);
   }
   /* jump.mp3 is a whoosh that builds for 0.3s and THEN a thump at 0.34s, its loudest moment; that thump landed while
      she was still in the air (her: "the jumping up sound sounds super weird"). Only the whoosh plays, faded out. */
@@ -1525,23 +1924,112 @@
   if (PHONE) TONE = { jump: { lp: 900, hp: 150, attack: 0.06, gain: 1.5 }, step: { lp: 2400, hp: 120, gain: 1.2 }, grip: { lp: 2400, hp: 120 } };
   var PITCH = PHONE ? 0.88 : 1;
   var sfxWas = null, fallV = 0, leapt = false;
-  function whoosh() { sfx('jump', 0.26, 0.9 + Math.random() * 0.08); }
-  function touchdown() { sfx('step', 0.2, 1.08); setTimeout(function () { sfx('step', 0.13, 1.14); }, 70); }
+  function whoosh(v) { springJump(v); }
+  /* FJ2 "Springy jump" exactly as she heard it on the sounds page: the recording, levelled to the same peak (.55), no pillow */
+  var SPRING_PEAK = null;
+  function springJump(v, mode) {   // mode: 'rise' = the boing only, 'fall' = the shh only, none = both (celebrations, the muscle-up)
+    var c = SFX.ctx, d = SFX.buf['jump-springy'];
+    if (!c || !d || c.state !== 'running' || rmActive() || document.documentElement.dataset.mute === 'on') return;   // the site's mute button
+    if (SPRING_PEAK == null) { var pk = 0; for (var ch = 0; ch < d.numberOfChannels; ch++) { var a = d.getChannelData(ch); for (var i = 0; i < a.length; i++) { var v = Math.abs(a[i]); if (v > pk) pk = v; } } SPRING_PEAK = pk || 1; }
+    /* TWO HALVES (her 2026-11-23, again: "super shrill ... way quieter and ... deeper ... not the second part, just the first part"):
+       the recording is a boing (0–0.2s, its loud peak) then a soft shh (0.2s on). The boing alone gets ~-10dB, ~4 more semitones
+       down and a dark 1.4kHz low-pass; the shh plays straight after it exactly as before (0.84 rate, 3.2kHz, 0.6) */
+    var SPLIT = 0.2, t = c.currentTime + 0.005;
+    function part(rate, cut, vol, from, len, at) {
+      var src = c.createBufferSource(), g = c.createGain(), lp = c.createBiquadFilter(); src.buffer = d;
+      src.playbackRate.value = PITCH * rate; lp.type = 'lowpass'; lp.frequency.value = cut; lp.Q.value = 0.5;
+      g.gain.value = vol / SPRING_PEAK; src.connect(lp); lp.connect(g); g.connect(c.destination);
+      if (len) src.start(at, from, len); else src.start(at, from);
+      return len ? len / (PITCH * rate) : 0;   // how long it lasts in real time
+    }
+    var k = v == null ? 1 : force(v);   // a harder push-off is a louder spring (FORCE below)
+    /* FALLS ARE ONLY THE SHH (her 2026-11-23: "I don't want the beginning half of the jump sound ... it's really just mainly
+       falling ... I only want the falling sound, which is the second half"): a drop plays the shh alone, at its own force */
+    if (mode === 'fall') { part(0.84, 3200, 0.6 * k, SPLIT, 0, t); return; }
+    /* THE DROP (her 2026-11-23: "when she jumps down from really far, there needs to be like a dropping sound ... the opposite sound"):
+       the same boing played BACKWARDS, so its rising notes fall, at the same deep, quiet setting; its envelope is re-shaped (quick
+       attack, natural decay) so it doesn't swell; then the shh, exactly as a jump's boing is followed by its shh */
+    if (mode === 'drop') {
+      if (!springJump.rev) { var n0 = Math.round(SPLIT * d.sampleRate), rb = c.createBuffer(d.numberOfChannels, n0, d.sampleRate);
+        for (var ch2 = 0; ch2 < d.numberOfChannels; ch2++) { var src0 = d.getChannelData(ch2), dst = rb.getChannelData(ch2); for (var j = 0; j < n0; j++) dst[j] = src0[n0 - 1 - j]; }
+        springJump.rev = rb; }
+      var rs = c.createBufferSource(), rg = c.createGain(), rl = c.createBiquadFilter(), rate = PITCH * 0.66, len = SPLIT / rate;
+      rs.buffer = springJump.rev; rs.playbackRate.value = rate; rl.type = 'lowpass'; rl.frequency.value = 1400; rl.Q.value = 0.5;
+      var pk = 0.19 * k / SPRING_PEAK * 2.2;   // (the reversed tail is quieter than the original's peak: lifted to sit at the boing's level)
+      rg.gain.setValueAtTime(0, t); rg.gain.linearRampToValueAtTime(pk, t + 0.012); rg.gain.exponentialRampToValueAtTime(pk * 0.25, t + len);
+      rs.connect(rl); rl.connect(rg); rg.connect(c.destination); rs.start(t, 0, SPLIT);
+      part(0.84, 3200, 0.6 * k, SPLIT, 0, t + len * 0.8);
+      return;
+    }
+    if (mode === 'rise') { part(0.66, 1400, 0.19 * k, 0, SPLIT, t); return; }
+    var boing = part(0.66, 1400, 0.19 * k, 0, SPLIT, t);
+    part(0.84, 3200, 0.6 * k, SPLIT, 0, t + boing);
+  }
+  /* G4 "Squeeze": made in the browser, a gentle squeeze as her fingers close, through the same pillow as her landing */
+  var SQ_NOISE = null;
+  function squeeze(v) {
+    var kq = v == null ? 1 : Math.max(0.5, force(v));   // her hands take the speed she arrives with; a soft catch still makes a sound
+    var c = SFX.ctx; if (!c || c.state !== 'running' || rmActive() || document.documentElement.dataset.mute === 'on') return;   // the site's mute button
+    if (!SQ_NOISE) { var n = c.sampleRate, b = c.createBuffer(1, n, c.sampleRate), dd = b.getChannelData(0), last = 0; for (var i = 0; i < n; i++) { var w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; dd[i] = last * 3.5 + w * 0.15; } SQ_NOISE = b; }
+    var t = c.currentTime + 0.01, bus = muffle(c);
+    var env = function (g, a, peak, dur) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); };
+    var o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(320 * PITCH, t); o.frequency.exponentialRampToValueAtTime(260 * PITCH, t + 0.1);
+    env(og, 0.01, 0.35 * kq, 0.1); o.connect(og); og.connect(bus); o.start(t); o.stop(t + 0.15);
+    var s2 = c.createBufferSource(), f = c.createBiquadFilter(), ng = c.createGain(); s2.buffer = SQ_NOISE; f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(700, t); f.frequency.exponentialRampToValueAtTime(400, t + 0.09); env(ng, 0.01, 0.45 * kq, 0.09);
+    s2.connect(f); f.connect(ng); ng.connect(bus); s2.start(t, Math.random() * 0.5, 0.14);
+  }
+  /* FORCE (her 2026-11-23: "the amplitude of the sound is based off of the amount of force exerted ... mathematically scaled
+     based off of the height and the force of the action"): every take-off, catch and landing is played at a gain proportional
+     to the speed of the impact, the same law for all of them. Impact speed comes from physics, not guesses: a fall of height h
+     lands at v = √(2gh) (G, her gravity); an arc drawn in a celebration lands at its own slope (see arc()). The reference is
+     her standard hop (JUMP_MAX × .6 + 20 px, the JUMP! box): that speed plays at gain 1, the level she approved, so a step off a
+     ledge is a pat, a long drop a thud, and the gain is clamped to [.25, 1.8] so nothing vanishes or clips. */
+  var V_REF = Math.sqrt(2 * G * (JUMP_MAX * .6 + 20));
+  function force(v) { return Math.max(0.25, Math.min(1.8, Math.abs(v || 0) / V_REF)); }
+  function fallSpeed(h) { return Math.sqrt(2 * G * Math.max(0, h)); }
+  var herH = function () { return CLAY.ready ? CLAY.H : 120; };
+  function touchdown(v) { var k = force(v == null ? V_REF : v); sfx('step', 0.42 * k, 1.08); setTimeout(function () { sfx('step', 0.27 * k, 1.14); }, 70); }   // same muffled B sound, two feet
+  function foot(liftH) { return function () { sfx('step', 0.42 * force(fallSpeed(liftH * herH())), 1.08); }; }   // ONE foot, on the frame it meets the floor, from the height it swung down
+  /* a celebration's flight is a true gravity arc: lift = 4·P·u(1−u) over u = (ct − a)/(b − a), off the floor exactly from the
+     take-off frame a to the landing frame b. Its take-off and landing speed is the arc's slope at either end, 4·P·H / T,
+     T = (b − a) × the move's duration in seconds. */
+  var ARC = { backflip: { a: 4 / 18, b: 14 / 18, P: .5 }, star: { a: .22, b: .78, P: .32 } };
+  function arcLift(name, ct) { var A = ARC[name], u = (ct - A.a) / (A.b - A.a); return u > 0 && u < 1 ? 4 * A.P * u * (1 - u) : 0; }
+  function arcV(name) { var A = ARC[name], c = fig.celeb; return 4 * A.P * herH() / ((A.b - A.a) * (c ? c.dur : 1)); }
   /* the moves a click on her plays leave the ground too, on their own clock, never through 'air' (her 2026-10-26, #87:
      "where is the jump and landing sound?", right after the cartwheel and the flip became her first two clicks): the same
      whoosh as she springs and the same two soft steps as she lands, at the moments the frames leave and meet the floor */
-  var CUES = { backflip: [[.06, whoosh], [.94, touchdown]], star: [[.22, whoosh], [.78, touchdown]], cartwheel: [[.92, touchdown]] };
+  /* CARTWHEEL FEET (her 2026-11-23: "the boom boom landing sound needs to be ... timed with the feet"): measured on CW_SEQ (33
+     frames over 1.3s) the lead foot plants on frame 26 (t .79) swinging down from about half her height, the trailing foot on
+     frame 28 (t .85) from lower; the old single cue at .92 came ~170ms late, once she was already standing. Celebration
+     heights are their peak lift (fractions of her height, as clayPick draws them). */
+  var CUES = { backflip: [[ARC.backflip.a, function () { whoosh(arcV('backflip')); }], [ARC.backflip.b, function () { touchdown(arcV('backflip')); }]],
+    star: [[ARC.star.a, function () { whoosh(arcV('star')); }], [ARC.star.b, function () { touchdown(arcV('star')); }]], cartwheel: [[26 / 33, foot(.45)], [28 / 33, foot(.25)]] };
+  /* ONCE PER REAL EVENT (her 2026-11-23: "I keep hearing the sound stuff play a bunch of times"): a sound never repeats within
+     a quarter second of itself, whatever the states do in between, and letting go of a bar is a drop, not a jump */
+  var sfxAt = {};
+  function once(n, fn) { var t = performance.now(); if (t - (sfxAt[n] || -1e9) < 250) return; sfxAt[n] = t; fn(); }
   function sfxTick() {
     var st = fig.state;
     if (st !== sfxWas) {
-      if (st === 'air' && fig.vy < -300) { whoosh(); leapt = true; }   // a launch, not a fall off an edge
-      if (st === 'hang') sfx('grip', 0.4);
+      if (st === 'air' && fig.vy < -300 && sfxWas !== 'hang' && !fig.dropSnd) { var v0 = fig.vy, gl = fig.waypoint || fig.target, down = !!(gl && (gl.drop || gl.y > fig.y + 8)); fig.bigDrop = down && gl ? gl.y - fig.y : 0; if (!down && v0 * v0 / (2 * G) >= herH()) once('jump', function () { springJump(v0, 'rise'); }); fig.shhV = v0; leapt = true; }   /* THE BIG SOUND IS FOR BIG MOVES (her 2026-11-23: "The jumping sound should only apply when we're moving ... bigger distances" / "That swishy sound can be there for ... smaller movements"): the boing only when the launch would lift her more than her own height (h = v²/2g); a small hop, a stair-step or a wall kick gets the swish alone, as she comes down — and NEVER on the way DOWN (her 2026-11-23: "she's moving down, shrill sound can't be there ... the second half of the sound needs to be there"): a jump whose goal is lower than where she takes off is a swish only */   // a launch, not a fall off an edge, nor her hands opening on a bar (release() gives her a little upward toss)
+      if (st === 'hang') { var vc = fallV; once('grip', function () { squeeze(vc); }); }
       /* a landing, ALWAYS after a jump (her ask: "a sound when I land on something I
          jumped on" — landing up on a ledge comes in slow, near the top of the arc) */
-      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) touchdown();   // LIGHT ON HER FEET (her 2026-10-24: the landing 'so heavy'): two soft quick footfalls, not the thud;
+      if ((sfxWas === 'air' || sfxWas === 'mantle') && (st === 'move' || st === 'idle') && (fallV > 150 || leapt)) { var vl = fallV; once('land', function () { touchdown(Math.max(0, vl)); }); }   // her real downward speed as she touched   // LIGHT ON HER FEET (her 2026-10-24: the landing 'so heavy'): two soft quick footfalls, not the thud;
       if (st !== 'air' && st !== 'mantle') leapt = false;
       sfxWas = st;
     }
+    /* a drop's shh: the moment she is coming down (at once for a walk-off, at the top of the little spring for a hop-off),
+       as loud as the speed the drop will land with (√(2g·h), the FORCE law) */
+    if (st === 'air' && fig.dropSnd && (fig.vy || 0) >= 0) { var dh = fig.dropSnd; fig.dropSnd = 0; leapt = true; once('jump', function () { springJump(fallSpeed(dh), dh >= 2 * herH() ? 'drop' : 'fall'); }); }   // from really far (2+ of her heights): the falling notes
+    /* A JUMP'S SHH WAITS FOR THE FALL (her 2026-11-23: "the jumping up sound is followed by the landing sound ... doesn't need to
+       be there because the monkey bar grabbing sound is there"; and #944, the shh is "the second half when she's coming down"):
+       the boing plays at take-off, the shh only once she is actually coming down. A jump that catches a bar never comes down,
+       so it is boing → grab, nothing else (an aimed jump keeps fig.aim until its apex; if she misses, the shh plays as she falls) */
+    if (st === 'air' && fig.shhV && (fig.vy || 0) >= 0 && !fig.aim) { var sv = fig.shhV, bd = fig.bigDrop || 0; fig.shhV = 0; fig.bigDrop = 0; once('shh', function () { bd >= 2 * herH() ? springJump(fallSpeed(bd), 'drop') : springJump(sv, 'fall'); }); }   // a jump DOWN from really far: the falling notes as she starts down
+    if (st !== 'air' && !(fig.loadT > 0)) { fig.dropSnd = 0; fig.shhV = 0; fig.bigDrop = 0; }   // (kept through the take-off crouch, which runs on the ground)
     if (st === 'air') fallV = fig.vy || 0;
   }
 
@@ -1572,6 +2060,7 @@
       fig.wave += dt / 1.6;
       if (fig.wave >= 1) { fig.state = fig.prev || 'idle'; fig.prev = null; }
     }
+    if (fig.state !== 'air' && !fig.loadT) fig.dbl = fig.dblQ = null;   // one double jump per flight
     puffs = puffs.filter(function (p) { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.t > 0; });
     stWas = fig.state;
   }
@@ -1688,7 +2177,7 @@
       function pump() { if (busy || !Q.length) return; busy = true; var st = Q.shift(); loadSet(st[0], function () { busy = false; if (st[1]) st[1](); pump(); }); }
       function queue(st, front) { if (front) Q.unshift(st); else Q.push(st); pump(); }
       function sheet(k) { return [[k], function () { CLAY.sheetIn[k] = true; if (CLAY.onSheet) CLAY.onSheet(); }]; }
-      var TRICKS = ['cartwheel-in', 'cartwheel-50', 'backflip-x3', 'star-bow-x3', 'hang-swing-climb-x3', 'monkey-x3'];
+      var TRICKS = ['tarzan-x3', 'cartwheel-in', 'cartwheel-50', 'backflip-x3', 'star-bow-x3'];   // tarzan-x3: the Flora hand-over-hand clip (2026-11-23); hang-swing-climb-x3 is no longer fetched   // (monkey-x3 retired 2026-11-22: the rigged hang goes hand over hand)
       var net = navigator.connection, lean = !!(net && (net.saveData || /2g|3g/.test(net.effectiveType || '')));
       CLAY.sheetIn = {};
       CLAY.tricks = function (first) {
@@ -1768,45 +2257,32 @@
         if (CLAY.run) return { s: 'run-x3', k: Math.floor(CLAY.ph + 11) % 48, lean: CLAY.lean };
         return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
+        /* on the wall (tickWall): her climb frame 6 facing it, the raised fist and the bent knee on it, pinned by that fist */
+        if (fig.wall) return { s: 'climb-x3', k: WALL_F, anchor: 'hands', ax: fig.wall.hx, ay: fig.wall.hy, gx: 68, gy: WALL_GY, rot: -fig.wall.side * .05 };   // (leant in a touch about the fist, so the knee meets the wall too)
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         /* falling, the last 60px to the ground slide the pin from the frame's middle to its feet, so they meet the floor
            exactly (#99: pinned by the middle all the way, the feet sat 9px off and snapped down as she touched) */
         var win = Math.max(60, vy * .1), gd = vy > 0 ? groundBelow(fig.x, fig.y, win) : null;   // (a fast fall gets a longer run-in)
-        return { s: 'jump-land-slide-x3', k: vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true, feet: gd == null ? 0 : Math.max(0, Math.min(1, 1 - (gd - fig.y) / win)) }; }
-      case 'hang': {
-        var h = fig.hang, hs = o.hands || [], hx = 0, hy = 0, n = 0;
-        hs.forEach(function (q) { if (q) { hx += q.x; hy += q.y; n++; } });
-        if (!n) { hx = fig.x; hy = fig.y - LEG - HANG_L; n = 1; }
-        /* only the dead-hang frame keeps both hands on the grip, so the swing is that frame
-           pivoting from the hands like a pendulum (stepped to 12 positions a turn of the swing) */
-        var th = Math.max(-1.1, Math.min(1.1, h.th || 0));
-        /* travelling along the line: hand over hand, like the stick figure (her ask 2026-10-23,
-           "monkey bars and alternating hands"). The 8 clay frames follow the same reach phase that
-           alternates the stick figure's grips; each frame's top is its gripping hand. */
-        /* zoom .82: these 24 frames were cut from their sheet ~1.2x bigger than her standing frame (her: "when it's hanging,
-           why does the person get bigger") */
-        if (h.reach && CLAY.man['monkey-x3']) return { s: 'monkey-x3', k: Math.floor(h.reach / (Math.PI * 2) * 24) % 24, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -Math.round(th * .4 / .09) * .09 * fig.dir, zoom: .82 };
-        /* the pose follows the swing: legs out ahead on the way forward (frames 1, 9 — the only ones that really grip,
-           with 0 and 11), and the straight body trailing on the way back; the frames carry the swing, so the body
-           itself only tilts a little */
-        /* one pose, the dead hang, so nothing pops between frames: the WHOLE body pivots from the hands like a pendulum,
-           the back and legs bend with the legs' lag, and the shoulders shrug up toward the hands as the swing climbs
-           (the arms pull) and stretch out at the bottom where it's fastest */
-        var bend = Math.max(-.7, Math.min(.7, (h.la == null ? th : h.la) - th));
-        var shrug = Math.min(1, Math.abs(Math.sin(th)) / Math.sin(.45)), stretch = Math.min(1, (h.om || 0) * (h.om || 0) / 4);
-        return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: hx / n, ay: hy / n, rot: -th * fig.dir,
-                 bend: bend, armSy: 1 - .12 * shrug + .04 * stretch };
+        return { s: 'jump-land-slide-x3', k: fig.aim && vy < 0 ? (vy < -500 ? 4 : 5) : vy < -500 ? 4 : vy < -300 ? 5 : vy < -90 ? 6 : vy < 120 ? 7 : vy < 300 ? 8 : 9, mid: true, feet: gd == null ? 0 : Math.max(0, Math.min(1, 1 - (gd - fig.y) / win)) }; }
+      case 'hang': {   /* a whole Tarzan frame pinned at her fist, turned only as the pendulum needs (tickHang) */
+        var h = fig.hang;
+        if (!tz()) return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: h.G.x, ay: h.G.y, gx: HANGF[0].gx, gy: HANGF[0].gy };
+        /* TURNING ON HER ARM (her 2026-11-23, #961: "a visual transition of when she switches directions, like she's like swinging on
+           her arm or like turning on her arm rather than kind of just like flipping"): she turns about the arm she hangs by, her
+           body going edge-on and round to face the other way over 0.32s (her width through cos), never a mirror-flip in one frame */
+        var sx = 1; if (h.turn) { var tu = Math.min(1, h.turn.t / .32); var cu = -Math.cos(Math.PI * tu * tu * (3 - 2 * tu)); sx = (cu < 0 ? -1 : 1) * (.3 + .7 * Math.abs(cu)); }   // (a body has depth: edge-on she is still ~a third of her width)
+        return { s: 'tarzan-x3', k: h.i, anchor: 'hands', ax: h.G.x + h.off.x, ay: h.G.y + h.off.y, rot: h.r + (h.ri || 0), pin: true, mix: h.mix, sx: sx };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
-        if (t < .45) return { s: 'climb-x3', k: 9 + Math.min(5, Math.floor(t / .45 * 6)), anchor: 'hands', ax: m.x1,
-          ay: m.hy0 == null ? m.y1 : m.hy0 + (m.y1 - m.hy0) * Math.min(1, t / .4) };   // a muscle-up's hands climb the glyph
-        return { s: 'climb-x3', k: 18 + Math.min(12, Math.floor((t - .45) / .55 * 13)) }; }
+        if (t < MU_PULL) return { s: 'climb-x3', k: m.up ? muFrame(m) : 9 + Math.min(5, Math.floor(t / MU_PULL * 6)), anchor: 'hands', ax: m.up ? muHandX(m) : m.x1, gx: m.up ? CLIMB_FIST[muFrame(m)] : undefined,
+          ay: m.hy0 == null ? m.y1 : muHand(m), gy: m.up ? HANGF[0].gy : 0 };   // a muscle-up's hands on the letters' tops, the fist closed over them as in the hang
+        return { s: 'climb-x3', k: 18 + Math.min(12, Math.floor((t - MU_PULL) / (1 - MU_PULL) * 13)) }; }
       case 'wave': return { s: 'idle-wave-sign-x3', k: timedAt(WAVE_T, fig.wave * 3) };
       case 'sign': return { s: 'star-bow-x3', k: 8 };
       case 'celeb': { var c = fig.celeb, ct = c.t;
         switch (c.name) {
-          case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: ct >= .22 && ct < .78 ? Math.sin((ct - .22) / .56 * Math.PI) * .32 : 0 };
-          case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: Math.sin(Math.PI * ct) * .5 };
+          case 'star': return { s: 'star-bow-x3', k: ct < .22 ? Math.min(2, Math.floor(ct / .22 * 3)) : ct < .78 ? 3 : 4 + Math.min(2, Math.floor((ct - .78) / .22 * 3)), lift: arcLift('star', ct) };
+          case 'backflip': return { s: 'backflip-x3', k: Math.min(17, Math.floor(ct * 18)), lift: arcLift('backflip', ct) };   // off the floor only between take-off (frame 4) and landing (frame 14)
           case 'dance': return { s: 'dance-x3', k: Math.min(47, Math.floor(ct * 48)) };
           /* (2026-10-24, her: "glitchy … at one point she's already on one hand but the next image has her back on her
              foot"): the clip's frames 12-15 drop her back onto a foot, and its second half swings the legs back the
@@ -1855,7 +2331,7 @@
   }
   function clayFigure(px, py, dir, o) {
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
-    CLAY.pk = pk;
+    CLAY.pk = pk; CLAY.pts = pk.anchor === 'hands' ? { hands: [{ x: pk.ax, y: pk.ay }] } : null;
     if (!f) return false;
     var im = CLAY.img[f.f];
     if ((!im || !im.complete || !im.naturalWidth) && list) {   // not in yet: the nearest earlier frame of the same move that is, else the walk's (for a run)
@@ -1881,8 +2357,15 @@
     } else CLAY.sk = 1;   // back to standing she is already smiling, never a beat of the flat face
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
-    if (pk.anchor === 'hands' && pk.bend != null) { ctx.translate(pk.ax, pk.ay); ctx.rotate(pk.rot); ctx.scale(sc * d, sc); bentHang(im, f, pk); }
-    else if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(f.gx != null ? f.gx : f.cx), -(f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
+    if (pk.anchor === 'hands' && pk.pin) {   /* a Tarzan frame: placed by its own pin to the fist */
+      var mf = pk.mix && list[pk.mix.k], mi = mf && CLAY.img[mf.f], ga = ctx.globalAlpha;
+      if (mi && mi.complete && mi.naturalWidth) {   // cross-fading into the next pose: both added ('lighter') on the clear canvas, weights summing to 1
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ga * (1 - pk.mix.a);
+        ctx.translate(pk.ax, pk.ay); ctx.save(); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(im, f.ox, f.oy); ctx.restore();
+        ctx.globalAlpha = ga * pk.mix.a; if (pk.mix.tx) ctx.translate(pk.mix.tx, pk.mix.ty); ctx.rotate(pk.mix.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(mi, mf.ox, mf.oy);
+      } else { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(im, f.ox, f.oy); }
+    }
+    else if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(pk.gx != null ? pk.gx : f.gx != null ? f.gx : f.cx), -(pk.gy != null ? pk.gy : f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
     else if (pk.spin != null) { ctx.translate(px, groundY - CLAY.H * .5); ctx.rotate(Math.round(pk.spin / .5) * .5); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + CLAY.man._ref * .5); }   /* stepped spin, like clay */
     /* airborne frames pin by their MIDDLE, not their feet: a tuck is ~25% shorter than a stretch, and
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
@@ -1891,22 +2374,6 @@
       ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx - (bo ? bo[pk.k % bo.length] : 0), -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
-  }
-
-  /* the hang frame drawn as a chain of thin horizontal slices from the grip down, each turned a little more than the
-     one above: the arms (top 22%) squash or stretch with the shrug, the back takes a third of the bend, the legs the
-     rest. In the frame's own (already mirrored) space, so the bend follows her facing. */
-  function bentHang(im, f, pk) {
-    var gx = f.gx != null ? f.gx : f.cx, S = 6, px = 0, py = 0, w = f.w, h = f.h;
-    for (var y0 = 0; y0 < h; y0 += S) {
-      var u = (y0 + S / 2) / h, sh = Math.min(S, h - y0);
-      var a = -pk.bend * (u < .22 ? 0 : u < .5 ? .35 * (u - .22) / .28 : .35 + .65 * (u - .5) / .5);
-      var dh = sh * (u < .22 ? pk.armSy : 1);
-      ctx.save(); ctx.translate(px, py); ctx.rotate(a);
-      ctx.drawImage(im, 0, y0, w, Math.min(sh + 1, h - y0), -gx, 0, w, dh + (y0 + sh < h ? 1 : 0));
-      ctx.restore();
-      px -= Math.sin(a) * dh; py += Math.cos(a) * dh;
-    }
   }
 
   function figure(px, py, dir, o) {
@@ -2485,8 +2952,12 @@
     sound: function () { return { ctx: SFX.ctx ? SFX.ctx.state : null, buf: SFX.buf }; },   // QA: is the sound context awake, and the decoded clips (to tell which one played)
     clay: function () { var k = CLAY.pk || {}; return { f: CLAY.last && CLAY.last.f.f, lean: k.lean || 0, rot: k.rot || 0, spin: k.spin || 0, miss: CLAY.miss || 0, moveReady: !!CLAY.moveReady, sheets: Object.keys(CLAY.sheetIn || {}) }; },   // QA: the frame drawn last and every rotation on it
     canvas: function () { return cv; },
+    pts: function () { return CLAY.pts; },   // QA: where a hands-anchored frame was pinned
+    rig: function () { return rig(); },
+    hangRise: function (i, x, y) { return hangRise(bars[i], x, y); },   // QA: the jump that would hang her from bar i at x, from feet y
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
     groundTop: function (x, y) { return groundTop(x, y, H); },
+    floor: function () { return { y: floorY, x1: floorX1, x2: floorX2, w: W }; },   // QA: the divider she runs on, and its ends
   };
 })();

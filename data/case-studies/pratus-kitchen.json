@@ -29,6 +29,11 @@
       "value": "Launching in 2026"
     },
     {
+      "label": "Live",
+      "value": "pratuskitchen.com",
+      "href": "https://pratuskitchen.com"
+    },
+    {
       "label": "Code",
       "value": "On GitHub",
       "href": "https://github.com/madhumita-krishnan/pratus-kitchen"

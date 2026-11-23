@@ -239,7 +239,9 @@ const ampLink = f => `<link href="https://fonts.googleapis.com/css2?family=${f.r
    start scrolling the state is off"): the list view only, the others blurred, never while the page moves. The options
    and dials live in studies/tweaker-hover/; Save writes data/tweaks.json
    'work-hover' and these become the defaults. */
-const WORK_HOVER = Object.assign({ mode: 'dim', op: 0.45, blur: 0, scale: 1.02, ms: 320, delay: 140, settle: 250, wash: true }, TWEAKS['work-hover'] || {});
+/* mode 'off' (her 2026-11-22: "remove the screen dimming thing on my website when i hover to highlight a screen"): the hovered
+   project keeps its highlight wash; the others no longer dim */
+const WORK_HOVER = Object.assign({ mode: 'off', op: 0.45, blur: 0, scale: 1.02, ms: 320, delay: 140, settle: 250, wash: true }, TWEAKS['work-hover'] || {});
 const HERO_FRAME = Object.assign({ heroH: 100, top: 112, bottom: 40, ebGap: 12, nameGap: 24, bioGap: 40, btnLow: false, accent: 'eyebrow', wm: 4, cave: .84, dark: .82, dent: .8, pressIn: 80, back: 600 }, TWEAKS['hero-frame'] || {});
 function heroFrameVars() {
   const h = HERO_FRAME, n = k => Number(h[k]) || 0;
@@ -807,6 +809,7 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
      word into letters, and they rise 7px in the accent one after another, falling back in reverse on leave */
   .hero-line .hs .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
   .hero-line .hs.waving .ch{transform:translateY(-7px);color:var(--accent)}
+  .hero-line .ch.ch-img{line-height:0}
 }
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip-path:inset(50%);white-space:nowrap;border:0}
@@ -1147,6 +1150,8 @@ html.hfocus .hf-path>:not(.hf-path):not(.hf-on):not(.dc){opacity:0!important;poi
 /* laptops: bottom-right corner, on the nav's right edge (her 2026-10-26: top right, then "put the toggle at the bottom right
    actually") */
 @media (hover:hover) and (pointer:fine){.view-dock.floating{top:auto;bottom:22px;left:auto;right:clamp(20px,4vw,56px)}}
+/* a NARROW window with a mouse docks like a phone: centred, so it never sits on the day/night toggle (bottom-right below 640px) (her 2026-11-23: "Is there an extra night and day toggle underneath") */
+@media (hover:hover) and (pointer:fine) and (max-width:640px){.view-dock.floating{left:0;right:0}}
 /* the toggles' appearing and leaving is ONE materialize timeline in app.js (see vt()): a clip of the bar's own surface
    from a small centre pill to the full bar, then the controls resolve in it; leaving plays it backwards. Hidden = not
    there and not clickable; while it dematerializes it can't be clicked either */
@@ -1203,6 +1208,15 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 @media (prefers-reduced-motion:reduce){.scard-stack{transition:none}}
 .scard-media>*{max-width:100%;max-height:100%}
 .scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
+/* her photo as a card's picture (site.json project.photo; her 2026-11-22 "can we use this image?"): it stands in for the phone;
+   the phone comes back with the local SPOTIFY CARD switch (B) */
+.scard-photo{width:100%;height:100%;border-radius:18px;overflow:hidden;background:#0b0f0c;box-shadow:0 0 0 1px rgba(22,26,36,.08),0 24px 50px -28px rgba(0,0,0,.5)}
+.scard-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.scard-photo{position:relative}.scard-film{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* her pick 2026-11-23: the Spotify card IS the film, transparent ground so only the phone is left when the corduroy fades ("I just want it to be the phone") */
+.scard-photo.has-film.v-live{background:none;box-shadow:none;border-color:transparent}.scard-photo.has-film.v-live img{opacity:0}
+.scard-media:has(.scard-photo) > .phone-media{display:none}
+
 /* the centred project's full-sentence headline, directly under the card; wraps freely, and its box is held
    at the height of the longest headline so nothing below jumps when it changes */
 .sdeck-title{margin:1.2rem auto 0;padding:0 16px;width:min(100%,calc(var(--S,50vw) + 2rem));min-height:var(--title-h,auto);box-sizing:border-box;
@@ -1941,6 +1955,7 @@ function makeJS() {
     if(anim&&!rmActive()){
       /* one snapshot cross-fade where the API exists; the per-element .theme-anim
          class only for engines without it */
+      /* the old cross-fade, kept (her 2026-11-23: "I liked the old transition from day to night mode better") */
       if(document.startViewTransition){document.startViewTransition(apply);return;}
       root.classList.add('theme-anim');clearTimeout(themeAnimT);
       themeAnimT=setTimeout(()=>root.classList.remove('theme-anim'),900);
@@ -2016,14 +2031,27 @@ function makeJS() {
     /* the bio lines wave like the headline (see .hero-line .hs .ch). Letters go INSIDE the reveal's word spans, so the
        words still arrive the same way and the clay figure still reads each word as one block of ground */
     if(matchMedia('(hover:hover)').matches)hero.querySelectorAll('.hero-line .hs').forEach(hs=>{
-      hs.querySelectorAll('.w').forEach(w=>{if(w.querySelector('img'))return;const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
+      hs.querySelectorAll('.w').forEach(w=>{if(w.querySelector('img')){   /* the word with the company logo waves too, logo and letters together (her 2026-11-23: "it doesn't lift the icon as far as it lifts the words") */
+        w.querySelectorAll('img').forEach(im=>{const c=document.createElement('span');c.className='ch ch-img';im.replaceWith(c);c.appendChild(im)});
+        const tw=document.createTreeWalker(w,NodeFilter.SHOW_TEXT),ts=[];let n;while(n=tw.nextNode())if(n.textContent.trim())ts.push(n);
+        ts.forEach(n=>{const f=document.createDocumentFragment();[...n.textContent].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;f.appendChild(c)});n.replaceWith(f)});return}
+        const t=w.textContent;w.textContent='';[...t].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;w.appendChild(c)})});
       const chs=[...hs.querySelectorAll('.ch')],st=Math.min(26,700/Math.max(1,chs.length));   // the whole line rises in ~0.7s, however long it is
       hs.addEventListener('mouseenter',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=(i*st)+'ms');hs.classList.add('waving')});
       hs.addEventListener('mouseleave',()=>{if(!rmActive())chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*st)+'ms');hs.classList.remove('waving')});
     });
     document.querySelectorAll('.lively').forEach(el=>{
       const txt=el.textContent;el.textContent='';
-      [...txt].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;el.appendChild(c)});
+      /* letters grouped per WORD in a no-wrap span, so a line only ever breaks between words (2026-11-22: at 320px "Madhu" broke as
+         "Mad / hu", since every letter is its own inline-block); every letter is still a .ch for the wave and for clay-her's footing */
+      /* break points = every space (her no-orphan nbsp too), EXCEPT the last one, which keeps the last two words together (no orphan):
+         "Hi, I'm Madhu" wraps as "Hi," / "I'm Madhu" when it must, never "Mad / hu" and never "Madhu" alone */
+      const parts=txt.split(/([\\s\\u00a0]+)/).filter(Boolean),seps=parts.map((p,i)=>/^[\\s\\u00a0]+$/.test(p)?i:-1).filter(i=>i>=0);
+      const glue=seps.length?seps[seps.length-1]:-1,groups=[];let cur='';
+      parts.forEach((p,i)=>{if(/^[\\s\\u00a0]+$/.test(p)&&i!==glue){if(cur)groups.push(cur);groups.push(' ');cur=''}else cur+=p});if(cur)groups.push(cur);
+      groups.forEach(g=>{const box=g===' '?el:el.appendChild(Object.assign(document.createElement('span'),{className:'lw'}));
+        if(box!==el)box.style.whiteSpace='nowrap';
+        [...g].forEach(ch=>{const c=document.createElement('span');c.className='ch';c.textContent=ch;box.appendChild(c)})});
       const stagger=26;
       el.addEventListener('mouseenter',()=>{if(!rmActive()){[...el.querySelectorAll('.ch')].forEach((c,i)=>c.style.transitionDelay=(i*stagger)+'ms')}el.classList.add('waving')});
       el.addEventListener('mouseleave',()=>{if(!rmActive()){const chs=[...el.querySelectorAll('.ch')];chs.forEach((c,i)=>c.style.transitionDelay=((chs.length-1-i)*stagger)+'ms')}el.classList.remove('waving')});
@@ -2555,7 +2583,7 @@ function makeJS() {
   if(sd){
     const stage=sd.querySelector('.sdeck-stage'),cards=[...stage.children],titleEl=sd.querySelector('.sdeck-title'),nameEl=titleEl.querySelector('.sdeck-name'),lineEl=titleEl.querySelector('.sdeck-line'),bar=sd.querySelector('.sdeck-progress'),segs=bar?[...bar.children]:[];
     const logoEl=titleEl.querySelector('.sdeck-logo');
-    const fill=i=>{nameEl.textContent=cards[i].dataset.name;lineEl.textContent=cards[i].dataset.title;
+    const brandOf=c=>c.dataset.brand||'';const fill=i=>{nameEl.textContent=cards[i].dataset.name;nameEl.dataset.brand=brandOf(cards[i]);lineEl.textContent=cards[i].dataset.title;
       const ico=segs[i]&&segs[i].querySelector('.sd-ico');if(logoEl&&ico){logoEl.innerHTML=ico.innerHTML;logoEl.style.background=ico.querySelector('img')?'transparent':ico.style.background}
       placeCo(i)
       if(sd.classList.contains('stack')&&dims[i])sd.style.setProperty('--tt',(stage.offsetTop+dims[i].cy+dims[i].h/2+tgNow)+'px')};
@@ -2623,7 +2651,7 @@ function makeJS() {
       /* phones read small beside the laptop screens at the same height (her 2026-10-26: "make the phones a little bigger on
          the horizontal scroll"): a phone stands --sd-phone (1.15) times as tall as the others */
       const PH=num('--sd-phone')||1.15;
-      dims=cards.map(c=>{const m=c.querySelector('.scard-media>*'),isP=m.classList.contains('phone-media'),ar=isP?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
+      dims=cards.map(c=>{const m=[...c.querySelector('.scard-media').children].find(e=>getComputedStyle(e).display!=='none')||c.querySelector('.scard-media>*'),isP=m.classList.contains('phone-media'),ar=isP?1.1036/2.2705:m.offsetWidth/m.offsetHeight;
         let h=isP?Ht*PH:Ht,w=h*ar;if(w>dw*W){w=dw*W;h=w/ar}wMax=Math.max(wMax,w);
         c.style.setProperty('--w',w+'px');c.style.setProperty('--h',h+'px');return {w,h,cy:sideM||phone?cyB+(isP?(h-Ht)/2:0):cyB+(Ht-h)/2}});   // a bigger phone grows DOWN (its top stays put, so nothing above it moves)   // under: bottoms aligned so the headline gap never changes; side: centred
       /* laptops: each case and its text are ONE group, centred on the screen, with the same gap between them for every
@@ -2645,7 +2673,7 @@ function makeJS() {
     function fitCo(){
       sd.style.removeProperty('--co-fs');if(tv!==1||!sd.classList.contains('side'))return;
       const cs=getComputedStyle(coEl),fs=parseFloat(cs.fontSize),gap=parseFloat(cs.columnGap)||0,lg=titleEl.querySelector('.sdeck-logo').offsetWidth,keep=nameEl.textContent;
-      let worst=0;cards.forEach(c=>{nameEl.textContent=c.dataset.name;worst=Math.max(worst,lg+gap+nameEl.offsetWidth)});nameEl.textContent=keep;
+      let worst=0;const kb=nameEl.dataset.brand;cards.forEach(c=>{nameEl.textContent=c.dataset.name;nameEl.dataset.brand=brandOf(c);worst=Math.max(worst,lg+gap+nameEl.offsetWidth)});nameEl.textContent=keep;nameEl.dataset.brand=kb;
       if(worst>titleEl.clientWidth)sd.style.setProperty('--co-fs',Math.floor(fs*titleEl.clientWidth/worst)+'px')}
     document.fonts&&document.fonts.ready.then(fitCo);
     const edge=v=>Math.max(-.2,Math.min(cards.length-1+.2,v));
@@ -3069,7 +3097,7 @@ function makeJS() {
     const card=box.closest('.scard,.wproject');
     const focused=()=>!card||(card.classList.contains('scard')?card.getAttribute('aria-current')==='true':card.classList.contains('focus'));
     let inView=false,userPaused=false,onScreen=false;
-    if(card)addEventListener('mk-focus',()=>{if(rmActive()||!onScreen)return;inView=focused();inView&&!userPaused?play():pause()});
+    if(card)addEventListener('mk-focus',()=>{if(rmActive()||!onScreen)return;const was=inView;inView=focused();if(inView&&!userPaused){if(!was)play(true)}else pause()});
     function arm(){if(!vid.src&&vid.dataset.src){vid.preload='auto';vid.src=vid.dataset.src;vid.load()}}
     /* fetch AHEAD of arrival (2026-08-26, "the gifs still aren't playing as I scroll"):
        preload=none + src-on-half-visible meant the mp4's first byte wasn't requested
@@ -3083,13 +3111,21 @@ function makeJS() {
     const afterLoad=f=>document.readyState==='complete'?f():addEventListener('load',f,{once:true});
     new IntersectionObserver((es,io)=>{es.forEach(e=>{if(e.isIntersecting){afterLoad(arm);io.disconnect()}})},
       {rootMargin:'150% 0px 150% 0px'}).observe(box);
-    function play(){arm();vid.play().then(()=>box.classList.add('playing')).catch(()=>{
+    /* THE COVER FIRST (her 2026-11-22: "I want moments where I can see the cover before the moments start"): a clip that
+       comes (back) into focus restarts from its beginning and holds on its cover (the poster under the video) for COVER_HOLD
+       before the video fades in; hover clips restart from the top with no hold, since they already rest on the cover */
+    const COVER_HOLD=1000;let fresh=true,holdT=0;
+    function play(hold){arm();
+      if(fresh){fresh=false;try{vid.currentTime=0}catch(e){}
+        if(hold){clearTimeout(holdT);holdT=setTimeout(()=>{if(inView&&!userPaused&&!rmActive())start()},COVER_HOLD);return}}
+      start()}
+    function start(){vid.play().then(()=>box.classList.add('playing')).catch(()=>{
       /* play() can lose the race with its own metadata on iOS (preload=none + src just
          attached): if the data wasn't there yet, try once more when it is */
-      vid.addEventListener('loadeddata',()=>{if(inView&&!userPaused&&!rmActive())play()},{once:true});
+      vid.addEventListener('loadeddata',()=>{if(inView&&!userPaused&&!rmActive())start()},{once:true});
     })}
-    function pause(){vid.pause();box.classList.remove('playing')}
-    vid.addEventListener('pause',()=>{if(inView&&!userPaused&&!rmActive())play()});
+    function pause(){clearTimeout(holdT);vid.pause();box.classList.remove('playing');fresh=true}
+    vid.addEventListener('pause',()=>{if(inView&&!userPaused&&!rmActive()&&!box.classList.contains('playing'))return;if(inView&&!userPaused&&!rmActive())start()});
     gestureRetries.push(()=>{if(inView&&!userPaused&&vid.paused&&!rmActive())play()});
     if(btn){btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
       if(box.classList.contains('playing')){userPaused=true;pause();btn.innerHTML=${JSON.stringify(PLAY_IC)}}
@@ -3099,7 +3135,7 @@ function makeJS() {
     /* data-autoplay = behave like a GIF: run whenever it is on screen, on any device */
     if(box.hasAttribute('data-autoplay')){
       new IntersectionObserver(es=>{es.forEach(e=>{onScreen=e.isIntersecting;inView=onScreen&&focused();
-        if(rmActive())return;inView?play():pause()})},{threshold:.15}).observe(box);
+        if(rmActive())return;inView?(box.classList.contains('playing')||play(true)):pause()})},{threshold:.15}).observe(box);
       return;
     }
     if(finePointer.matches){
@@ -3107,7 +3143,7 @@ function makeJS() {
       hoverZone.addEventListener('mouseleave',()=>{inView=false;if(!rmActive())pause()});
     }else{
       new IntersectionObserver(es=>{es.forEach(e=>{if(rmActive())return;
-        onScreen=seen(e);if(onScreen&&focused()){inView=true;if(!userPaused)play()}else{inView=false;pause()}})},
+        onScreen=seen(e);if(onScreen&&focused()){if(!inView){inView=true;if(!userPaused)play(true)}}else{inView=false;pause()}})},
         {threshold:[0,.25,.5,.75,1]}).observe(box);
     }
     new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting){onScreen=inView=false;pause()}})},{threshold:0}).observe(box);
@@ -3116,6 +3152,103 @@ function makeJS() {
   /* disciplines panels */
   const panels=[...document.querySelectorAll('#panels .panel')];
   if(panels.length){
+    /* THE GALLERY (her 2026-11-22: "if they click on the architecture and service design, is there a way to scroll through picture
+       aesthetically?"): clicking the OPEN panel (a second tap on phones) opens every project big, in one native sideways scroll with
+       snap, starting at that one. No arrow buttons (her no-UI-arrows rule), no scroll-jacking; only the centred film plays. */
+    const dg=document.getElementById('dg');
+    if(dg&&dg.showModal){
+      const strip=dg.querySelector('.dg-strip'),slides=[...dg.querySelectorAll('.dg-slide')],num=dg.querySelector('.dg-n');
+      let pushed=false,cur=0;
+      const play=()=>slides.forEach((sl,i)=>{const v=sl.querySelector('video');if(!v)return;if(i===cur){if(!v.src)v.src=v.dataset.src;const pr=v.play();pr&&pr.catch&&pr.catch(()=>{})}else v.pause()});
+      const mark=()=>{if(mode()!=='strip')return;const c=strip.scrollLeft+strip.clientWidth/2;let best=0,d=1e9;slides.forEach((sl,i)=>{const m=sl.offsetLeft+sl.offsetWidth/2,dd=Math.abs(m-c);if(dd<d){d=dd;best=i}});
+        if(best!==cur||!num.textContent)setCur(best)};
+      /* three ways to sift (her 2026-11-22: "i just want a creative an aesthetic way to sift through them"), on the review switch:
+         strip = the sideways scroll · prints = a pile of prints, the top one flicks away · film = one big picture over a thumbnail filmstrip */
+      document.documentElement.dataset.gal='prints';document.documentElement.dataset.desk='blur';   // her pick 2026-11-23: "just do something like blurred ... basic" (not the clay desk, not the soap film)
+      const mode=()=>document.documentElement.dataset.gal||'prints';   // her pick 2026-11-22: "gallery b" (prints on the clay desk)
+      /* CROPPED TO FIT (her 2026-11-22: "some pictures can be cropped to fit like the boat house one"): a print is 4:3, 3:4 or square. A picture
+         that keeps 80% or more of itself in that shape fills it; the wide drawings stay whole; boat-house-01 by her name, at its building */
+      const FIT={'boat-house-01':'38% 50%'};slides.forEach(sl=>{const im=sl.querySelector('img');if(!im)return;const tag=()=>{const w=im.naturalWidth,h=im.naturalHeight;if(!w)return;const r=w/h,
+        ar=r>1.15?4/3:r<.87?3/4:1,keep=Math.min(r,ar)/Math.max(r,ar),k=(im.getAttribute('src')||'').split('/').pop().split('.')[0];
+        if(keep>=.8||FIT[k]){im.classList.add('dg-fit');im.style.setProperty('--ar',ar);if(FIT[k])im.style.objectPosition=FIT[k]}};im.complete?tag():im.addEventListener('load',tag,{once:true})});
+      const thumbs=dg.querySelector('.dg-thumbs');
+      if(thumbs&&!thumbs.childElementCount)slides.forEach((sl,i)=>{const m=sl.querySelector('img,video'),t=document.createElement('button');t.type='button';t.className='dg-th';
+        t.setAttribute('aria-label',sl.dataset.name+' '+sl.dataset.k+' of '+sl.dataset.of);const im=document.createElement('img');im.alt='';im.loading='lazy';im.src=m.tagName==='VIDEO'?m.poster:m.getAttribute('src');t.appendChild(im);
+        t.addEventListener('click',e=>{e.stopPropagation();go(i,true)});thumbs.appendChild(t)});
+      const cap=dg.querySelector('.dg-cap');let capFor=null;
+      /* ONE caption per project (her 2026-11-22: "i dont want a new caption with every photo"): it changes only when the project does */
+      const setCap=sl=>{if(!cap||capFor===sl.dataset.i)return;capFor=sl.dataset.i;const f=sl.querySelector('figcaption');cap.classList.remove('in');
+        requestAnimationFrame(()=>{cap.innerHTML=f?f.innerHTML:'';requestAnimationFrame(()=>cap.classList.add('in'))})};
+      const setCur=i=>{cur=i;const sl=slides[cur];num.textContent=sl.dataset.name+' · '+sl.dataset.k+' / '+sl.dataset.of;setCap(sl);
+        /* PILES (her 2026-11-22: "when you're done, the next pile should come to the side … it shouldn't automatically go to the next
+           picture"): the current project is the pile in the middle; the next project's pile waits at the right, the previous at the left */
+        const P=+sl.dataset.i,projs=[...new Set(slides.map(x=>+x.dataset.i))],pi=projs.indexOf(P),nextP=projs[pi+1],prevP=projs[pi-1];
+        /* PILE CHANGES that read as one move (her 2026-11-22: "the pile swiping is still weird"): the left pile is stacked from the END
+           (the print you were on slides over and stays on top; going back lands on it), the right pile from the start; a print that is
+           out of sight when it changes place jumps there unseen and only fades in (it used to fly back down from off the desk) */
+        const hid=slides.map(x=>x.dataset.d==='far'||x.dataset.d==='gone'||x.dataset.pile==='off'||!x.dataset.d);
+        /* ONE PILE OUT, THEN THE NEXT IN (her 2026-11-23: "it should be empty in between ... one pile comes in, the next pile moves out ...
+           you can watch it move out"): on a pile change the arriving prints wait until the leaving ones have cleared the middle */
+        const changed=dg._lastP!==undefined&&dg._lastP!==P;dg._lastP=P;
+        /* both piles move together (her 2026-11-23: "they should just both be moving at the same time"); only unseen prints wait for the landing */
+        slides.forEach((x,j)=>{x.classList.toggle('on',j===cur);const xp=+x.dataset.i,k=xp===prevP?+x.dataset.of-+x.dataset.k:+x.dataset.k-1;let d;
+          if(xp===P){d=(+x.dataset.k-+sl.dataset.k+ +x.dataset.of)%+x.dataset.of;d=d>3?'far':String(d);x.dataset.pile='cur'}   // a LOOP: the pile goes round (her: "it needs to feel like things are moving circularly")
+          else if(xp===nextP){d=k>2?'far':String(k);x.dataset.pile='next'}else if(xp===prevP){d=k>2?'far':String(k);x.dataset.pile='prev'}else{d='far';x.dataset.pile='off'}
+          const was=x.dataset.pile+x.dataset.d;x.dataset.d=d;x.style.setProperty('--tilt',((j*37)%7-3)*.9+'deg');
+          if(hid[j]&&was!==x.dataset.pile+d&&!rmActive()){x.style.transition=changed?'opacity .3s cubic-bezier(.2,.7,.2,1) .5s':'opacity .45s cubic-bezier(.2,.7,.2,1)';   /* on a pile change an unseen print appears only once its pile has landed (her 2026-11-23: "there is already a photo there before the photo pile reaches there") */if(changed)setTimeout(()=>{x.style.transition=''},900);else requestAnimationFrame(()=>requestAnimationFrame(()=>{x.style.transition=''}))}});
+        /* SMOOTH FLIPS (her 2026-11-22: "the pictures dont switch smoothly"): every print the next flip or side-swipe can show is fetched
+           and DECODED ahead, so no 2400px picture is decoded mid-animation */
+        slides.forEach(x=>{if(x.dataset.d==='far'||x.dataset.d==='gone'&&x.dataset.pile!=='cur')return;const im=x.querySelector('img');if(!im)return;im.loading='eager';if(im.decode&&!im.dataset.dec){im.dataset.dec='1';im.decode().catch(()=>{})}});
+        dg.classList.toggle('at-end',projs.length&&slides.filter(x=>+x.dataset.i===P).pop()===sl);
+        if(thumbs){[...thumbs.children].forEach((t,j)=>t.classList.toggle('on',j===cur));const t=thumbs.children[cur];t&&t.scrollIntoView({block:'nearest',inline:'center',behavior:rmActive()?'auto':'smooth'})}
+        clearTimeout(dg._pl);dg._pl=setTimeout(play,mode()==='prints'&&!rmActive()?650:0)};
+      const pileOf=i=>slides.filter(x=>x.dataset.i===slides[i].dataset.i),firstOf=pid=>slides.findIndex(x=>+x.dataset.i===pid);
+      const bounce=()=>{const t=slides[cur];if(!t||rmActive())return;t.classList.remove('bounce');void t.offsetWidth;t.classList.add('bounce')};
+      const flip=dir=>{const pile=pileOf(cur),k=pile.indexOf(slides[cur]);if(pile.length<2){bounce();return}const n=(k+dir+pile.length)%pile.length,
+        mv=dir>0?slides[cur]:pile[n];if(!rmActive()){mv.classList.remove('cyc','cyc-back');void mv.offsetWidth;mv.classList.add(dir>0?'cyc':'cyc-back');
+        mv.addEventListener('animationend',()=>mv.classList.remove('cyc','cyc-back'),{once:true})}setCur(slides.indexOf(pile[n]))};   // up: the top print swings round and under; down: the bottom one swings back on top   // one print, never into the next project
+      const pile=dir=>{const projs=[...new Set(slides.map(x=>+x.dataset.i))],pi=projs.indexOf(+slides[cur].dataset.i),np=projs[pi+dir];if(np===undefined){bounce();return}
+        let t=firstOf(np);if(dir<0)while(slides[t+1]&&+slides[t+1].dataset.i===np)t++;setCur(t)};   // back = the print you left on top
+      const go=(i,smooth)=>{i=(i+slides.length)%slides.length;if(mode()!=='strip'){setCur(i);return}const sl=slides[i];strip.scrollTo({left:sl.offsetLeft-(strip.clientWidth-sl.offsetWidth)/2,behavior:smooth&&!rmActive()?'smooth':'auto'})};
+      /* swipe on the pile / the big picture: a horizontal flick of 40px moves one */
+      /* SWIPE UP to flip (her 2026-11-22: "i want to swipe up to flip through the pictures"): on the prints, a flick up (or a scroll
+         up the wheel/trackpad) sends the top print off the desk; down brings the last one back. One gesture, one print (her rule);
+         sideways flicks still work. The filmstrip keeps sideways. */
+      let sx=null,sy=null;strip.addEventListener('pointerdown',e=>{if(mode()!=='strip'){sx=e.clientX;sy=e.clientY;try{strip.setPointerCapture(e.pointerId)}catch(_){}}});strip.addEventListener('pointercancel',()=>{sx=sy=null});
+      strip.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=sy=null;
+        const up=mode()==='prints'&&Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx);
+        if(up||Math.abs(dx)>40){strip.dataset.swiped='1';if(mode()==='prints'){up?flip(dy<0?1:-1):pile(dx<0?1:-1)}else go(cur+(dx<0?1:-1),true);setTimeout(()=>delete strip.dataset.swiped,0)}});
+      strip.addEventListener('touchmove',e=>{if(mode()==='prints')e.preventDefault()},{passive:false});   // the pile owns the vertical gesture
+      /* ONE FLICK, ONE PRINT (her 2026-11-22: "when i flick up it should go one picture at a time"): after a print flips, the flick's
+         momentum is ignored until it dies (a 180ms quiet gap) or a NEW flick begins (the deltas rise again); quick separate flicks still stack */
+      /* her 2026-11-22 again: "when i swipe i cant move one picture at a time everytim": the momentum tail used to re-arm on its own
+         jitter. Now a print, once flipped, holds until the gesture goes quiet (220ms) or, after the flip has landed (550ms), a NEW swipe
+         clearly starts (deltas climb to 3× the tail's low point) */
+      let wLock=false,wAcc=0,wT=0,wMin=1e9,wAt=0,wSideAcc=0;strip.addEventListener('wheel',e=>{if(mode()!=='prints')return;e.preventDefault();const now=performance.now(),a=Math.max(Math.abs(e.deltaY),Math.abs(e.deltaX)),b=Math.abs(e.deltaX);
+        if(now-wT>220){wLock=false;wAcc=0;wSideAcc=0}else if(wLock){wMin=Math.min(wMin,a);if(now-wAt>550&&a>wMin*3&&a>25){wLock=false;wAcc=0;wSideAcc=0}}wT=now;if(wLock)return;
+        const lock=()=>{wLock=true;wAt=now;wMin=a};
+        if(b>Math.abs(e.deltaY)){wSideAcc+=e.deltaX;if(Math.abs(wSideAcc)>60){lock();wSideAcc=0;pile(e.deltaX>0?1:-1)}return}
+        wAcc+=e.deltaY;if(Math.abs(wAcc)<24)return;lock();flip(wAcc>0?1:-1);wAcc=0},{passive:false});
+      const dcEl=document.getElementById('dc'),dcHome=dcEl&&dcEl.parentNode;
+      const open=i=>{cur=-1;capFor=null;num.textContent='';dg.showModal();if(dcEl)dg.appendChild(dcEl);{const rv=document.querySelector('.rv-sws');if(rv)dg.appendChild(rv)}   /* local review switch rides along, so GALLERY A/B/C can be seen while the gallery is open (her 2026-11-22: "i didnt see anything change") */   /* her cursor goes WITH the gallery (2026-11-22: "the cursor disappears when i click on the pictures") */document.documentElement.classList.add('dg-on');requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i);strip.focus({preventScroll:true})});
+        if(!pushed){history.pushState({dg:1},'');pushed=true}};
+      const close=()=>{slides.forEach(sl=>{const v=sl.querySelector('video');v&&v.pause()});if(dcEl&&dcHome)dcHome.appendChild(dcEl);{const rv=dg.querySelector('.rv-sws');if(rv)document.body.appendChild(rv)}dg.close();document.documentElement.classList.remove('dg-on')};
+      strip.addEventListener('scroll',()=>requestAnimationFrame(mark),{passive:true});
+      document.addEventListener('mk-gal',()=>{if(!dg.open)return;const i=Math.max(cur,0);cur=-1;capFor=null;strip.scrollLeft=0;requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i)})});   // re-lay the open gallery when the review switch changes
+      slides.forEach((sl,i)=>sl.addEventListener('click',()=>{if(strip.dataset.swiped)return;
+        if(mode()==='prints'){if(sl.dataset.pile==='next')pile(1);else if(sl.dataset.pile==='prev')pile(-1);else if(i===cur)flip(1);return}
+        go(i!==cur?i:cur+1,true)}));   // the picture you're on → the next one
+      dg.querySelector('.dg-x').addEventListener('click',()=>pushed?history.back():close());
+      dg.addEventListener('cancel',e=>{e.preventDefault();pushed?history.back():close()});
+      addEventListener('popstate',()=>{if(dg.open){pushed=false;close()}});
+      dg.addEventListener('keydown',e=>{const pr=mode()==='prints';
+        if(e.key==='ArrowRight'){e.preventDefault();pr?pile(1):go(cur+1,true)}if(e.key==='ArrowLeft'){e.preventDefault();pr?pile(-1):go(cur-1,true)}
+        if(pr&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();flip(e.key==='ArrowUp'?1:-1)}});
+      const first=i=>slides.findIndex(sl=>+sl.dataset.i===i);
+      panels.forEach((p,i)=>p.addEventListener('click',()=>{if(p.dataset.wasOpen==='1')open(first(i))}));
+      panels.forEach(p=>p.addEventListener('pointerdown',()=>{p.dataset.wasOpen=p.classList.contains('active')?'1':'0'}));
+      panels.forEach((p,i)=>p.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&p.classList.contains('active')){setTimeout(()=>open(first(i)),0)}}));
+    }
     function activate(target){panels.forEach(p=>{const on=p===target;p.classList.toggle('active',on);p.setAttribute('aria-selected',String(on))})}
     /* the open panel's final width, so its copy is set once at that width (see .panel-content): flex-grow 8 against
        1 for each closed panel, after the gaps and each panel's 1px border */
@@ -3161,10 +3294,10 @@ function makeJS() {
       /* a fast scroll can land a stale pause AFTER the entering play resolves — the
          pause listener puts it back: any pause that arrives while the panel is still
          on screen is wrong by definition and gets replayed */
-      v.addEventListener('pause',()=>{if(inView&&!rmActive())run()});
-      gestureRetries.push(()=>{if(inView&&v.paused&&!rmActive())run()});
+      v.addEventListener('pause',()=>{if(inView)run()});
+      gestureRetries.push(()=>{if(inView&&v.paused)run()});   /* plays under Reduce Motion too (her 2026-11-23 "the Michelob GIF is not playing" = Reduce Motion held it; her rule: always autoplay) */
       new IntersectionObserver(es=>{es.forEach(e=>{inView=e.isIntersecting;
-        if(inView&&!rmActive())run();else v.pause()})},{threshold:.1}).observe(p);
+        if(inView)run();else v.pause()})},{threshold:.1}).observe(p);
     });
   }
 
@@ -3379,7 +3512,7 @@ if(!t){
   else{var h=now.getHours();t=(h<7||h>=19)?'night':'day';}
 }
 window.__mkSun={next:nxt?nxt[1]:null,mode:nxt?(nxt[0]==='rise'?'day':'night'):null};
-if(t==='night')document.documentElement.setAttribute('data-theme','night');
+if(t==='night')document.documentElement.setAttribute('data-theme','night');var gq=/[?&]ground=(cool)/.exec(location.search);if(gq)document.documentElement.setAttribute('data-ground',gq[1]);var tq=/[?&]theme=(day|night)/.exec(location.search);if(tq){if(tq[1]==='night')document.documentElement.setAttribute('data-theme','night');else document.documentElement.removeAttribute('data-theme')}
 }catch(e){}})();</script>
 <link rel="stylesheet" href="styles.css?v=${BUILD_V}">
 <!-- .w is the word wrapper reveal-words puts around every word, and it starts at opacity 0
@@ -3406,6 +3539,7 @@ ${boot ? `
 <noscript><style>#boot{display:none}</style></noscript>
 <style>#boot{position:fixed;inset:0;z-index:2147483646;background:#0f1013;animation:boot-out .4s ease 32s forwards;touch-action:none}
 .mk-ld{position:absolute;inset:0;background:#0f1013;overflow:hidden}
+html:not([data-theme="night"]) #boot,html:not([data-theme="night"]) .mk-ld{background:#fafaf8}   /* the day look's ground (2026-11-22) */
 .mk-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;font:600 min(${LOADER.fs}px,20vw)/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.01em;color:transparent}
 .mk-mark span{display:inline-block}.mk-mark .bl{width:0;height:0;vertical-align:baseline}
 .mk-goo{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
@@ -3451,6 +3585,67 @@ function svgFilters() {
 </svg>`;
 }
 
+
+/* THE DAY / NIGHT TOGGLE (her 2026-11-22: sun + moon, "not dragable", "not gooey like my normal toggles"): her projects view
+   toggle's ring + gooey knob (spring 520/17, stretch along travel, squash at the walls, rubber band), sun and moon drawn icons.
+   It drives the site's own switch: pressing it clicks the (hidden) .theme-toggle, so the stored choice, the sunrise/sunset timer
+   and the cross-fade all stay the one path. Phones: lifted to <body>, docked bottom-right (the nav has no room). */
+/* the project photo / transparent film block, the SAME on the deck card and the list row (her 2026-11-23 Spotify pick) */
+function photoBlock(p) { return `<div class="project-media scard-photo${p.photo.film ? ' has-film' : ''}" style="aspect-ratio:${p.photo.w}/${p.photo.h}"><img src="${esc(asset(p.photo.src))}" alt="${esc(p.photo.alt)}" width="${p.photo.w}" height="${p.photo.h}" loading="lazy" decoding="async">${p.photo.film ? `<video class="scard-film" muted loop playsinline preload="none" data-mov="${esc(asset(p.photo.film.mov))}" data-webm="${esc(asset(p.photo.film.webm))}" data-day="${esc(asset(p.photo.film.day))}" data-night="${esc(asset(p.photo.film.night))}" aria-hidden="true"></video>` : ''}</div>`; }
+
+const LOOK_TOGGLE = '<span class="lt-toggle" role="group" aria-label="Day or night">'
+  + '<button type="button" class="lt-btn" data-look-to="day" aria-label="Day mode" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.35 5.35l1.63 1.63M17.02 17.02l1.63 1.63M5.35 18.65l1.63-1.63M17.02 6.98l1.63-1.63"/></svg></button>'
+  + '<button type="button" class="lt-btn" data-look-to="night" aria-label="Night mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19.6 14.9A8 8 0 0 1 9.1 4.4a8 8 0 1 0 10.5 10.5z"/></svg></button>'
+  /* SOUND (her 2026-11-23: "We probably need like a mute site button somewhere"): mutes her avatar's sounds, the only sounds on the site; remembered */
+  + '<span class="lt-sep" aria-hidden="true"></span><button type="button" class="lt-mute" aria-label="Mute sounds" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.6h3.2L12 5.6v12.8l-4.8-4H4z"/><path class="lm-on lm-w1" pathLength="1" d="M15.4 9.2a4 4 0 0 1 0 5.6"/><path class="lm-on lm-w2" pathLength="1" d="M17.9 6.7a7.6 7.6 0 0 1 0 10.6"/><path class="lm-off lm-x1" pathLength="1" d="M16 9.6l4.8 4.8"/><path class="lm-off lm-x2" pathLength="1" d="M20.8 9.6L16 14.4"/></svg></button></span>';
+const LOOK_TOGGLE_JS = `<script>
+(function(){var h=document.documentElement,m=document.querySelector('.lt-mute'),on=false;try{on=localStorage.getItem('mk-mute')==='on'}catch(e){}
+ function set(x){on=x;if(x)h.dataset.mute='on';else delete h.dataset.mute;if(m){m.setAttribute('aria-pressed',String(x));m.setAttribute('aria-label',x?'Turn sounds on':'Mute sounds')}}
+ set(on);if(m)m.addEventListener('click',function(){set(!on);try{localStorage.setItem('mk-mute',on?'on':'off')}catch(e){}});
+ /* ease in once the loader has lifted (pages without one: straight away) — her 2026-11-23 "I hate when things just appear" */
+ var show=function(){[].slice.call(document.querySelectorAll('.lt-mute,.lt-sep')).forEach(function(e){e.classList.add('lm-show')})};
+ var go=function(){Promise.resolve(window.__mkBoot).then(show,show)};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
+(function(){var h=document.documentElement,tg=document.querySelector('.lt-toggle');if(!tg)return;
+ var bs=[].slice.call(tg.querySelectorAll('.lt-btn')),cur=function(){return h.getAttribute('data-theme')==='night'?'night':'day'};
+ /* read live, like the view toggle's rmActive(): the OS setting OR the site's own reduce-motion switch (body.rm-mode) */
+ var calm=function(){return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)||document.body.classList.contains('rm-mode')};
+ function mark(){bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.lookTo===cur()))})}
+ /* aim = the look asked for. The theme lands a frame or two later (inside the cross-fade's callback), so a drag that crosses
+    back before it lands waits for mk-theme instead of clicking the switch twice */
+ var aim=cur(),busy=false;
+ function setLook(v){aim=v;if(busy||v===cur())return;var t=document.querySelector('.theme-toggle');if(t){busy=true;t.click()}}
+ var knob=document.createElement('span');knob.className='lt-knob';knob.setAttribute('aria-hidden','true');tg.insertBefore(knob,tg.firstChild);tg.classList.add('has-knob');
+ var at=function(v){var b=bs.filter(function(x){return x.dataset.lookTo===v})[0]||bs[0];return b.offsetLeft};
+ var x=null,vx=0,target=0,raf=0,drag=null,last=0,kw=0,size=function(){kw=bs[0].offsetWidth};
+ var paint=function(){var lo=bs[0].offsetLeft,hi=bs[bs.length-1].offsetLeft+kw,s=Math.min(.5,Math.abs(vx)/900)*kw,L=x,R=x+kw;if(vx>0)L-=s;else R+=s;
+  L=Math.max(lo,L);R=Math.min(hi,R);var min=kw*.6;if(R-L<min){if(L===lo)R=lo+min;else L=hi-min}
+  var sq=1-(R-L)/kw,sy=sq>0?1+Math.min(.12,sq*.35):1-Math.min(.15,s/kw*.3);
+  knob.style.width=(R-L).toFixed(2)+'px';knob.style.transform='translateX('+L.toFixed(2)+'px) scaleY('+sy.toFixed(3)+')'};
+ var step=function(now){var dt=Math.min(.032,(now-last)/1000||.016);last=now;if(!drag){vx+=((target-x)*520-vx*17)*dt;x+=vx*dt}
+  paint();if(drag||Math.abs(target-x)>.3||Math.abs(vx)>4)raf=requestAnimationFrame(step);else{x=target;vx=0;paint();raf=0}};
+ var go=function(){if(x===null){size();x=target=at(cur());paint()}if(!raf){last=performance.now();raf=requestAnimationFrame(step)}};
+ function settle(v){size();target=at(v);if(x===null){x=target;paint()}calm()?(x=target,vx=0,paint()):go()}
+ /* a click springs the knob AT ONCE, like the view toggle, instead of waiting for the theme to land */
+ bs.forEach(function(b){b.addEventListener('click',function(e){if(tg._dragged){e.preventDefault();return}settle(b.dataset.lookTo);setLook(b.dataset.lookTo)})});
+ tg.addEventListener('pointerdown',function(e){if(e.button||e.target.closest('.lt-mute'))return;   /* the sound button is a plain button, never a knob drag */size();if(x===null)x=at(cur());tg._dragged=false;
+  var r=tg.getBoundingClientRect();drag={off:e.clientX-r.left-x,px:e.clientX,t:e.timeStamp,moved:false};go()});
+ addEventListener('pointermove',function(e){if(!drag)return;var r=tg.getBoundingClientRect(),lo=at('day'),hi=at('night');
+  if(Math.abs(e.clientX-drag.px)>3)drag.moved=true;if(!drag.moved)return;
+  var nx=e.clientX-r.left-drag.off;if(nx<lo)nx=lo-(lo-nx)*.3;if(nx>hi)nx=hi+(nx-hi)*.3;
+  var dtm=Math.max(8,e.timeStamp-drag.t);vx=vx*.6+((nx-x)/dtm*1000)*.4;x=nx;drag.t=e.timeStamp;
+  /* the look switches the moment the knob crosses the middle, mid-drag, exactly as the view toggle does (it used to wait for release) */
+  var v=(x+kw/2)<(lo+hi+kw)/2?'day':'night';if(v!==aim)setLook(v)});
+ var up=function(){if(!drag)return;var moved=drag.moved;drag=null;if(!moved)return;tg._dragged=true;setTimeout(function(){tg._dragged=false},0);settle(aim)};
+ addEventListener('pointerup',up);addEventListener('pointercancel',up);
+ addEventListener('mk-theme',function(){var mine=busy;busy=false;if(mine&&aim!==cur())return setLook(aim);aim=cur();mark();if(!drag)settle(cur())});
+ addEventListener('resize',function(){if(x!==null){size();x=target=at(cur());paint()}});
+ var home=tg.parentNode,next=tg.nextSibling,phone=matchMedia('(max-width:640px)');
+ function dock(){var want=phone.matches?document.body:home;if(tg.parentNode!==want){if(phone.matches)document.body.appendChild(tg);else home.insertBefore(tg,next);
+  if(x!==null){size();x=target=at(cur());paint()}}}
+ dock();phone.addEventListener?phone.addEventListener('change',dock):phone.addListener(dock);
+ mark();requestAnimationFrame(function(){settle(cur())})})();
+</script>`;
+
 function navBar(kind) {
   const home = kind === 'home';
   /* the SAME links on every page (her ask 2026-10-24: "the nav bar isn't consistent across the site"); off the home page
@@ -3461,9 +3656,19 @@ function navBar(kind) {
 <div class="nav-wrap"><nav class="bar glass" aria-label="Main">
   <a class="wordmark${home ? ' wm-load' : ''}" href="index.html" aria-label="M--K, home">${wordmarkSVG('nav')}</a>
   <div class="nav-links">${links}</div>
+  ${LOOK_TOGGLE}
   <a class="btn solid sm" href="${esc(site.calendly)}" target="_blank" rel="noopener" data-hand="SAY HEY!">say hey!</a>
 </nav></div>
-<button class="theme-toggle glass" type="button" aria-label="Switch to night mode"><span class="tt-rim" aria-hidden="true"></span></button>`;
+<button class="theme-toggle glass" type="button" aria-label="Switch to night mode"><span class="tt-rim" aria-hidden="true"></span></button>
+${LOOK_TOGGLE_JS}
+<script>/* the Spotify card's transparent film (her 2026-11-23 pick): Safari + every iOS browser get the HEVC-alpha .mov, others the VP9-alpha .webm,
+   anything else the solid-ground mp4 for its theme. Loads when the card is near, plays while it is on screen; once playing, the photo and frame step away */
+(function go(){if(document.readyState==='loading')return document.addEventListener('DOMContentLoaded',go);var vs=[].slice.call(document.querySelectorAll('.scard-film'));if(!vs.length||!('IntersectionObserver' in window))return;var ua=navigator.userAgent,
+ apple=/iP(hone|ad|od)/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)||(/Safari/.test(ua)&&!/Chrome|Chromium|Edg|OPR|Firefox|Android/.test(ua));
+ vs.forEach(function(v){var box=v.parentElement,pick=function(){if(v.src)return;v.src=apple&&v.canPlayType('video/mp4; codecs="hvc1"')?v.dataset.mov:v.canPlayType('video/webm; codecs="vp09.00.10.08"')?v.dataset.webm:(document.documentElement.getAttribute('data-theme')==='night'?v.dataset.night:v.dataset.day)};
+  v.addEventListener('playing',function(){box.classList.add('v-live')});
+  new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){pick();var p=v.play();if(p&&p.catch)p.catch(function(){})}else v.pause()})},{threshold:.1}).observe(box);
+  new IntersectionObserver(function(es,io){if(es[0].isIntersecting){pick();v.preload='auto';io.disconnect()}},{rootMargin:'150% 0px'}).observe(box)})})();</script>`;
 }
 
 /* "M--K" split for the nav interaction: the letters are movable spans, the dashes their
@@ -3660,7 +3865,7 @@ function renderHome() {
     /* m.ar pins the box to a recording's native aspect (default 1.7343) so a clip that
        isn't 16:9 fills the frame instead of getting cover-cropped — Vantage's console
        walkthrough is 1064x672 and its bottom captions would otherwise be cut off */
-    return `<div class="project-media" data-video${m.ar ? ` style="aspect-ratio:${esc(m.ar)}"` : ''}>
+    return `<div class="project-media" data-video${m.autoplay ? ' data-autoplay' : ''}${m.ar ? ` style="aspect-ratio:${esc(m.ar)}"` : ''}>
       <img class="poster" src="${esc(asset(m.poster))}" alt="${esc(m.alt)}" loading="lazy" decoding="async">
       ${videoTag(m)}
       <button class="play-btn btn icon solid" type="button" aria-label="Play project preview">${PLAY_IC}</button>
@@ -3673,10 +3878,10 @@ function renderHome() {
   <a class="wproject fade" href="${esc(p.slug)}.html" data-curious>
     <div class="w-copy">
       <h3 class="w-outcome">${typo(p.outcome)}</h3>
-      <p class="w-chiprow">${p.icon ? `<img class="w-logo" src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" width="28" height="28" draggable="false">` : ''}<span class="w-name">${esc(p.name)}</span></p>
+      <p class="w-chiprow">${p.icon ? `<img class="w-logo" src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" width="28" height="28" draggable="false">` : ''}<span class="w-name" data-brand="${esc(p.slug)}">${esc(p.name)}</span></p>
       ${p.stack ? `<ul class="w-stack" aria-label="Built with">${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
-    <div class="project-media-wrap">${projectMedia(p)}</div>
+    <div class="project-media-wrap">${p.photo && p.photo.film ? photoBlock(p) : projectMedia(p)}</div>
   </a>`).join('\n')}`;
 
   /* THE SWIPE DECK (review copy, branch review/swipe-deck; her spec claude-case-study-swipe-deck.md and her
@@ -3686,9 +3891,9 @@ function renderHome() {
   const sdeckHTML = `
   <div class="sdeck" tabindex="0" role="region" aria-roledescription="carousel" aria-label="${esc(site.work.title)}. Drag, swipe or use the arrow keys">
     <div class="sdeck-stage">
-      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
+      ${site.work.projects.map((p, i) => `<a class="scard" href="${esc(p.slug)}.html" data-curious data-i="${i}" data-brand="${esc(p.slug)}" data-name="${esc(p.name)}" data-title="${esc(p.outcome)}" aria-label="${esc(p.name)}: ${esc(p.outcome)}" draggable="false"><div class="scard-media">${p.photo ? photoBlock(p) : ''}${projectMedia(p)}</div>${p.stack ? `<div class="scard-stack" aria-hidden="true"><span class="scard-stack-label">Built with</span><ul>${p.stack.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}</a>`).join('\n      ')}
     </div>
-    <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-co"><span class="sdeck-logo" aria-hidden="true"></span><span class="sdeck-name">${esc(site.work.projects[0].name)}</span></span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
+    <div class="sdeck-title" aria-live="polite"><span><span class="sdeck-co"><span class="sdeck-logo" aria-hidden="true"></span><span class="sdeck-name" data-brand="${esc(site.work.projects[0].slug)}">${esc(site.work.projects[0].name)}</span></span><span class="sdeck-line">${typo(site.work.projects[0].outcome)}</span></span></div>
     <div class="sdeck-progress" role="group" aria-label="Jump to a project">${site.work.projects.map((p, i) => `<button type="button" data-i="${i}" aria-label="Go to project ${i + 1} of ${site.work.projects.length}: ${esc(p.name)}"><span class="sd-ico" aria-hidden="true" style="--k:${i}${p.markBg ? `;background:${esc(p.markBg)}` : ''}">${p.icon ? `<img src="${esc(p.icon.replace(/-clay\.svg$/, '.svg'))}" alt="" draggable="false">` : esc(p.mark || p.name[0])}</span></button>`).join('')}</div>
   </div>`;
 
@@ -3726,9 +3931,10 @@ function renderHome() {
   <div class="panels" id="panels" role="tablist" aria-label="Design work across disciplines">
     ${panels.map((p, i) => `
     <div class="panel${i === 0 ? ' active' : ''}${p.video ? ' has-video' : ''}" role="tab" aria-selected="${i === 0}" tabindex="0">
-      <img src="${esc(p.img)}" alt="${esc(p.alt)}" loading="lazy" decoding="async">
-      ${p.video ? `<video muted loop playsinline preload="none" data-src="${esc(p.video)}"></video>` : ''}
+      <img src="${esc(p.img)}?v=${BUILD_V}" alt="${esc(p.alt)}" loading="lazy" decoding="async">
+      ${p.video ? `<video muted loop playsinline preload="none" data-src="${esc(p.video)}?v=${BUILD_V}"></video>` : ''}
       <span class="panel-collapsed-label">${esc(p.shortLabel)}</span>
+      <span class="p-open" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></span>
       <div class="panel-content">
         <p class="p-org">${esc(p.org)}</p>
         <h3 class="p-title">${typo(p.title)}</h3>
@@ -3736,7 +3942,26 @@ function renderHome() {
       </div>
     </div>`).join('\n')}
   </div>
-</section>`;
+</section>
+<dialog class="dg" id="dg" aria-label="${esc(site.disciplines.title)}">
+  <button class="dg-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <p class="dg-n" aria-live="polite"></p>
+  <div class="dg-thumbs" aria-label="All pictures"></div>
+  <div class="dg-cap" aria-live="polite"></div>
+  <div class="dg-strip" tabindex="0">
+    ${panels.map((p, i) => {
+      /* every picture of the project (her 2026-11-22: "im not able to click through multiple pictures … I normally have way more
+         pictures"): the panel's own picture or film first, then her project folder's pictures (site.json panels[].gallery) */
+      /* galleryLeads: the gallery's first picture IS the panel's picture at full resolution, so the panel's smaller copy is not shown twice */
+      const pics = (p.galleryLeads ? [] : [p.video ? `<video muted loop playsinline preload="none" poster="${esc(p.img)}?v=${BUILD_V}" data-src="${esc(p.video)}?v=${BUILD_V}" aria-label="${esc(p.alt)}"></video>` : `<img src="${esc(p.img)}?v=${BUILD_V}" alt="${esc(p.alt)}" loading="lazy" decoding="async">`])
+        .concat((p.gallery || []).map(g => `<img src="${esc(g)}?v=${BUILD_V}" alt="${esc(p.shortLabel)}" loading="lazy" decoding="async">`));
+      return pics.map((m, k) => `<figure class="dg-slide" data-i="${i}" data-k="${k + 1}" data-of="${pics.length}" data-name="${esc(p.shortLabel)}">
+      ${m}
+      <figcaption><span class="dg-org">${esc(p.org)}</span><b>${typo(p.title)}</b><em>${typo(p.desc)}</em></figcaption>
+    </figure>`).join('');
+    }).join('')}
+  </div>
+</dialog>`;
 
   /* The GIF's own background is --bg-base, so it sits on the page with no visible edge —
      the notebook page bleeding into the site rather than a framed picture.
@@ -4122,7 +4347,7 @@ function lintIcons(html, page) {
    ~8s on slow 3G instead of with app.js (device-check, 2026-10-27). She joins the opening late via __mkHero* flags. */
 /* the localhost tweaker dock, only where its files exist (a checkout without studies/ would serve a 404 on every page) */
 const DEV_TOOLS = fs.existsSync(path.join(ROOT, 'studies', 'tweaker-deck', 'tweak-dock.js'));
-const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>\n<script src="lean.js?v=' + BUILD_V + '" defer></script>');   // the first-focus lean (lean.js)
+const homePage = lintIcons(renderHome(), 'index.html').replace('<script src="app.js?v=' + BUILD_V + '" defer></script>', m => m + '\n<script src="stick.js?v=' + BUILD_V + '" defer></script>');   // the first-focus clay hand tap (lean.js) REMOVED everywhere — her 2026-11-22: "you can remove the claymation hand tapping the reveal the horizontal scroll nav bar everywhere" (lean.js kept on disk)
 fs.writeFileSync(path.join(DIST, 'index.html'), process.env.VERCEL || !DEV_TOOLS ? homePage : homePage.replace('</body>', '<script src="studies/tweaker-deck/tweaker-receiver.js"></script>\n<script src="studies/tweaker-deck/tweak-dock.js"></script>\n</body>'));
 /* preview only (unlinked): the home page with the work list as the swipe deck (option C, see sdeckHTML; she ruled the first deck, B, "wrong") */
 /* "template": "walkthrough" cases are the presented-live format (walkthrough.js) */
@@ -4253,3 +4478,145 @@ scan();document.addEventListener('DOMContentLoaded',scan);addEventListener('load
   });
   walk(DIST);
 }
+
+/* LOCAL REVIEW ONLY (2026-11-22, her: "why cant i explore the site. when I click on stuff it goes back to old stuff"): while the new
+   case-study drafts live on their own server (case-study-drafts, :4191), data/review-links.local.json maps a page to its new draft so
+   clicking around the site opens the new work. The file is git-ignored: delete it and every link is back to normal; it can never ship. */
+{
+  const rl = path.join(ROOT, 'data', 'review-links.local.json');
+  if (fs.existsSync(rl)) {
+    const map = JSON.parse(fs.readFileSync(rl, 'utf8'));
+    for (const f of fs.readdirSync(DIST).filter(f => f.endsWith('.html'))) {
+      const p = path.join(DIST, f); let h = fs.readFileSync(p, 'utf8'), n = 0;
+      for (const [from, to] of Object.entries(map)) h = h.replace(new RegExp(`href="${from.replace('.', '\\.')}(#[^"]*)?"`, 'g'), (m, hash) => (n++, `href="${to}${hash || ''}"`));
+      if (n) fs.writeFileSync(p, h);
+    }
+    console.log('review links (local only):', Object.keys(map).join(', '));
+    /* the A/B/C day-look switch (her 2026-11-22: "i cant see a difference with abc, I need to see it on the big screen. i just want to
+       navigate the full website with all the new changes"): full-size, pinned bottom-left, remembered while she clicks around. Local only. */
+    const SW = `<div class="rv-sws"><div class="rv-sw rv-ppan" role="group" aria-label="Phone panel text"><span>PHONE PANEL</span><button type="button" data-p="now">NOW</button><button type="button" data-p="a">A</button></div></div>
+<style>.rv-sws{position:fixed;left:16px;bottom:16px;z-index:2147483100;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.dg .rv-sws{top:64px;bottom:auto}
+.rv-sw{display:flex;align-items:center;gap:4px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(22,26,36,.9);color:#fff;font:600 12px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
+.rv-sw span{margin-right:6px;opacity:.8}.rv-sw button{all:unset;cursor:pointer;display:grid;place-items:center;min-width:32px;padding:0 8px;box-sizing:border-box;height:32px;border-radius:999px}
+.rv-sw button[aria-pressed=true]{background:#fff;color:#161a24}.rv-sw button:focus-visible{outline:2px solid #fff;outline-offset:2px}</style>
+<script>/* CLAY, BY DAY retired: her pick 2026-11-23 "Clay by day is a" (no grade) */
+(function(){var h=document.documentElement,K='mk-review-brands';function v(){try{return localStorage.getItem(K)||'a'}catch(e){return 'a'}}
+function paint(x){if(x==='a')h.removeAttribute('data-brands');else h.setAttribute('data-brands',x);document.querySelectorAll('.rv-brands button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.b===x))})}
+document.querySelectorAll('.rv-brands button').forEach(function(b){b.addEventListener('click',function(){try{localStorage.setItem(K,b.dataset.b)}catch(e){}paint(b.dataset.b)})});paint(v())})();
+/* GALLERY switch retired: her pick 2026-11-22 "gallery b" */
+/* GALLERY BACK retired: her pick 2026-11-23, a plain blur */
+/* SPOTIFY CARD retired: her pick 2026-11-23, the film */
+/* SLIDER ICON retired: her pick 2026-11-23, the paper plane */
+/* DAY/NIGHT CARRIES into the case studies (her 2026-11-22: "the state should carry when i click on cards"): the drafts live on another
+   port (their own storage), so the link takes the look along */
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var u;try{u=new URL(a.href,location.href)}catch(_){return}
+ if(u.pathname===location.pathname&&u.port===location.port)return;if(u.port!=='4191'&&!/\.html$/.test(u.pathname))return;
+ u.searchParams.set('look',document.documentElement.getAttribute('data-theme')==='night'?'dark':'day');a.href=u.href},true);
+(function(){var h=document.documentElement,K='mk-review-hov';try{localStorage.removeItem(K)}catch(e){}function v(){return 'a'}
+function paint(x){if(x==='a')h.removeAttribute('data-hov');else h.setAttribute('data-hov',x);document.querySelectorAll('.rv-hov button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.h===x))})}
+document.querySelectorAll('.rv-hov button').forEach(function(b){b.addEventListener('click',function(){try{localStorage.setItem(K,b.dataset.h)}catch(e){}paint(b.dataset.h)})});paint(v())})();
+(function(){var h=document.documentElement,K='mk-review-knob';function v(){try{return localStorage.getItem(K)||'a'}catch(e){return 'a'}}
+function paint(x){if(x==='a')h.removeAttribute('data-knob');else h.setAttribute('data-knob',x);document.querySelectorAll('.rv-knob button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.k===x))})}
+document.querySelectorAll('.rv-knob button').forEach(function(b){b.addEventListener('click',function(){try{localStorage.setItem(K,b.dataset.k)}catch(e){}paint(b.dataset.k)})});paint(v())})();
+/* READABILITY options 2026-11-23 (skin-walkthrough.css data-plab / data-ppan): NOW = as shipped; her pick owed */
+[['ppan','.rv-ppan']].forEach(function(s){var h=document.documentElement,K='mk-review-'+s[0],bs=document.querySelectorAll(s[1]+' button');
+function v(){try{return localStorage.getItem(K)||'now'}catch(e){return 'now'}}
+function paint(x){if(x==='now')h.removeAttribute('data-'+s[0]);else h.setAttribute('data-'+s[0],x);bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.p===x))})}
+bs.forEach(function(b){b.addEventListener('click',function(){try{localStorage.setItem(K,b.dataset.p)}catch(e){}paint(b.dataset.p)})});paint(v())});</script>`;
+    for (const f of fs.readdirSync(DIST).filter(f => f.endsWith('.html'))) {
+      const p = path.join(DIST, f), h = fs.readFileSync(p, 'utf8');
+      if (h.includes('</body>') && !h.includes('class="rv-sw"')) fs.writeFileSync(p, h.replace('</body>', SW + '\n</body>'));
+    }
+
+  }
+}
+    /* AI TOOLS, reimagined (her 2026-11-23: "clear, simple, not very noisy ... just tools I've coded ... showcase it very differently, not
+   traditionally, just creatively"; "you're showing me random screens ... I kind of just want to see the tools and hover over them and it
+   gives me like a quick sentence"; "you've put the AI tool still in the traditional case study format ... I want to reimagine how we
+   might present AI tools on the page"). THE REAL SITE since 2026-11-23 (her: "You never fixed AI tools with the instructions that I gave you": the switch defaulted to the old card). AI tools leaves
+   the case-study deck and list and gets its own quiet band after them: the three tools as their OWN interfaces (the editor's panel, the
+   taste sliders moving by themselves, the zoom demo's camera easing onto a click); hover / focus shows the name + her one line (always
+   shown on touch screens). Her renames 2026-11-23: Tweaker → "Taste sliders"; Zoom demo → "Video editor" ("I feel like I made
+   like a video editor"). No DRAFT pills on the page, ever ("why do you have these random draft pills ... remove those"). Injected into dist/index.html on every build. */
+{
+  const ip = path.join(DIST, 'index.html');
+  let h = fs.readFileSync(ip, 'utf8');
+  const T = 'assets/case-studies/ai-tools/';
+  /* her 2026-11-23: "when you click on the AI tools, I want you to be able to demo each tool" -> the tile is a button that opens the try-it demo (tool-demos.js); the name still links to the tools page */
+  const tool = (id, name, line, vis) => `<figure class="tb-tool" data-tool="${id}"><div class="tb-vis">${vis}<button type="button" class="tb-open" aria-label="Try ${name}" aria-haspopup="dialog"></button></div><figcaption><a href="ai-tools.html#${id}">${name}</a>`
+    + `<span>${line}</span></figcaption></figure>`;
+  const BAND = `<script>/* NEW: take AI tools out of the case-study deck + list before app.js counts the cards (it is the last card, so the others keep their numbers) */
+(function(){document.documentElement.dataset.ats='new';
+var c=document.querySelector('.scard[data-brand=ai-tools]'),n=c&&c.dataset.i;if(c)c.remove();var b=n!=null&&document.querySelector('.sdeck-progress button[data-i="'+n+'"]');if(b)b.remove();
+var w=document.querySelector('.w-name[data-brand=ai-tools]'),li=w&&w.closest('.wproject');if(li)li.remove()})();</script>
+<section id="ai-tools-band" class="tb" aria-labelledby="tb-h">
+  <h2 class="section-title" id="tb-h">My AI tools</h2>
+  <div class="tb-row">
+${tool('editor', 'Editor', 'Click any text on a page and rewrite it in place.', `<img src="${T}editor-tool.jpg" alt="The editor on one of her pages: a heading selected with its handles, an ✕ on the line under it, and the style panel beside it" loading="lazy" decoding="async">`)}
+${tool('video-editor', 'Video editor', 'A demo video of a real site, the camera easing in on each click.', `<div class="ve-pre"><video src="${T}zoom-demo-click.mp4" poster="${T}zoom-demo-click.jpg" muted loop playsinline autoplay preload="metadata" aria-label="The video editor's camera easing in on a SHOP NOW button as it is clicked"></video><span class="vf" aria-hidden="true"></span></div>`
+  + `<div class="ve-tl" aria-hidden="true"><div class="ve-keys">${[.95, 1.55, 2.55, 3.12].map(k => `<i style="left:${(k / 5.9 * 100).toFixed(1)}%"></i>`).join('')}</div>`
+  + `<div class="ve-strip">${'<b></b>'.repeat(7)}</div><span class="ve-ph"></span></div>`)}
+  </div>
+</section>`;
+  /* HIDDEN ON THE LIVE SITE for now (her 2026-11-23 push: "Hide it this push" while the hi-fi demos are rebuilt): on Vercel only the
+     card-removal script ships (AI tools is not a case study), not the band, its CSS or the demo scripts. Local builds show it all.
+     Set AI_TOOLS_LIVE to true when she has tried and approved the demos. */
+  const AI_TOOLS_LIVE = false, aiLive = AI_TOOLS_LIVE || !process.env.VERCEL;
+  h = h.replace('<section id="disciplines"', (aiLive ? BAND : BAND.slice(0, BAND.indexOf('<section id="ai-tools-band"'))) + '\n<section id="disciplines"');
+  const TB_CSS = `<style>
+.tb{--f:#e9e8e3;--ink:#161a24;--mut:#4f5866;width:min(1180px,calc(100vw - 48px));margin:0 auto;padding:96px 0 24px}
+html[data-theme=night] .tb{--f:#1b1e24;--ink:#f3f4f6;--mut:#a9adb7}
+.tb .section-title{margin:0 0 40px}
+.tb-row{display:grid;grid-template-columns:repeat(2,1fr);gap:32px}   /* two tools since 2026-11-23: her "the editor and the taste sliders are like the same tool" (the Editor demo now holds the taste-slider controls) */
+.tb-tool{margin:0;display:flex;flex-direction:column;gap:18px}
+.tb-vis{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--f)}
+.tb-open{position:absolute;inset:0;z-index:1;margin:0;padding:0;border:0;background:none;border-radius:inherit;cursor:pointer}
+.tb-open:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+.tb-vis .ts-demo{z-index:2;pointer-events:none}.tb-vis .ts-rows{pointer-events:auto}   /* the band's own sliders stay draggable in place; the rest of the tile opens the demo */
+.tb-vis>img,.tb-vis>video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;display:block}
+/* the video editor IS a camera (her 2026-11-23: "I feel like I made a video editor"): viewfinder corners over the clip as it eases in */
+/* her 2026-11-23: "the video editor does not actually look like a video editor" -> an editor view made from the real recording:
+   preview window on top, under it the timeline (a filmstrip of the same clip, the camera's keyframes from its zoom-demo plan, a playhead that follows the clip) */
+.ve-pre{position:absolute;left:17%;right:17%;top:5%;height:66%;border-radius:8px;overflow:hidden;background:#F0EBED;box-shadow:0 0 0 1px rgba(22,26,36,.12)}
+html[data-theme=night] .ve-pre{box-shadow:0 0 0 1px rgba(243,244,246,.14)}
+.ve-pre>video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ve-tl{position:absolute;left:5%;right:5%;bottom:5%}
+.ve-keys{position:relative;height:14px}
+.ve-keys::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--mut);opacity:.3}
+.ve-keys i{position:absolute;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--mut);transform:rotate(45deg);border-radius:1px}
+.ve-strip{display:flex;gap:2px;aspect-ratio:28/3}
+.ve-strip b{flex:1;border-radius:3px;background:url(${T}zoom-demo-strip.jpg) 0 0/700% 100%}
+${[0, 1, 2, 3, 4, 5, 6].map(i => `.ve-strip b:nth-child(${i + 1}){background-position:${(i / 6 * 100).toFixed(3)}% 0}`).join('')}
+.ve-ph{position:absolute;left:0;right:0;top:0;bottom:-3px;pointer-events:none;will-change:transform}
+.ve-ph::before{content:'';position:absolute;left:-1px;top:3px;bottom:0;width:2px;border-radius:1px;background:var(--ink)}
+.ve-ph::after{content:'';position:absolute;left:-4px;top:0;width:8px;height:8px;border-radius:50%;background:var(--ink)}
+.vf{position:absolute;inset:12%;pointer-events:none;--c:rgba(255,255,255,.92);
+  background:linear-gradient(var(--c),var(--c)) top left/16px 2px,linear-gradient(var(--c),var(--c)) top left/2px 16px,
+  linear-gradient(var(--c),var(--c)) top right/16px 2px,linear-gradient(var(--c),var(--c)) top right/2px 16px,
+  linear-gradient(var(--c),var(--c)) bottom left/16px 2px,linear-gradient(var(--c),var(--c)) bottom left/2px 16px,
+  linear-gradient(var(--c),var(--c)) bottom right/16px 2px,linear-gradient(var(--c),var(--c)) bottom right/2px 16px;background-repeat:no-repeat;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.tb-tool figcaption{display:flex;flex-direction:column;gap:6px;min-height:4.4em}
+.tb-tool figcaption a{font:600 1.15rem/1.25 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);text-decoration:none;width:max-content}
+.tb-tool figcaption a:hover,.tb-tool figcaption a:focus-visible{text-decoration:underline;text-underline-offset:4px}
+.tb-tool figcaption span{font:300 1rem/1.5 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--mut)}
+/* the NAME is always there; only her one line waits for a hover (her 2026-11-23: "the names should be underneath each one regardless ... when I hover, then the subline pops up"), easing up, never popping */
+@media (hover:hover){.tb-tool figcaption span{opacity:0;transform:translateY(-4px);transition:opacity .35s ease,transform .35s cubic-bezier(.2,.8,.2,1)}.tb-tool:hover figcaption span,.tb-tool:focus-within figcaption span{opacity:1;transform:none}}
+@media (max-width:860px){.tb{padding-top:72px}.tb-row{grid-template-columns:1fr;gap:40px}.tb .section-title{margin-bottom:28px}}
+@media (prefers-reduced-motion:reduce){.tb-tool figcaption{transition:none}}
+</style>`;
+  /* ?v= (2026-11-23): without it her browser kept the OLD demos (max-age 3600 + stale-while-revalidate) while every fix was on disk */
+  const TB_JS = `<script src="${T}taste-sliders.js?v=${BUILD_V}" defer></script>
+<script src="${T}tool-demos.js?v=${BUILD_V}" defer></script>
+<script>document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#ai-tools-band .tb-open');if(!b||!window.toolDemo)return;var f=b.closest('.tb-tool');
+window.toolDemo.open(f.dataset.tool,{name:f.querySelector('figcaption a').textContent,line:f.querySelector('figcaption span').textContent,from:b})});</script>
+<script>(function(){/* Reduce Motion: the zoom clip holds its still */
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('#ai-tools-band video').forEach(function(v){v.removeAttribute('autoplay');v.pause()})
+var v=document.querySelector('[data-tool=video-editor] video'),ph=document.querySelector('.ve-ph'),on=0;
+if(v&&ph){var r=function(){ph.style.transform='translateX('+(v.duration?v.currentTime/v.duration*100:0)+'%)';if(!v.paused)requestAnimationFrame(r);else on=0},go=function(){if(!on){on=1;r()}};
+v.addEventListener('play',go);v.addEventListener('seeked',r);if(!v.paused)go()}})();</script>`;
+  if (aiLive) h = h.replace('</head>', TB_CSS + '\n</head>').replace('</body>', TB_JS + '\n</body>');
+  fs.writeFileSync(ip, h);
+}
+

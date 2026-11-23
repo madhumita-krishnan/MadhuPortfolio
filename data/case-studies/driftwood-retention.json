@@ -28,7 +28,12 @@
     "alt": "The face and voice email",
     "pos": "right"
    }
-  ]
+  ],
+  "film": {
+   "video": "hero-film.mp4",
+   "poster": "hero-film-poster.jpg",
+   "alt": "Driftwood onboarding, teased: the helm builds into Sign in with Google, LinkedIn connects, Marc’s demo arrives and is paused, feedback is sent, then: first demo in 7 business days, down from 2.5–3 weeks"
+  }
  },
  "sections": [
   {

@@ -1,369 +1,435 @@
 {
-  "title": "Madhu — Product Design Engineer",
-  "previewTitle": "Madhumita Krishnan - Product Design Engineer",
-  "previewLine": "staying curious",
-  "description": "Madhumita Krishnan — product design engineer with a background in architecture and brand strategy. Curious about how design helps our mind process complex workflows.",
-  "wordmark": "M--K",
-  "email": "kmadhumita@gmail.com",
-  "location": "New York",
-  "fullName": "Madhumita Krishnan",
-  "hero": {
-    "eyebrow": "Product design engineer",
-    "headline": "Hi, I'm Madhu",
-    "lines": [
-      "Architecture taught me how to guide people with design.",
-      "Brand strategy taught me to study why they believe in that guidance.",
-      "As a product designer I combine both disciplines to help people navigate digital complexity with confidence."
+ "title": "Madhu — Product Design Engineer",
+ "previewTitle": "Madhumita Krishnan - Product Design Engineer",
+ "previewLine": "staying curious",
+ "description": "Madhumita Krishnan — product design engineer with a background in architecture and brand strategy. Curious about how design helps our mind process complex workflows.",
+ "wordmark": "M--K",
+ "email": "kmadhumita@gmail.com",
+ "location": "New York",
+ "fullName": "Madhumita Krishnan",
+ "hero": {
+  "eyebrow": "Product design engineer",
+  "headline": "Hi, I'm Madhu",
+  "lines": [
+   "Architecture taught me how to guide people with design.",
+   "Brand strategy taught me to study why they believe in that guidance.",
+   "As a product design engineer I combine both disciplines to help people navigate digital complexity with confidence."
+  ],
+  "now": {
+   "text": "Currently at",
+   "name": "Driftwood",
+   "logo": "assets/case-studies/driftwood-retention/logo.svg"
+  },
+  "ctaPrimary": {
+   "label": "say hey!",
+   "href": "https://calendly.com/meet-madhu"
+  },
+  "ctaSecondary": {
+   "label": "Resume",
+   "href": "assets/Madhumita-Krishnan-Resume.pdf"
+  },
+  "_line3_was": "As a product designer I combine both disciplines to help people navigate digital complexity with confidence.  (her 2026-11-23: \"Go back to my old bio sentence and then use the words 'I'm a product design engineer' in that statement.\")"
+ },
+ "brands": {
+  "eyebrow": "Brands",
+  "title": "Brands that have liked my thinking",
+  "sub": "I worked in brand strategy for 3+ years",
+  "logos": [
+   {
+    "src": "assets/logos/clean/white-house.png",
+    "alt": "The White House",
+    "href": "https://www.whitehouse.gov/gallery/president-donald-trump-and-first-lady-melania-trump-participate-in-a-halloween-event-on-the-south-lawn-of-the-white-house/",
+    "h": 50
+   },
+   {
+    "src": "assets/logos/clean/red-bull.png",
+    "alt": "Red Bull"
+   },
+   {
+    "src": "assets/logos/clean/aston-martin.png",
+    "alt": "Aston Martin"
+   },
+   {
+    "src": "assets/logos/clean/looney-tunes.png",
+    "alt": "Looney Tunes"
+   },
+   {
+    "src": "assets/logos/clean/floor-decor.png",
+    "alt": "Floor & Decor",
+    "href": "https://ir.flooranddecor.com/news-events/press-releases/detail/210/floor-decor-announces-grand-opening-of-allentown"
+   },
+   {
+    "src": "assets/logos/clean/orlando-magic.png",
+    "alt": "Orlando Magic",
+    "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
+   },
+   {
+    "src": "assets/logos/clean/michelob-ultra.png",
+    "alt": "Michelob Ultra"
+   },
+   {
+    "src": "assets/logos/clean/john-muir.png",
+    "alt": "John Muir Health"
+   },
+   {
+    "src": "assets/logos/clean/city-national.png",
+    "alt": "City National Bank",
+    "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
+   }
+  ]
+ },
+ "work": {
+  "eyebrow": "",
+  "title": "Selected Projects",
+  "projects": [
+   {
+    "slug": "driftwood-retention",
+    "name": "Driftwood onboarding",
+    "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks",
+    "tags": "Web · Product design + code",
+    "media": {
+     "src": "assets/case-studies/driftwood-retention/home-teaser.mp4",
+     "alt": "Driftwood onboarding, teased: the helm builds into Sign in with Google, LinkedIn connects, Marc’s demo arrives and is paused, feedback is sent, then: first demo in 7 business days, down from 2.5–3 weeks",
+     "poster": "assets/case-studies/driftwood-retention/home-teaser-poster.jpg",
+     "autoplay": true,
+     "ar": "1280/800"
+    },
+    "stack": [
+     "React",
+     "TypeScript",
+     "Vite",
+     "Tailwind CSS",
+     "Vercel",
+     "GitHub",
+     "Claude Code"
     ],
-    "now": {
-      "text": "Currently at",
-      "name": "Driftwood",
-      "logo": "assets/case-studies/driftwood-retention/logo.svg"
+    "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
+   },
+   {
+    "slug": "spotify-mix",
+    "name": "Spotify Mix redesign",
+    "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it",
+    "tags": "Mobile · Interaction design",
+    "media": {
+     "type": "phone-video",
+     "src": "assets/projects/spotify-screen.mp4",
+     "poster": "assets/projects/spotify-screen-poster.jpg",
+     "autoplay": true,
+     "alt": "The redesigned Spotify Mix screen, animating through a transition edit"
     },
-    "ctaPrimary": {
-      "label": "say hey!",
-      "href": "https://calendly.com/meet-madhu"
-    },
-    "ctaSecondary": {
-      "label": "Resume",
-      "href": "assets/Madhumita-Krishnan-Resume.pdf"
+    "stack": [
+     "Figma",
+     "Miro"
+    ],
+    "icon": "assets/case-studies/spotify/spotify-logo-clay.svg",
+    "_photo_retired": {
+     "src": "assets/case-studies/spotify-photo-green.jpg",
+     "w": 2400,
+     "h": 1340,
+     "alt": "The redesigned Spotify Mix edit-transition screen on a phone, on green fabric",
+     "_note": "her 2026-11-22: \"this is cool. can we use this image?\" (her photo, Flora-extended, her real screen composited)",
+     "film": {
+      "day": "assets/case-studies/spotify-hero-film-day.mp4",
+      "night": "assets/case-studies/spotify-hero-film.mp4",
+      "_note": "her 2026-11-23: \"Did you make the new Spotify Home Hero video?\" (SPOTIFY CARD C on the local switch)",
+      "mov": "assets/case-studies/spotify-hero-alpha.mov",
+      "webm": "assets/case-studies/spotify-hero-alpha.webm"
+     },
+     "_why": "her 2026-11-23: \"On the Spotify home card, you dont need the whole film. We just want the film of the interaction on the screen ... the flora film is only when you click into the page.\" Home card = her phone recording in the bezel (projectMedia)."
     }
-  },
-  "brands": {
-    "eyebrow": "Brands",
-    "title": "Brands that have liked my thinking",
-    "sub": "I worked in brand strategy for 3+ years",
-    "logos": [
-      {
-        "src": "assets/logos/clean/white-house.png",
-        "alt": "The White House",
-        "href": "https://www.whitehouse.gov/gallery/president-donald-trump-and-first-lady-melania-trump-participate-in-a-halloween-event-on-the-south-lawn-of-the-white-house/",
-        "h": 50
-      },
-      {
-        "src": "assets/logos/clean/red-bull.png",
-        "alt": "Red Bull"
-      },
-      {
-        "src": "assets/logos/clean/aston-martin.png",
-        "alt": "Aston Martin"
-      },
-      {
-        "src": "assets/logos/clean/looney-tunes.png",
-        "alt": "Looney Tunes"
-      },
-      {
-        "src": "assets/logos/clean/floor-decor.png",
-        "alt": "Floor & Decor",
-        "href": "https://ir.flooranddecor.com/news-events/press-releases/detail/210/floor-decor-announces-grand-opening-of-allentown"
-      },
-      {
-        "src": "assets/logos/clean/orlando-magic.png",
-        "alt": "Orlando Magic",
-        "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
-      },
-      {
-        "src": "assets/logos/clean/michelob-ultra.png",
-        "alt": "Michelob Ultra"
-      },
-      {
-        "src": "assets/logos/clean/john-muir.png",
-        "alt": "John Muir Health"
-      },
-      {
-        "src": "assets/logos/clean/city-national.png",
-        "alt": "City National Bank",
-        "href": "https://www.linkedin.com/posts/citynationalbankfl_as-a-proud-partner-of-the-orlando-magic-activity-7374567342183251968-N9_6"
-      }
-    ]
-  },
-  "work": {
-    "eyebrow": "",
-    "title": "Selected Projects",
-    "projects": [
-      {
-        "slug": "driftwood-retention",
-        "name": "Driftwood onboarding",
-        "outcome": "New clients reached their first demo in 7 business days, down from 2.5–3 weeks",
-        "tags": "Web · Product design + code",
-        "media": {
-          "type": "browser",
-          "src": "assets/case-studies/driftwood-retention/home-thumb.mp4",
-          "url": "driftwood.sh/dashboard",
-          "tab": "driftwood · dashboard",
-          "alt": "The redesigned driftwood dashboard in use: the Pipeline range toggled, an email approved, a trigger typed in",
-          "poster": "assets/case-studies/driftwood-retention/home-thumb-poster.jpg",
-          "autoplay": true,
-          "ar": "1280/800"
-        },
-        "stack": [
-          "React",
-          "TypeScript",
-          "Vite",
-          "Tailwind CSS",
-          "Vercel",
-          "GitHub",
-          "Claude Code"
-        ],
-        "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
-      },
-      {
-        "slug": "vantage",
-        "name": "Vantage",
-        "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them",
-        "tags": "Web · Open source",
-        "media": {
-          "type": "landscape-video",
-          "src": "assets/projects/vantage.mp4",
-          "poster": "assets/projects/vantage-poster.jpg",
-          "ar": "1064/672",
-          "alt": "The Vantage console — creating a private share and reading usability results"
-        },
-        "stack": [
-          "JavaScript",
-          "Node.js",
-          "HTML",
-          "CSS",
-          "Docker",
-          "GitHub",
-          "Claude Code"
-        ],
-        "icon": "assets/case-studies/vantage/vantage-logo-clay.svg"
-      },
-      {
-        "slug": "pratus-kitchen",
-        "name": "Pratu’s Kitchen",
-        "outcome": "Directing E2E brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand",
-        "tags": "Web · Brand + product design + code",
-        "media": {
-          "type": "browser",
-          "src": "assets/case-studies/pratus-kitchen/demo.mp4",
-          "poster": "assets/case-studies/pratus-kitchen/demo-poster.jpg",
-          "url": "pratuskitchen.com",
-          "tab": "Pratus Kitchen · Culture that performs",
-          "autoplay": true,
-          "ar": "1280/800",
-          "alt": "A walkthrough of the Pratus Kitchen storefront: the home page, the meal lineup, a product page, the cart and checkout"
-        },
-        "stack": [
-          "JavaScript",
-          "HTML",
-          "CSS",
-          "Vite",
-          "GSAP",
-          "GitHub",
-          "Claude Code"
-        ],
-        "icon": "assets/case-studies/pratus-kitchen/pratus-logo-clay.svg"
-      },
-      {
-        "slug": "driftwood",
-        "name": "Driftwood",
-        "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours",
-        "tags": "Web · Strategy + code",
-        "media": {
-          "type": "browser",
-          "src": "assets/case-studies/driftwood/home.mp4",
-          "poster": "assets/case-studies/driftwood-home-poster.jpg",
-          "url": "driftwood.sh",
-          "tab": "driftwood · ship a custom demo",
-          "alt": "The new driftwood.sh homepage in motion"
-        },
-        "stack": [
-          "React",
-          "TypeScript",
-          "Vite",
-          "Tailwind CSS",
-          "Vercel",
-          "GitHub",
-          "Claude Code"
-        ],
-        "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
-      },
-      {
-        "slug": "spotify-mix",
-        "name": "Spotify Mix redesign",
-        "outcome": "Uncovered why users avoided Spotify's new product expansion and redesigned the experience so 100% of tested participants preferred it",
-        "tags": "Mobile · Interaction design",
-        "media": {
-          "type": "phone-video",
-          "src": "assets/projects/spotify-screen.mp4",
-          "poster": "assets/projects/spotify-screen-poster.jpg",
-          "autoplay": true,
-          "alt": "The redesigned Spotify Mix screen, animating through a transition edit"
-        },
-        "stack": [
-          "Figma",
-          "Miro"
-        ],
-        "icon": "assets/case-studies/spotify/spotify-logo-clay.svg"
-      },
-      {
-        "slug": "stack",
-        "name": "Budgeting app",
-        "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, to make budgeting guidance more valuable before spending",
-        "tags": "Research · Mobile · Usability testing",
-        "media": {
-          "type": "phone-image",
-          "src": "assets/case-studies/stack/raw/01-home-top.png",
-          "alt": "Stack home screen — ask before you spend, with quick insights"
-        },
-        "stack": [
-          "Figma",
-          "Claude Code",
-          "Claude Design",
-          "Miro"
-        ],
-        "mark": "S",
-        "markBg": "#D50000",
-        "icon": "assets/case-studies/stack/stack-logo-clay.svg"
-      },
-      {
-        "slug": "message-testing",
-        "name": "Atlantic Health",
-        "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment",
-        "tags": "Healthcare · Brand strategy · Research",
-        "media": {
-          "type": "landscape-video",
-          "src": "assets/projects/atlantic.mp4",
-          "poster": "assets/projects/atlantic-poster.jpg",
-          "alt": "Atlantic Health proton therapy campaign"
-        },
-        "stack": [
-          "Adobe Creative Suite"
-        ],
-        "icon": "assets/case-studies/message-testing/atlantic-logo-clay.svg"
-      },
-      {
-        "slug": "ai-tools",
-        "name": "My AI tools",
-        "outcome": "An in-page editor and a slider tweaker I built so I can change copy and visuals directly instead of describing them to AI",
-        "tags": "Tooling · Web · Built with Claude Code",
-        "media": {
-          "type": "browser",
-          "src": "assets/case-studies/ai-tools/tweaker-logos.jpg",
-          "url": "localhost:4174/studies/tweaker-logos",
-          "tab": "Logo wisps tweaker",
-          "alt": "The tweaker beside the live home page",
-          "ar": "1440/900"
-        },
-        "stack": [
-          "JavaScript",
-          "HTML",
-          "CSS",
-          "Node.js",
-          "Claude Code"
-        ],
-        "icon": "assets/case-studies/ai-tools/ai-tools-logo-clay.svg"
-      }
-    ]
-  },
-  "disciplines": {
-    "eyebrow": "Designing across disciplines",
-    "title": "Architecture & service design",
-    "panels": [
-      {
-        "org": "Michelob Ultra",
-        "shortLabel": "Michelob Ultra",
-        "title": "What does a brand feel like when you're standing inside it?",
-        "desc": "Every event has a user journey. I designed this one.",
-        "img": "assets/disciplines/michelob-poster.jpg",
-        "video": "assets/disciplines/michelob.mp4",
-        "alt": "Michelob Ultra experiential event"
-      },
-      {
-        "org": "University of Michigan",
-        "shortLabel": "Boat House",
-        "title": "Designing for competing user needs in shared space",
-        "desc": "Athletes and scientists. Same building, same river, completely different needs.",
-        "img": "assets/disciplines/boat-house.jpg",
-        "alt": "Boat house aerial render on the river"
-      },
-      {
-        "org": "University of Michigan",
-        "shortLabel": "Wall House",
-        "title": "How do you design privacy without building a wall?",
-        "desc": "A study on perceived privacy.",
-        "img": "assets/disciplines/wall-house.jpg",
-        "alt": "Wall house case study model"
-      },
-      {
-        "org": "University of Michigan",
-        "shortLabel": "Chair Study",
-        "title": "How people use their chair to control their social experience",
-        "desc": "A study in how people use physical space to signal exactly how much interaction they want.",
-        "img": "assets/disciplines/chair-study.jpg",
-        "alt": "Chair interaction study"
-      },
-      {
-        "org": "LeaseMagnets",
-        "shortLabel": "Filming Guide",
-        "title": "The instructions were the problem",
-        "desc": "How I turned repeated user frustration into a process anyone could follow in one read.",
-        "img": "assets/disciplines/filming-guide.jpg",
-        "alt": "Filming day instruction guide"
-      },
-      {
-        "org": "University of Michigan",
-        "shortLabel": "Playscape",
-        "title": "I removed gravity to understand what we design playgrounds around",
-        "desc": "When the environment changes completely, you find out what you were actually designing for.",
-        "img": "assets/disciplines/playscape.jpg",
-        "alt": "Zero gravity playscape concept"
-      },
-      {
-        "org": "University of Michigan",
-        "shortLabel": "Rec Center",
-        "title": "How I organized a rec center the way a UX designer organizes an app",
-        "desc": "Grouping activities by type, minimizing unnecessary movement, and designing for the path of least resistance — in concrete.",
-        "img": "assets/disciplines/rec-center.jpg",
-        "alt": "Detroit recreation center plan"
-      }
-    ]
-  },
-  "about": {
-    "eyebrow": "About",
-    "headshot": "assets/hero/headshot.jpg",
-    "title": "I love designing experiences that make it easier for people to stay curious",
-    "more": [
-      "What draws me to product design is the same concept that has drawn me to tutoring.",
-      "I'm interested in the moments where we lose the learner — when someone is excited to understand something, but along the way, starts questioning whether they can.",
-      "There's something comforting about helping people feel understood."
-    ],
-    "moreLabel": "The short story, long",
-    "lessLabel": "The long story, short",
-    "education": {
-      "items": [
-        {
-          "logo": "assets/logos/umich-block-m.svg",
-          "logoW": 294,
-          "logoH": 212,
-          "name": "University of Michigan",
-          "detail": "B.S. Architecture"
-        },
-        {
-          "logo": "assets/logos/google-g.svg",
-          "logoW": 24,
-          "logoH": 24,
-          "name": "Google UX Design Professional Certificate",
-          "detail": "Coursera"
-        }
-      ]
+   },
+   {
+    "slug": "vantage",
+    "name": "Vantage",
+    "outcome": "A private, revocable way to share coded prototypes with the exact people you choose — and see how they actually use them",
+    "tags": "Web · Open source",
+    "media": {
+     "type": "landscape-video",
+     "src": "assets/projects/vantage-loop.mp4",
+     "poster": "assets/covers/vantage-logos.jpg",
+     "ar": "1280/800",
+     "alt": "Vantage: the Figma and Claude Code logos, a LinkedIn post about sharing HTML, then the console adding people, copying private links, reading results and revoking a link"
     },
-    "resumeLabel": "View my resume"
-  },
-  "footer": {
-    "note": "Madhumita Krishnan · New York",
-    "links": [
-      {
-        "label": "LinkedIn",
-        "href": "https://www.linkedin.com/in/madhumitak/"
-      },
-      {
-        "label": "Twitter",
-        "href": "https://x.com/madhuishungry"
-      }
+    "stack": [
+     "JavaScript",
+     "Node.js",
+     "HTML",
+     "CSS",
+     "Docker",
+     "GitHub",
+     "Claude Code"
+    ],
+    "icon": "assets/case-studies/vantage/vantage-logo-clay.svg"
+   },
+   {
+    "slug": "driftwood",
+    "name": "Driftwood",
+    "outcome": "Translated customer feedback into product positioning that the founder used to win 3 new clients, then rebuilt the website around it in 18 hours",
+    "tags": "Web · Strategy + code",
+    "media": {
+     "src": "assets/case-studies/driftwood/site-loop.mp4",
+     "poster": "assets/case-studies/driftwood/site-loop-poster.jpg",
+     "ar": "1280/800",
+     "alt": "The driftwood ident on its blue (the helm, the wordmark, driftwood.sh), then the site's hero: Ship tailored demos to every prospect, and Book a demo pressed"
+    },
+    "stack": [
+     "React",
+     "TypeScript",
+     "Vite",
+     "Tailwind CSS",
+     "Vercel",
+     "GitHub",
+     "Claude Code"
+    ],
+    "icon": "assets/case-studies/driftwood-retention/logo-clay.svg"
+   },
+   {
+    "slug": "pratus-kitchen",
+    "name": "Pratu’s Kitchen",
+    "outcome": "Directing E2E brand and digital product design for a fitness creator’s 35.8K-follower vegetarian food brand",
+    "tags": "Web · Brand + product design + code",
+    "media": {
+     "src": "assets/case-studies/pratus-kitchen/demo.mp4",
+     "poster": "assets/case-studies/pratus-kitchen/hero-cover.jpg",
+     "autoplay": true,
+     "ar": "1280/800",
+     "alt": "A walkthrough of the Pratus Kitchen storefront: the home page, the meal lineup, a product page, the cart and checkout"
+    },
+    "stack": [
+     "JavaScript",
+     "HTML",
+     "CSS",
+     "Vite",
+     "GSAP",
+     "GitHub",
+     "Claude Code"
+    ],
+    "icon": "assets/case-studies/pratus-kitchen/pratus-logo-clay.svg"
+   },
+   {
+    "slug": "stack",
+    "name": "Budgeting app",
+    "outcome": "Explored what drives subscription stability in budgeting apps, then designed around financial decisions, to make budgeting guidance more valuable before spending",
+    "tags": "Research · Mobile · Usability testing",
+    "media": {
+     "type": "phone-image",
+     "src": "assets/case-studies/stack/raw/01-home-top.png",
+     "alt": "Stack home screen — ask before you spend, with quick insights"
+    },
+    "stack": [
+     "Figma",
+     "Claude Code",
+     "Claude Design",
+     "Miro"
+    ],
+    "mark": "S",
+    "markBg": "#D50000",
+    "icon": "assets/case-studies/stack/stack-logo-clay.svg"
+   },
+   {
+    "slug": "message-testing",
+    "name": "Atlantic Health",
+    "outcome": "Doubled physician interest from 16% to 32% in Atlantic Health's $30M proton therapy investment",
+    "tags": "Healthcare · Brand strategy · Research",
+    "media": {
+     "type": "landscape-video",
+     "src": "assets/projects/atlantic.mp4",
+     "poster": "assets/projects/atlantic-poster.jpg",
+     "alt": "Atlantic Health proton therapy campaign"
+    },
+    "stack": [
+     "Adobe Creative Suite"
+    ],
+    "icon": "assets/case-studies/message-testing/atlantic-logo-clay.svg"
+   },
+   {
+    "slug": "ai-tools",
+    "name": "My AI tools",
+    "outcome": "An in-page editor and a slider tweaker I built so I can change copy and visuals directly instead of describing them to AI",
+    "tags": "Tooling · Web · Built with Claude Code",
+    "media": {
+     "type": "browser",
+     "src": "assets/case-studies/ai-tools/tweaker-logos.jpg",
+     "url": "localhost:4174/studies/tweaker-logos",
+     "tab": "Logo wisps tweaker",
+     "alt": "The tweaker beside the live home page",
+     "ar": "1440/900"
+    },
+    "stack": [
+     "JavaScript",
+     "HTML",
+     "CSS",
+     "Node.js",
+     "Claude Code"
+    ],
+    "icon": "assets/case-studies/ai-tools/ai-tools-logo-clay.svg"
+   }
+  ]
+ },
+ "disciplines": {
+  "eyebrow": "Designing across disciplines",
+  "title": "Architecture & service design",
+  "panels": [
+   {
+    "org": "Michelob Ultra",
+    "shortLabel": "Michelob Ultra",
+    "title": "What does a brand feel like when you're standing inside it?",
+    "desc": "Every event has a user journey. I designed this one.",
+    "img": "assets/disciplines/michelob-poster.jpg",
+    "video": "assets/disciplines/michelob.mp4",
+    "alt": "Michelob Ultra experiential event",
+    "gallery": [
+     "assets/disciplines/gallery/michelob-07.jpg",
+     "assets/disciplines/gallery/michelob-08.jpg",
+     "assets/disciplines/gallery/michelob-02.jpg",
+     "assets/disciplines/gallery/michelob-11.jpg",
+     "assets/disciplines/gallery/michelob-06.jpg",
+     "assets/disciplines/gallery/michelob-12.jpg",
+     "assets/disciplines/gallery/michelob-03.jpg",
+     "assets/disciplines/gallery/michelob-13.jpg"
     ]
+   },
+   {
+    "org": "University of Michigan",
+    "shortLabel": "Boat House",
+    "title": "Designing for competing user needs in shared space",
+    "desc": "Athletes and scientists. Same building, same river, completely different needs.",
+    "img": "assets/disciplines/boat-house.jpg",
+    "alt": "Boat house aerial render on the river",
+    "gallery": [
+     "assets/disciplines/gallery/boat-house-00.jpg",
+     "assets/disciplines/gallery/boat-house-01.jpg",
+     "assets/disciplines/gallery/boat-house-02.jpg",
+     "assets/disciplines/gallery/boat-house-03.jpg",
+     "assets/disciplines/gallery/boat-house-04.jpg",
+     "assets/disciplines/gallery/boat-house-05.jpg"
+    ],
+    "galleryLeads": true
+   },
+   {
+    "org": "University of Michigan",
+    "shortLabel": "Wall House",
+    "title": "How do you design privacy without building a wall?",
+    "desc": "A study on perceived privacy.",
+    "img": "assets/disciplines/wall-house.jpg",
+    "alt": "Wall house case study model",
+    "gallery": [
+     "assets/disciplines/gallery/wall-house-00.jpg",
+     "assets/disciplines/gallery/wall-house-01.jpg",
+     "assets/disciplines/gallery/wall-house-02.jpg",
+     "assets/disciplines/gallery/wall-house-03.jpg",
+     "assets/disciplines/gallery/wall-house-04.jpg",
+     "assets/disciplines/gallery/wall-house-05.jpg",
+     "assets/disciplines/gallery/wall-house-06.jpg",
+     "assets/disciplines/gallery/wall-house-07.jpg",
+     "assets/disciplines/gallery/wall-house-08.jpg",
+     "assets/disciplines/gallery/wall-house-09.jpg"
+    ]
+   },
+   {
+    "org": "University of Michigan",
+    "shortLabel": "Chair Study",
+    "title": "How people use their chair to control their social experience",
+    "desc": "A study in how people use physical space to signal exactly how much interaction they want.",
+    "img": "assets/disciplines/chair-study.jpg",
+    "alt": "Chair interaction study"
+   },
+   {
+    "org": "LeaseMagnets",
+    "shortLabel": "Filming Guide",
+    "title": "The instructions were the problem",
+    "desc": "How I turned repeated user frustration into a process anyone could follow in one read.",
+    "img": "assets/disciplines/filming-guide.jpg",
+    "alt": "Filming day instruction guide",
+    "gallery": [
+     "assets/disciplines/gallery/filming-guide-02.jpg",
+     "assets/disciplines/gallery/filming-guide-00.jpg",
+     "assets/disciplines/gallery/filming-guide-01.jpg",
+     "assets/disciplines/gallery/filming-guide-03.jpg",
+     "assets/disciplines/gallery/filming-guide-04.jpg"
+    ],
+    "galleryLeads": true
+   },
+   {
+    "org": "University of Michigan",
+    "shortLabel": "Playscape",
+    "title": "I removed gravity to understand what we design playgrounds around",
+    "desc": "When the environment changes completely, you find out what you were actually designing for.",
+    "img": "assets/disciplines/playscape.jpg",
+    "alt": "Zero gravity playscape concept",
+    "gallery": [
+     "assets/disciplines/gallery/playscape-02.jpg",
+     "assets/disciplines/gallery/playscape-00.jpg",
+     "assets/disciplines/gallery/playscape-01.jpg",
+     "assets/disciplines/gallery/playscape-03.jpg",
+     "assets/disciplines/gallery/playscape-04.jpg",
+     "assets/disciplines/gallery/playscape-05.jpg"
+    ],
+    "galleryLeads": true
+   },
+   {
+    "org": "University of Michigan",
+    "shortLabel": "Rec Center",
+    "title": "How I organized a rec center the way a UX designer organizes an app",
+    "desc": "Grouping activities by type, minimizing unnecessary movement, and designing for the path of least resistance — in concrete.",
+    "img": "assets/disciplines/rec-center.jpg",
+    "alt": "Detroit recreation center plan",
+    "gallery": [
+     "assets/disciplines/gallery/rec-center-00.jpg",
+     "assets/disciplines/gallery/rec-center-01.jpg",
+     "assets/disciplines/gallery/rec-center-02.jpg",
+     "assets/disciplines/gallery/rec-center-03.jpg",
+     "assets/disciplines/gallery/rec-center-04.jpg",
+     "assets/disciplines/gallery/rec-center-05.jpg",
+     "assets/disciplines/gallery/rec-center-06.jpg",
+     "assets/disciplines/gallery/rec-center-07.jpg"
+    ]
+   }
+  ]
+ },
+ "about": {
+  "eyebrow": "About",
+  "headshot": "assets/hero/headshot.jpg",
+  "title": "I love designing experiences that make it easier for people to stay curious",
+  "more": [
+   "What draws me to product design is the same concept that has drawn me to tutoring.",
+   "I'm interested in the moments where we lose the learner — when someone is excited to understand something, but along the way, starts questioning whether they can.",
+   "There's something comforting about helping people feel understood."
+  ],
+  "moreLabel": "The short story, long",
+  "lessLabel": "The long story, short",
+  "education": {
+   "items": [
+    {
+     "logo": "assets/logos/umich-block-m.svg",
+     "logoW": 294,
+     "logoH": 212,
+     "name": "University of Michigan",
+     "detail": "B.S. Architecture"
+    },
+    {
+     "logo": "assets/logos/google-g.svg",
+     "logoW": 24,
+     "logoH": 24,
+     "name": "Google UX Design Professional Certificate",
+     "detail": "Coursera"
+    }
+   ]
   },
-  "calendly": "https://calendly.com/meet-madhu"
+  "resumeLabel": "View my resume"
+ },
+ "footer": {
+  "note": "Madhumita Krishnan · New York",
+  "links": [
+   {
+    "label": "LinkedIn",
+    "href": "https://www.linkedin.com/in/madhumitak/"
+   },
+   {
+    "label": "X",
+    "href": "https://x.com/madhuishungry"
+   }
+  ]
+ },
+ "calendly": "https://calendly.com/meet-madhu"
 }

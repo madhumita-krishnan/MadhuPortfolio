@@ -184,6 +184,9 @@ http.createServer((req, res) => {
   try {
     let urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (urlPath.endsWith('/')) urlPath += 'index.html';
+    /* LOCAL REVIEW: a page with a new draft opens the draft, from any link (data/review-links.local.json, git-ignored; absent = no-op) */
+    try { const rv = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/review-links.local.json'), 'utf8'))[urlPath.slice(1)];
+      if (rv) { res.writeHead(302, { Location: rv + (new URL(req.url, 'http://x').search || '') }); return res.end(); } } catch (e) {}
     const file = path.normalize(path.join(DIST, urlPath));
     if (!file.startsWith(DIST)) { res.writeHead(403); return res.end(); }
     const ext = path.extname(file).toLowerCase();

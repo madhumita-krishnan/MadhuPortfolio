@@ -102,3 +102,369 @@ nav.bar .btn.sm{padding-bottom:4px}
 .tp-lead{font-weight:300;font-size:clamp(19px,2.4vw,30px);line-height:1.5;color:#f3f4f6}
 .tp-h{font-size:clamp(30px,4vw,44px);line-height:1.18;font-weight:600;letter-spacing:-.01em;color:#f3f4f6}
 .tp-p{font-size:18px;font-weight:300;line-height:1.65;color:#a9adb7;max-width:772px}
+
+
+/* ===== DAY (her 2026-11-22: "can we prioritize the day look for the home page?"). The palette lives in data/theme.json "colors";
+   this block gives every colour the skin hard-codes for the dark look its day twin, from the case-study day system
+   (ink #161a24 · body #3d4552 · quiet #4f5866 · labels tide #3a62ab · ground #fafaf8). Night (data-theme=night) is untouched. ===== */
+html:not([data-theme="night"]){--glass-grad-a:rgba(255,255,255,.6);--glass-bg:rgba(250,250,248,.82);--glass-grad-b:rgba(255,255,255,.3);
+  --glass-border:rgba(22,26,36,.08);--glass-cres-top:rgba(255,255,255,.9);--glass-cres-bottom:rgba(255,255,255,.5);
+  --glass-cres-side:rgba(255,255,255,.4);--glass-glow:transparent;--glass-prism-o:0;color-scheme:light}
+html:not([data-theme="night"]) body{background:linear-gradient(180deg,rgba(250,250,248,0) 0,rgba(250,250,248,0) 400px,#fafaf8 1080px) no-repeat,
+  linear-gradient(165deg,#f1efe9 0%,#e3e8ec 48%,#cbd8e2 100%) 0 0/100% 1080px no-repeat,#fafaf8}
+html:not([data-theme="night"]) .nav-links a{color:#4f5866}
+html:not([data-theme="night"]) .nav-links a:not([data-hand]):hover{color:#161a24}   /* never on hand-swap links: their hover hides the sans (color:transparent) and shows her handwriting */
+html:not([data-theme="night"]) .btn.solid{background:#161a24;color:#fff}
+html:not([data-theme="night"]) .btn.solid:hover,html:not([data-theme="night"]) .btn.solid:active{background:#000}
+html:not([data-theme="night"]) .btn.outline,html:not([data-theme="night"]) .btn.teal{border-color:rgba(58,98,171,.45);color:#3a62ab}
+html:not([data-theme="night"]) .btn.outline:hover,html:not([data-theme="night"]) .btn.teal:hover{background:#3a62ab;border-color:#3a62ab;color:#fff}
+html:not([data-theme="night"]) .nav-wrap::before{background:linear-gradient(var(--bg-base) 50%,rgba(250,250,248,0))}
+html:not([data-theme="night"]) .cs-hero-band,html:not([data-theme="night"]) .cs-kicker,html:not([data-theme="night"]) .cs-title,
+html:not([data-theme="night"]) .cs-heading,html:not([data-theme="night"]) .cs-body h3,html:not([data-theme="night"]) .tp-title,
+html:not([data-theme="night"]) .tp-h{color:#161a24}
+html:not([data-theme="night"]) .cs-tagline,html:not([data-theme="night"]) .tp-lead{color:#47505e}
+html:not([data-theme="night"]) .cs-meta dd,html:not([data-theme="night"]) .cs-body p,html:not([data-theme="night"]) .cs-body li,html:not([data-theme="night"]) .tp-p{color:#3d4552}
+html:not([data-theme="night"]) .cs-meta a{color:#3a62ab}
+html:not([data-theme="night"]) .cs-label{color:#3a62ab}
+html:not([data-theme="night"]) .cs-section figcaption,html:not([data-theme="night"]) .cs-media figcaption,html:not([data-theme="night"]) .cs-row figcaption{color:#4f5866}
+html:not([data-theme="night"]) .stat-card.glass{background:#fff;border-color:rgba(22,26,36,.08)}
+
+/* the day / night toggle (see LOOK_TOGGLE in build.js): her view toggle's ring and knob, in each look's inks */
+.lt-toggle{position:relative;display:inline-flex;gap:4px;padding:4px;border-radius:999px;border:1px solid rgba(22,26,36,.18);flex:0 0 auto;touch-action:none;align-self:center}
+.lt-btn{all:unset;box-sizing:border-box;position:relative;z-index:1;display:grid;place-items:center;width:40px;height:32px;border-radius:999px;cursor:pointer;color:#4f5866;transition:color .18s ease}
+.lt-toggle:not(.has-knob) .lt-btn[aria-pressed=true]{background:#161a24}
+.lt-btn[aria-pressed=true]{color:#fff}
+.lt-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lt-btn:focus-visible{outline:2px solid #3a62ab;outline-offset:2px}
+.lt-knob{position:absolute;left:0;top:4px;bottom:4px;border-radius:999px;background:#161a24;z-index:0;pointer-events:none;transform-origin:0 50%;will-change:transform,width}
+[data-theme="night"] .lt-toggle{border-color:rgba(169,196,245,.42)}
+[data-theme="night"] .lt-btn{color:#a9adb7}[data-theme="night"] .lt-btn[aria-pressed=true]{color:#0f1013}
+[data-theme="night"] .lt-knob,[data-theme="night"] .lt-toggle:not(.has-knob) .lt-btn[aria-pressed=true]{background:#f3f4f6}
+[data-theme="night"] .lt-btn:focus-visible{outline-color:#8fb2f2}
+/* the knob springs LIVE through the day/night cross-fade (2026-11-23, her: "not GUI enough … like the horizontal vertical scroll
+   thing"): the page's snapshot cross-fade used to freeze an old knob in place and fade the moving one in over it at half
+   strength. The toggle is lifted out of that snapshot and fades its own inks over the same 520ms instead */
+.lt-toggle{view-transition-name:lt-toggle;transition:background-color .52s var(--ease-standard,ease),border-color .52s var(--ease-standard,ease)}
+.lt-knob{transition:background-color .52s var(--ease-standard,ease),box-shadow .52s var(--ease-standard,ease)}
+.lt-sep{transition:background-color .52s var(--ease-standard,ease)}
+::view-transition-group(lt-toggle),::view-transition-new(lt-toggle){animation:none}
+::view-transition-old(lt-toggle){display:none}
+@media (max-width:640px){.lt-toggle{position:fixed;right:16px;bottom:16px;z-index:60;padding:3px;gap:2px;background:rgba(250,250,248,.86);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 10px 30px -14px rgba(20,40,60,.35)}
+  [data-theme="night"] .lt-toggle{background:rgba(22,27,40,.88)}
+  .lt-btn{width:34px;height:28px}.lt-btn svg{width:16px;height:16px}.lt-knob{top:3px;bottom:3px}}
+
+/* the swipe deck's ground was hard-coded near-black (#101010) in both looks */
+html:not([data-theme="night"]) .work-sec[data-view="deck"]{background:var(--sd-bg-day,#eef1f3)}
+/* ONE cursor colour, day and night (her rule): the pill stays HER moon blue, its words dark */
+html:not([data-theme="night"]) .dc-body{background:#8fb2f2}
+html:not([data-theme="night"]) .dc-body span{color:#0f1013}
+/* the projects view toggle + phone turn cue: their night ring/ground, in day inks */
+html:not([data-theme="night"]) .view-toggle,html:not([data-theme="night"]) .turn-hint{border-color:rgba(22,26,36,.18)}
+html:not([data-theme="night"]) .view-dock .view-toggle,html:not([data-theme="night"]) .turn-hint{background:rgba(250,250,248,.86)}
+html:not([data-theme="night"]) .turn-hint{color:#3a62ab}
+/* the clay tiles' shadow was tuned for the dark page (black .45); by day it muddied them — a soft blue-grey lift instead */
+html:not([data-theme="night"]) .cta-socials img{filter:drop-shadow(calc(var(--lx,0)*3px) calc(var(--ly,1)*3px) 6px rgba(20,40,60,.22))}
+/* ground option to compare (?ground=cool): the day gradient without the warm sand at the top, behind the clay */
+html[data-ground=cool]:not([data-theme="night"]) body{background:linear-gradient(180deg,rgba(250,250,248,0) 0,rgba(250,250,248,0) 400px,#fafaf8 1080px) no-repeat,
+  linear-gradient(165deg,#f3f5f7 0%,#e8edf1 48%,#d3dde6 100%) 0 0/100% 1080px no-repeat,#fafaf8}
+/* the projects view toggle, by day = the day/night toggle's look (one toggle system; her: "the website toggle to horizontal
+   scroll is weird and black"): hairline ring, no fill, a solid ink knob, white icon on the knob, quiet icons beside it */
+html:not([data-theme="night"]) .view-toggle,html:not([data-theme="night"]) .view-dock .view-toggle{background:rgba(250,250,248,.86)!important;border:1px solid rgba(22,26,36,.18)!important}
+html:not([data-theme="night"]) .vt-knob{background:#161a24}
+html:not([data-theme="night"]) .view-btn{color:#4f5866}
+html:not([data-theme="night"]) .view-btn[aria-pressed="true"]{color:#fff}
+html:not([data-theme="night"]) .view-toggle:not(.has-knob) .view-btn[aria-pressed="true"]{background:#161a24}
+html:not([data-theme="night"]) .view-btn:focus-visible{outline-color:#3a62ab}
+/* clay option to compare (?clay=grade): by day only, a gentle grade nudging her clay off pink (the pixels are identical in both
+   looks — measured avg 155,122,120 — it READS pinker on the light warm ground). Her call; off unless the param is set */
+/* clay grade options retired 2026-11-23 (her pick: "Clay by day is a", no grade) */
+
+/* THE DISCIPLINES GALLERY (see build.js "THE GALLERY"): full screen on her near-black (pictures never on white), each project big
+   in one native sideways scroll with snap, neighbours peeking; captions in her words; drawn ✕; fades in */
+.panel .p-open{position:absolute;right:14px;top:14px;z-index:3;display:grid;place-items:center;width:36px;height:36px;border-radius:999px;
+  background:rgba(15,16,19,.55);color:#fff;opacity:0;transition:opacity .3s ease;pointer-events:none}
+.panel .p-open svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.panel.active .p-open{opacity:1}
+.panel.active{cursor:zoom-in}
+.dg{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#0f1013;color:#f3f4f6;overflow:hidden}
+.dg[open]{animation:dg-in .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes dg-in{from{opacity:0}to{opacity:1}}
+.dg::backdrop{background:#0f1013}
+.dg-x{all:unset;position:absolute;right:20px;top:20px;z-index:2;display:grid;place-items:center;width:44px;height:44px;border-radius:999px;cursor:pointer;background:rgba(255,255,255,.08)}
+.dg-x:hover{background:rgba(255,255,255,.16)}.dg-x:focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}
+.dg-x svg{width:18px;height:18px;fill:none;stroke:#f3f4f6;stroke-width:1.8;stroke-linecap:round}
+.dg-n{position:absolute;left:24px;top:30px;margin:0;font:500 13px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.12em;color:#a9adb7;font-variant-numeric:tabular-nums}
+.dg-strip{display:flex;gap:4vw;height:100%;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;
+  padding:0 12vw;box-sizing:border-box;outline:none}
+.dg-strip::-webkit-scrollbar{display:none}
+.dg-slide{flex:0 0 76vw;margin:0;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;opacity:.35;transition:opacity .45s cubic-bezier(.2,.7,.2,1);cursor:pointer}
+.dg-slide.on{opacity:1;cursor:e-resize}
+.dg-slide img,.dg-slide video{display:block;max-width:100%;max-height:68vh;width:auto;height:auto;border-radius:14px;object-fit:contain;box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}
+.dg-slide video{width:min(100%,1100px)}
+.dg-slide figcaption{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;max-width:620px}
+.dg-slide figcaption .dg-org{font:500 13px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8fb2f2}
+.dg-slide figcaption b{font:600 22px/1.3 'Plus Jakarta Sans',system-ui,sans-serif;color:#f3f4f6}
+.dg-slide figcaption em{font:300 16px/1.5 'Plus Jakarta Sans',system-ui,sans-serif;font-style:normal;color:#a9adb7}
+html.dg-on{overflow:hidden}
+@media (max-width:640px){.dg-slide{flex-basis:86vw}.dg-strip{padding:0 7vw;gap:5vw}.dg-slide img,.dg-slide video{max-height:56vh}.dg-slide figcaption b{font-size:19px}}
+@media (prefers-reduced-motion:reduce){.dg[open]{animation:none}.dg-slide{transition:none}}
+/* the disciplines panels keep their NIGHT inks in both looks (her 2026-11-22: "the text on the images … need to stay in night mode
+   so you can read it"): the words sit on a photo under a fixed dark wash, never on the page */
+html:not([data-theme="night"]) .panel{--text-on-deep:#f3f4f6;--text-on-deep-secondary:#c3c7cf;--accent-bright:#a9c4f5}
+
+/* KNOB options to compare on her real page (review switch, local only): both toggles (day/night + projects), day look only.
+   A = now (ink knob) · B = her blue, rich (#195cd7) · C = softer slate on a faint track · D = a white knob lifted off a soft grey track */
+html[data-knob=b]:not([data-theme="night"]) :is(.lt-knob,.vt-knob){background:#195cd7}
+html[data-knob=c]:not([data-theme="night"]) :is(.lt-toggle,.view-toggle){border-color:rgba(22,26,36,.12)!important;background:rgba(22,26,36,.04)!important}
+html[data-knob=c]:not([data-theme="night"]) :is(.lt-knob,.vt-knob){background:#3d4552}
+html[data-knob=d]:not([data-theme="night"]) :is(.lt-toggle,.view-toggle){border-color:transparent!important;background:rgba(22,26,36,.07)!important}
+html[data-knob=d]:not([data-theme="night"]) :is(.lt-knob,.vt-knob){background:#fff;box-shadow:0 1px 2px rgba(20,40,60,.12),0 4px 10px -4px rgba(20,40,60,.25)}
+html[data-knob=d]:not([data-theme="night"]) :is(.lt-btn,.view-btn)[aria-pressed="true"]{color:#161a24}
+
+/* HOVER options to compare (review switch, local only; her 2026-11-22: "the blue hover case study highlight on day mode needs to be
+   bluer and grainier … doesnt feel so blendy … maybe a moving wave grain?"). Day look only.
+   B = a real blue wash + fine blue grain · C = B's wash + a band of grain that sweeps across like a slow wave, only while hovered
+   (a static grain tile; only its mask moves, so nothing animates at rest) · D = B + the others dulled (she asked 2026-11-22 to remove
+   dimming; shown again so she can judge it) */
+html[data-hov]:not([data-theme="night"]) .work-sec[data-wash].wh-on .wproject.wh-cur{position:relative;isolation:isolate;
+  background:linear-gradient(135deg,rgba(58,98,171,.16),rgba(58,98,171,.09))!important}
+html[data-hov]:not([data-theme="night"]) .work-sec[data-wash] .wproject::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.05' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .23 0 0 0 0 .38 0 0 0 0 .67 0 0 0 2.2 -.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px 200px;opacity:0;transition:opacity .32s cubic-bezier(.2,.7,.2,1)}
+html[data-hov]:not([data-theme="night"]) .work-sec[data-wash].wh-on .wproject.wh-cur::after{opacity:.55}
+html[data-hov=c]:not([data-theme="night"]) .work-sec[data-wash].wh-on .wproject.wh-cur::after{opacity:.9;
+  -webkit-mask:linear-gradient(100deg,transparent 0%,#000 22%,#000 38%,transparent 60%,#000 78%,transparent 100%) 0 0/250% 100%;
+  mask:linear-gradient(100deg,transparent 0%,#000 22%,#000 38%,transparent 60%,#000 78%,transparent 100%) 0 0/250% 100%;
+  animation:hov-wave 3.6s cubic-bezier(.45,0,.55,1) infinite alternate,hov-drift 9s linear infinite}
+@keyframes hov-wave{from{-webkit-mask-position:100% 0;mask-position:100% 0}to{-webkit-mask-position:0% 0;mask-position:0% 0}}
+@keyframes hov-drift{from{background-position:0 0}to{background-position:200px 60px}}
+html[data-hov=d]:not([data-theme="night"]) .work-sec[data-view="list"].wh-on .wproject:not(.wh-cur)>*{filter:grayscale(.7) opacity(.45);transition:filter .32s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){html[data-hov=c] .wproject::after{animation:none!important}}
+
+/* THE KNOB, by day = WHITE (her pick 2026-11-22: "Lets do white nobs", option D): both toggles (day/night + projects) — a white knob
+   lifted off a soft grey track, no ring, the chosen icon in ink. Night keeps its light knob on the ring */
+html:not([data-theme="night"]) :is(.lt-toggle,.view-toggle,.view-dock .view-toggle){border-color:transparent!important;background:rgba(22,26,36,.07)!important}
+html:not([data-theme="night"]) :is(.lt-knob,.vt-knob){background:#fff;box-shadow:0 1px 2px rgba(20,40,60,.12),0 4px 10px -4px rgba(20,40,60,.25)}
+html:not([data-theme="night"]) :is(.lt-btn,.view-btn){color:#4f5866}
+html:not([data-theme="night"]) :is(.lt-btn,.view-btn)[aria-pressed="true"]{color:#161a24}
+@media (max-width:640px){html:not([data-theme="night"]) .lt-toggle{background:rgba(236,238,240,.92)!important}}
+
+/* GALLERY styles (review switch; her 2026-11-22: "a creative an aesthetic way to sift through them") */
+.dg-thumbs{display:none}
+/* B · PRINTS: a pile of prints on the dark table, each turned a little, white-bordered like photo paper; the top one flicks away */
+html[data-gal=prints] .dg-strip{display:grid;place-items:center;overflow:hidden;scroll-snap-type:none;padding:0}
+html[data-gal=prints] .dg-slide{grid-area:1/1;width:min(70vw,1000px);opacity:1;cursor:pointer;transition:transform .7s cubic-bezier(.2,.7,.2,1),opacity .5s cubic-bezier(.2,.7,.2,1);
+  transform:rotate(var(--tilt)) translateY(calc(var(--dd,0)*10px)) scale(calc(1 - var(--dd,0)*.03))}
+html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{background:#f6f4ef;padding:14px 14px 18px;border-radius:4px;box-shadow:0 30px 60px -20px rgba(0,0,0,.8),0 2px 6px rgba(0,0,0,.4)}
+html[data-gal=prints] .dg-slide[data-d="0"]{z-index:5;--dd:0;transform:rotate(calc(var(--tilt)*.35))}
+html[data-gal=prints] .dg-slide[data-d="1"]{z-index:4;--dd:1}html[data-gal=prints] .dg-slide[data-d="2"]{z-index:3;--dd:2}html[data-gal=prints] .dg-slide[data-d="3"]{z-index:2;--dd:3}
+html[data-gal=prints] .dg-slide[data-d="far"]{opacity:0;z-index:1}
+html[data-gal=prints] .dg-slide[data-d="gone"]{opacity:0;z-index:6;transform:translate(4vw,-95vh) rotate(-14deg);pointer-events:none}   /* swiped UP off the desk */
+/* the CLAY DESK under the prints (her: "I almost want the pictures to be on a clay desk"). STAND-IN: her clay-storyboard worktable
+   (clay-storyboards/frames/b1-worktable, 1376px — soft full-screen); a crisp, empty-centred clay desk is a Flora render to approve */
+html[data-gal=prints] .dg,html[data-gal=prints] .dg::backdrop{background:#ece4d6 url(assets/disciplines/clay-desk.jpg?v=2) center/cover no-repeat}   /* her CLAYMATION desk (Flora, Nano Banana Pro 4K, her clay tiles as the style; original in 5. My assets/claymation-desk-flora-4k.png) */
+html[data-gal=prints] .dg-n{color:#3d4552}html[data-gal=prints] .dg-x{background:rgba(22,26,36,.12)}html[data-gal=prints] .dg-x svg{stroke:#161a24}
+html[data-gal=prints] .dg-slide figcaption{background:rgba(250,250,248,.86);padding:12px 18px;border-radius:12px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+html[data-gal=prints] .dg-slide figcaption .dg-org{color:#3a62ab}html[data-gal=prints] .dg-slide figcaption b{color:#161a24}html[data-gal=prints] .dg-slide figcaption em{color:#3d4552}
+html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{box-shadow:0 26px 40px -18px rgba(60,45,30,.55),0 2px 5px rgba(60,45,30,.3)}
+html[data-gal=prints] .dg-slide:not([data-d="0"]) figcaption{visibility:hidden}
+/* C · FILMSTRIP: one big picture, every picture as a small frame beneath; the current one lifts and lights */
+html[data-gal=film] .dg-strip{display:grid;place-items:center;overflow:hidden;scroll-snap-type:none;padding:0 0 120px}
+html[data-gal=film] .dg-slide{grid-area:1/1;width:min(78vw,1100px);opacity:0;pointer-events:none;transition:opacity .45s cubic-bezier(.2,.7,.2,1)}
+html[data-gal=film] .dg-slide.on{opacity:1;pointer-events:auto}
+html[data-gal=film] .dg-slide img,html[data-gal=film] .dg-slide video{max-height:58vh}
+html[data-gal=film] .dg-thumbs{display:flex;position:absolute;left:0;right:0;bottom:22px;gap:8px;padding:6px 24px;overflow-x:auto;scrollbar-width:none;justify-content:safe center}
+html[data-gal=film] .dg-thumbs::-webkit-scrollbar{display:none}
+.dg-th{all:unset;flex:none;cursor:pointer;width:76px;height:52px;border-radius:6px;overflow:hidden;opacity:.4;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.7,.2,1)}
+.dg-th img{width:100%;height:100%;object-fit:cover;display:block}
+.dg-th:hover{opacity:.75}.dg-th.on{opacity:1;transform:translateY(-6px);box-shadow:0 0 0 2px #8fb2f2}
+.dg-th:focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){html[data-gal=prints] .dg-slide{transition:opacity .2s linear}}
+@media (max-width:640px){html[data-gal=prints] .dg-slide{width:86vw}.dg-th{width:58px;height:40px}}
+
+/* BRANDS colour options (review switch; her 2026-11-22: "is there any color for the brands listing. they feel boring and bland"). Her rule
+   stays: ONE ink for the whole row so nine marks read as a set. B = her blue · C = ink · D = one gradient across the row (deep → moon blue) */
+/* her pick (2026-11-22: "i like blue for the brands … but i dont like black when you hover over them"): her blue, one ink for the set;
+   hover = the richer blue and a small lift, never black */
+html:not([data-theme="night"]) .brand{background:#3a62ab;transition:background .32s cubic-bezier(.2,.7,.2,1),translate .32s cubic-bezier(.2,.7,.2,1)}
+html:not([data-theme="night"]) .brand:hover{background:#195cd7;translate:0 -2px}
+
+/* ONE caption per project: the slides' own captions are hidden; .dg-cap sits under the pictures and fades only when the project changes */
+.dg-slide figcaption{display:none!important}
+.dg-cap{position:absolute;left:50%;bottom:clamp(24px,5vh,56px);translate:-50% 0;z-index:7;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;
+  width:min(620px,88vw);opacity:0;transition:opacity .45s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.dg-cap.in{opacity:1}
+.dg-cap .dg-org{font:500 13px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8fb2f2}
+.dg-cap b{font:600 22px/1.3 'Plus Jakarta Sans',system-ui,sans-serif;color:#f3f4f6}
+.dg-cap em{font:300 16px/1.5 'Plus Jakarta Sans',system-ui,sans-serif;font-style:normal;color:#a9adb7}
+.dg-slide img,.dg-slide video{max-height:62vh}
+.dg-strip{padding-bottom:150px}
+html[data-gal=film] .dg-cap{bottom:110px}html[data-gal=film] .dg-strip{padding-bottom:230px}
+html[data-gal=prints] .dg-cap{background:rgba(250,250,248,.86);padding:12px 18px;border-radius:12px;width:auto;max-width:min(620px,88vw)}
+html[data-gal=prints] .dg-cap .dg-org{color:#3a62ab}html[data-gal=prints] .dg-cap b{color:#161a24}html[data-gal=prints] .dg-cap em{color:#3d4552}
+@media (max-width:640px){.dg-cap b{font-size:18px}.dg-slide img,.dg-slide video{max-height:52vh}}
+@media (prefers-reduced-motion:reduce){.dg-cap{transition:none}}
+/* the pile always sits ABOVE the caption, never under it (on a phone the caption covered the print) */
+html[data-gal=prints] .dg-strip{padding:72px 0 180px;box-sizing:border-box}
+html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{max-height:calc(100dvh - 300px)}
+@media (max-width:640px){html[data-gal=prints] .dg-strip{padding:64px 0 210px}html[data-gal=prints] .dg-slide{width:84vw}
+  html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{max-height:calc(100dvh - 320px);padding:8px 8px 12px}
+  .dg-cap b{font-size:16px}.dg-cap em{font-size:14px}}
+/* a portrait film on the pile: the print hugs the film (it sat in a wide white print) */
+html[data-gal=prints] .dg-slide video{width:auto;height:calc(100dvh - 300px);max-width:100%}
+@media (max-width:640px){html[data-gal=prints] .dg-slide video{height:calc(100dvh - 320px)}}
+
+/* PILES: the next project waits at the right, the previous at the left, small and stacked; click or swipe sideways to move to it */
+html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{opacity:1;z-index:1;cursor:pointer;
+  transform:translateX(calc(var(--side)*46vw)) translateY(calc(var(--dd,0)*8px)) rotate(var(--tilt)) scale(.42)}
+html[data-gal=prints] .dg-slide[data-pile=next]{--side:1}html[data-gal=prints] .dg-slide[data-pile=prev]{--side:-1}
+html[data-gal=prints] .dg-slide[data-pile=next][data-d="0"],html[data-gal=prints] .dg-slide[data-pile=prev][data-d="0"]{z-index:3;--dd:0}
+html[data-gal=prints] .dg-slide[data-pile=next][data-d="1"],html[data-gal=prints] .dg-slide[data-pile=prev][data-d="1"]{z-index:2;--dd:1}
+html[data-gal=prints] .dg-slide[data-pile=next][data-d="2"],html[data-gal=prints] .dg-slide[data-pile=prev][data-d="2"]{z-index:1;--dd:2}
+html[data-gal=prints] .dg-slide[data-pile=next][data-d="far"],html[data-gal=prints] .dg-slide[data-pile=prev][data-d="far"],
+html[data-gal=prints] .dg-slide[data-pile=off]{opacity:0;pointer-events:none}
+html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{filter:brightness(1.04)}
+/* the end of a pile: the last print gives a small bounce instead of jumping to the next project */
+html[data-gal=prints] .dg-slide.bounce{animation:pile-bounce .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes pile-bounce{0%{translate:0 0}35%{translate:0 -14px}100%{translate:0 0}}
+@media (max-width:640px){html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{transform:translateX(calc(var(--side)*52vw)) rotate(var(--tilt)) scale(.38)}}
+
+/* smooth flips: the moving prints live on their own GPU layers; their pictures are pre-decoded (build.js SMOOTH FLIPS) */
+html[data-gal=prints] .dg-slide:not([data-d="far"]){will-change:transform,opacity;backface-visibility:hidden}
+html[data-gal=prints] .dg-slide img{contain:paint}
+html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{filter:none;translate:0 -6px}
+/* the clay desk AT NIGHT (her 2026-11-22: "does clay not happen in dark mode? can there be a desk lamp?"): the same desk with the room
+   lights down — dark edges, a warm pool of lamp light over the prints (a real clay lamp in the picture would be a Flora edit) */
+html[data-theme="night"][data-gal=prints] .dg,html[data-theme="night"][data-gal=prints] .dg::backdrop{
+  background:radial-gradient(70% 75% at 50% 42%,rgba(255,214,150,.10) 0%,rgba(20,18,16,.35) 55%,rgba(10,10,12,.86) 100%),url(assets/disciplines/clay-desk.jpg?v=2) center/cover no-repeat,#16130f}
+html[data-theme="night"][data-gal=prints] .dg-n{color:#c9ced6}html[data-theme="night"][data-gal=prints] .dg-x{background:rgba(255,255,255,.12)}html[data-theme="night"][data-gal=prints] .dg-x svg{stroke:#f3f4f6}
+html[data-theme="night"][data-gal=prints] .dg-cap{background:rgba(22,27,40,.86)}
+html[data-theme="night"][data-gal=prints] .dg-cap .dg-org{color:#8fb2f2}html[data-theme="night"][data-gal=prints] .dg-cap b{color:#f3f4f6}html[data-theme="night"][data-gal=prints] .dg-cap em{color:#a9adb7}
+html[data-theme="night"][data-gal=prints] .dg-slide img,html[data-theme="night"][data-gal=prints] .dg-slide video{background:#efe9dd;box-shadow:0 30px 50px -18px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.5)}
+
+/* PRINTS, her pick (2026-11-22: "gallery b"). CROPPED TO FIT ("some pictures can be cropped to fit like the boat house one"): a .dg-fit
+   picture fills a print of --ar (4:3, 3:4 or 1:1), as large as the desk allows. SMOOTH ("none of the transitions are not smooth"): each
+   print is its own composited layer, moved by transform/opacity only; the browser never pans under a swipe (touch-action) */
+html[data-gal=prints] .dg-strip{touch-action:none}
+html[data-gal=prints] .dg-slide{will-change:transform,opacity;backface-visibility:hidden}
+html[data-gal=prints] .dg-slide img.dg-fit{object-fit:cover;aspect-ratio:var(--ar);height:auto;width:min(100%,calc((100dvh - 300px - 32px) * var(--ar) + 28px));max-width:100%}
+@media (max-width:640px){html[data-gal=prints] .dg-slide img.dg-fit{width:min(100%,calc((100dvh - 260px - 32px) * var(--ar) + 28px))}}
+
+/* THE PILE GOES ROUND (her 2026-11-22: "it needs to feel like things are moving circularly"): the top print swings out on an arc to
+   the right and tucks under the pile (z-index drops at the far side of the circle); going back plays the same circle in reverse */
+html[data-gal=prints] .dg-slide.cyc{animation:pile-round .9s cubic-bezier(.45,.05,.4,1) both}
+html[data-gal=prints] .dg-slide.cyc-back{animation:pile-round .9s cubic-bezier(.45,.05,.4,1) reverse both}
+@keyframes pile-round{
+  0%{transform:rotate(calc(var(--tilt)*.35));z-index:7;opacity:1}
+  25%{transform:translate(30vw,-9vh) rotate(10deg) scale(.97);z-index:7;opacity:1}
+  50%{transform:translate(42vw,0) rotate(18deg) scale(.92);z-index:0;opacity:1}
+  75%{transform:translate(26vw,8vh) rotate(9deg) scale(.9);z-index:0;opacity:1}
+  100%{transform:rotate(var(--tilt)) translateY(30px) scale(.91);z-index:0;opacity:0}}
+@media (max-width:640px){@keyframes pile-round{
+  0%{transform:rotate(calc(var(--tilt)*.35));z-index:7;opacity:1}
+  25%{transform:translate(34vw,-7vh) rotate(10deg) scale(.95);z-index:7;opacity:1}
+  50%{transform:translate(48vw,0) rotate(18deg) scale(.88);z-index:0;opacity:1}
+  75%{transform:translate(30vw,6vh) rotate(9deg) scale(.86);z-index:0;opacity:1}
+  100%{transform:rotate(var(--tilt)) translateY(30px) scale(.91);z-index:0;opacity:0}}}
+/* PILES GO ROUND TOO (her 2026-11-22: "like the far one grow big and the one moving out grow small"): the piles sit on a circle seen
+   from the front. Sideways position (translate) and size/depth (scale) ease on separate sine curves, so a pile travels an arc, not a
+   line: leaving the front it slides out fast and shrinks late; arriving it grows early and settles in */
+html[data-gal=prints] .dg-slide{translate:0 0;scale:1;
+  transition:transform .7s cubic-bezier(.2,.7,.2,1),opacity .5s cubic-bezier(.2,.7,.2,1),translate .85s cubic-bezier(.12,0,.39,0),scale .85s cubic-bezier(.61,1,.88,1)}
+html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{
+  transform:translateY(calc(var(--dd,0)*8px - 3vh)) rotate(var(--tilt));translate:calc(var(--side)*46vw) 0;scale:.42;
+  transition:transform .85s cubic-bezier(.12,0,.39,0),opacity .5s cubic-bezier(.2,.7,.2,1),translate .85s cubic-bezier(.61,1,.88,1),scale .85s cubic-bezier(.12,0,.39,0)}
+html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{translate:calc(var(--side)*46vw) -6px;filter:none}
+@media (max-width:640px){html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{transform:translateY(calc(var(--dd,0)*6px - 2vh)) rotate(var(--tilt));translate:calc(var(--side)*52vw) 0;scale:.38}
+  html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{translate:calc(var(--side)*52vw) 0}}
+@media (prefers-reduced-motion:reduce){html[data-gal=prints] .dg-slide,html[data-gal=prints] .dg-slide[data-pile]{transition:opacity .2s linear}html[data-gal=prints] .dg-slide.cyc,html[data-gal=prints] .dg-slide.cyc-back{animation:none}}
+
+/* project names: ONE font for every card, the deck's own (her 2026-11-23: "use the same font for the company names on the case study cards"; brand lettering retired) */
+/* the project names are INK, not blue (her 2026-11-23: "I don't like that it's blue... it should not be blue") */
+.sdeck-name[data-brand],.w-name[data-brand]{color:#161a24!important}
+html[data-theme="night"] .sdeck-name[data-brand],html[data-theme="night"] .w-name[data-brand]{color:#f3f4f6!important}
+
+/* SWIFTER FLIPS (her 2026-11-23: "the photo flip through isn't a swift, quick motion. It's super choppy"): the round trip .9s → .55s and
+   the stack steps .7s → .45s, on one smooth curve; nothing but transform and opacity moves. PILE CHANGE: the arriving pile waits .32s
+   (build.js .arrive) so the middle clears first; prints that leave stay visible until they reach their side pile, then tuck away */
+html[data-gal=prints] .dg-slide.cyc{animation-duration:.55s;animation-timing-function:cubic-bezier(.33,0,.2,1)}
+html[data-gal=prints] .dg-slide.cyc-back{animation-duration:.55s;animation-timing-function:cubic-bezier(.33,0,.2,1)}
+html[data-gal=prints] .dg-slide{transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .35s cubic-bezier(.2,.7,.2,1),translate .7s cubic-bezier(.12,0,.39,0),scale .7s cubic-bezier(.61,1,.88,1)}
+html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{transition:transform .5s cubic-bezier(.12,0,.39,0),opacity .2s linear .5s,translate .5s cubic-bezier(.61,1,.88,1),scale .5s cubic-bezier(.12,0,.39,0)}
+html[data-gal=prints] .dg-slide[data-pile=next]:not([data-d=far]),html[data-gal=prints] .dg-slide[data-pile=prev]:not([data-d=far]){transition-delay:0s}
+html[data-gal=prints] .dg-slide.arrive{transition-delay:.42s!important}
+
+/* SOAP FILM behind the prints (her 2026-11-23: "a very interesting translucent film ... blurred the background behind the pictures ... soapy
+   feel ... reduce the opacity ... more see-through ... more polished"): the page shows through, blurred, with her Flora soap-film texture
+   laid over it at low opacity. Held still (her no-shimmer rule). Local GALLERY BACK switch: A clay desk / B soap film */
+html[data-desk=soap][data-gal=prints] .dg{background:transparent}
+html[data-desk=soap][data-gal=prints] .dg::backdrop{background:rgba(250,250,248,.42);-webkit-backdrop-filter:blur(30px) saturate(1.15);backdrop-filter:blur(30px) saturate(1.15)}
+html[data-desk=soap][data-gal=prints] .dg::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:url(assets/disciplines/soap-film.jpg) center/cover no-repeat;opacity:.42;mix-blend-mode:multiply}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg,html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::backdrop{background:rgba(12,13,16,.55)}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::backdrop{-webkit-backdrop-filter:blur(30px) saturate(1.1);backdrop-filter:blur(30px) saturate(1.1)}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::before{opacity:.16;mix-blend-mode:screen}
+
+/* SOAP FILM, lighter: glass, not a film (her 2026-11-23: "drop the opacity ... not feeling super translucent ... not a glass morphism feel
+   ... almost like a film separating it ... some kind of transition into this"): a thin tint, the page clearly blurred through, the soap
+   swirls a whisper on top; opening eases the blur and the sheen in over .6s */
+html[data-desk=soap][data-gal=prints] .dg::backdrop{background:rgba(250,250,248,.10);-webkit-backdrop-filter:blur(22px) saturate(1.25) brightness(1.03);backdrop-filter:blur(22px) saturate(1.25) brightness(1.03);animation:soap-in .6s cubic-bezier(.2,.7,.2,1) both}
+html[data-desk=soap][data-gal=prints] .dg::before{opacity:.13;mix-blend-mode:soft-light;animation:soap-sheen .9s cubic-bezier(.2,.7,.2,1) both}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg{background:transparent}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::backdrop{background:rgba(12,13,16,.28);-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2)}
+html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::before{opacity:.09;mix-blend-mode:screen}
+@keyframes soap-in{from{background:rgba(250,250,248,0);-webkit-backdrop-filter:blur(0) saturate(1);backdrop-filter:blur(0) saturate(1)}}
+@keyframes soap-sheen{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){html[data-desk=soap][data-gal=prints] .dg::backdrop,html[data-desk=soap][data-gal=prints] .dg::before{animation-duration:.01s}}
+
+/* THE GALLERY BACK = A PLAIN BLUR (her 2026-11-23: "the soap thing just looks weird ... just do something like blurred ... basic"): the page
+   softly blurred behind the prints, a light veil by day, a dark one at night; eases in on open. Clay desk + soap film retired */
+html[data-desk=blur][data-gal=prints] .dg{background:transparent}
+html[data-desk=blur][data-gal=prints] .dg::backdrop{background:rgba(250,250,248,.55);-webkit-backdrop-filter:blur(24px) saturate(1.1);backdrop-filter:blur(24px) saturate(1.1);animation:blur-in .5s cubic-bezier(.2,.7,.2,1) both}
+html[data-theme="night"][data-desk=blur][data-gal=prints] .dg,html[data-theme="night"][data-desk=blur][data-gal=prints] .dg::backdrop{background:rgba(12,13,16,.62)}
+html[data-desk=blur][data-gal=prints] .dg::before{content:none}
+@keyframes blur-in{from{background:rgba(250,250,248,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}}
+html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-n{color:#c9ced6}html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-x{background:rgba(255,255,255,.12)}html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-x svg{stroke:#f3f4f6}
+@media (prefers-reduced-motion:reduce){html[data-desk=blur][data-gal=prints] .dg::backdrop{animation-duration:.01s}}
+
+/* the SOUND button inside the day/night pill (her 2026-11-23 "a mute site button"): same size and ink as the sun and moon, a hairline before it */
+.lt-sep{flex:0 0 1px;align-self:stretch;margin:6px 2px;background:rgba(22,26,36,.18)}
+[data-theme="night"] .lt-sep{background:rgba(169,196,245,.42)}
+.lt-mute{all:unset;box-sizing:border-box;position:relative;z-index:1;display:grid;place-items:center;width:40px;height:32px;border-radius:999px;cursor:pointer;color:#4f5866;transition:color .18s ease}
+.lt-mute svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lt-mute:hover{color:#161a24}.lt-mute:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+[data-theme="night"] .lt-mute{color:#a9adb7}[data-theme="night"] .lt-mute:hover{color:#f3f4f6}
+/* the sound icon MORPHS (her 2026-11-23: "like having the lines morph into the X or come together and then morph ... I don't like quick switches"):
+   muting, the outer wave then the inner one draw back into the speaker, then the two strokes of the X draw in one after the other;
+   unmuting plays it backwards. Every stroke is pathLength 1, so the draw is the same speed whatever its size */
+.lt-mute .lm-on,.lt-mute .lm-off{stroke-dasharray:1;transition:stroke-dashoffset .26s cubic-bezier(.4,0,.2,1) var(--d,0s),opacity 0s linear var(--o,0s)}
+/* shown strokes: opacity 1 at once, then draw in; hidden strokes: draw back, THEN vanish (a round cap leaves a dot at length 0) */
+.lt-mute .lm-on{stroke-dashoffset:0;opacity:1;--o:0s}.lt-mute .lm-off{stroke-dashoffset:1;opacity:0}
+.lt-mute .lm-w1{--d:.3s}.lt-mute .lm-w2{--d:.42s}.lt-mute .lm-x1{--d:.12s;--o:.38s}.lt-mute .lm-x2{--d:0s;--o:.26s}
+html[data-mute=on] .lt-mute .lm-on{stroke-dashoffset:1;opacity:0}html[data-mute=on] .lt-mute .lm-off{stroke-dashoffset:0;opacity:1;--o:0s}
+html[data-mute=on] .lt-mute .lm-w2{--d:0s;--o:.26s}html[data-mute=on] .lt-mute .lm-w1{--d:.12s;--o:.38s}html[data-mute=on] .lt-mute .lm-x1{--d:.3s}html[data-mute=on] .lt-mute .lm-x2{--d:.42s}
+.lt-mute svg path:first-child{transition:transform .3s cubic-bezier(.2,.8,.2,1) .2s;transform-origin:8px 12px}html[data-mute=on] .lt-mute svg path:first-child{transform:scale(.92)}
+@media (prefers-reduced-motion:reduce){.lt-mute .lm-on,.lt-mute .lm-off,.lt-mute svg path:first-child{transition:none!important}}
+@media (max-width:640px){.lt-mute{width:34px;height:28px}.lt-mute svg{width:16px;height:16px}}
+/* the sound button never just appears (her 2026-11-23: "can there be like a transition ... of the mute button showing itself? ... I hate when
+   things just appear. It looks glitchy"): it eases in, fading up, growing a touch and sharpening, just after the loader lifts (html.booted);
+   pages without a loader get it on a later clock. Reduce Motion: a plain fade */
+.lt-mute,.lt-sep{opacity:0}
+.lt-mute.lm-show,.lt-sep.lm-show{animation:lm-in .55s cubic-bezier(.2,.8,.2,1) .35s both}
+@keyframes lm-in{from{opacity:0;transform:scale(.6);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.lt-mute.lm-show,.lt-sep.lm-show{animation:lm-fade .3s ease .2s both}@keyframes lm-fade{from{opacity:0}to{opacity:1}}}
+
+/* READABILITY 2026-11-23 (case-study-drafts/design-system/audit/readability/confirmed.md) */
+/* the night play button's ring was thin white on a light picture (1.25:1): a two-tone ring, white inside, ink outside, reads on anything */
+[data-theme="night"] .play-btn:focus-visible{outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #0f1013}
+/* PHOTO LABELS: the ORIGINAL labels (her 2026-11-23: picked C, then "I liked the old labels that you had on the photos. The new one is too harsh."). A/B/C tried and dropped. */
+/* PHONE PANEL option (review switch, local only, her pick owed): the open panel's words sat on the particle film at 1.3:1 because the
+   scrim was painted UNDER the film (the film is z-index 1). A = the scrim over the film + white words; and at 200% zoom (≤300px wide)
+   the open panel grows to hold its words instead of clipping them */
+@media (max-width:760px){
+  html[data-ppan=a] .panel::after{z-index:1}
+  html[data-ppan=a] .panel.active::after{background:linear-gradient(180deg,rgba(18,35,32,0) 6%,rgba(18,35,32,.72) 40%,rgba(18,35,32,.94) 100%)}
+  html[data-ppan=a] .panel.active :is(.p-title,.p-desc){color:#fff}}
+@media (max-width:300px){
+  html[data-ppan=a] .panels{interpolate-size:allow-keywords}
+  html[data-ppan=a] .panel.active{display:flex;flex-direction:column;justify-content:flex-end;height:auto;min-height:360px}
+  html[data-ppan=a] .panel.active .panel-content{position:relative;inset:auto}}
