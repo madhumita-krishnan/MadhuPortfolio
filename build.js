@@ -4369,6 +4369,17 @@ const caseTail = process.env.VERCEL || !DEV_TOOLS ? '' : '<script src="studies/t
 for (const cs of cases) fs.writeFileSync(path.join(DIST, `${cs.slug}.html`), lintIcons(
   cs.template === 'walkthrough' ? renderWalkthrough(cs, { esc, asset, site, cases, ROOT, phoneFrame, screenFit, PHONE_CSS, CHROME_CSS, chromeHTML })
     : renderCase(cs).replace(/(<a class="skip"[^>]*>[^<]*<\/a><style>[^<]*<\/style>)/, '$1' + edgeArrows(cs)), `${cs.slug}.html`).replace('</body>', caseTail + '\n</body>'));
+/* THE NEW CASE STUDIES (her 2026-11-23: "the case study pages arent pushed"): her case-study-drafts pages, copied in by
+   tools/ship-drafts.mjs with everything local-only taken out (their files live in assets/). They take the place of the pages written
+   above at the same urls; the old pages' source is untouched, so deleting a file in case-studies-live/ brings its old page back. */
+{ const LIVE_CS = path.join(ROOT, 'case-studies-live');
+  if (fs.existsSync(LIVE_CS)) for (const f of fs.readdirSync(LIVE_CS).filter(f => f.endsWith('.html')))
+    fs.writeFileSync(path.join(DIST, f), fs.readFileSync(path.join(LIVE_CS, f), 'utf8').split('?v=__V__').join('?v=' + BUILD_V));
+  /* DAY/NIGHT CARRIES into them (her 2026-11-22: "if we are in day mode on the home page. we are in day mode on all the case studies"):
+     a card click takes the home page's look along as ?look=, which those pages read and keep; their links home send ?theme= back */
+  const ip = path.join(DIST, 'index.html');
+  fs.writeFileSync(ip, fs.readFileSync(ip, 'utf8').replace('</body>', `<script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a||a.origin!==location.origin||!/\\.html$/.test(a.pathname)||/\\/index\\.html$/.test(a.pathname))return;
+var u=new URL(a.href);u.searchParams.set('look',document.documentElement.getAttribute('data-theme')==='night'?'dark':'day');a.href=u.href},true);</script>\n</body>`)); }
 fs.writeFileSync(path.join(DIST, 'app.js'), lintIcons(fs.readFileSync(path.join(DIST, 'app.js'), 'utf8'), 'app.js'));
 copyDir(path.join(ROOT, 'assets'), path.join(DIST, 'assets'));
 /* the resume sheet shows a picture of Madhumita-Krishnan-Resume.pdf with its links laid over it: a new PDF needs a new picture */

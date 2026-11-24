@@ -332,6 +332,11 @@
   var qs = /[?&]bootseek=(\d+)/.exec(location.search); if (qs) setTimeout(function () { window.__mkBootQA.seek(+qs[1]); }, 3000);   // ?boot&bootseek=1500: freeze there (for comparing devices where no script can be run, iPhone Safari)
   function tick(nw) {
     if (done || held) return;
+    /* THE BOX CHANGED SIZE WITHOUT TELLING ANYONE (her 2026-11-23, iPhone Chrome from an old link: she landed beside the hyphen, not
+       on it, "every single time", never on reload): a page Chrome opened from a link can be laid out at one size and shown at another
+       (its toolbars, a page prepared out of sight) with no resize event, so the letters' drawing (sized to the old box) was squeezed
+       into the new one while she kept the old measurements. Checked every frame: two integer reads, no forced layout */
+    if (M && (Math.abs(S.ld.clientWidth - M.W) > 1 || Math.abs(S.ld.clientHeight - M.H) > 1)) measure();
     var dt = last ? Math.min(nw - last, 100) : 16; last = nw;
     if (!rm || readyT !== null) T += dt;
     var b = beats();
@@ -381,6 +386,13 @@
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { if (S.started && !done) measure(); });
   setTimeout(go, 1500);
   addEventListener('resize', function () { if (!done && S.started) measure(); });
+  if (window.visualViewport) visualViewport.addEventListener('resize', function () { if (!done && S.started) measure(); });
+  /* shown after being prepared out of sight (a link Chrome opened in the background, or a prerender): measure in the real size */
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !done && S.started) measure(); });
+  document.addEventListener('prerenderingchange', function () { if (!done && S.started) measure(); });
+  /* a copy of the page brought back from the browser's back/forward memory is a return visit: no loader, straight to the page
+     (it would otherwise resume frozen mid-flight with the measurements of whatever size the page had when it was put away) */
+  addEventListener('pageshow', function (e) { if (e.persisted && !done) finish(); });
   /* Safari can lay the mark out in her face AFTER the font events above have fired, so it was measured in the fallback
      face and kept those spacings: M and K sat closer than on the laptop. Any change in the mark's size measures again */
   if (window.ResizeObserver) new ResizeObserver(function () { if (!done && S.started) measure(); }).observe(S.mark);

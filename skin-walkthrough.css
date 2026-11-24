@@ -153,6 +153,10 @@ html:not([data-theme="night"]) .stat-card.glass{background:#fff;border-color:rgb
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 10px 30px -14px rgba(20,40,60,.35)}
   [data-theme="night"] .lt-toggle{background:rgba(22,27,40,.88)}
   .lt-btn{width:34px;height:28px}.lt-btn svg{width:16px;height:16px}.lt-knob{top:3px;bottom:3px}}
+/* FINGER-SIZED ON TOUCH (her 2026-11-23: "are the ... daytime, nighttime, and ... muting ... toggles ... sized big enough? ... they look
+   kind of small, like the touch target ... on mobile"): they were 34x28 on phones, 2px apart. On any touch screen each one is now a
+   full 44x44 (Apple's minimum for a finger), 4px apart; a mouse keeps the compact 40x32 */
+@media (pointer:coarse){.lt-toggle{padding:4px;gap:4px}.lt-btn,.lt-toggle .lt-mute{width:44px;height:44px}.lt-btn svg,.lt-toggle .lt-mute svg{width:20px;height:20px}.lt-knob{top:4px;bottom:4px}}
 
 /* the swipe deck's ground was hard-coded near-black (#101010) in both looks */
 html:not([data-theme="night"]) .work-sec[data-view="deck"]{background:var(--sd-bg-day,#eef1f3)}
