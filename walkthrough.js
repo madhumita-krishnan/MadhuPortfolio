@@ -341,18 +341,18 @@ ${cs.sections.map(section).join('\n')}
   <p><a href="mailto:${esc(site.email)}">${esc(site.email)}</a>${(site.footer.links || []).map(l => ` · <a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</p>   <!-- the main footer's LinkedIn / X too (her: "linkedin is not linked") -->
 </footer>
 
-<dialog class="viewer" aria-label="Explore this screen" tabindex="-1">
+<dialog class="viewer${bezel ? ' v-phoned' : ''}" aria-label="Explore this screen" tabindex="-1">
   <div class="v-top">
-    <button class="v-close" type="button" aria-label="Back to the walkthrough">${ic('back')}<span>Back</span></button>
+    <button class="v-close" type="button" aria-label="Back">${ic('prev')}</button>
     <p class="v-title"></p>
     <div class="v-tabs" role="tablist"><span class="v-thumb" aria-hidden="true"></span><button type="button" role="tab" data-tab="clip">Interaction</button><button type="button" role="tab" data-tab="iter">Iterations</button></div>
     ${LC ? `<span class="live-note v-live-note">${esc(LC)}</span><a class="v-live" target="_blank" rel="noopener"><span>say hey!</span></a>` : `<a class="v-live" target="_blank" rel="noopener"><span>Open live prototype</span>${ic('external')}</a>`}
   </div>
-  <div class="v-stage"><video playsinline muted loop controls preload="none"></video><img alt=""><svg class="mouse v-mouse" viewBox="0 0 18 22" hidden aria-hidden="true"></svg>
+  <div class="v-stage"><video playsinline muted loop controls preload="none"></video>${bezel ? `<div class="v-phone">${phoneFrame('<img alt="">')}</div>` : '<img alt="">'}<svg class="mouse v-mouse" viewBox="0 0 18 22" hidden aria-hidden="true"></svg>
     <button class="v-nav prev arrow-btn" type="button" aria-label="Previous">${ic('back')}</button><button class="v-nav next arrow-btn" type="button" aria-label="Next">${ic('arrow')}</button>
     <div class="v-cmp" hidden><img class="ca" alt=""><img class="cb" alt=""><span class="cl la"></span><span class="cl lb"></span><span class="cmp-knob" aria-hidden="true">${ic('swap')}</span>
       <input type="range" min="0" max="100" value="50" step=".5" aria-label="Drag to wipe between before and after"></div>
-    <div class="v-side" hidden><figure><img alt=""><figcaption></figcaption></figure><figure class="kept"><img alt=""><figcaption></figcaption></figure></div>
+    ${(f => `<div class="v-side" hidden><figure>${f}<figcaption></figcaption></figure><figure class="kept">${f}<figcaption></figcaption></figure></div>`)(bezel ? `<div class="v-phone">${phoneFrame('<img alt="">')}</div>` : '<img alt="">')}
   </div>
   <div class="v-cap"><p class="v-why"></p><p class="v-ask"></p></div>
   <div class="v-groups" role="tablist" aria-label="Screen"></div>
@@ -361,7 +361,8 @@ ${cs.sections.map(section).join('\n')}
 
 <script>window.__SHOTS=${JSON.stringify(shotGroups).replace(/</g, '\\u003c')}</script>
 <script>window.__IC=${JSON.stringify(ICONS)};window.__CURSORS=${JSON.stringify(Object.fromEntries(Object.entries(cs.cursors || {}).map(([k, v]) => [`${cs.dir}/${k}`, v])))};window.__MOUSE='${MOUSE}'</script>
-<script>window.__VIEWS=${JSON.stringify(views).replace(/</g, '\\u003c')}</script>
+<script>window.__PH=${bezel ? JSON.stringify(phoneFrame('\0').split('\0')).replace(/</g, '\\u003c') : 'null'}</script>
+  <script>window.__VIEWS=${JSON.stringify(views).replace(/</g, '\\u003c')}</script>
 <script>${JS}</script>
 <script src="${asset('resume-plane.js')}" defer></script>
 <!-- cursor light saved for later: <script src="${asset('cursor-light.js')}" defer></script> (see build.js) -->
@@ -885,6 +886,52 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 .viewer.side-mode .v-ask{font-size:30px;line-height:1.15}
 /* the viewer is a carousel: drag or swipe the screen, use the side arrows, or the arrow keys */
 .v-stage>img,.v-stage>video{touch-action:pan-y;user-select:none;-webkit-user-drag:none}
+.v-nav{touch-action:pan-y}   /* a swipe that starts on a side button still moves the screen (on a phone the buttons sit over its edges) */
+/* app case studies: the viewer's screens in her iPhone bezel, like every other screen (her 2026-11-23: "Always bezel. Always bezel."); same rules as case-study-drafts/make-spotify-top.py */
+.v-phoned .v-phone{position:absolute;inset:10px;container-type:size;display:grid;place-items:center;min-height:0}
+.v-phoned .v-phone .phone-media{width:min(100cqw,calc(100cqh * .486));max-width:none}
+.v-phoned .v-phone:has(img[hidden]){display:none}
+.v-phoned .phone-screen img{filter:none!important;user-select:none;-webkit-user-drag:none}
+.v-phoned .v-stage{touch-action:pan-y}   /* a sideways swipe beside the phone moves it too (the screen no longer fills the stage) */
+.v-phoned .v-stage .phone-screen img{cursor:default!important}
+.v-phoned .v-stage.dragging .phone-screen img{transition:none}
+.v-phoned .v-stage .phone-screen img.in-next{animation:in-next .45s var(--ease)}.v-phoned .v-stage .phone-screen img.in-prev{animation:in-prev .45s var(--ease)}
+.v-phoned .v-side{grid-template-columns:1fr 1fr;gap:14px}
+.v-phoned .v-side figure{justify-items:stretch;text-align:center}
+.v-phoned .v-side .v-phone{position:relative;inset:auto;width:100%;height:100%}
+.v-phoned .v-side .phone-screen img{width:100%;height:100%;object-fit:cover;max-height:none}
+.v-phoned .v-strip{align-items:flex-start;gap:14px;padding:6px 4px 8px}
+.v-phoned .v-strip button{width:auto;padding:0 2px}
+.v-phoned .v-strip .phone-media,.v-phoned .v-strip span{width:80px;max-width:none}
+.v-phoned .v-strip .phone-screen img{width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;object-fit:cover;object-position:top center}
+.v-phoned .v-strip button[aria-current=true] .phone{outline:2px solid var(--cy);outline-offset:3px}
+.v-phoned .v-strip span:empty{display:none}
+@media (min-width:900px) and (min-height:700px){.v-phoned .v-strip .phone-media,.v-phoned .v-strip span{width:88px}}
+@media (max-height:700px){.v-phoned .v-strip .phone-media,.v-phoned .v-strip span{width:60px}}   /* a short phone: the big screen stays the biggest thing */
+@media (max-width:420px){.viewer.v-phoned.side-mode .v-why{font-size:16px;line-height:1.5}}
+/* a phone turned sideways: the thumbnails stand in a column at the right, so the big phone keeps the height */
+@media (orientation:landscape) and (max-height:500px){
+  .viewer.v-phoned{grid-template-columns:minmax(0,1fr) auto;column-gap:16px;padding-top:10px;padding-bottom:10px}
+  .v-phoned .v-top{grid-column:1/-1}
+  .v-phoned :is(.v-stage,.v-cap,.v-groups){grid-column:1}
+  .v-phoned .v-strip{grid-column:2;grid-row:2/span 4;flex-direction:column;align-items:center;overflow-x:hidden;overflow-y:auto;padding:6px 8px}
+  .v-phoned .v-strip .phone-media,.v-phoned .v-strip span{width:60px}}
+@media (orientation:landscape) and (max-height:500px){   /* sideways, the pair's words stand beside the two phones (above them, the phones had no room left) */
+  .v-phoned .v-cap{min-height:0}
+  .viewer.v-phoned.side-mode{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);grid-template-rows:auto minmax(0,1fr)}
+  .viewer.v-phoned.side-mode .v-cap{grid-column:1;grid-row:2;overflow-y:auto;align-self:start;max-height:100%}
+  .viewer.v-phoned.side-mode .v-stage{grid-column:2;grid-row:2}
+  .viewer.v-phoned.side-mode .v-groups{display:none}
+  .viewer.v-phoned.side-mode :is(.v-why,.v-ask){font-size:15px;line-height:1.5}}
+/* BACK = a circle with a chevron (her 2026-11-23: "this back button does not need to say back. It can just be like the arrow and like a circle"):
+   her icon-control tile (a 20px drawn chevron in 12px padding = 44px), the gallery ✕'s circle, 24px from the title */
+.v-close{display:grid;place-items:center;box-sizing:border-box;width:44px;height:44px;min-height:44px;padding:12px;border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#f3f4f6}
+.v-close:hover{background:rgba(255,255,255,.16)}
+.v-close .ic{width:20px;height:20px;stroke-width:1.8}
+.v-close:focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}
+.v-top{column-gap:24px}
+@media (hover:none) and (pointer:coarse){.v-nav{display:none!important}}   /* phones and tablets: a swipe moves the screen (her no-UI-arrows rule; on a phone the buttons covered the screen's edges) */
+.v-close{min-height:44px}
 .v-stage.dragging>img,.v-stage.dragging>video{transition:none}
 .v-stage>img.in-next,.v-stage>video.in-next{animation:in-next .45s var(--ease)}
 .v-stage>img.in-prev,.v-stage>video.in-prev{animation:in-prev .45s var(--ease)}
@@ -1085,9 +1132,10 @@ if (cur && matchMedia('(hover: hover) and (pointer: fine)').matches && !reduce) 
 const V = window.__VIEWS || {}, dlg = $('.viewer'), vid = $('video', dlg), still = $('.v-stage img', dlg);
 const tabBox = $('.v-tabs', dlg), tabs = $$('.v-tabs button', dlg), strip = $('.v-strip', dlg), live = $('.v-live', dlg); const liveNote = $('.v-live-note', dlg);
 let cur_ = null, idx = 0, ci = 0, grp = '', mode = 'iter', pushed = false;
+const PH = s => window.__PH ? window.__PH[0] + s + window.__PH[1] : s;   // app case studies: build.js phoneFrame around each thumbnail
 /* the strip under the stage lists clips on the Interaction tab and versions on Iterations */
 function fillStrip(items, label, onPick) {
-  strip.innerHTML = items.map((s, i) => '<button type="button" role="listitem"><img src="' + s.src + '" alt="" loading="lazy"><span>' +
+  strip.innerHTML = items.map((s, i) => '<button type="button" role="listitem">' + PH('<img src="' + s.src + '" alt="" loading="lazy">') + '<span>' +
     label(s, i).replace(/</g, '&lt;') + '</span></button>').join('');
   $$('button', strip).forEach((b, i) => b.addEventListener('click', () => onPick(i)));
   strip.hidden = items.length < 2;
@@ -1225,7 +1273,7 @@ addEventListener('pointerup', () => {
   if (tabMoved) { show(parseFloat(tabBox.style.getPropertyValue('--i')) >= .5 ? 'iter' : 'clip'); setTimeout(() => { tabMoved = false; }); }
 });
 still.draggable = false;
-still.addEventListener('click', () => { if (swiped) { swiped = false; return; } $('.v-stage', dlg).classList.toggle('zoom'); placeMouse(); });
+still.addEventListener('click', () => { if (swiped) { swiped = false; return; } if (dlg.classList.contains('v-phoned')) return; $('.v-stage', dlg).classList.toggle('zoom'); placeMouse(); });
 
 /* ---- carousel: one step through whatever the strip holds. Iterations run on into the next
    screen-type group at either end, so you can swipe the whole history without clicking. */
@@ -1267,7 +1315,7 @@ navN.addEventListener('click', () => step(1));
 /* drag the screen itself: it follows the pointer, and a throw past 60px moves one step */
 let sx = null, dx = 0;
 stageEl.addEventListener('pointerdown', e => {
-  if (stageEl.classList.contains('zoom') || e.target.closest('button, .v-cmp, .v-side') || e.button) return;
+  if (stageEl.classList.contains('zoom') || e.target.closest('button:not(.v-nav), .v-cmp, .v-side') || e.button) return;
   if (e.target === vid && e.clientY > stageEl.getBoundingClientRect().bottom - 64) return; // the video's own controls
   sx = e.clientX; dx = 0;
 });

@@ -461,14 +461,38 @@ html[data-mute=on] .lt-mute .lm-w2{--d:0s;--o:.26s}html[data-mute=on] .lt-mute .
 /* the night play button's ring was thin white on a light picture (1.25:1): a two-tone ring, white inside, ink outside, reads on anything */
 [data-theme="night"] .play-btn:focus-visible{outline:2px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #0f1013}
 /* PHOTO LABELS: the ORIGINAL labels (her 2026-11-23: picked C, then "I liked the old labels that you had on the photos. The new one is too harsh."). A/B/C tried and dropped. */
-/* PHONE PANEL option (review switch, local only, her pick owed): the open panel's words sat on the particle film at 1.3:1 because the
+/* PHONE PANEL = A, her pick 2026-11-23 ("A, shaded"): the open panel's words sat on the particle film at 1.3:1 because the
    scrim was painted UNDER the film (the film is z-index 1). A = the scrim over the film + white words; and at 200% zoom (≤300px wide)
    the open panel grows to hold its words instead of clipping them */
 @media (max-width:760px){
-  html[data-ppan=a] .panel::after{z-index:1}
-  html[data-ppan=a] .panel.active::after{background:linear-gradient(180deg,rgba(18,35,32,0) 6%,rgba(18,35,32,.72) 40%,rgba(18,35,32,.94) 100%)}
-  html[data-ppan=a] .panel.active :is(.p-title,.p-desc){color:#fff}}
+  .panel::after{z-index:1}
+  .panel.active::after{background:linear-gradient(180deg,rgba(18,35,32,0) 6%,rgba(18,35,32,.72) 40%,rgba(18,35,32,.94) 100%)}
+  .panel.active :is(.p-title,.p-desc){color:#fff}}
 @media (max-width:300px){
-  html[data-ppan=a] .panels{interpolate-size:allow-keywords}
-  html[data-ppan=a] .panel.active{display:flex;flex-direction:column;justify-content:flex-end;height:auto;min-height:360px}
-  html[data-ppan=a] .panel.active .panel-content{position:relative;inset:auto}}
+  .panels{interpolate-size:allow-keywords}
+  .panel.active{display:flex;flex-direction:column;justify-content:flex-end;height:auto;min-height:360px}
+  .panel.active .panel-content{position:relative;inset:auto}}
+
+/* THE GALLERY ON PHONES (her 2026-11-23: "Mobile picture flip through has bugs"):
+   1 · the caption was squeezed to HALF the screen (an absolute box at left:50% can only shrink-wrap into the half to its right), so it
+       stood 6–9 lines tall and covered the bottom of the print on most phones. It now takes the width its words need, up to 88vw.
+   2 · the pile's room is the screen minus the caption's REAL height (--capb, measured in build.js setCap), so the print always sits
+       above the caption, whatever the project's words and the phone's height.
+   3 · a phone turned sideways: the caption moves to a column at the left and the print gets the full height (it shrank to ~80px) */
+html[data-gal=prints] .dg-cap{width:max-content}
+@media (max-width:640px){
+  html[data-gal=prints] .dg{--pile-h:calc(100dvh - 124px - var(--capb,150px) - clamp(24px,5vh,56px))}
+  html[data-gal=prints] .dg-strip{padding:64px 0 calc(var(--capb,150px) + clamp(24px,5vh,56px) + 14px)}
+  html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{max-height:var(--pile-h)}
+  html[data-gal=prints] .dg-slide video{height:var(--pile-h)}
+  html[data-gal=prints] .dg-slide img.dg-fit{width:min(100%,calc((var(--pile-h) - 20px) * var(--ar) + 16px))}}
+@media (orientation:landscape) and (max-height:500px){
+  html[data-gal=prints] .dg{--capw:min(34vw,300px);--pile-h:calc(100dvh - 78px)}
+  html[data-gal=prints] .dg-cap{left:20px;bottom:16px;translate:none;align-items:flex-start;text-align:left;width:var(--capw);max-width:none}
+  html[data-gal=prints] .dg-cap b{font-size:16px}html[data-gal=prints] .dg-cap em{font-size:13px}
+  html[data-gal=prints] .dg-strip{padding:16px 72px 16px calc(var(--capw) + 36px)}
+  html[data-gal=prints] .dg-slide{width:100%}
+  html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{max-height:var(--pile-h);padding:8px 8px 12px}
+  html[data-gal=prints] .dg-slide video{height:var(--pile-h)}
+  html[data-gal=prints] .dg-slide img.dg-fit{width:min(100%,calc((var(--pile-h) - 20px) * var(--ar) + 16px))}}
+html[data-gal=prints] .dg{touch-action:none}

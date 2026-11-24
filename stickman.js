@@ -158,6 +158,8 @@
     var nxs = hero.nextElementSibling, rule = nxs && [nxs].concat([].slice.call(nxs.querySelectorAll('*'), 0, 12)).filter(function (e) { return parseFloat(getComputedStyle(e).borderTopWidth) > 0; })[0];
     floorX1 = floorX2 = null;
     if (rule) { var rr = localRect(rule, hr), rt = rr.y1; if (rt > H - 40 && rt <= H + 1) { floorY = Math.min(H, Math.round(rt)); floorX1 = rr.x1; floorX2 = rr.x2; } }
+    readRamp(floorX1 != null && rule, hr);
+    if (ramp) floorX1 = floorX2 = null;   // the line reaches the page edges: no ends to stop at, no gap to leap
 
     W2 = Math.max(1, Math.ceil(W * S)); H2 = Math.max(1, Math.ceil(H * S));
     if (mk.width !== W2 || mk.height !== H2) { mk.width = W2; mk.height = H2; }   // same size: the clearRect below empties it
@@ -229,6 +231,14 @@
       else rows.push({ x1: r.x1, x2: r.x2, y1: r.y1, y2: r.y2 });
     });
     rows.forEach(function (q) { bars.push({ x1: q.x1, x2: q.x2, y: q.y2 - 2, top: q.y1 }); });   // top..y: the line box
+    /* HER REACH (her 2026-11-24: "the highest words you should be able to reach is the, as a product design engineer, I combine both
+       disciplines to help align ... Like those two words are too high"): from where she stands she can jump to hang from a line no
+       higher than the bio's last sentence's FIRST line is above the divider, plus a fifth of her height. One k × her height does not
+       hold on every width (that line is 2.56 heights up on a 375 phone but the next line up, "in that guidance", only 2.11 on a 1440
+       laptop), so it is read off the layout: the same reach from the floor and from every line she has climbed to (stages) */
+    reachBase = null;
+    var hs = hero.querySelectorAll('.hero-line .hs:not(.hs-now)'), lw = hs.length && (hs[hs.length - 1].querySelector('.w') || hs[hs.length - 1]);   // (.hs-now: the "Currently at" status line, not the bio)
+    if (lw) { var lr = localRect(lw, hr); if (lr.h) reachBase = floorY - (lr.y2 - 2); }   // that first word's line, where it rests (read before it has written itself in, too)
 
     var btn = hero.querySelector('.hero-cta-row .btn.solid');
     sign = null;
@@ -265,8 +275,55 @@
   /* the floor is the divider, only where it is drawn (her 2026-11-23: "the avatar should just stop at the ends of the
      divider … she can never fall directly in that space") */
   function onFloor(x) { return floorX1 == null || (x >= floorX1 && x <= floorX2); }
+  /* THE DIVIDER CAN CURVE UP INTO THE PAGE EDGE (her 2026-11-23: "design the divider so that it almost like curves up and she can
+     like run up and get up to the wall"; "she needs to be able to walk all the way to the wall now that this corner radius ramp
+     thing is happening"): when the rule carries a drawn line (svg.mk-div inside it, build.js) that line IS her floor, whatever its
+     shape. Its two ends are sampled from the path itself once per layout: surf[x] = the top of the line at each whole px (the flat
+     middle is floorY), x1/x2 where the flat ends, eL/eR the wall (the page edge it turns up into), topL/R where the wall ends,
+     limL/R the steepest spot she can stand on (RAMP_MAX). No path, or it isn't shown: the flat border, as before */
+  var ramp = null, rampKey = '', rampMO = null, RAMP_MAX = 35 * Math.PI / 180, SLOPE_TILT = 1;
+  function readRamp(rule, hr) {
+    var pa = rule && rule.querySelector('svg.mk-div path'), sv = pa && pa.ownerSVGElement;
+    if (rule && !rampMO && window.MutationObserver) {   // re-read when the line is redrawn or switched on/off (it is drawn after layout, on its own clock)
+      rampMO = new MutationObserver(queueRebuild);
+      rampMO.observe(rule, { subtree: true, childList: true, attributes: true, attributeFilter: ['d', 'style'] });
+      rampMO.observe(document.documentElement, { attributes: true, attributeFilter: ['data-divider'] });   // (the local review switch shows/hides it; a filter, so scroll-time class flips never cost a re-read)
+    }
+    var L = pa && pa.getTotalLength ? pa.getTotalLength() : 0;
+    if (!L || getComputedStyle(sv).display === 'none') { ramp = null; rampKey = ''; return; }
+    var M = pa.getScreenCTM(), dx = -hr.left, dy = -hr.top - liftOf(rule) - .5;   // page px → her stage, where it rests; the surface is the stroke's top
+    var key = pa.getAttribute('d') + '|' + [M.a, M.d, M.e, M.f, dx, dy, W, floorY].join(',');
+    if (key === rampKey) return;
+    var P = function (l) { var q = pa.getPointAtLength(l), x = M.a * q.x + M.c * q.y + M.e, y = M.b * q.x + M.d * q.y + M.f; return { x: x + dx, y: y + dy }; };
+    var off = floorY - P(L / 2).y, n = Math.ceil(W) + 2, surf = new Float32Array(n).fill(floorY), ends = [];
+    [[0, 1], [L, -1]].forEach(function (e) {   // from each wall's top down its lip and curve to where it runs flat
+      var pts = [];
+      for (var l = e[0], k = 0; k < 3000 && l >= 0 && l <= L; k++, l += e[1]) { var q = P(l); q.y += off; pts.push(q); if (k > 2 && floorY - q.y < .02) break; }
+      for (var i = 1; i < pts.length; i++) { var a = pts[i - 1], b = pts[i];
+        if (Math.abs(b.x - a.x) < 1e-3) continue;   // the wall itself
+        for (var xi = Math.ceil(Math.min(a.x, b.x)); xi <= Math.floor(Math.max(a.x, b.x)); xi++) if (xi >= 0 && xi < n) surf[xi] = Math.min(surf[xi], a.y + (b.y - a.y) * (xi - a.x) / (b.x - a.x)); }
+      ends.push(pts);
+    });
+    var A = ends[0], B = ends[1];
+    if (!A.length || !B.length || A[A.length - 1].x > W / 2 || B[B.length - 1].x < W / 2) { ramp = null; rampKey = ''; return; }
+    for (var xi = 0; xi < Math.floor(A[0].x + 1) && xi < n; xi++) surf[xi] = Math.min(surf[xi], surf[Math.min(n - 1, Math.ceil(A[0].x))]);   // (outside the wall: as high as its foot)
+    for (xi = Math.ceil(B[0].x); xi < n; xi++) if (xi > 0) surf[xi] = Math.min(surf[xi], surf[Math.max(0, Math.floor(B[0].x))]);
+    ramp = { s: surf, x1: A[A.length - 1].x, x2: B[B.length - 1].x, eL: A[0].x, eR: B[0].x, topL: A[0].y, topR: B[0].y };
+    var tm = Math.tan(RAMP_MAX), lim = function (x0, st, stop) { for (var x = x0; st * (stop - x) > 0; x += st * .25) if (Math.abs(slopeAt(x)) >= tm) return x; return stop; };
+    ramp.limL = Math.max(10, lim(ramp.x1, -1, ramp.eL)); ramp.limR = Math.min(W - 10, lim(ramp.x2, 1, ramp.eR));
+    rampKey = key;
+  }
+  /* the top of the floor line at x: the flat divider, or up its curved ends */
+  function floorAt(x) {
+    if (!ramp || (x >= ramp.x1 && x <= ramp.x2)) return floorY;
+    var s = ramp.s, i = Math.max(0, Math.min(s.length - 2, Math.floor(x))), f = Math.max(0, Math.min(1, x - i));
+    return s[i] + (s[i + 1] - s[i]) * f;
+  }
+  function slopeAt(x) { return (floorAt(x + .75) - floorAt(x - .75)) / 1.5; }   // dy/dx of the line (y down): + on the left curve
+  function onCurve(x) { return !!ramp && (x < ramp.x1 || x > ramp.x2); }
+  function wallX(side) { return ramp ? (side < 0 ? ramp.eL + .5 : ramp.eR - .5) : side < 0 ? 2 : W - 2; }   // the face of the wall her hand meets
   function solid(x, y) {
-    if (y >= floorY) return onFloor(x);
+    if (y >= floorAt(x)) return onFloor(x);
     if (x < 0 || y < 0 || x >= W || y >= H) return false;
     return md[(((y * S) | 0) * W2 + ((x * S) | 0)) * 4 + 3] > 60;
   }
@@ -613,6 +670,7 @@
        is scrolled away — no rect reads on every mousemove over the rest of the page */
     if (!visible && !down) return;
     var p = stagePoint(e); mouse.x = p.x; mouse.y = p.y; CLAY.away = false;
+    wallRestFree(p);
     /* her ask: hover over clay-her and she smiles (the standing frame swaps to its smile twin) */
     var sm = !touchMode && CLAY.ready && onClay(p, CLAY.smile ? 14 : 0);   // let go 14px further out than it catches: no flicker on her edge
     /* …and as the cursor arrives on her she WAVES with one hand, smiling (her ask 2026-10-24), then keeps smiling
@@ -629,7 +687,7 @@
          launches her (higher for a longer stroke) toward the pointer, free to catch the text and hang; fast enough
          across, she flips */
       if (down.jy == null || p.y >= down.jy - 4) { down.jy = Math.max(p.y, down.jy || p.y); down.jx = p.x; }   // the stroke starts where the drag last ran level or down
-      if (down.jy - p.y > 60 && down.jy - p.y > Math.abs(p.x - down.jx) && dragJump(down.jy - p.y, p)) { down.jy = p.y; down.jx = p.x; return; }
+      if (down.jy - p.y > 60 && down.jy - p.y > Math.abs(p.x - down.jx) && !onCurve(p.x) && dragJump(down.jy - p.y, p)) { down.jy = p.y; down.jx = p.x; return; }   // (up the divider's curved end it is the wall attempt instead: wallLead)
       down.p = p; clearTimeout(down.tt);
       var now = performance.now(), tg = fig.target;
       if (!tg || !tg.follow || (now - (down.ft || 0) > 120 && Math.abs(tg.x - p.x) + Math.abs(tg.py - p.y) > 24)) follow(p);
@@ -672,6 +730,7 @@
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') fig.state = 'move';
   }
   function keyJump() {
+    if (fig.state !== 'mantle') fig.muStand = false;
     if (CLAY.ready && !CLAY.moveReady) return;
     if (fig.state === 'hang') { muscleUp(); return; }
     if ((fig.state !== 'move' && fig.state !== 'idle') || fig.loadT) return;
@@ -703,6 +762,7 @@
     if (fig.dbl || fig.state !== 'air' || fig.wall || fig.parkour || fig.boxJump) return;
     fig.dbl = true;
     var ab = canHang() && aimBar(p), hr = ab && hangRise(ab, Math.max(ab.x1 + 8, Math.min(ab.x2 - 8, p.x)), fig.y), rise;
+    if (hr && fig.fallFrom != null && fig.fallFrom - ab.y > reach()) hr = null;   // her reach counts from where she took off, not from mid-air
     if (hr && hr.rise <= JUMP_MAX) { fig.aim = ab; fig.hangGoal = p.x; rise = hr.rise + 4; }
     else { fig.aim = null; hr = null; rise = Math.max(80, Math.min(JUMP_MAX * .6, fig.y - p.y)); }
     var v = -Math.sqrt(2 * G * rise), tUp = -v / G;
@@ -715,7 +775,7 @@
   }
   function keyDrop() {
     if (fig.state === 'hang') { release(0); return true; }
-    if ((fig.state !== 'move' && fig.state !== 'idle') || fig.y >= floorY - 4) return false;
+    if ((fig.state !== 'move' && fig.state !== 'idle') || fig.y >= floorAt(fig.x) - 4) return false;
     fig.target = null; fig.waypoint = null; fig.celeb = null;
     fig.thru = fig.y + 28;   // through the letters under her feet; she lands on whatever comes next
     fig.state = 'air'; fig.vy = 60; fig.fallFrom = fig.y; fig.hangCool = 0.5;
@@ -733,6 +793,52 @@
   });
   document.addEventListener('keyup', function (e) { var dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (dir && keys[dir]) { keys[dir] = false; steer(); } });
   addEventListener('blur', function () { keys = {}; steer(); });
+  /* A FINGER DRAGS HER ALONG THE BARS TOO (her 2026-11-23: "I want her to be able to follow my cursor drag"): on a phone a moving finger
+     is the page scrolling, so a drag never arms on touch. While she hangs, a finger that sets off sideways from her line (its band,
+     down to her feet) drags her along it instead (the pointermove follow above). The listener can't be passive (it stops that scroll),
+     so it is only there while she hangs: everywhere else the page scrolls exactly as before */
+  var hangTouchOn = false;
+  function hangTouchMove(e) {
+    if (!down || down.hz === false || fig.state !== 'hang' || e.touches.length !== 1) return;
+    var p = stagePoint(e.touches[0]);
+    if (down.hz == null) {
+      var dx = p.x - down.x, dy = p.y - down.y, b = fig.hang.bar; if (!dx && !dy) return;
+      down.hz = Math.abs(dx) > Math.abs(dy) && down.y > (b.top != null ? b.top : fig.hang.G.y - 40) - 30 && down.y < fig.y + 30;
+      if (!down.hz) return;
+    }
+    if (e.cancelable) e.preventDefault();
+    if (!down.moved) { down.moved = true; hero.classList.add('stick-dragging'); }
+    mouse.x = p.x; mouse.y = p.y; follow(p);
+  }
+  function hangTouch(on) {
+    if (on === hangTouchOn) return;
+    hangTouchOn = on;
+    if (on) document.addEventListener('touchmove', hangTouchMove, { passive: false }); else document.removeEventListener('touchmove', hangTouchMove, { passive: false });
+  }
+  /* LED UP THE WALL (her 2026-11-23: "When I try to lead her up the wall, she like glitches. She needs to like try to go up the wall
+     and then, or like jump or I don't know, do something to try to go up the wall just a little bit and then like do her like jump
+     off wall thing"): a drag that reaches the divider's curved end, or goes on up the wall, is ONE attempt: she runs up the curve,
+     springs up the wall a little and does her wall rebound (rampCling), landing on the flat by the wall's foot. She stood flickering
+     at the steepest spot (every pointer move re-sent her, she arrived, stopped, was sent again) and hopped at the strokes up the wall.
+     Then she WAITS there (fig.wallRest) while the pointer stays at that wall; it going back out over the flat, or a new press, frees her */
+  function wallLead(p) {
+    if (!ramp || !onCurve(p.x)) return false;
+    var side = p.x < W / 2 ? -1 : 1;
+    if (fig.wallRest && fig.wallRest.side === side) {   // done that: wait on the flat by the wall's foot
+      var rx = side < 0 ? ramp.x1 + 40 : ramp.x2 - 40;
+      if (Math.abs(fig.x - rx) > 40 && !(fig.target && fig.target.rest)) { fig.target = { x: rx, y: floorY, tries: 0, follow: true, rest: true }; fig.waypoint = null; wake(); }
+      return true;
+    }
+    if (fig.target && fig.target.wall === side) return true;   // already on her way up it
+    var lim = side < 0 ? ramp.limL : ramp.limR;
+    fig.target = { x: lim, y: floorAt(lim), tries: 0, wall: side, follow: true }; fig.waypoint = null; wake();
+    return true;
+  }
+  function wake() { if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; } start(); }
+  function wallRestFree(p) {
+    var R = fig.wallRest;
+    if (R && ramp && (R.side < 0 ? p.x > ramp.x1 + 60 : p.x < ramp.x2 - 60)) fig.wallRest = null;
+  }
   function follow(p) {
     /* in the air (or crouching to go) the drag waits for her to land, then she follows on from there */
     if (fig.loadT || fig.state === 'air' || fig.state === 'mantle') {
@@ -744,8 +850,9 @@
       if (p.y > fig.y + 60) release(Math.sign(p.x - fig.x)); else fig.hang.goal = p.x;
       return;
     }
-    var ty = groundTop(p.x, p.y - 2, H);
     if (down) down.ft = performance.now();
+    if (wallLead(p)) return;
+    var ty = groundTop(p.x, p.y - 2, H);
     fig.target = { x: p.x, y: ty == null ? floorY : ty, py: p.y, tries: 0, follow: true }; fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -760,6 +867,8 @@
     var p = stagePoint(e);
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
     down = Object.assign(p, { t: performance.now(), moved: false });
+    fig.wallRest = null;   // a new press: she may go up the wall again
+    if (fig.state !== 'mantle') fig.muStand = false;   // a new press: she may hang again (one made during the muscle-up itself doesn't count)
     if (CLAY.tricks) CLAY.tricks();   // someone's playing with her: the trick frames come now (on a slow connection they wait for this)
   }, { passive: true });
   /* a touch the browser reclaims for scrolling ends in pointercancel, not pointerup —
@@ -799,15 +908,15 @@
       if (p.y < (hb.top != null ? hb.top : G0.y - 30) - 6) {
         lastTap = null;
         if (muscleUp()) { var gy = clickGround(p);
-          if (gy != null && Math.abs(gy - fig.mantle.y1) <= 8) { if (Math.abs(p.x - fig.mantle.x1) > 12) fig.target = { x: p.x, y: gy, tries: 0 }; }   // on top of the line she held: she walks there
-          else fig.tapQ = { x: p.x, y: p.y, t: performance.now() + 1100 }; }   // higher: once up, she jumps for it (counted from when she's up: the muscle-up takes ~1s)
+          if (gy != null && Math.abs(gy - fig.mantle.y1) <= 8) { if (Math.abs(p.x - fig.mantle.x1) > 12) fig.target = { x: p.x, y: gy, tries: 0 }; } }   // on top of the line she held: she walks there; higher up, she just stands (fig.muStand: a new click takes her on)
         return;
       }
       /* A CLICK NEAR HER = STOP (her 2026-11-23: "If I click near her, that means I just want her to stop swinging ... there's a
          difference when I'm ... trying to click to get her to go somewhere and click to just be like, okay, you can stop moving"):
          within ~60% of her height of her hands she settles where she is (the gentle beside-pose stop if travelling, the swing dies
          down) and the cursor no longer pulls her until it moves well away from that spot. Further along the line = go there. */
-      if (p.y < fig.y + 60 && Math.abs(p.x - G0.x) < (CLAY.ready ? CLAY.H : 120) * .6) { fig.hang.goal = G0.x; fig.hang.pin = { x: p.x }; fig.hang.settle = true; fig.hang.auto = null; start(); return; }
+      /* (no goal: one set at the hand she held then was behind her a catch later, and she turned straight back for it) */
+      if (p.y < fig.y + 60 && Math.abs(p.x - G0.x) < (CLAY.ready ? CLAY.H : 120) * .6) { fig.hang.goal = null; fig.hang.pin = { x: p.x }; fig.hang.settle = true; fig.hang.auto = null; start(); return; }
       if (p.y < fig.y + 60 && p.x > hb.x1 - 40 && p.x < hb.x2 + 40) { fig.hang.goal = p.x; fig.hang.pin = null; fig.hang.settle = false; fig.hang.auto = null; start(); return; }
       release(Math.sign(p.x - fig.x));
       var dy = clickGround(p); fig.target = { x: p.x, y: dy == null ? floorY : dy, tries: 0 };
@@ -830,6 +939,9 @@
     fig.target = { x: p.x, y: ty == null ? floorY : ty, tries: 0 };
     /* a click out past the divider's end, beside it: she goes to that end and does the wall jump (wallJump) */
     if (ty == null && floorX1 != null && (p.x < floorX1 || p.x > floorX2)) { var ws = p.x < floorX1 ? -1 : 1; fig.target = { x: ws < 0 ? floorX1 : floorX2, y: floorY, tries: 0, wall: ws }; }
+    /* …and where the line curves up into the page edge, a click at or past where it stops being flat (on the curve, up the wall):
+       she runs up the curve to the wall and rebounds off it from the top (rampCling), no leap */
+    if (onCurve(p.x) && (ty == null || ty >= floorAt(p.x) - 2)) { var rw = p.x < W / 2 ? -1 : 1, rl = rw < 0 ? ramp.limL : ramp.limR; fig.target = { x: rl, y: floorAt(rl), tries: 0, wall: rw }; }
     fig.waypoint = null;
     if (fig.state === 'idle' || fig.state === 'sign' || fig.state === 'celeb' || fig.state === 'wave') { fig.state = 'move'; fig.celeb = null; }
     start();
@@ -884,6 +996,11 @@
     fig.mantle.d0 = Math.max(0, Math.min(12, fig.y - muFeet(fig.mantle)));   // the reach starts with her feet where the hang had them (it popped her up ~5px): the reaching hand leaves the edge from that low
     fig.hang = null; fig.hangCool = 0.6; fig.vx = 0; fig.vy = 0; fig.flip = null;
     fig.target = null; fig.waypoint = null; fig.celeb = null;
+    /* AFTER A MUSCLE-UP SHE STANDS (her 2026-11-23 rule: "if you muscle up on top of something, never go straight into another
+       monkey bar situation unless there is another click ... If you muscle up, you just always stand on top of the thing you
+       muscle up. Like that has to be the next move."): no hang of any kind (a route's next bar, a queued jump, a mid-air grab)
+       until a new press or key clears this */
+    fig.muStand = true; fig.tapQ = null;
     // no sound for a muscle-up (her 2026-11-23: "I don't think there needs to be a sound for the muscle up.")
     start();
     return true;
@@ -895,7 +1012,8 @@
      under the one she was sent to, so a word two or three lines up was never reachable. Now the line under the pointer
      is the aim: bars below it are let go by on the way up, and the jump is sized (past JUMP_MAX, up to HANG_MAX) so her
      raised hands reach it. */
-  var HANG_MAX = 340;
+  var HANG_MAX = 340, reachBase = null;
+  function reach() { return reachBase == null ? HANG_MAX : Math.min(HANG_MAX + 60, reachBase + .2 * (CLAY.ready ? CLAY.H : 100)); }   // how far above her feet a line can be for her to jump and hang from it
   function aimBar(p) {
     var best = null;
     for (var i = 0; i < bars.length; i++) {
@@ -910,12 +1028,14 @@
      so the catch is a change of grip, not a jump of the drawing. null when she can reach it standing (no hang there) or
      it's out of a jump */
   function hangRise(b, x, y0) {
+    if (y0 - b.y > reach()) return null;   // out of her reach from here: a line lower down first, then up from there
     var g = topGrip(x, b, 24, null, null, null, true); if (!g) return null;   // she hangs from the underside of the letters
     var rise = y0 - (g.y + rig().soles) + 2;
     return rise >= 8 && rise <= HANG_MAX ? { rise: rise, g: g } : null;
   }
   /* auto: she muscles up onto the line once she has it (a tap or a click above her, her route): her 2026-11-22 ask */
   function hangJump(b, p, auto) {
+    if (fig.muStand) return false;   // just muscled up: she stands until a new click
     var gx = Math.max(b.x1 + 8, Math.min(b.x2 - 8, p.x)), hr = hangRise(b, gx, fig.y);
     if (!hr) return false;
     fig.aim = b; fig.autoUp = auto ? { x: p.x, y: p.y } : null; fig.hangGoal = p.x; fig.dir = p.x >= fig.x ? 1 : -1;
@@ -1053,6 +1173,7 @@
         if (b.y >= a.y - 30) return;
         for (var i = 0; i < bars.length; i++) { var q = bars[i];
           if (a.x < q.x1 + 4 || a.x > q.x2 - 4 || b.y < q.top - 6 || b.y > q.y + 4) continue;
+          if (a.y - q.y > reach()) return;   // (her reach: hangRise)
           var gb = glyphBottom(b.x, q); if (gb == null) return;
           var rise = a.y - (gb + R.soles) + 2;   // she hangs from the underside of that line's letters
           if (rise >= 8 && rise <= HANG_MAX) out.push({ n: b, how: 'hang', cost: rise + 60, bar: q });
@@ -1112,20 +1233,34 @@
       if (solid(nx, Math.min(ny, y) - 6) && !solid(x, Math.min(ny, y) - 6)) { nx = x; vx = 0; }
       if (vy > 0) { var land = groundTop(nx, y + 0.5, Math.max(2, ny - y + 2));
         if (land != null && land >= y - 2 && land <= ny + 0.5 && clearance(nx, land) >= MIN_CLR) return near(nx, land); }
-      x = nx; y = Math.min(ny, floorY);
-      if (y >= floorY && vy >= 0) return near(x, y);
+      x = nx; y = Math.min(ny, floorAt(nx));
+      if (y >= floorAt(x) && vy >= 0) return near(x, y);
     }
     return false;
   }
   /* there: she stops (the 2026-10-24 hop up at a tap above her is gone, her 2026-10-26 call) */
-  function arrived() { var ws = fig.target && fig.target.wall; fig.target = null; fig.waypoint = null; fig.vx = 0;
+  function arrived() { var ws = fig.target && fig.target.wall, v0 = Math.abs(fig.vx); fig.target = null; fig.waypoint = null; fig.vx = 0;
+    if (ws && ramp && Math.abs(fig.y - floorAt(fig.x)) <= 3 && Math.abs(fig.x - (ws < 0 ? ramp.limL : ramp.limR)) < 30) { rampCling(ws, v0, true); return; }
     if (ws && floorX1 != null && fig.y >= floorY - .5 && Math.abs(fig.x - (ws < 0 ? floorX1 : floorX2)) < 24) wallJump(ws); }
   /* PARKOUR OFF THE SIDE WALL (her 2026-11-23: "if I click outside the divider line, her goal is that she jumps on the wall like
      Spider-Man and then jumps back. Like it's like a parkour sort of thing"): from the divider's end she leaps out over the gap,
      at the top of the leap her feet plant on the side of the page (a crouch turned flat against it, tickAir), a beat, and she
      kicks back onto the divider. The click is used up at take-off, so nothing re-triggers it */
+  /* UP THE CURVE AND ONTO THE WALL: at the steepest spot she can stand on, a run still going (or a click that sent her to the
+     wall) carries on up it, her own wall rebound (wallOn / tickWall: facing us, the wall-side hand and both soles on it) rising with
+     what is left of her speed (v²/2G: a run takes her ~30px up), so she slows, stops and slides back down it, then pushes off;
+     at the top of a short wall (the quarter-pipe's lip) she pushes off from there. Never lower than where the curve turns up */
+  function rampCling(side, v, spring) {
+    var f0 = wallF(), need = fig.y - ((CLAY.ready ? CLAY.H : 113) * .5 - (f0.base - f0.gy) / 2 * wallSc()) - floorAt(wallX(side));   // how far up her wall pose has to go
+    fig.target = null; fig.waypoint = null; fig.celeb = null; fig.flip = null; fig.flipQueued = true;
+    /* her run's speed, 90% of it upward; sent to the wall (a click), her legs add what a run up a big curve lacks, so she always gets there */
+    fig.state = 'air'; fig.fallFrom = fig.y; fig.vx = 0; fig.vy = -Math.max(v * .9, spring ? Math.sqrt(2 * G * Math.max(0, need + 14)) : 0, 270); fig.dir = side;
+    fig.rampUp = { side: side, low: floorAt(wallX(side)) };
+    fig.wallRest = { side: side };   // one attempt per lead (wallLead)   // she rises off the curve until her wall pose's soles reach the wall (tickAir)
+    start();
+  }
   function wallJump(side) {
-    var wx = side < 0 ? 2 : W - 2, ta = 600 / G;
+    var wx = wallX(side), ta = 600 / G;
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.flip = null; fig.flipQueued = true;
     fig.state = 'air'; fig.vy = -600; fig.fallFrom = fig.y; fig.dir = side;
     fig.vx = side * Math.max(20, Math.abs(wx - fig.x) - WALL_GX()) / ta;   // her hand meets the wall at the top of the leap
@@ -1137,16 +1272,31 @@
      knee both touching it (WALL_GX: the column of her frame they share), the rest of her hanging. Gravity still works: friction
      on her hand and knee only takes some of it, so she slows (or rises on a little if she hit it going up) and slides down, then
      pushes off, turning away from the wall, back onto the divider */
-  var WALL_F = 6, WALL_GY = 12;
-  function wallF() { var L = CLAY.man && CLAY.man['climb-x3']; return L && L[WALL_F] || { cx: 39, base: 263 }; }
-  function wallSc() { return (CLAY.ready ? CLAY.H : 113) / (CLAY.man ? CLAY.man._ref : 252); }
-  function WALL_GX() { return (68 - wallF().cx) * wallSc(); }   // her middle → the wall, in px
+  /* THE WALL REBOUND (her 2026-11-23: "I don't like that she's facing the wall. I want her to face like me ... one hand in contact
+     with the wall and one foot ... two legs and one hand in contact with the wall and you're like facing the front"): Flora
+     poses of her own clay, facing us with her side to the wall: 0 sliding (crouched, the wall-side hand flat on it, both soles
+     on it), 1 coiled to spring, 2 the push-off. Each is pinned where her hand meets the wall's face (-ox, -oy); mx/my her centre
+     of mass from there. Drawn facing the wall's side (unmirrored = wall on her right). Until the sheet is in: climb frame 6 */
+  var WALL_S = 'wall-rebound', WALL_COIL = .18;   // s: coiled for the last of her .55s on the wall, before the push
+  function wallF(k) {
+    var W0 = CLAY.sheetIn && CLAY.sheetIn[WALL_S] && CLAY.man[WALL_S], f = W0 && W0[k || 0];
+    if (f) return { s: WALL_S, k: k || 0, gx: -f.ox, gy: -f.oy, base: f.base, cx: -f.ox + f.mx };
+    var L = CLAY.man && CLAY.man['climb-x3'], c = L && L[6] || { cx: 39, base: 263 };
+    return { s: 'climb-x3', k: 6, gx: 68, gy: 12, base: c.base, cx: c.cx, rot: .05 };
+  }
+  /* HER SIZE ON THE WALL (her 2026-11-23: "she gets larger ... when she's on the wall and she's like sliding down the wall ... Her body
+     parts become bigger"): the three rebound poses were cut from Flora stills at the hang clip's px scale, so her head, hands and shoes
+     came out ~1.22x her walk/idle size (bandana, face, eye and earring spans, brow to chin, measured against idle-wave-sign-0). Drawn
+     at WALL_Z, about the hand on the wall, so the hand and soles stay on it */
+  var WALL_Z = .82;
+  function wallSc() { return (CLAY.ready ? CLAY.H : 113) / (CLAY.man ? CLAY.man._ref : 252) * (wallF().s === WALL_S ? WALL_Z : 1); }
+  function WALL_GX() { var f = wallF(); return (f.gx - f.cx) * wallSc(); }   // her middle → the wall, in px
   function wallOn(side, wx, nx) {
     var f = wallF(), sc = wallSc(), mid = fig.y - (CLAY.ready ? CLAY.H : 113) * .5;   // her airborne frame is pinned by its middle: the cling frame's middle goes there
     var v = Math.hypot(fig.vx, fig.vy);
-    fig.wall = { t: 0, side: side, hx: wx, hy: mid - ((f.base + WALL_GY) / 2 - WALL_GY) * sc };
+    fig.wall = { t: 0, side: side, hx: wx, hy: mid - (f.base - f.gy) / 2 * sc };
     fig.parkour = null; fig.vx = 0; fig.vy = Math.min(fig.vy, 0) * .5; fig.flip = null; fig.flipQueued = true; fig.dir = side;
-    fig.x = wx - side * WALL_GX(); fig.y = fig.wall.hy + (f.base - WALL_GY) * sc;
+    fig.x = wx - side * WALL_GX(); fig.y = fig.wall.hy + (f.base - f.gy) * sc;
     once('grip', function () { squeeze(v); });   // her hand and knee meet the wall
   }
   function tickWall(dt) {
@@ -1154,12 +1304,18 @@
     Wl.t += dt;
     fig.vy = Math.min(150, fig.vy + (fig.vy < 0 ? G : G * .3) * dt);   // going up, gravity and the rub both stop her; coming down, the rub takes 70% of it
     Wl.hy += fig.vy * dt;
-    fig.y = Wl.hy + (f.base - WALL_GY) * sc; fig.x = Wl.hx - Wl.side * WALL_GX(); fig.vx = 0;
-    var low = fig.y >= floorY - 2;
-    if (low) { fig.y = floorY - 2; Wl.hy = fig.y - (f.base - WALL_GY) * sc; }
-    if (Wl.t < .55 && !low) return;
+    fig.y = Wl.hy + (f.base - f.gy) * sc; fig.x = Wl.hx - Wl.side * WALL_GX(); fig.vx = 0;
+    var lowY = ramp ? floorAt(Wl.hx) : floorY - 2, low = fig.y >= lowY;   // (on a curved divider: down to where it turns up into the wall)
+    if (low) { fig.y = lowY; Wl.hy = fig.y - (f.base - f.gy) * sc; }
+    var topY = ramp ? (Wl.side < 0 ? ramp.topL : ramp.topR) : null, atTop = topY != null && fig.y <= topY;   // over the top of a short wall: nothing under her soles
+    if (atTop) { fig.y = topY; Wl.hy = fig.y - (f.base - f.gy) * sc; fig.vy = 0; }
+    /* on a curved divider, at the top of the wall or back down at its foot, she coils (her frame 1) a beat, then pushes */
+    if (ramp && (atTop || low) && !Wl.end) { Wl.end = true; Wl.t = Math.max(Wl.t, .55 - WALL_COIL); }
+    if (Wl.t < .55 && (ramp || !low)) return;
     /* the push: off the wall, turned away from it, onto the divider a stride past its end */
-    var into = -Wl.side, end = into > 0 ? floorX1 : floorX2, lx = (end == null ? fig.x + into * 80 : end + into * 40), vy = -560;
+    var into = -Wl.side, end = ramp ? (into > 0 ? ramp.x1 : ramp.x2) : into > 0 ? floorX1 : floorX2, lx = (end == null ? fig.x + into * 80 : end + into * 40), vy = -560;
+    var KF = f.s === WALL_S && CLAY.man[WALL_S][2];
+    if (KF) { fig.x = Wl.hx + into * Math.abs(KF.mx) * sc; fig.wallPush = { t: 0, side: Wl.side }; }   // her middle out to where the push-off pose has it, feet still on the wall
     var T = (-vy + Math.sqrt(vy * vy + 2 * G * Math.max(0, floorY - fig.y))) / G;
     fig.wall = null; fig.endFix = true; fig.vy = vy; fig.vx = (lx - fig.x) / T; fig.dir = into; fig.fallFrom = fig.y; fig.shhV = vy;   // (a swish as she comes down: the kick lifts her less than her height)
     puff(Wl.hx, fig.y - 10, 2);
@@ -1261,7 +1417,7 @@
   /* she LOADS before she jumps (her 2026-10-26, #76: "athletes load up before they jump"): a launch from her feet is held
      back for a crouch, longer for a bigger jump, then goes off with the same speed it was planned with */
   function crouchFirst(was, x0) {
-    if (fig.state !== 'air' || fig.vy > -150 || fig.loadV || (was !== 'move' && was !== 'idle')) return;
+    if (fig.state !== 'air' || fig.vy > -150 || fig.loadV || fig.wall || fig.rampUp || (was !== 'move' && was !== 'idle')) return;   // (up the curve onto the wall: no crouch, her run carries on)
     fig.loadV = { vx: fig.vx, vy: fig.vy };
     fig.loadT = fig.load0 = 0.05 + 0.08 * Math.min(1, -fig.vy / 1000);   // quick and springy (#84): was 0.07-0.18s
     fig.state = was; fig.vx = 0; fig.vy = 0;
@@ -1275,12 +1431,34 @@
     fig.fallFrom = fig.y; fig.state = 'air';
   }
   function tickGround(dt) {
+    fig.wallPush = null; fig.rampUp = null;
     fig.flipQueued = false;
+    /* SHE NEVER STANDS ON THE CURVE (her 2026-11-24: "have her like avoid the corner or like either slide down it ... or like run up
+       to it and like jump ... never like stand. Like she never stands on it. I think that's kind of weird no matter what"): a spot on
+       the curve that isn't the wall is the flat just before it; on the curve without being sent up it (the wall, or the keys / a drag
+       driving at it), she SLIDES down it (her slide frame, feet on the line) and stops on the flat. Up it she only ever runs */
+    if (ramp && fig.target && !fig.target.wall && onCurve(fig.target.x)) { var ts = fig.target.x < W / 2 ? -1 : 1; fig.target.x = ts < 0 ? ramp.x1 + 3 : ramp.x2 - 3; fig.target.y = floorY; fig.target.route = null; }
+    if (ramp && onCurve(fig.x) && Math.abs(fig.y - floorAt(fig.x)) <= 3) {
+      var cs = fig.x < W / 2 ? -1 : 1;
+      if (!((fig.target && fig.target.wall === cs) || (fig.drag && fig.drag.vx * cs > 0))) {
+        fig.landT = 0; fig.state = 'move'; fig.slideT = .12; fig.dir = -cs;
+        fig.vx = -cs * Math.max(Math.abs(fig.vx) * (fig.vx * cs < 0 ? 1 : 0), 240);
+        var sx = fig.x + fig.vx * dt; if (!onCurve(sx)) sx = cs < 0 ? Math.max(sx, ramp.x1) : Math.min(sx, ramp.x2);
+        fig.x = sx; fig.y = floorAt(sx); fig.phase += Math.abs(fig.vx) * dt * 0.05;
+        return;
+      }
+    }
     if (fig.landT > 0 && !fig.drag) { fig.vx = 0; return; }   // the landing crouch holds still, then she sets off
     if (CLAY.ready && !CLAY.moveReady) { fig.vx = 0; return; }   // her walking frames aren't in yet (#102): she waits, then goes
     var want = 0;
     var g = fig.waypoint || fig.target;
-    if (fig.drag) { want = fig.drag.vx; }
+    /* a spot on the divider's curve, from the divider: straight along the line (the curve branch below), no route; the planner's
+       walk points stop short of the steep end, where she has to get all the way to the wall */
+    var tgR = !fig.drag && fig.target && ramp && onCurve(fig.target.x) && Math.abs(fig.y - floorAt(fig.x)) <= 3 && Math.abs(fig.target.y - floorAt(fig.target.x)) <= 4;
+    if (tgR) { var rdx = fig.target.x - fig.x, atLim = Math.abs(fig.target.x - ramp.limL) < .5 || Math.abs(fig.target.x - ramp.limR) < .5;
+      if (Math.abs(rdx) < (atLim ? .5 : 3)) { arrived(); return; }   // (the steepest spot: walked right onto it, the curve branch stops her there)
+      want = Math.sign(rdx) * pace(Math.abs(rdx)); }
+    else if (fig.drag) { want = fig.drag.vx; }
     else if (fig.target && !fig.target.manual) {
       var tg = fig.target;
       if (!tg.route) {
@@ -1295,7 +1473,7 @@
       }
       if (tg.route) { var rw = followRoute(dt); if (rw === null) return; want = rw; }
     }
-    if (!fig.drag && fig.target && fig.target.manual) {
+    if (!tgR && !fig.drag && fig.target && fig.target.manual) {
       var dx = g.x - fig.x;
       want = Math.sign(dx) * pace(Math.abs(dx));
       /* near enough on the same bump of ink counts as arrived — waypoint or not */
@@ -1353,6 +1531,7 @@
     fig.crawl += (Math.max(0, Math.min(1, (CRAWL_CLR - clr) / (CRAWL_CLR - 22))) - fig.crawl) * Math.min(1, dt * 10);
     want *= 1 - fig.crawl * 0.55;
 
+    if (ramp && fig.target && fig.target.wall && want) want = Math.sign(want) * RUN;   // sent to the wall: a run-up all the way, no slowing for the spot
     fig.vx += (want - fig.vx) * Math.min(1, dt * 15);   // snappy starts and turns (was dt * 9: ~0.25s to full pace, now ~0.15s)
     if (Math.abs(fig.vx) < 6 && !fig.target && !fig.drag) {
       fig.vx = 0;
@@ -1360,6 +1539,26 @@
       return;
     }
     if (fig.vx) fig.dir = fig.vx > 0 ? 1 : -1;
+    /* ON THE CURVE: her feet stay on the drawn line (floorAt), and climbing it costs her: gravity along the slope takes G·sinθ off
+       her speed each moment she goes up it (never pushing her down while she stands), so a run slows as it climbs and a walk
+       crawls up the steepest part. She can stand up to RAMP_MAX (35°); a run still going there, or a click that sent her to the
+       wall, carries on up the wall (rampCling) */
+    if (ramp && Math.abs(fig.y - floorAt(fig.x)) <= 3 && (onCurve(fig.x) || onCurve(fig.x + fig.vx * dt))) {
+      var rs = fig.x < W / 2 ? -1 : 1, lim = rs < 0 ? ramp.limL : ramp.limR, sl = slopeAt(fig.x);
+      if (fig.vx * rs > 0 && onCurve(fig.x)) fig.vx -= rs * G * Math.abs(sl) / Math.sqrt(1 + sl * sl) * dt;
+      var rx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt)), toWall = fig.target && fig.target.wall === rs;
+      if (rs * (fig.x - lim) > .5 && fig.vx * rs <= 0) rx = fig.x + (lim - fig.x) * Math.min(1, dt * 8);   // (came down on the steep part: she steps down to where she can stand)
+      else if (rs * (rx - lim) >= 0 && fig.vx * rs > 0) {   // the steepest spot she can stand on
+        /* (sent to a spot on the curve: she stops there; sent to the wall, or run at it by the keys or a drag: up the wall) */
+        if (toWall || (fig.drag && fig.drag.vx * rs > 0) || (Math.abs(fig.vx) > 200 && (!fig.target || fig.target.follow))) { fig.x = lim; fig.y = floorAt(lim); rampCling(rs, Math.abs(fig.vx), true); return; }   // (up the curve she always gets to the wall: never left standing at its top)
+        rx = lim; fig.vx = 0;
+      }
+      fig.x = rx; fig.y = floorAt(rx);
+      if (rx === lim && fig.target && rs * (fig.target.x - lim) >= -1) arrived();   // as far as she can stand: there
+      fig.phase += Math.abs(fig.vx) * dt * 0.05;
+      advGait(dt);
+      return;
+    }
     var nx = Math.max(10, Math.min(W - 10, fig.x + fig.vx * dt));
     if (fig.y >= floorY - .5 && floorX1 != null && !onFloor(nx)) {   // the divider's end
       var side = nx < floorX1 ? -1 : 1, tgo = fig.target;
@@ -1431,6 +1630,16 @@
 
   function tickAir(dt) {
     if (fig.wall) { tickWall(dt); return; }
+    /* up off the curve toward the wall (rampCling): once her wall pose's soles would be on the wall (above where the curve turns up
+       into it) she is on it, with the speed she has left; a run that runs out first drops her back down onto the curve */
+    if (fig.rampUp) {
+      var U = fig.rampUp, f0 = wallF(), off = (CLAY.ready ? CLAY.H : 113) * .5 - (f0.base - f0.gy) / 2 * wallSc();
+      fig.vy = Math.min(fig.vy + G * dt, 1500); fig.y += fig.vy * dt;
+      if (fig.y - off <= U.low) { var uv = fig.vy; fig.rampUp = null; wallOn(U.side, wallX(U.side), fig.x); if (fig.y > U.low) { fig.wall.hy -= fig.y - U.low; fig.y = U.low; } fig.vy = uv; return; }
+      if (fig.vy < 0) return;
+      fig.rampUp = null;
+    }
+    if (fig.wallPush && (fig.wallPush.t += dt) > .26) fig.wallPush = null;   // the push-off pose, then the jump's own
     fig.vy = fig.boxJump && fig.boxJump.g ? Math.min(fig.vy + fig.boxJump.g * dt, 2600) : Math.min(fig.vy + G * dt, 1500);
     if (fig.dblQ && fig.vy > -220) { var dq = fig.dblQ; fig.dblQ = null; doubleJump(dq); }   // a double click: the second jump comes off the top of the first
     var g = fig.waypoint || fig.target;
@@ -1503,13 +1712,14 @@
     if (fig.aim && (fig.vy >= 0 || fig.state !== 'air')) fig.aim = fig.autoUp = null;   // the aim lasts the climb only
     /* monkey-bar grab — free-form leaps, and a jump aimed at a line (a click or tap above her, her route); never while
        chasing a click otherwise */
-    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && (!fig.target || fig.aim) && !fig.tapQ && canHang()) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
+    if (!fig.flip && !fig.boxJump && !fig.dropping && fig.vy < 160 && !fig.hangCool && !fig.muStand && (!fig.target || fig.aim) && !fig.tapQ && canHang()) {   // never grabs a bar mid box-jump, or while dropping out of the burst cloud
       /* THE CATCH IS A CHANGE OF GRIP, NOT A JUMP OF HER DRAWING: her hands close on a letter top at the moment her
          hanging body's feet would be where her feet are now. Of the lines in reach, the one nearest her hands wins */
       var R = rig(), handY = ny - R.soles, win = R.soles * .03, best = null;
       for (var i = 0; i < bars.length; i++) {
         var b = bars[i];
         if (nx < b.x1 - 4 || nx > b.x2 + 4) continue;
+        if (fig.fallFrom != null && fig.fallFrom - b.y > reach()) continue;   // out of her reach from where she took off
         if (fig.aim && b !== fig.aim) continue;   // rising to an aimed line: the ones below pass by
         var g0 = topGrip(nx, b, 12, null, null, null, true);
         if (!g0) continue;
@@ -1565,7 +1775,7 @@
           fig.waypoint = null;
           if (fig.target) fig.target.avoid = 0;
         }
-        fig.state = (fig.target || fig.drag) ? 'move' : 'idle';
+        fig.state = (fig.target || fig.drag || onCurve(fig.x)) ? 'move' : 'idle';   // (down on the curve: she slides off it, tickGround)
         /* she BRACES (her 2026-10-26, #76: "athletes ... brace impact"): every landing that comes down with any speed bends
            the knees and stands back up, longer the harder she hit; a frame-deep gap between letters is still a walk */
         if (fig.vy > 150) brace(0.07 + 0.15 * Math.min(1, (fig.vy - 150) / 900));   // (#84: was 0.09-0.29s)
@@ -1581,10 +1791,10 @@
         return;
       }
     }
-    fig.x = nx; fig.y = onFloor(nx) ? Math.min(ny, floorY) : ny;
+    fig.x = nx; fig.y = onFloor(nx) ? Math.min(ny, floorAt(nx)) : ny;
     /* only when coming DOWN: a jump launched from the floor sits on it for its first (zero-length) frame, and this used to
        cancel it on the spot — why a second jump at the cloud, from the floor, sometimes never left the ground */
-    if (fig.y >= floorY && fig.vy >= 0 && onFloor(fig.x)) { fig.state = (fig.target || fig.drag) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; fig.thru = 0; }
+    if (fig.y >= floorAt(fig.x) && fig.vy >= 0 && onFloor(fig.x)) { fig.state = (fig.target || fig.drag || onCurve(fig.x)) ? 'move' : 'idle'; fig.vy = 0; fig.flip = null; fig.dropping = false; fig.thru = 0; }
   }
 
   /* ------------------------------------------------------------------ the hang: a pendulum
@@ -1626,7 +1836,7 @@
     var rawAt = function (raw) { for (var q = 0; q < L.length; q++) if (L[q].raw === raw) return q; return -1; };
     if (first.S != null && first.H1 != null && first.H2 != null && first.H3 != null) {
       var Q2 = 272 / 975;
-      TZ.hoh = { first: first, last: last, catchTo: { S: 'H1', H1: 'H2', H2: 'H3', H3: 'H2' }, stop: { H1: rawAt(1050), H2: rawAt(1094), H3: rawAt(1136) }, rest: at(100) };
+      TZ.hoh = { go: rawAt(1012), first: first, last: last, catchTo: { S: 'H1', H1: 'H2', H2: 'H3', H3: 'H2' }, stop: { H1: rawAt(1050), H2: rawAt(1094), H3: rawAt(1136) }, rest: at(100) };
       TZ.step.S = (902.5 - 682) * Q2; TZ.step.H1 = (1058 - 902.5) * Q2; TZ.step.H2 = (1267 - 1058) * Q2; TZ.step.H3 = (1440 - 1267) * Q2;   // the catch that ends each
     }
     TZ.after = { A: 'B', B: 'C', C: 'D', D: 'B' };   // the first clip's reaches: the hold each lands on
@@ -1646,9 +1856,10 @@
     return false;
   }
   /* the next hold a step on: the underside of a letter at the same height (±6px), the nearest to where her hand lands in the clip */
-  function tzHold(h, seg) {
-    var R = rig(), d = fig.dir, want = h.G.x + d * TZ.step[seg] * R.sc, best = null;
-    for (var dx = 0; dx <= 10; dx++) for (var s2 = -1; s2 <= 1; s2 += 2) {
+  function tzHold(h, seg) { return holdNear(h, h.G.x + fig.dir * TZ.step[seg] * rig().sc, 10); }
+  function holdNear(h, want, r) {
+    var best = null;
+    for (var dx = 0; dx <= r; dx++) for (var s2 = -1; s2 <= 1; s2 += 2) {
       var x = Math.round(want + s2 * dx), t = glyphBottom(x, h.bar);
       if (t != null && Math.abs(t - h.G.y) <= 6 && (!best || dx + Math.abs(t - h.G.y) * .5 < best.sc)) best = { x: x, y: t, sc: dx + Math.abs(t - h.G.y) * .5 };
       if (!dx) break;
@@ -1656,19 +1867,216 @@
     return best && { x: best.x, y: best.y, dx: best.x - want, dy: best.y - h.G.y };
   }
   function ofs2(h, q) { var z = TZ_FLIGHT.indexOf(TZ.L[q].raw); return h.next && z >= 0 ? (z % 2 + 1) / 2 : 0; }   // how much of the gap to the next letter is taken up by pose q (in the air, halves)
+  function turnReady() { return !CLAY.ready || !!(CLAY.sheetIn && CLAY.sheetIn['hang-turn-x3'] && CLAY.man['hang-turn-x3']); }
+  /* THE TURN, A SWING ROUND ONE HAND (her 2026-11-23: "your hand that is holding the bar faces direction A. When you're turning, rather
+     than reaching your hand forward for the next rung like you normally would, instead you kind of reach it forward and turn around ...
+     you're rotating on your shoulder cuff around, and so your hand is still facing the old direction and you're twisting on your body.
+     And then the second hand now faces the new direction and holds it. And once it grasps a hold of the new direction, then the old
+     direction is released from hand one, and then it kind of does the scoop up, swing, grab in the new direction"). The Flora clip of her
+     turning under the bar (hang-turn-x3: side, three-quarter, front, three-quarter, the other side) used to be pinned at the midpoint
+     between her fists, so she spun in place ("like a ballerina that just like twirled in place"). Now every frame is pinned to the fist
+     that is actually holding, and the swing is a real pendulum about that fist:
+       b  frames 0-7 on HAND 1 (the hold she had): hand 2 reaches forward and her body swings out and round under hand 1, whatever swing
+          she had carried on, arriving at the top of it just as hand 2 meets the next letter (her centre of mass then sits between them)
+       c  frame 7: both hands on the bar, her body square to us
+       d  hand 1 lets go: frames 8-14 on HAND 2, swinging back under it as she comes round to face the new way
+       e  the hand-over-hand clip's own reach (its S: from one hand, the other scoops up and catches) the new way (tickHang 'go')
+     TURN_L / TURN_R: each frame's two fists (x, the clip's own px from its pin), measured off the frames; L is the fist on the new
+     direction's side, R the old one's. Hand 2 reaches forward (R) when there is a letter there; else back (L), mirrored roles */
+  var TURN_L = [0, -1, -2.4, -2.9, -18, -26.3, -26.4, -26, -24.8, -23, -21, -19, -15, -6, -3],
+      TURN_R = [0, 12, 20.1, 20.1, 21, 22.2, 23.6, 26, 27.7, 28, 21, 3, 0, -2, -3];
+  var TURN_B = .26, TURN_C = .06, TURN_D = .16, TURN_IN = .08, TURN_CATCH = 7;   // s: swing round, both hands, round onto hand 2, the fade out of the pose she was in; the both-hands frame
+  /* THE SCOOP (her 2026-11-23, on the turn above: "instead of scooping forward, it scoops around, like the head turns and it scoops around to
+     the other side ... the head turns and the arm scoops around to the other side and the body twists to grab the other direction", and
+     "the head has to turn too ... the head leads the movement, and the arm sweeps, or like scoops"): a second Flora clip (hang-scoop-x3,
+     MiniMax first/middle/last frames from her face-fixed turn frames, 480p, keyed and sized like the others) of exactly that, every frame
+     pinned at HAND 1, which never moves in it: her head turns first, the free hand comes off the bar, drops to her side and scoops round in
+     front of her as her body twists and swings, then comes up and catches the bar SCOOP_R further on (frame SCOOP_CATCH); both hands
+     hold while the swing comes back (to the last frame), then the turn's own frames 8-14 bring her round to face the new way on hand 2.
+     It replaces b and c when hand 2 has a letter on the old direction's side; else the turn above */
+  var SCOOP = 'hang-scoop-x3', SCOOP_R = 33, SCOOP_CATCH = 11, SCOOP_B = .34, SCOOP_C = .12, SCOOP_D0 = 8;   // clay px; frame; s, s; the turn frame d starts from
+  function scoopIn() { return !!(CLAY.sheetIn && CLAY.sheetIn[SCOOP] && CLAY.man[SCOOP]); }
+  function turnTh(k, P) { var g = CLAY.man['hang-turn-x3'][k]; return Math.atan2(g.mx - P, g.my); }   // frame k: her centre of mass from its fist P, as an angle
+  /* waiting for a hand to be on a letter: mid-catch (the drift to the next letter) or in the first clip's flight frames */
+  function turnWait(h) {
+    if (h.mode !== 'go') return false;
+    var L = TZ.L, n = tzNext(h.i);
+    return TZ_FLIGHT.indexOf(L[h.i].raw) >= 0 || (!!h.next && L[n].seg !== L[h.i].seg && !tzSame(h.i));
+  }
+  /* THE WHIP, ONE SWIFT MOTION, NEVER FACING US (her 2026-11-23, on the scoop: "she's like smiling like at nowhere ... She should be always
+     looking towards the direction that she is moving ... She just never need to look at us ... in one swift motion she turns around and
+     grabs the other direction bar with her other hand. However, her first hand is still on the bar facing the original direction. She then
+     lets go of it and grabs a bar further in the new direction"). Only frames whose face points along the bar: the turn clip's 0-3 (side
+     on, her old way, the free hand coming up off her side) on HAND 1, then a cut straight to 12-14 (side on, the new way): in 12 hand 2 has
+     just closed on the bar beside hand 1, toward the new way (the overlap is that one instant), 13-14 on HAND 2 as hand 1 comes off, and
+     on into the hand-over-hand reach. The front views (4-11, and the scoop clip) are her looking at the camera, so they are not used.
+     ponytail: no frame of her head turning toward the new way BEFORE her body exists (no back view), so the head does not lead yet */
+  /* (the scoop clip, hang-scoop-x3, stays in assets/clay but is not fetched while TURN_WHIP is on: add it back to TRICKS to use it) */
+  var TURN_WHIP = true, WHIP = [[0, 'L', 1], [1, 'L', 1], [2, 'L', 1], [3, 'L', 1], [12, 'R', 1], [13, 'L', 2], [14, 'L', 2]], WHIP_T = .3;   // frame, fist, hand; s for all of it
+  function whipStart(h) {
+    var sc = rig().sc, A = fig.dir, G1 = { x: h.G.x + h.off.x, y: h.G.y + h.off.y }, sep = (TURN_R[12] - TURN_L[12]) * sc;
+    var G2 = holdNear(h, G1.x - A * sep, 3) || holdNear(h, G1.x - A * sep, 10) || G1;   // hand 2 beside hand 1, the new way's side (else on the same letter)
+    G2 = { x: G2.x, y: G2.y };
+    h.turn = { t: 0, A: A, whip: true, G1: G1, G2: G2, th: h.th, om: h.om || 0, ph: 'b', from: { k: h.i, rot: h.r + (h.ri || 0) } };
+    h.mode = 'idle'; h.next = null; h.stop = false; h.fade = null; h.xf = null; h.mix = null; h.off = { x: 0, y: 0 }; h.u = 0; h.ri = 0;
+    return true;
+  }
+  function tickWhip(h, dt, sc) {
+    var tu = h.turn, A = tu.A, w0 = 2 * Math.PI / SWING.period, n = WHIP.length, step = WHIP_T / n;
+    tu.t += dt;
+    if (tu.t >= WHIP_T) return turnEnd(h);
+    var q = Math.min(n - 1, Math.floor(tu.t / step)), e = tu.t / step - q, W = WHIP[q], hand = W[2];
+    if (hand === 2 && tu.ph !== 'd') { tu.ph = 'd'; tu.th = A * turnTh(W[0], TURN_L[W[0]]) - tu.rho; tu.om = 0; }   // hand 1 off: she swings from hand 2
+    else if (W[0] === 12 && tu.ph === 'b') { tu.ph = 'c'; }   // hand 2 closes on the bar
+    for (var s3 = 0; s3 < 2; s3++) { tu.om += (-w0 * w0 * Math.sin(tu.th) - SWING.drive * tu.om) * dt / 2; tu.th += tu.om * dt / 2; }
+    var at = function (w) { var P = (w[1] === 'L' ? TURN_L : TURN_R)[w[0]], G = w[2] === 1 ? tu.G1 : tu.G2; return turnAt(w[0], P, G, A * turnTh(w[0], P) - tu.th, sc); };
+    var cur = at(W), mix = null, nx = q < n - 1 ? WHIP[q + 1] : null;
+    tu.rho = cur.rot;
+    if (tu.t < TURN_IN && tu.from) { var fi = tu.t / TURN_IN; fi = fi * fi * (3 - 2 * fi);   // the pose she was in fades out, pinned at hand 1 as it was
+      mix = { s: 'tarzan-x3', k: tu.from.k, a: 1 - fi, rot: tu.from.rot, tx: tu.G1.x - cur.x, ty: tu.G1.y - cur.y }; }
+    else if (nx && nx[0] !== 12 && e > .6) { var nn = at(nx), a = (e - .6) / .4; a = a * a * (3 - 2 * a); mix = { k: nn.k, a: a, rot: nn.rot, tx: nn.x - cur.x, ty: nn.y - cur.y }; }   // (into 12, a cut: the whip)
+    tu.pk = { s: 'hang-turn-x3', k: cur.k, anchor: 'hands', ax: cur.x, ay: cur.y, rot: cur.rot, pin: true, mix: mix, hold: hand === 1 ? (tu.ph === 'c' ? [tu.G1, tu.G2] : [tu.G1]) : [tu.G2], ph: tu.ph };
+    var f = CLAY.man['hang-turn-x3'][cur.k], cr = Math.cos(cur.rot), sr = Math.sin(cur.rot), mx = A * f.mx * sc, my = f.my * sc, fy = (f.oy + f.base) * sc;
+    h.P = { x: cur.x + mx * cr - my * sr, y: cur.y + mx * sr + my * cr };
+    fig.x = h.hx = h.P.x; fig.y = cur.y + mx * sr + fy * cr;
+    h.th = tu.th; h.om = tu.om;
+  }
+  function turnStart(h) {
+    if (TURN_WHIP) return whipStart(h);
+    var sc = rig().sc, A = fig.dir, k = TURN_CATCH, sep = (TURN_R[k] - TURN_L[k]) * sc, G1 = { x: h.G.x + h.off.x, y: h.G.y + h.off.y }, G2 = null, side = 0, scoop = false;
+    /* a letter right where hand 2 lands (the scoop first), else the nearest within 10px (the difference is taken up as hand 1 lets go) */
+    var ss = scoopIn() ? SCOOP_R * sc : 0;
+    [3, 10].some(function (r) {
+      if (ss && (G2 = holdNear(h, G1.x + A * ss, r))) { side = 1; scoop = true; sep = ss; return true; }
+      return [1, -1].some(function (s) { return (G2 = holdNear(h, G1.x + A * s * sep, r)) && (side = s); });
+    });
+    if (!G2) return false;
+    G2 = { x: G2.x, y: G2.y };
+    var dx = G2.x - G1.x, dy = G2.y - G1.y, rc = Math.atan2(A * side * dy, A * side * dx);   // her turn at the catch: the line through her fists runs through both letters
+    var P1 = side > 0 ? TURN_L : TURN_R, w0 = 2 * Math.PI / SWING.period;
+    var thC = A * turnTh(k, P1[k]) - rc, th0 = h.th, wt = w0 * TURN_B;
+    /* momentum: from wherever her swing has her (θ0, often trailing behind a hand that has just caught), she throws her weight so the
+       swing carries her centre of mass out to where hanging from hand 1 lifts hand 2 to the letter (θc) just as it gets there:
+       θ(t) = θ0·cos w0t + (θ'/w0)·sin w0t = θc at t = TURN_B */
+    var om = w0 * (thC - th0 * Math.cos(wt)) / Math.sin(wt);
+    h.turn = { t: 0, A: A, side: side, G1: G1, G2: G2, rc: rc, res: { x: G2.x - G1.x - A * side * sep * Math.cos(rc), y: G2.y - G1.y - A * side * sep * Math.sin(rc) },
+      th: th0, om: om, ph: 'b', from: { k: h.i, rot: h.r + (h.ri || 0) }, scoop: scoop };
+    if (scoop) { h.turn.r0 = A * CLAY.man[SCOOP][0].th - th0; h.turn.om = 0; }   // her lean as she was, easing into the clip's own swing
+    h.mode = 'idle'; h.next = null; h.stop = false; h.fade = null; h.xf = null; h.mix = null; h.off = { x: 0, y: 0 }; h.u = 0; h.ri = 0;
+    return true;
+  }
+  /* one frame of the turn: frame k pinned so its fist P (own px) is ON grip G, turned rho (the anchor is the clip's own pin) */
+  function turnAt(k, P, G, rho, sc, s) {
+    var d = fig.hang.turn.A;
+    return { s: s || 'hang-turn-x3', k: k, x: G.x - d * P * sc * Math.cos(rho), y: G.y - d * P * sc * Math.sin(rho), rot: rho };
+  }
+  /* b and c from the scoop clip (pinned at hand 1, its own swing), then d from the turn's frames 8-14 on hand 2 */
+  function tickScoop(h, dt, sc) {
+    var tu = h.turn, A = tu.A, SL = CLAY.man[SCOOP], TL = CLAY.man['hang-turn-x3'], w0 = 2 * Math.PI / SWING.period, last = TL.length - 1, SN = SL.length - 1, C = SCOOP_CATCH;
+    tu.t += dt;
+    if (tu.ph === 'b' && tu.t >= SCOOP_B) tu.ph = 'c';   // hand 2 on the letter
+    if (tu.ph === 'c' && tu.t >= SCOOP_B + SCOOP_C) { tu.ph = 'd'; tu.th = A * turnTh(SCOOP_D0, TURN_R[SCOOP_D0]) - tu.rc; tu.om = 0; }   // hand 1 lets go: she swings from hand 2
+    if (tu.ph === 'd' && tu.t >= SCOOP_B + SCOOP_C + TURN_D) return turnEnd(h);
+    var cur, nxt = null, e = 0, hold, G1r = { x: tu.G1.x + tu.res.x, y: tu.G1.y + tu.res.y };
+    if (tu.ph === 'b') {
+      var u = tu.t / SCOOP_B, kf = u * C, k = Math.min(C, Math.floor(kf)), w = Math.max(0, Math.min(1, (u - .55) / .45));
+      w = w * w * (3 - 2 * w); e = kf - k;
+      var r0 = tu.r0 * Math.exp(-tu.t / .15), rho = (1 - w) * r0 + w * tu.rc;   // the lean she had eases into the clip's own swing, landing level with the letters
+      cur = turnAt(k, 0, tu.G1, rho, sc, SCOOP); if (k < C) nxt = turnAt(k + 1, 0, tu.G1, rho, sc, SCOOP);
+      hold = [tu.G1];
+    } else if (tu.ph === 'c') {
+      var v = (tu.t - SCOOP_B) / SCOOP_C, kf1 = C + Math.min(1, v) * (SN - C), k1 = Math.min(SN, Math.floor(kf1)), vv = v * v * (3 - 2 * v);
+      var G = { x: tu.G1.x + tu.res.x * vv, y: tu.G1.y + tu.res.y * vv };   // (a letter a few px off where hand 2 lands: hand 1 gives way that much)
+      e = kf1 - k1; cur = turnAt(k1, 0, G, tu.rc, sc, SCOOP); if (k1 < SN) nxt = turnAt(k1 + 1, 0, G, tu.rc, sc, SCOOP);
+      hold = [G, tu.G2];
+    } else {
+      for (var s3 = 0; s3 < 2; s3++) { tu.om += (-w0 * w0 * Math.sin(tu.th) - SWING.drive * tu.om) * dt / 2; tu.th += tu.om * dt / 2; }
+      var u2 = (tu.t - SCOOP_B - SCOOP_C) / TURN_D, kf2 = SCOOP_D0 + u2 * (last - SCOOP_D0), k2 = Math.min(last, Math.floor(kf2));
+      e = kf2 - k2;
+      cur = turnAt(k2, TURN_R[k2], tu.G2, A * turnTh(k2, TURN_R[k2]) - tu.th, sc);
+      if (k2 < last) nxt = turnAt(k2 + 1, TURN_R[k2 + 1], tu.G2, A * turnTh(k2 + 1, TURN_R[k2 + 1]) - tu.th, sc);
+      hold = [tu.G2];
+    }
+    var mix = null, td = tu.t - SCOOP_B - SCOOP_C;
+    if (tu.t < TURN_IN && tu.from) { var fi = tu.t / TURN_IN; fi = fi * fi * (3 - 2 * fi);   // the pose she was in fades out, pinned at hand 1 as it was
+      mix = { s: 'tarzan-x3', k: tu.from.k, a: 1 - fi, rot: tu.from.rot, tx: tu.G1.x - cur.x, ty: tu.G1.y - cur.y }; }
+    else if (tu.ph === 'd' && td < TURN_IN) { var fd = td / TURN_IN; fd = fd * fd * (3 - 2 * fd);   // the scoop's last frame fades into the turn's, both on hand 2
+      mix = { s: SCOOP, k: SN, a: 1 - fd, rot: tu.rc, tx: G1r.x - cur.x, ty: G1r.y - cur.y }; }
+    else if (nxt && e > .65) { var a = (e - .65) / .35; a = a * a * (3 - 2 * a); mix = { s: nxt.s, k: nxt.k, a: a, rot: nxt.rot, tx: nxt.x - cur.x, ty: nxt.y - cur.y }; }   // stepped like clay, each pose fading into the next only at its end (the scoop moves a lot between poses: a longer fade showed two of her)
+    tu.pk = { s: cur.s, k: cur.k, anchor: 'hands', ax: cur.x, ay: cur.y, rot: cur.rot, pin: true, mix: mix, hold: hold, ph: tu.ph };
+    var f = CLAY.man[cur.s][cur.k], cr = Math.cos(cur.rot), sr = Math.sin(cur.rot), mx = A * f.mx * sc, my = f.my * sc, fy = (f.oy + f.base) * sc;
+    h.P = { x: cur.x + mx * cr - my * sr, y: cur.y + mx * sr + my * cr };
+    fig.x = h.hx = h.P.x; fig.y = cur.y + mx * sr + fy * cr;
+    if (tu.ph !== 'd') { tu.th = Math.atan2(h.P.x - tu.G1.x, h.P.y - tu.G1.y); }   // (her swing angle about hand 1, for a release mid-turn)
+    h.th = tu.th; h.om = tu.om;
+  }
+  function tickTurn(h, dt, sc) {
+    if (h.turn.whip) return tickWhip(h, dt, sc);
+    if (h.turn.scoop) return tickScoop(h, dt, sc);
+    var tu = h.turn, A = tu.A, TL = CLAY.man['hang-turn-x3'], w0 = 2 * Math.PI / SWING.period, last = TL.length - 1, C = TURN_CATCH;
+    var P1 = tu.side > 0 ? TURN_L : TURN_R, P2 = tu.side > 0 ? TURN_R : TURN_L;
+    tu.t += dt;
+    if (tu.ph === 'b' && tu.t >= TURN_B) { tu.ph = 'c'; tu.th = A * turnTh(C, P1[C]) - tu.rc; tu.om = 0; }   // hand 2 on: both hands hold her still
+    if (tu.ph === 'c' && tu.t >= TURN_B + TURN_C) { tu.ph = 'd'; tu.th = A * turnTh(C, P2[C]) - tu.rc; tu.om = 0; }   // hand 1 lets go: she swings from hand 2
+    if (tu.ph === 'd' && tu.t >= TURN_B + TURN_C + TURN_D) return turnEnd(h);
+    if (tu.ph !== 'c') for (var s3 = 0; s3 < 2; s3++) { tu.om += (-w0 * w0 * Math.sin(tu.th) - SWING.drive * tu.om) * dt / 2; tu.th += tu.om * dt / 2; }
+    var cur, nxt = null, e = 0, hold, G;
+    if (tu.ph === 'b') {
+      var u = tu.t / TURN_B, kf = u * C, k = Math.min(C, Math.floor(kf)), w = Math.max(0, Math.min(1, (u - .45) / .55));
+      w = w * w * (3 - 2 * w); e = kf - k;
+      var rho = function (q) { return (1 - w) * (A * turnTh(q, P1[q]) - tu.th) + w * tu.rc; };   // the pendulum's, landing exactly level with the letters
+      cur = turnAt(k, P1[k], tu.G1, rho(k), sc); if (k < C) nxt = turnAt(k + 1, P1[k + 1], tu.G1, rho(k + 1), sc);
+      hold = [tu.G1];
+    } else if (tu.ph === 'c') {
+      var v = (tu.t - TURN_B) / TURN_C; v = v * v * (3 - 2 * v);
+      G = { x: tu.G1.x + tu.res.x * v, y: tu.G1.y + tu.res.y * v };   // (a letter a few px off where hand 2 lands: hand 1 gives way that much as it lets go)
+      cur = turnAt(C, P1[C], G, tu.rc, sc); hold = [G, tu.G2];
+    } else {
+      var u2 = (tu.t - TURN_B - TURN_C) / TURN_D, kf2 = C + u2 * (last - C), k2 = Math.min(last, Math.floor(kf2));
+      e = kf2 - k2;
+      cur = turnAt(k2, P2[k2], tu.G2, A * turnTh(k2, P2[k2]) - tu.th, sc);
+      if (k2 < last) nxt = turnAt(k2 + 1, P2[k2 + 1], tu.G2, A * turnTh(k2 + 1, P2[k2 + 1]) - tu.th, sc);
+      hold = [tu.G2];
+    }
+    var mix = null;
+    if (tu.t < TURN_IN && tu.from) { var fi = tu.t / TURN_IN; fi = fi * fi * (3 - 2 * fi);   // the pose she was in fades out, pinned at hand 1 as it was
+      mix = { s: 'tarzan-x3', k: tu.from.k, a: 1 - fi, rot: tu.from.rot, tx: tu.G1.x - cur.x, ty: tu.G1.y - cur.y }; }
+    else if (nxt && e > .01) { var a = e * e * (3 - 2 * e); mix = { k: nxt.k, a: a, rot: nxt.rot, tx: nxt.x - cur.x, ty: nxt.y - cur.y }; }   // frame to frame, a cross-fade, never a pop
+    tu.pk = { s: 'hang-turn-x3', k: cur.k, anchor: 'hands', ax: cur.x, ay: cur.y, rot: cur.rot, pin: true, mix: mix, hold: hold, ph: tu.ph };
+    /* her body and feet, from the frame as drawn */
+    var f = TL[cur.k], cr = Math.cos(cur.rot), sr = Math.sin(cur.rot), mx = A * f.mx * sc, my = f.my * sc, fy = (f.oy + f.base) * sc;
+    h.P = { x: cur.x + mx * cr - my * sr, y: cur.y + mx * sr + my * cr };
+    fig.x = h.hx = h.P.x; fig.y = cur.y + mx * sr + fy * cr;
+    h.th = tu.th; h.om = tu.om;
+  }
+  /* e: facing the new way from hand 2; the swing goes on in the hand-over-hand clip (or she just hangs, if she's there) */
+  function turnEnd(h) {
+    var tu = h.turn, T = TZ, L = T.L, want = h.turnWant;
+    fig.dir = -tu.A; h.turn = null; h.G = tu.G2; h.hands = [tu.G2, tu.G2]; h.off = { x: 0, y: 0 }; h.th = tu.th; h.om = tu.om; h.u = 0; h.ri = 0; h.mix = null; h.xf = null;
+    var onward = want === fig.dir && T.hoh && tzHold(h, 'S');
+    if (onward) { h.mode = 'go'; h.i = T.hoh.go; h.next = onward; h.stop = false; h.fade = null; }   // the reach the new way, already under way
+    else { h.mode = 'idle'; h.i = 0; }
+    h.r = fig.dir * L[h.i].th - h.th;   // her centre of mass where the swing has it
+    tickHang(0);
+  }
   function tickHang(dt) {
     var h = fig.hang, R = rig(), T = tz(), sc = R.sc;
     h.t += dt; h.L = R.L;
-    if (h.turn && (h.turn.t += dt) >= .32) h.turn = null;   // turning on her arm (clayPick)
     if (!T) { fig.x = h.G.x; fig.y = h.G.y + R.soles; return; }
     var L = T.L;
     /* where she's going: the arrows; else the click or tap along the line; else, on a laptop, the cursor */
     if (h.pin && Math.abs(mouse.x - h.pin.x) > 2 * (CLAY.ready ? CLAY.H : 120)) { h.pin = null; h.settle = false; }   // the cursor has moved well away: following again
     var gx = fig.drag && fig.drag.key ? (fig.drag.vx > 0 ? 1e6 : -1e6) : h.goal != null ? h.goal : !touchMode && performance.now() - keyAt > 4000 && !CLAY.away && !h.pin ? mouse.x : null;
     if (gx != null) gx = Math.max(h.bar.x1, Math.min(h.bar.x2, gx));
-    var near = T.step.B * sc * .55, want = h.auto || gx == null || Math.abs(gx - h.G.x) < near ? 0 : gx > h.G.x ? 1 : -1;
+    var near = T.step.B * sc * (down && down.moved ? .2 : .55), want = h.auto || gx == null || Math.abs(gx - h.G.x) < near ? 0 : gx > h.G.x ? 1 : -1;
     if (!want && h.goal != null && h.mode === 'idle') h.goal = null;   // there
     h.rest = want ? 0 : h.rest + dt;
+    /* THE TURN STARTS AT ONCE (her 2026-11-23, dragging along the bars and back: "the animation has to like pause and think. It doesn't
+       just do the swift turn with my cursor"): it used to wait for the reach under way to finish, a stop, a 0.45s settle into the dead
+       hang and the swing to pass the bottom. Now from whatever she's doing, the moment a hand is on a letter (tickTurn) */
+    h.turnWant = want;
+    if (h.turn) { if (CLAY.man && CLAY.man['hang-turn-x3']) { tickTurn(h, dt, sc); return; } h.turn = null; }
+    if (want && want !== fig.dir && CLAY.ready && turnReady() && !turnWait(h) && turnStart(h)) { tickTurn(h, 0, sc); return; }
     var w0 = 2 * Math.PI / SWING.period, f = L[h.i];
     if (h.mode === 'go') {
       /* TRAVELLING: the clip's own swing, played on her pendulum's clock (its swing took ~1.67s; hers takes SWING.period) */
@@ -1708,7 +2116,7 @@
       /* HANGING: a pendulum. At rest her centre of mass is straight under her hand; she swings only with momentum */
       var th0 = h.th, c = want ? SWING.drive : h.settle ? SWING.rest * 5 : SWING.rest;   // told to stop: the swing dies down quickly, never a freeze
       for (var s3 = 0; s3 < 2; s3++) { h.om += (-w0 * w0 * Math.sin(h.th) - c * h.om) * dt / 2; h.th += h.om * dt / 2; }
-      if (want && want !== fig.dir && Math.abs(h.th) < .08 && Math.abs(L[h.i].th) < .25) { fig.dir = want; }   // (the 0.32s squeeze-'turn' is off: her 2026-11-23 "looks like you did some picture stuff"; a real turn needs new frames, her call)   // she turns as she passes under her hand, where facing the other way changes the least
+      if (want && want !== fig.dir && Math.abs(h.th) < .08 && h.om * want > -.1 && Math.abs(L[h.i].th) < .25) fig.dir = want;   // (no turn frames, or no letter for hand 2: she turns as she passes under her hand)
       if (want && (th0 < 0) !== (h.th < 0) && h.om * want > 0 && Math.abs(h.om) / w0 < SWING.amp) h.om += want * Math.min(SWING.kick, (SWING.amp - Math.abs(h.om) / w0) * w0);   // the end of the line: she pumps the swing instead
       /* the frame from the same hold whose angle and direction of swing match hers */
       var best = h.i, bs = 1e9;
@@ -1730,7 +2138,7 @@
       else if (onward && Math.abs(h.th) < .03 && Math.abs(h.om) < .15) h.om += want * SWING.kick;
       if (h.auto && h.t > .5 && (Math.abs(h.th) < .12 && Math.abs(h.om) < .8 || h.t > 1.6)) {   // her route climbs on through this line
         var tg0 = fig.target, wp0 = fig.waypoint; h.auto = null;
-        if (muscleUp()) { if (tg0) { fig.target = tg0; fig.waypoint = wp0; } return; }
+        if (muscleUp()) return;   // she stands on it (fig.muStand); her route used to carry on into the next bar
       }
     }
     f = L[h.i];
@@ -1989,7 +2397,8 @@
   function force(v) { return Math.max(0.25, Math.min(1.8, Math.abs(v || 0) / V_REF)); }
   function fallSpeed(h) { return Math.sqrt(2 * G * Math.max(0, h)); }
   var herH = function () { return CLAY.ready ? CLAY.H : 120; };
-  function touchdown(v) { var k = force(v == null ? V_REF : v); sfx('step', 0.42 * k, 1.08); setTimeout(function () { sfx('step', 0.27 * k, 1.14); }, 70); }   // same muffled B sound, two feet
+  /* ONE BOOM WHEN BOTH FEET LAND TOGETHER (her 2026-11-24: "whenever I'm landing with 2 feet at the same time, it's one boom. But if I'm doing one of my feet at a time, then it's boom boom ... it literally is just supposed to be about when my feet are touching the floor"): jumps, flips and the star land on both feet at once = one sound; staggered feet (the cartwheel) use foot() per foot in CUES */
+  function touchdown(v) { var k = force(v == null ? V_REF : v); sfx('step', 0.5 * k, 1.08); }
   function foot(liftH) { return function () { sfx('step', 0.42 * force(fallSpeed(liftH * herH())), 1.08); }; }   // ONE foot, on the frame it meets the floor, from the height it swung down
   /* a celebration's flight is a true gravity arc: lift = 4·P·u(1−u) over u = (ct − a)/(b − a), off the floor exactly from the
      take-off frame a to the landing frame b. Its take-off and landing speed is the arc's slope at either end, 4·P·H / T,
@@ -2035,6 +2444,7 @@
 
   var stWas = 'idle';
   function advance(dt) {
+    hangTouch(fig.state === 'hang' && touchMode);
     crouchFirst(stWas);   // a launch set outside the tick (the JUMP! box) loads first too, before the whoosh can hear it
     sfxTick();   // first: a launch set by a click or last frame's hop still has its full upward speed
     cloudMagnet();
@@ -2136,6 +2546,12 @@
      Flora stop-motion poses of her (assets/clay/, made in clay-character/), chosen from the
      state and its timers, stepped like stop motion, mirrored by dir. The stick figure stays
      as the fallback until the frames load, and under ?stick. */
+  /* HANG LOOK, a LOCAL review switch (her 2026-11-23: "The hanging avatar feels like a different treatment and like a different like visual
+     quality than the normal avatar"): html[data-hang] is set only by build.js's local-review block (never on Vercel). 'colour': the hang
+     sheets (tarzan-x3, hang-turn-x3) from assets/clay/graded/, colour-matched to walk/run/idle; 'step': that, and a change of pose while
+     she hangs is a cut, like her walk, instead of the two poses blended (clayFigure); the swing's rotation and her pinned hands as they are */
+  var HANG_LOOK = document.documentElement.getAttribute('data-hang') || '', HANG_STEP = HANG_LOOK === 'step';
+  function HANG_DIR(f) { return HANG_LOOK && /^(tarzan-x3|hang-turn-x3)-\d+\.png$/.test(f) ? 'graded/' : ''; }
   var CLAY = { on: !/[?&]stick\b/.test(location.search), ready: false, man: null, img: {}, hx: {}, ph: 0, run: false, lastX: null, H: matchMedia('(max-width:760px)').matches ? 92 : 113, sk: 1, want: 0, skT: 0 };   // a little smaller on phones (her ask)
   function loadClay() {
     if (!CLAY.on) return;
@@ -2156,13 +2572,13 @@
          A frame not in yet is drawn as the nearest one of the same move that is (clayFigure), running borrows walking,
          a trick waits for its frames, and a browser without WebP gets the PNG. The unused clips (cartwheel-x3, dance-x3,
          the rest of idle-wave-sign-x3) are never fetched. */
-      function src(f) { return dir + (f === 'idle-wave-sign-0.png' ? f : f.replace(/\.png$/, '.webp')) + ver; }
+      function src(f) { return dir + HANG_DIR(f) + (f === 'idle-wave-sign-0.png' ? f : f.replace(/\.png$/, '.webp')) + ver; }
       var pend = {};   // one load per frame, shared: a sheet is "in" only once its images really are, whoever asked first
       function getImg(f) {
         return pend[f] || (pend[f] = new Promise(function (res) {
           var im = new Image(); im.decoding = 'async';
           im.onload = function () { (im.decode ? im.decode() : Promise.resolve()).then(res, res); };   // decoded off the main thread BEFORE its first draw, or that draw decodes it, mid-move
-          im.onerror = function () { if (/\.webp/.test(im.src)) im.src = dir + f + ver; else res(); };
+          im.onerror = function () { if (/\.webp/.test(im.src)) im.src = dir + HANG_DIR(f) + f + ver; else res(); };
           im.src = src(f); CLAY.img[f] = im;
         }));
       }
@@ -2177,7 +2593,7 @@
       function pump() { if (busy || !Q.length) return; busy = true; var st = Q.shift(); loadSet(st[0], function () { busy = false; if (st[1]) st[1](); pump(); }); }
       function queue(st, front) { if (front) Q.unshift(st); else Q.push(st); pump(); }
       function sheet(k) { return [[k], function () { CLAY.sheetIn[k] = true; if (CLAY.onSheet) CLAY.onSheet(); }]; }
-      var TRICKS = ['tarzan-x3', 'cartwheel-in', 'cartwheel-50', 'backflip-x3', 'star-bow-x3'];   // tarzan-x3: the Flora hand-over-hand clip (2026-11-23); hang-swing-climb-x3 is no longer fetched   // (monkey-x3 retired 2026-11-22: the rigged hang goes hand over hand)
+      var TRICKS = ['tarzan-x3', 'hang-turn-x3', 'wall-rebound', 'cartwheel-in', 'cartwheel-50', 'backflip-x3', 'star-bow-x3'];   // tarzan-x3: the Flora hand-over-hand clip (2026-11-23); hang-swing-climb-x3 is no longer fetched   // (monkey-x3 retired 2026-11-22: the rigged hang goes hand over hand)
       var net = navigator.connection, lean = !!(net && (net.saveData || /2g|3g/.test(net.effectiveType || '')));
       CLAY.sheetIn = {};
       CLAY.tricks = function (first) {
@@ -2258,7 +2674,9 @@
         return { s: 'walk-x3', k: Math.floor(CLAY.ph), lean: CLAY.lean };   // x3: a frame every third of the old stride step
       case 'air': { var vy = fig.vy || 0;
         /* on the wall (tickWall): her climb frame 6 facing it, the raised fist and the bent knee on it, pinned by that fist */
-        if (fig.wall) return { s: 'climb-x3', k: WALL_F, anchor: 'hands', ax: fig.wall.hx, ay: fig.wall.hy, gx: 68, gy: WALL_GY, rot: -fig.wall.side * .05 };   // (leant in a touch about the fist, so the knee meets the wall too)
+        if (fig.wall) { var Wl = fig.wall, w0 = wallF(), wf = w0.s === WALL_S && Wl.t >= .55 - WALL_COIL ? wallF(1) : w0;   // sliding; coiled the last moment before the push
+          return { s: wf.s, k: wf.k, anchor: 'hands', ax: Wl.hx, ay: Wl.hy, gx: wf.gx, gy: wf.gy, rot: -Wl.side * (wf.rot || 0), flip: Wl.side !== fig.dir, zoom: wf.s === WALL_S ? WALL_Z : 1 }; }   // (both pinned at her hand on the wall)
+        if (fig.wallPush && CLAY.man[WALL_S]) { var kf = CLAY.man[WALL_S][2]; return { s: WALL_S, k: 2, anchor: 'hands', ax: fig.x, ay: groundY - CLAY.H * .5, gx: kf.mx - kf.ox, gy: kf.my - kf.oy, flip: fig.wallPush.side !== fig.dir, zoom: WALL_Z }; }   // the push-off: her middle where the air frames put it, still facing us
         if (fig.flip) return { s: 'jump-land-slide-x3', k: 7, spin: (fig.flip.rot || 0) * (fig.flip.dir || 1) };
         /* falling, the last 60px to the ground slide the pin from the frame's middle to its feet, so they meet the floor
            exactly (#99: pinned by the middle all the way, the feet sat 9px off and snapped down as she touched) */
@@ -2267,11 +2685,8 @@
       case 'hang': {   /* a whole Tarzan frame pinned at her fist, turned only as the pendulum needs (tickHang) */
         var h = fig.hang;
         if (!tz()) return { s: 'hang-swing-climb-x3', k: 0, anchor: 'hands', ax: h.G.x, ay: h.G.y, gx: HANGF[0].gx, gy: HANGF[0].gy };
-        /* TURNING ON HER ARM (her 2026-11-23, #961: "a visual transition of when she switches directions, like she's like swinging on
-           her arm or like turning on her arm rather than kind of just like flipping"): she turns about the arm she hangs by, her
-           body going edge-on and round to face the other way over 0.32s (her width through cos), never a mirror-flip in one frame */
-        var sx = 1; if (h.turn) { var tu = Math.min(1, h.turn.t / .32); var cu = -Math.cos(Math.PI * tu * tu * (3 - 2 * tu)); sx = (cu < 0 ? -1 : 1) * (.3 + .7 * Math.abs(cu)); }   // (a body has depth: edge-on she is still ~a third of her width)
-        return { s: 'tarzan-x3', k: h.i, anchor: 'hands', ax: h.G.x + h.off.x, ay: h.G.y + h.off.y, rot: h.r + (h.ri || 0), pin: true, mix: h.mix, sx: sx };
+        if (h.turn && h.turn.pk) return h.turn.pk;   // the turn round one hand (tickTurn), pinned at whichever fist holds
+        return { s: 'tarzan-x3', k: h.i, anchor: 'hands', ax: h.G.x + h.off.x, ay: h.G.y + h.off.y, rot: h.r + (h.ri || 0), pin: true, mix: h.mix };
       }
       case 'mantle': { var m = fig.mantle, t = m.t;
         if (t < MU_PULL) return { s: 'climb-x3', k: m.up ? muFrame(m) : 9 + Math.min(5, Math.floor(t / MU_PULL * 6)), anchor: 'hands', ax: m.up ? muHandX(m) : m.x1, gx: m.up ? CLIMB_FIST[muFrame(m)] : undefined,
@@ -2329,9 +2744,29 @@
       return (CLAY.hx[sheet] = hs);
     } catch (e) { return (CLAY.hx[sheet] = false); }
   }
+  /* running on the divider's curve she goes square to the line, her body along its normal (pivoting on her feet), never more
+     than RAMP_MAX; eased in and out so stepping onto the curve is not a snap. IN MOTION ONLY, like her lean (her 2026-10-26, #91):
+     stopped on the curve she settles to half of it (all of it standing still, at 35°, she read as falling over; bolt upright, her
+     downhill foot hung in the air: the 2026-11-23 check). SLOPE_TILT 0 = upright in motion too. footDrop() plants the feet */
+  var slopeA = 0;
+  function slopeTilt() {
+    var st = fig.state, on = ramp && (st === 'move' || st === 'idle') && onCurve(fig.x) && Math.abs(fig.y - floorAt(fig.x)) < 1.5;
+    var t = on ? Math.max(-RAMP_MAX, Math.min(RAMP_MAX, Math.atan(slopeAt(fig.x)))) * SLOPE_TILT * (st === 'move' && Math.abs(fig.vx || 0) >= 12 ? 1 : .5) : 0;
+    slopeA += (t - slopeA) * .35; if (Math.abs(slopeA - t) < .002) slopeA = t;
+    return slopeA;
+  }
+  /* SHE NEVER FLOATS ON THE CURVE: her soles span ~±6.5% of her height either side of her middle; turned by her tilt, if the line
+     under either one is lower than that foot, her drawing comes down until it touches (the other foot presses into the line) */
+  function footDrop(px, sa) {
+    if (!ramp || !onCurve(px) || (fig.state !== 'move' && fig.state !== 'idle') || Math.abs(fig.y - floorAt(px)) > 1.5) return 0;
+    var f = CLAY.H * .065, c = Math.cos(sa), sn = Math.sin(sa), d = 0;
+    for (var k = -1; k <= 1; k += 2) d = Math.max(d, floorAt(px + k * f * c) - (fig.y + k * f * sn));
+    return d;
+  }
   function clayFigure(px, py, dir, o) {
+    var sa = slopeTilt();   // (every frame, so it is never stale from before a jump)
     var groundY = py + LEG - 0.7, pk = clayPick(o, groundY), list = CLAY.man[pk.s], f = list && list[pk.k % list.length];
-    CLAY.pk = pk; CLAY.pts = pk.anchor === 'hands' ? { hands: [{ x: pk.ax, y: pk.ay }] } : null;
+    CLAY.pk = pk; CLAY.pts = pk.anchor === 'hands' ? { hands: pk.hold || [{ x: pk.ax, y: pk.ay }] } : null;
     if (!f) return false;
     var im = CLAY.img[f.f];
     if ((!im || !im.complete || !im.naturalWidth) && list) {   // not in yet: the nearest earlier frame of the same move that is, else the walk's (for a run)
@@ -2358,11 +2793,15 @@
     var sc = CLAY.H / CLAY.man._ref, d = dir * (pk.flip ? -1 : 1);
     ctx.save();
     if (pk.anchor === 'hands' && pk.pin) {   /* a Tarzan frame: placed by its own pin to the fist */
-      var mf = pk.mix && list[pk.mix.k], mi = mf && CLAY.img[mf.f], ga = ctx.globalAlpha;
-      if (mi && mi.complete && mi.naturalWidth) {   // cross-fading into the next pose: both added ('lighter') on the clear canvas, weights summing to 1
+      var mf = pk.mix && (pk.mix.s ? CLAY.man[pk.mix.s] : list)[pk.mix.k], mi = mf && CLAY.img[mf.f], ga = ctx.globalAlpha;
+      if (mi && mi.complete && mi.naturalWidth && HANG_STEP) {   // HANG LOOK 'step': only the pose that outweighs the other, each where it is pinned
+        ctx.translate(pk.ax, pk.ay);
+        if (pk.mix.a < .5) { if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(im, f.ox, f.oy); }
+        else { if (pk.mix.tx || pk.mix.ty) ctx.translate(pk.mix.tx || 0, pk.mix.ty || 0); ctx.rotate(pk.mix.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(mi, mf.ox, mf.oy); }
+      } else if (mi && mi.complete && mi.naturalWidth) {   // cross-fading into the next pose: both added ('lighter') on the clear canvas, weights summing to 1
         ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ga * (1 - pk.mix.a);
         ctx.translate(pk.ax, pk.ay); ctx.save(); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(im, f.ox, f.oy); ctx.restore();
-        ctx.globalAlpha = ga * pk.mix.a; if (pk.mix.tx) ctx.translate(pk.mix.tx, pk.mix.ty); ctx.rotate(pk.mix.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(mi, mf.ox, mf.oy);
+        ctx.globalAlpha = ga * pk.mix.a; if (pk.mix.tx || pk.mix.ty) ctx.translate(pk.mix.tx || 0, pk.mix.ty || 0); ctx.rotate(pk.mix.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(mi, mf.ox, mf.oy);
       } else { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); ctx.scale(sc * d * (pk.sx || 1), sc); ctx.drawImage(im, f.ox, f.oy); }
     }
     else if (pk.anchor === 'hands') { ctx.translate(pk.ax, pk.ay); if (pk.rot) ctx.rotate(pk.rot); var z = pk.zoom || 1; ctx.scale(sc * d * z, sc * z); ctx.drawImage(im, -(pk.gx != null ? pk.gx : f.gx != null ? f.gx : f.cx), -(pk.gy != null ? pk.gy : f.gy || 0)); }   /* gx/gy: the gripping fist, so it lands ON the letter */
@@ -2371,7 +2810,7 @@
        feet-pinning dropped her head ~50px every time the frame changed (the "glitch when I jump") */
     else if (pk.mid) { var w = 1 - (pk.feet || 0); ctx.translate(px, groundY - CLAY.H * .5 * w); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx, -f.base + f.h * .5 * w); }
     else { var bo = pk.s === 'run-x3' && bodyOff(pk.s);
-      ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx - (bo ? bo[pk.k % bo.length] : 0), -f.base); }   /* lean pivots on the feet, top toward travel */
+      ctx.translate(px, groundY - (pk.lift || 0) * CLAY.H + footDrop(px, sa)); if (sa) ctx.rotate(sa); if (pk.lean) ctx.rotate(pk.lean * dir); ctx.scale(sc * d, sc); ctx.drawImage(im, -f.cx - (bo ? bo[pk.k % bo.length] : 0), -f.base); }   /* lean pivots on the feet, top toward travel */
     ctx.restore();
     return true;
   }
@@ -2789,7 +3228,7 @@
   function groundBelow(x, y, d) {
     var best = null;
     for (var k = -6; k <= 6; k += 6) { var t = groundTop(x + k, y - 2, d + 2); if (t != null && t >= y - 2 && (best == null || t < best)) best = t; }
-    return best != null ? best : floorY - y <= d ? floorY : null;
+    var fa = floorAt(x); return best != null ? best : fa - y <= d ? fa : null;
   }
   function rideTarget() {
     if (!chRide.length || fig.state === 'sign') return 0;
@@ -2958,6 +3397,7 @@
     hide: function (on) { fig.hidden = !!on; draw(performance.now()); if (on) { fig.target = null; fig.waypoint = null; fig.vx = 0; } },
     solid: function (x, y) { return solid(x, y); },
     groundTop: function (x, y) { return groundTop(x, y, H); },
-    floor: function () { return { y: floorY, x1: floorX1, x2: floorX2, w: W }; },   // QA: the divider she runs on, and its ends
+    floor: function () { return { y: floorY, x1: floorX1, x2: floorX2, w: W, ramp: ramp && { x1: ramp.x1, x2: ramp.x2, eL: ramp.eL, eR: ramp.eR, topL: ramp.topL, topR: ramp.topR, limL: ramp.limL, limR: ramp.limR } }; },   // QA: the divider she runs on, and its ends (and its curved ends, if drawn)
+    go: function () { start(); }, reach: function () { return reach(); }, floorAt: function (x) { return floorAt(x); }, tilt: function (k) { if (k != null) SLOPE_TILT = k; return slopeA; }, drop: function () { return footDrop(fig.x, slopeA); },   // QA: the line's top at x; the slope tilt (0 = upright)
   };
 })();

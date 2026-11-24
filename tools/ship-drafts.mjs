@@ -55,6 +55,8 @@ for (const [url, draft] of Object.entries(MAP)) {
   h = cut(h, /<script>\(function\(\)\{var st=document\.querySelector\('\.rv-stack'\)[\s\S]*?<\/script>/, 'WHAT SHIPPED switches');
   h = cut(h, /<script>\(function\(\)\{var h=document\.documentElement;document\.querySelectorAll\('\.rv-sw2'\)[\s\S]*?<\/script>/, 'rv-sw2 painter');
   h = cut(h, '<div class="rv-stack"></div>', 'rv-stack');
+  h = cut(h, /<script>\/\* PHONE-DS review switch[\s\S]*?<\/script>\n?/, 'PHONE switch (local review of the phone design system)');
+  h = cut(h, /<script>\/\* BA hint lab[\s\S]*?<\/script>\n?/, 'BA hint lab (local only)', true);
   h = cut(h, '<div class="tt-stack"></div>', 'tt-stack', true);
   h = cut(h, /<script>document\.querySelectorAll\('\.tt-sw:not\(\.grn-sw\)'\)[\s\S]*?<\/script>/, 'tt-sw painter', true);
   if (h.includes('<div class="tt-sw" role="group" aria-label="Section title drafts to compare">')) {
