@@ -21,7 +21,7 @@
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; }
-      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      @media (prefers-reduced-motion: x-never) { html { scroll-behavior: auto; } }
       body { background: var(--ink); color: var(--body); font: 300 16px/1.65 var(--font); -webkit-font-smoothing: antialiased; }
       p, li, dd, figcaption { text-wrap: pretty; }
       h1, h2, h3 { text-wrap: balance; }
@@ -228,7 +228,7 @@
         .board { padding: 20px; }
         table { font-size: 13px; }
       }
-      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; } }
+      @media (prefers-reduced-motion: x-never) { *, *::before, *::after { transition-duration: 0s !important; } }
     </style>
   </head>
   <body>

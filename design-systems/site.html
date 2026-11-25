@@ -478,7 +478,7 @@
           <h3>Motion rules</h3>
           <table class="spec">
             <tr><th style="width: 220px">Rule</th><th>Specification</th></tr>
-            <tr><td>Reduced motion</td><td><code>prefers-reduced-motion</code> disables the cursor, the theme animation, reveals and the creatures — plus a fail-safe that forces all content visible even if animations never run. On iOS, Reduce Motion also blocks video autoplay: treat "everything broken" reports as this first.</td></tr>
+            <tr><td>Reduced motion</td><td>Ignored on purpose: full motion for everyone, even with the phone's Reduce Motion on (global or per-app). Her decision, 2026-11-25: visitors come once, and her mom's iPhone looked broken with the site obeying it. No motion switch for now. Clips autoplay muted; a clip a phone refuses (Low Power Mode) starts on the first touch.</td></tr>
             <tr><td>Autoplay</td><td>Panel clips always autoplay (muted, looped, in-view). Low Power Mode vetoes <code>play()</code> — retry in-view clips on <code>touchend</code>. Videos pause off-screen.</td></tr>
             <tr><td>Nothing floats</td><td>Flat controls never drift or bob (contradicts "solid fills only"). The only idle motion is the glass float and the creatures.</td></tr>
             <tr><td>Delight is physical</td><td>The koi's leap is a true projectile arc out of the pot (every pot click re-launches); the stick figure grips real glyph outlines, feet snap-planted — never floating, no fake holds. New characters follow the same law: real physics, real anchors.</td></tr>

@@ -86,7 +86,7 @@
         -webkit-font-smoothing: antialiased;
       }
       html { scroll-behavior: smooth; }
-      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      @media (prefers-reduced-motion: x-never) { html { scroll-behavior: auto; } }
       p, li, figcaption, .rule-card span, .swatch__use, .say, .cut, .type-sample__meta { text-wrap: pretty; }
       h1, h2, h3, h4 { text-wrap: balance; }
       .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
@@ -486,7 +486,7 @@
         .range { width: 100%; }
         figure.is-phone { max-width: 100%; }
       }
-      @media (prefers-reduced-motion: reduce) {
+      @media (prefers-reduced-motion: x-never) {
         .range__thumb, .night::before, .night__card, .night__stars, .widget__num { transition: none !important; }
         .mic.is-on::after { animation: none; }
       }
@@ -1194,7 +1194,7 @@
     </div>
     <script>
       (() => {
-        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const reduce = matchMedia('(prefers-reduced-motion: x-never)').matches;
 
         /* nav: mark the section in view */
         const links = Array.from(document.querySelectorAll('nav a[href^="#"]'));
