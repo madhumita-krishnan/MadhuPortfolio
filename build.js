@@ -4408,6 +4408,16 @@ try{const rp=JSON.parse(fs.readFileSync(path.join(ROOT,'assets','resume-page.jso
    design-systems/index.html mirrors the workshop hub (landing → rules → system),
    and the rules doc IS this README — one file, never two copies to drift. */
 copyDir(path.join(ROOT, 'design-systems'), path.join(DIST, 'design-systems'));
+/* SITE CHECK (her 2026-11-25: the check must work "regardless" of the Mac): m--k.me/check opens the real home page with ?vcheck; only
+   then does the home page load check/probe.js FIRST (before any of its own scripts), which reports to the cloud collector api/check.js.
+   Normal visits run one regex and nothing else. */
+copyDir(path.join(ROOT, 'check'), path.join(DIST, 'check'));
+{
+  const ip = path.join(DIST, 'index.html'); let h = fs.readFileSync(ip, 'utf8');
+  const LOADER = '<script>try{if(/[?&]vcheck(=|&|$)/.test(location.search)||localStorage.getItem("vcheck-pending"))document.write(\'<script src="/check/probe.js"><\\/script>\')}catch(e){}</script>';
+  if (!h.includes('/check/probe.js')) h = h.replace(/<head[^>]*>/i, (m) => m + LOADER);
+  fs.writeFileSync(ip, h);
+}
 /* design studies (preview only): standalone playable studies served at /studies/<name>/ */
 if (!process.env.VERCEL && fs.existsSync(path.join(ROOT, 'studies'))) copyDir(path.join(ROOT, 'studies'), path.join(DIST, 'studies'));
 fs.copyFileSync(path.join(ROOT, 'README.md'), path.join(DIST, 'design-systems', 'README.md'));
