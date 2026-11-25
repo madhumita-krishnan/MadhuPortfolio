@@ -1371,7 +1371,7 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 /* a SIDEWAYS PHONE (her 2026-10-29: "On mobile the icons get cut off in horizontal scroll mode in the nav bar. Maybe the nav bar
    should be lower and the icons come on top?"): ~390pt of height has no room under the dashes, so there the dashes drop lower
    and the icons rise ABOVE them, into the clear band they leave under the case (still never overlapping) */
-.sdeck.low .sdeck-progress{margin-top:64px;margin-bottom:10px}
+.sdeck.low .sdeck-progress{margin-top:var(--low-gap,6px);margin-bottom:10px}   /* her 2026-11-25 (sideways phone): "I don't like how high and off centered the project and description is. It's too hard to read": a 64px gap over the bar meant the bar could only stay on screen if the case rode near the top; now the case and its words sit mid-screen */
 .sdeck.low .sdeck-progress .sd-ico{top:auto;bottom:calc(100% + 8px);transform:translate(-50%,10px) scale(.55)}
 .sdeck.low .sdeck-progress:hover .sd-ico,.sdeck.low .sdeck-progress:focus-within .sd-ico,.sdeck.low .sdeck-progress.scrub .sd-ico,.sdeck.low .sdeck-progress.lean .sd-ico{transform:translate(-50%,0) scale(1)}
 .sdeck.low .sdeck-progress .sd-ico:hover{transform:translate(-50%,0) scale(1.08)}
