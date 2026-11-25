@@ -823,7 +823,9 @@ nav.pill{background:#0f1013}
 .fw-part{max-width:944px;margin:0 auto;padding:160px 16px 0;scroll-margin-top:40px}
 .fw-n{color:var(--dim);font-size:16px;margin:0 0 12px}
 .fw-h{color:var(--hi);font-size:clamp(28px,3.4vw,40px);line-height:1.15;font-weight:600;letter-spacing:-.02em;margin:0;max-width:820px}
-.fw-lead,.fw-body{color:var(--body);font-size:18px;line-height:1.6;max-width:720px;margin:20px 0 0}
+/* ONE RIGHT EDGE FOR WORDS (her 2026-11-25: "the trade-off, the words can go wider along the screen than the captions under pictures can ... extend how far out the caption under the pictures can go so that they match"): captions and body run to where the trade-off's words stop (the column minus the callout's right padding, --call-pr) */
+.fw-part{--call-pr:28px}
+.fw-lead,.fw-body{color:var(--body);font-size:18px;line-height:1.6;max-width:calc(100% - var(--call-pr));margin:20px 0 0}
 .fw-lead b,.fw-body b{color:var(--hi);font-weight:500}
 .fw-h3{color:var(--hi);font-size:22px;line-height:1.3;font-weight:500;margin:80px 0 24px;max-width:720px}
 /* "The light check" reads as its own part, so it wears the section-title type (her 2026-11-24: "light check's title is really small font
@@ -1051,7 +1053,7 @@ html[data-look=dark] .fw-needs b{color:#f3f4f6!important}html[data-look=dark] .f
 
 /* the highlight tag she likes from her Spotify page (".callout"), in the light: a tide rule, a soft gradient fading out, the label in tide,
    the line in body ink (her: "I like that highlight gradient tag thing. is there a place for that in the driftwood onboarding page?") */
-.fw-callout{margin:36px 0;padding:24px 28px;border-left:2px solid var(--acc);background:linear-gradient(90deg,rgba(var(--acc-rgb),.10),rgba(var(--acc-rgb),0))}
+.fw-callout{margin:36px 0;padding:24px var(--call-pr,28px) 24px 28px;border-left:2px solid var(--acc);background:linear-gradient(90deg,rgba(var(--acc-rgb),.10),rgba(var(--acc-rgb),0))}
 .fw-callout p{margin:0;font-size:20px;line-height:1.5;color:#2b323d}.fw-callout p b{color:#161a24}
 .fw-callout .fw-callout-l{font-size:15px;font-weight:600;color:var(--acc);margin-bottom:6px}
 html[data-look=dark] .fw-callout{border-left-color:#7fb0d8;background:linear-gradient(90deg,rgba(127,176,216,.14),rgba(127,176,216,0))}
@@ -1430,7 +1432,7 @@ html:not([data-phone-type=off]) :is(.fw-cap p,.fw-test figcaption span,.pair-cap
 html:not([data-phone-type=off]) :is(.lc-d figcaption span,.fw-opts span,.q-front p,.fw-q p,.fw-needs li > span){font-size:var(--ph-cb)!important;line-height:var(--ph-cb-lh)!important}
 html:not([data-phone-type=off]) :is(.fw-cap b,.fw-list > li > b,.fw-opts b,.lc-d figcaption b,.fw-needs b){font-size:var(--ph-ct)!important;line-height:var(--ph-ct-lh)!important}
 html:not([data-phone-type=off]) :is(.fw-callout p:not(.fw-callout-l),.sp-media .callout p:last-child){font-size:var(--ph-call)!important;line-height:var(--ph-call-lh)!important;font-weight:var(--ph-w)}
-html:not([data-phone-type=off]) .fw-callout{margin-left:0;margin-right:0;padding:var(--ph-row) 20px}
+html:not([data-phone-type=off]) .fw-part{--call-pr:20px}html:not([data-phone-type=off]) .fw-callout{margin-left:0;margin-right:0;padding:var(--ph-row) 20px}
 html:not([data-phone-type=off]) :is(.fw-stats b,.bars-d .bn,.fw-test figcaption b,.fw-vote b){font-size:var(--ph-stat)!important;line-height:1!important;word-spacing:var(--ph-ws-stat)!important}
 html:not([data-phone-type=off]) :is(.fw-stats > div > span,.bars-d .bk,#impact .bk){font-size:var(--ph-lab)!important;line-height:var(--ph-lab-lh)!important;color:var(--ph-ink2)!important}
 html:not([data-phone-type=off]) :is(.meta dt,.fw-src,.bars-d .bt u,.fw-q cite,.fw-needs em){font-size:var(--ph-fn)!important;line-height:var(--ph-fn-lh)!important;color:var(--ph-ink3)!important}
@@ -2427,7 +2429,7 @@ function turn(to,ms,ease){cancelAnimationFrame(anim);busy=true;goal=to;
 /* a swipe that lands while the laptops are still turning is never lost (her 2026-11-24: "it's not reading it every time"): it adds
    another half turn to where they're heading and the move carries on from where it is, easing out, so every swipe is one step */
 function swap(dir){stopHint();if(zoomed)zoomOut();var d=dir<0?-PI:PI;
- if(busy){if(!calm.matches)turn(goal+d,900,function(k){return 1-Math.pow(1-k,3)});return true}
+ if(busy){if(Math.abs(goal-th)>PI+.01)return true;if(!calm.matches)turn(goal+d,900,function(k){return 1-Math.pow(1-k,3)});return true}
  turn(Math.round(th/PI)*PI+d,TURN,inout);return true}
 var lastTouchEnd=-1e9;   // a touch decides for itself; the click the browser sends after it is ignored
 /* her 2026-11-24: "I can tap on the laptop to zoom in further and see it fully and then I need a way to zoom out": tapping the laptop IN
@@ -2462,6 +2464,7 @@ function zoomOut(){if(!zoomed)return;zoomed=false;st.classList.remove('zoomed');
 addEventListener('resize',function(){if(zoomed&&box.clientWidth!==lw)zoomOut()});
 sc.addEventListener('click',function(e){if(performance.now()-lastTouchEnd<700)return;if(zoomed){zoomOut();return}if(e.clientX&&onFront(e.clientX,e.clientY)){stopHint();zoomFront();return}swap(1)});
 sc.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();swap(1)}});
+/* NO SPIN (her 2026-11-25: "No matter how strong my click is, no matter what, it always just goes to before and then to after, and that's it. Just the next one"): a new swipe needs a real pause (140ms); momentum, however hard, is one step; at most one step queued */
 /* the wheel / trackpad, inside the box only (the page doesn't move): a few px = one step; the rest of that gesture is spent */
 var spent=false,last=0,lastT=0,firedT=0,acc=0,lastSg=0,pk=0,tr=Infinity,ema=40;
 /* NEVER A TRAP (her 2026-11-24: "my scroll gets stuck and I didn't realize"): a page scroll that sweeps the panel under a resting cursor
@@ -2479,22 +2482,28 @@ function centre(r){var y0=scrollY,to=Math.max(0,y0+r.top+r.height/2-innerHeight/
  if(calm.matches){scrollTo({top:to,behavior:'instant'});return}
  glide=requestAnimationFrame(function f(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/350);scrollTo({top:y0+(to-y0)*inout(k),behavior:'instant'});if(k<1)glide=requestAnimationFrame(f)})}
 sc.addEventListener('wheel',function(e){var now=performance.now();
- if(!cap){if(now-anyW<220||now-pageS<150||vis()<.6)return;   // mid page-scroll, or mostly off screen: the page keeps the wheel
+ /* LIGHT OR HARD, ALWAYS ONE STEP (her 2026-11-25: "even if I lightly scroll, it should move from before to after. Sometimes I have to
+    scroll really hard and it's not working ... I just need it to work lightly for one and hard for one. Always."): a page scroll still
+    running (wheel events under 90ms apart) sweeps past as before (never a trap), but a NEW scroll that starts over the panel is the
+    panel's at once (it used to wait for 220ms of no wheel anywhere + 150ms of a still page, so a light scroll soon after reaching it
+    scrolled the page instead); and when it isn't fully on screen it glides to the middle AND that same scroll flips it (the glide used
+    to eat the scroll) */
+ if(!cap){if(now-anyW<90||vis()<.6)return;
   setCap(true);var r=st.getBoundingClientRect();
-  if(r.top<0||r.bottom>innerHeight){e.preventDefault();centre(r);spent=true;lastT=now;firedT=now;return}}
+  if(r.top<0||r.bottom>innerHeight)centre(r)}
  e.preventDefault();
  var hz=Math.abs(e.deltaX)>Math.abs(e.deltaY),d=hz?e.deltaX:e.deltaY;if(e.deltaMode)d*=16;var m=Math.abs(d),sg=(d<0?-1:1)*(hz?2:1);
  /* a NEW swipe is any of: a gap (≥60ms and ≥3× this gesture's usual spacing: momentum arrives every frame, fingers landing stop it; a
     busy page that delivers events slowly raises the bar instead of splitting one flick into many), a turn of direction, or the deltas
     climbing again after the last swipe's momentum had started to die (×1.5 and +1.5px over the lowest point since it peaked).
     Anything else is that momentum tail, and is spent: one swipe = one step */
- var rise=false;if(tr===Infinity&&m>=pk)pk=m;else if(m<=(tr===Infinity?pk:tr))tr=m;else rise=m>=1.5*tr&&m-tr>=1.5;
+ var rise=false;if(tr===Infinity&&m>=pk)pk=m;else if(m<=(tr===Infinity?pk:tr))tr=m;else rise=false;   // (no 'climbing again' rule: an uneven hard flick read as two swipes; only a real pause starts a new one)
  var dt=now-lastT;
- if(dt>=Math.max(60,3*ema)||(sg!==lastSg&&m>1)||rise){spent=false;acc=0;pk=m;tr=Infinity;ema=40}else ema=.7*ema+.3*dt;
+ if(dt>=Math.max(90,3*ema)||rise){spent=false;acc=0;pk=m;tr=Infinity;ema=40}else ema=.7*ema+.3*dt;
  lastT=now;last=m;lastSg=sg;if(spent)return;acc+=m;
  // the laptops move the way the page would (her 2026-11-24: "the scroll pattern … should be the same"): the deltas already carry her
  // natural-scrolling setting. Down-scroll (content would rise) sends the front laptop UP its orbit; a sideways one sends it the content's way
- if(acc>=4){spent=true;firedT=now;acc=0;swap(hz?(e.deltaX>0?1:-1):(e.deltaY>0?-1:1))}},{passive:false});
+ if(acc>=2){spent=true;firedT=now;acc=0;swap(hz?(e.deltaX>0?1:-1):(e.deltaY>0?-1:1))}},{passive:false});
 /* TOUCH, the way iOS reads a sideways pager inside a vertical page (her 2026-11-24: "bring that data into the design"):
    · DIRECTION LOCK: nothing is decided for the first 10px of travel (touch slop); then within 30° of level = a flip (one swipe = one
      step, the way the finger goes), anything steeper = the page scrolls and the panel neither flips nor holds that touch

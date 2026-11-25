@@ -748,8 +748,8 @@
     }
     fig.target = null; fig.waypoint = null; fig.celeb = null; fig.hangCool = 0; fig.flip = null; fig.flipQueued = false; fig.state = 'idle';
     var ty = clickGround(p), b = ty != null && ty < fig.y - STEP_UP ? { x: p.x, y: ty } : null, ab;
-    if (touchMode && b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // phone (her 2026-11-24): a line she can jump straight onto, she stands on it (no hang first)
-    else if (canHang() && (ab = aimBar(p) || overheadBar(p)) && hangJump(ab, p, touchMode)) { }   // phone: too high for one jump, so up by the letters and a muscle-up onto them (auto); a word double-tapped: up to hang from it (her 2026-11-23: never an automatic muscle-up)
+    /* (phone-only "stand on it, no hang first" of 2026-11-24 removed 2026-11-25: on a phone a tap above her is the same jump-and-hang as on a laptop) */
+    if (canHang() && (ab = aimBar(p) || overheadBar(p)) && hangJump(ab, p, false)) { }   // phones too since 2026-11-25: a tap above her = jump up and hang (monkey bars)   // phone: too high for one jump, so up by the letters and a muscle-up onto them (auto); a word double-tapped: up to hang from it (her 2026-11-23: never an automatic muscle-up)
     else if (b && arcLands(fig.x, fig.y, b)) { routeJump(b); fig.waypoint = null; }   // a line up there she can reach: onto it
     else {   // nothing to land on in reach: straight up toward the finger and back down
       fig.dir = p.x >= fig.x ? 1 : -1;
@@ -901,6 +901,11 @@
       celebrate();
       return;
     }
+    /* SHE FINISHES THE MUSCLE-UP (her 2026-11-25: "rather than muscle upping and then just standing on top of the text that she just
+       muscled up over, she jumps up further and monkey bars on the text above that. I don't want her to do that extra step. I just want
+       her to finish the muscle up and stand on that text"): a 2nd tap, or the 2nd half of a double tap, while she is still climbing out
+       of the hang used to set a new goal (up onto the next line, or back down) that took over the moment she stood. Now it is ignored */
+    if (fig.state === 'mantle' && fig.muStand) { lastTap = null; return; }
     var tnow = performance.now(), lt = lastTap; lastTap = { t: tnow, x: p.x, y: p.y };
     var dbl = lt && tnow - lt.t < 400 && Math.hypot(p.x - lt.x, p.y - lt.y) < 70;
     var reach = CLAY.ready ? CLAY.H : 90, herTop = fig.y - (CLAY.ready ? CLAY.H : LEG + TO), grounded = /^(idle|move|sign|wave)$/.test(fig.state) && !fig.loadT;
@@ -924,7 +929,7 @@
          between the letters right over her head (or a gap between words there), was the click-near-her stop and she kept swinging under
          the cursor. Now anything at or above her hands within her reach is above her too; clicks beside her body stay the stop, and
          clicks further along the line stay the hand-over-hand travel (her 2026-11-23 rules) */
-      var upTap = p.y < (hb.top != null ? hb.top : G0.y - 30) - 6 || (p.y <= G0.y + 4 && Math.abs(p.x - G0.x) < (CLAY.ready ? CLAY.H : 120) * .6) || (touchMode && p.y < fig.y + 60 && p.x > hb.x1 - 40 && p.x < hb.x2 + 40);
+      var upTap = p.y < (hb.top != null ? hb.top : G0.y - 30) - 6 || (p.y <= G0.y + 4 && Math.abs(p.x - G0.x) < (CLAY.ready ? CLAY.H : 120) * .6);   // phones too since 2026-11-25: a tap further along the line is hand-over-hand travel, as on a laptop
       if (upTap) {
         lastTap = null;
         if (muscleUp()) { var gy = clickGround(p);
@@ -1772,7 +1777,7 @@
         var g = { x: best.g.x, y: best.g.y };
         /* PHONE: EVERY CATCH IS ON THE WAY UP (her 2026-11-24: "no matter what, always go into standing on something"): whatever got her
            hands on the letters (a tap's aimed jump, her route's last line, a double jump, a free leap), on touch she muscles up onto them */
-        var au = fig.autoUp || (touchMode ? { x: nx, y: ny } : null);
+        var au = fig.autoUp;   // (her 2026-11-25 "if I tell her to go monkey bar on the phone, then I want her to monkey bar on the phone": a phone catch is a hang again, not an automatic muscle-up; a far line she was sent to still carries autoUp)
         fig.hang = { bar: best.b, G: g, hands: [g, g], th: 0, om: Math.max(-2.2, Math.min(2.2, fig.vx / R.L)), t: 0, rest: 0, k: 0, L: R.L, auto: au,
                      i: 0, u: 0, mode: 'idle', r: 0, off: { x: 0, y: 0 }, goal: au ? null : fig.hangGoal };
         if (!au) { fig.target = null; fig.waypoint = null; }   // a hang she was sent to is where she was going: from here the bars
@@ -2255,6 +2260,7 @@
   function enterFrames() { var m = CLAY.man; return m['jump-land-slide-x3'].concat([m['backflip-x3'][9]], (m['idle-wave-sign-x3'] || []).slice(3, 6)); }
   function startEnter() {
     var seen = true; try { seen = !!sessionStorage.getItem(ENTER_KEY); sessionStorage.setItem(ENTER_KEY, '1'); } catch (e) {}
+    return;   // her 2026-11-25 "No no. Just have her spawn": no entrance, she appears on the d as before (code below kept, unreached)
     if (seen || rmActive() || !CLAY.on || !hero.querySelector('.eyebrow') || fig.state !== 'idle') return;
     fig.enter = { ph: 'wait', t: 0, D: { x: fig.x, y: fig.y } };
     fig.state = 'enter'; fig.x = -400; fig.dir = 1;
@@ -2325,8 +2331,8 @@
     if (E.ph === 'fly') {
       var t = Math.min(E.t, F.T);
       fig.x = F.x0 + F.vx * t; fig.y = F.y0 + F.vy * t + G * t * t / 2; E.vx = F.vx; E.vy = F.vy + G * t;
-      E.th = t > F.T - F.TU ? ROLL_AIR * (1 - (F.T - t) / F.TU) : null;   // she tucks and starts turning just before the line
-      if (E.t >= F.T) { fig.x = E.xL; fig.y = E.Ey; E.ph = 'roll'; E.t = 0; E.th = ROLL_AIR; touchdown(E.vy); }
+      E.th = null;   // her 2026-11-25 "Remove the tumbling": no tuck or roll; she lands on her feet (the roll code below stays, unreached)
+      if (E.t >= F.T) { fig.x = E.xL; fig.y = E.Ey; E.ph = 'pop'; E.t = 0; touchdown(E.vy); }
       return;
     }
     if (E.ph === 'roll') {
@@ -2337,7 +2343,7 @@
     }
     if (E.ph === 'pop') {   // up through her crouch onto her toes, and off
       fig.x += E.v * .3 * dt;
-      if (E.t < .07) return;
+      if (E.t < .15) return;   // a beat in the landing crouch, then off
       var apex = Math.min(E.Ey, E.D.y) - .5 * CLAY.H, vy = -Math.sqrt(2 * G * (E.Ey - apex)), T = -vy / G + Math.sqrt(2 * (E.D.y - apex) / G);
       E.jump = { x0: fig.x, vx: (E.D.x - fig.x) / T, vy: vy, T: T }; E.ph = 'jump'; E.t = 0; fig.dir = E.D.x >= fig.x ? 1 : -1;
     }
