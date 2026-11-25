@@ -29,6 +29,7 @@
   window.__vantageNoReload = true;                                   // the relay's live reload must never restart a check mid-way
   try { sessionStorage.setItem('__vantage_nobtn', '1'); } catch (e) { }   // no "add to home screen" panel for a visitor
   var post = function (m) { try { if (parent !== window) parent.postMessage(Object.assign({ vcheck: 1 }, m), location.origin); } catch (e) { } };
+  post({ start: 1 });   // the check page starts its countdown now, so the seconds it shows are the real ones (her 2026-11-25: "don't say it's only going to take 30 seconds … if it's not")
   // 1 · every error, including scripts and images that fail to load (capture phase sees resource errors too)
   addEventListener('error', function (e) {
     if (R.errors.length >= 25) return; var t = e.target;
@@ -91,9 +92,10 @@
   }
   function send(stage, tries) {
     tries = tries || 0;
+    if (stage === 'full') post({ sending: 1, tries: tries });
     fetch(EP, { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: body(stage) })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); if (stage === 'full') { sentFull = true; post({ sent: 1 }); try { localStorage.setItem(PK, JSON.stringify(q().filter(function (b) { return b.indexOf('"run":"' + R.run + '"') < 0; }))); } catch (e) { } } })
-      .catch(function (er) { if (tries < 3) setTimeout(function () { send(stage, tries + 1); }, 1500 * (tries + 1)); else if (stage === 'full') { keep(body('full')); post({ failed: String(er && er.message || er) }); } });
+      .catch(function (er) { if (stage === 'full' && tries < 3) post({ retry: tries + 1, offline: navigator.onLine === false, why: String(er && er.message || er) }); if (tries < 3) setTimeout(function () { send(stage, tries + 1); }, 1500 * (tries + 1)); else if (stage === 'full') { keep(body('full')); post({ failed: String(er && er.message || er) }); } });
   }
   /* a snapshot every 5s until the full report: if the phone freezes the page (app switched, tab closed), the newest snapshot is at
      most 5s old. Each line is the whole report so far; the reader keeps the newest line per run. */

@@ -21,7 +21,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#111318
 </style></head><body>
 <noscript><p style="color:#fff;font:16px/1.5 -apple-system,system-ui,sans-serif;padding:24px">This check needs JavaScript. Please turn it on in your browser settings, then open the link again.</p></noscript>
 <iframe id="site" title="Madhu's website"></iframe>
-<div id="pill" role="status" aria-live="polite" style="display:none"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle class="ring" cx="14" cy="14" r="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="69.1" stroke-dashoffset="0" transform="rotate(-90 14 14)"/></svg><span>Look around for <b>30</b> more seconds</span></div>
+<div id="pill" role="status" aria-live="polite" style="display:none"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle class="ring" cx="14" cy="14" r="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="69.1" stroke-dashoffset="0" transform="rotate(-90 14 14)"/></svg><span>Opening the site…</span></div>
 <script>
 /* restored from the back/forward cache (a reopened tab): start a fresh check, never resume a half-finished one */
 addEventListener('pageshow',function(e){if(e.persisted)location.reload()});
@@ -31,27 +31,35 @@ addEventListener('pageshow',function(e){if(e.persisted)location.reload()});
   var site=document.getElementById('site'), pill=document.getElementById('pill'), ring=pill.querySelector('.ring');
   pill.style.display='';   // shown only when JavaScript runs (with it off, the noscript line is the only thing on screen)
   site.src='/?vcheck=1&run='+run+(who?'&who='+who:'')+(self?'&selftest=1':'');
-  var T=30,left=T,sent=false,failed=false;
+  var T=27,left=T,sent=false,failed=false,started=false,opened=0,st='',retry=0,offline=false;
   var heard=false;
-  addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.vcheck)return;heard=true;if(e.data.sent)sent=true;if(e.data.failed)failed=true;});
+  /* the probe tells this page what it is doing, so the pill always says what's really happening (her 2026-11-25: "if it keeps saying
+     almost done, there should be messaging as to like what is happening and what the holdup is") */
+  addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.vcheck)return;var d=e.data;heard=true;
+    if(d.start)started=true;if(d.sending)st='sending';if(d.retry){retry=d.retry;offline=!!d.offline;st='retry'}if(d.sent)sent=true;if(d.failed)failed=true;});
   /* the site never came up (server down, blocked, crashed before the probe): this page reports that itself, so nothing vanishes */
   setTimeout(function(){if(heard||sent)return;var w=site.contentWindow,has=false;try{has=!!(w&&w.__vcheck)}catch(e){}if(has)return;
     fetch('/api/check',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({diag:1,check:'site-check',stage:'site-never-loaded',run:run,who:who,self:self,ua:navigator.userAgent,
       report:{env:{screen:screen.width+'x'+screen.height+'@'+devicePixelRatio,view:innerWidth+'x'+innerHeight},frameUrl:String(site.src),frameTitle:(function(){try{return w.document.title}catch(e){return 'unreadable'}})()}})})
-      .then(function(r){if(r.ok)sent=true}).catch(function(){})},28000);
+      .then(function(r){if(r.ok)sent=true}).catch(function(){})},45000);
   /* the moment this page is hidden or closed, the probe sends what it has (iPhones freeze hidden pages) */
   function bye(st){try{site.contentWindow.__vcheckLast&&site.contentWindow.__vcheckLast(st)}catch(e){}}
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')bye('hidden')});
   addEventListener('pagehide',function(){bye('closed-early')});
   function say(h){pill.querySelector('span').innerHTML=h}
+  function done(h){pill.classList.add('done');pill.innerHTML='<span>'+h+'</span>'}
   function tick(){
-    if(left>0)left--;ring.style.strokeDashoffset=(69.1*(1-left/T)).toFixed(1);
+    if(!started){opened++;   // the site is still opening: say so, with the real seconds, never a countdown that isn't running yet
+      if(opened>=45){if(!sent)done('The site didn\'t open on this phone. Thank you anyway, you can close this page.');else done('All done, thank you. You can close this page.');return}
+      say(opened<8?'Opening the site…':'The site is slow to open on this connection. Still opening… <b>'+opened+'</b>s');return setTimeout(tick,1000)}
+    if(left>0){left--;ring.style.strokeDashoffset=(69.1*(1-left/T)).toFixed(1)}
     if(left>0){say('Look around for <b>'+left+'</b> more second'+(left===1?'':'s'));return setTimeout(tick,1000)}
-    if(sent){pill.classList.add('done');pill.innerHTML='<span>All done, thank you. You can close this page.</span>';return}
-    if(left<=-30){pill.classList.add('done');pill.innerHTML='<span>This phone couldn\'t send the results. Thank you anyway, you can close this page.</span>';return}   // never stuck forever (her 2026-11-25: "It's stuck on almost done")
+    if(sent){done('All done, thank you. You can close this page.');return}
+    if(failed){done('Couldn\'t reach the server. The results are saved on this phone and send next time this link is opened. You can close this page.');return}
     left--;
-    if(failed){say('Still sending… please keep this page open');failed=false;try{site.contentWindow.postMessage({vcheck:'send'},location.origin)}catch(e){}}
-    else say('Almost done…');
+    if(left<=-40){done('Couldn\'t reach the server. Thank you anyway, you can close this page.');return}   // never stuck forever
+    if(st==='retry')say(offline?'This phone is offline. Waiting for a connection… (try '+(retry+1)+' of 4)':'Can\'t reach the server yet. Trying again… (try '+(retry+1)+' of 4)');
+    else say('Sending the results… <b>'+(-left)+'</b>s');
     setTimeout(tick,1000);
   }
   setTimeout(tick,1000);
