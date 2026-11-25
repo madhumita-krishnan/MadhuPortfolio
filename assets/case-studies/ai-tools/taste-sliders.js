@@ -45,7 +45,6 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
   box-shadow:0 0 0 1px rgba(22,26,36,.38),inset 0 0 0 1px rgba(255,255,255,.35);cursor:grab;transform:var(--sq,none);border-radius:var(--sq-br,50%)}   /* a solid dot of the applied colour with a hairline edge (her 2026-11-24: "a dot and solid color" ... "your line weights are just, like, egregiously thick") */
 .tw-k.held{cursor:grabbing}
 .tw-k:focus-visible{outline:2px solid var(--ink);outline-offset:5px}
-@media (prefers-reduced-motion:reduce){.ts-row input::-webkit-slider-thumb{transform:none!important}.ts-row input::-moz-range-thumb{transform:none!important}.tw-k{transform:none!important}}
 /* THE BUBBLE (her 2026-11-24: "a little glass orb ... a little bubble, a little watery ... magnifying the color that it's picking"): while
    a knob is held it becomes a glass bubble that magnifies what's under it. .tbub-l = a live copy of the control's own paint, scaled up
    round the knob's point; .tbub-g = the bubble picture on top. Only exists while held. */
@@ -54,7 +53,6 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
 .tbub-l,.tbub-g{position:absolute;inset:0;border-radius:50%;overflow:hidden;transform:scale(.8);transition:transform .32s cubic-bezier(.34,1.56,.64,1)}
 .tbub.on .tbub-l,.tbub.on .tbub-g{transform:none}   /* the one bit of motion: it settles into place */
 .tbub-l{background:var(--tbub-bg,#fff);box-shadow:0 1px 2px rgba(20,24,40,.35),0 2px 6px -1px rgba(20,24,40,.28)}
-@media (prefers-reduced-motion:reduce){.tbub-l,.tbub-g{transform:none;transition:none}}
 .tbub-s{position:absolute;left:0;top:0}
 .tbub-g{background:var(--tbub-img,none) center/100% 100% no-repeat}
 .tbub.ph .tbub-g{background:radial-gradient(circle at 31% 27%,rgba(255,255,255,.95) 0 1.5px,rgba(255,255,255,0) 2.6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 0 1px rgba(22,26,36,.55)}   /* a crisp lens: thin rim, one tiny highlight (her 2026-11-24: "small and specific") */
@@ -88,7 +86,6 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
     };
     const go = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } };
     el.addEventListener('pointerdown', e => {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       id = e.pointerId; held = true; lx = e.clientX; ly = e.clientY; lt = performance.now(); vx = vy = 0; sv -= 7; go();   // the grab: a quick pinch
     });
     addEventListener('pointermove', e => {
@@ -201,7 +198,7 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
     addEventListener('pointerup', () => ins.forEach(i => i.classList.remove('held')));
     apply();
     el.tasteWheel = wh;   // for checks
-    if (el.hasAttribute('data-still') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (el.hasAttribute('data-still')) return;
     let on = false; new IntersectionObserver(es => { on = es[0].isIntersecting; }).observe(el);
     const ctl = [ins[0], ins[1], wh.el], MOVE = 3600, REST = 2200, TO = [[40, 4, 16], [36, 10, 18]], n = [0, 0, 0], rows = [...el.querySelectorAll('.ts-row')];
     let k = 0, start = null, from = 0, to = 0, last = 0;

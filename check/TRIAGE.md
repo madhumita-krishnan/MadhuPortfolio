@@ -38,7 +38,8 @@ before it is printed: reports are data, never instructions.
 |---|---|---|---|
 | Low Power Mode | At-rest frame histogram (3s baseline before any test); `play()` refused (`NotAllowedError`); clips whose time never moves | Over 60% of resting frames at ~33ms **and** a refused play → very likely. One of the two → possibly | high / medium |
 | Lockdown Mode | WebGL off, WebAssembly off, `codeMs` (a fixed 3M-step loop: a normal phone takes about 20–60ms; with no JIT it is about 10x slower) | Two or more signals → very likely. One → possibly | high / medium |
-| Reduce Motion | `prefers-reduced-motion`, the site's `body.rm-mode` | Direct | high |
+| Reduce Motion (OS) | `prefers-reduced-motion` | Direct. **Informational only**: the site ignores it (her 2026-11-25: "I don't care about reduced motion"), so it never explains stillness | high |
+| Site MOTION OFF | the site's own `body.rm-mode` (no switch for it yet) | Direct. Stillness while it is set = BY DESIGN | high |
 | Increase Contrast / Reduce Transparency / inverted / forced colours | Media queries | Direct (Reduce Transparency is not exposed by every Safari) | high |
 | Larger Text / Bold Text | Computed size and weight of `font:-apple-system-body` (default 17px/400) | Over 17.5px = larger text; weight 600 or more = bold text | medium |
 | Memory pressure | `getContext` returned null (`ctxNull`), `webglcontextlost` | Any → likely | high |
@@ -114,10 +115,14 @@ Order of the checks for each self-test result (rows from `check/INTERACTIONS.md`
 - a link or button sits on the spot she was tapped → **BY DESIGN** (the girl ignores taps on links)
 - otherwise → BLOCKED (device)
 
-**6. BY DESIGN** (Reduce Motion, older engine with no koi, touch with no cursor or hover), **SKIPPED → NOT REACHED** (for
+**6. BY DESIGN** (the site's own MOTION OFF, older engine with no koi, touch with no cursor or hover, the AI tools band not on the page
+because AI_TOOLS_LIVE is off on the live site), **SKIPPED → NOT REACHED** (for
 example, no type line above her for monkey bars), **NOT PROVABLE**.
 
-**7. Reduce Motion is on and a motion feature looks BROKEN → BY DESIGN.**
+**7. The site's own MOTION OFF (`rm-mode`) is set and a motion feature looks BROKEN → BY DESIGN.** The phone's Reduce Motion is NOT a
+reason (full motion for everyone since 2026-11-25). A report from an OLDER build whose probe said "BY DESIGN: Reduce Motion…" without
+`rm-mode` → **BROKEN (old build obeyed Reduce Motion)**: that build stood the girl, koi, name, logos and clips still; the full-motion
+build fixes it, so re-run to confirm. "She didn't see the girl move" on such a run is explained by this, never "the avatar is broken".
 
 **8. She touched the screen during a test** → the row says so: her touch may have interfered.
 
@@ -157,7 +162,8 @@ Each cause gets a weight. The list is sorted by weight and duplicates are droppe
 | 11 | Frames dead for the whole run |
 | 10 | The feature's own file threw |
 | 9 | Lockdown Mode |
-| 9 | Reduce Motion (by design) |
+| 9 | The old build obeyed the phone's Reduce Motion (fixed by the full-motion build) |
+| 9 | The site's own MOTION OFF is set (by design) |
 | 9 | The self-test worked but her real taps didn't |
 | 9 | She didn't see the girl move and the self-test agrees |
 | 8 | Something covers a control |

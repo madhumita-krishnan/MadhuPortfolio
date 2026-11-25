@@ -180,7 +180,7 @@
     var src = document.querySelector('script[src*="app.js"]');
     return { ua: ua, browser: br, safariVer: (/Version\/([\d.]+)/.exec(ua) || [])[1] || null, screen: screen.width + 'x' + screen.height + '@' + devicePixelRatio, view: innerWidth + 'x' + innerHeight,
       webkit: ver, staticBlocks: statics, webgl: webgl, gpu: gpu, wasm: typeof WebAssembly === 'object', codeMs: speed,
-      reduceMotion: mm('(prefers-reduced-motion: reduce)'), rmClass: !!(document.body && document.body.classList.contains('rm-mode')), reduceTransparency: mm('(prefers-reduced-transparency: reduce)'),
+      reduceMotion: mm('(prefers-reduced-motion: reduce)'), aiBand: !!document.getElementById('ai-tools-band'), rmClass: !!(document.body && document.body.classList.contains('rm-mode')), reduceTransparency: mm('(prefers-reduced-transparency: reduce)'),
       contrastMore: mm('(prefers-contrast: more)'), inverted: mm('(inverted-colors: inverted)'), forcedColors: mm('(forced-colors: active)'), dark: mm('(prefers-color-scheme: dark)'),
       bodyText: dyn, zoom: window.visualViewport ? +visualViewport.scale.toFixed(2) : null,
       touch: mm('(pointer: coarse)'), hover: mm('(hover: hover)'), cores: n.hardwareConcurrency || null, mem: n.deviceMemory || null,
@@ -206,7 +206,7 @@
   function mem() {
     var seen = typeof Set === 'function' ? new Set() : null, by = {}, img = 0, cv = 0, vid = 0, n = 0;
     var add = function (k, b) { by[k] = (by[k] || 0) + b; };
-    var doImg = function (im) { if (!im || (seen && seen.has(im))) return; if (seen) seen.add(im); if (im.complete && im.naturalWidth) { var b = im.naturalWidth * im.naturalHeight * 4; img += b; n++; add(fileKey(im.currentSrc || im.src), b); } };
+    var doImg = function (im) { if (!im || (seen && seen.has(im))) return; if (seen) seen.add(im); if (im.complete && im.naturalWidth) { var cs = im.currentSrc || im.src || ''; if (/^data:image\/svg/.test(cs)) return;   /* an SVG placeholder (the gallery's empty print) is drawn as a vector at its shown size, never a photo-sized bitmap */ var sc = /^data:/.test(cs) ? 1 : 1; var b = im.naturalWidth * im.naturalHeight * 4; img += b; n++; add(fileKey(im.currentSrc || im.src), b); } };
     try { [].forEach.call(document.images, doImg); trackImgs = trackImgs.filter(function (w) { var im = w.deref(); if (im) doImg(im); return !!im; }); } catch (e) { }
     try {
       var cvsAll = [].slice.call(document.querySelectorAll('canvas')); trackCvs = trackCvs.filter(function (w) { var c = w.deref(); if (c && cvsAll.indexOf(c) < 0) cvsAll.push(c); return !!c; });
@@ -256,7 +256,9 @@
   }
   var V = function (ms, slow, note, extra) { var r = { v: ms < 0 ? 'NO EFFECT' : ms > slow ? 'SLOW' : 'PASS', ms: ms }; if (note) r.note = note; if (extra) Object.assign(r, extra); return r; };
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  var rm = function () { var h = matchMedia('(prefers-reduced-motion: reduce)').matches || (document.body && document.body.classList.contains('rm-mode')); return h; };
+  /* FULL MOTION (her 2026-11-25): the site ignores the OS Reduce Motion setting, so the probe expects motion under it too. Only the site's
+     own MOTION OFF (body.rm-mode, no switch for it yet) makes stillness BY DESIGN. */
+  var rm = function () { return !!(document.body && document.body.classList.contains('rm-mode')); };
   var touchDev = matchMedia('(pointer: coarse)').matches;
   function vis(el) { if (!el) return false; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }
   /* jump: an instant scroll. The site sets html{scroll-behavior:smooth}, which makes even behavior:'auto' glide, so the inline style is
@@ -321,7 +323,7 @@
   function herPoint(dx, dy) { var s = stk(), cv = s.canvas().getBoundingClientRect(), f = s.fig; return { x: cv.left + f.x + dx, y: cv.top + f.y + dy }; }
   async function avatarTap(dx, dy, what, okFn, slow, settle) {
     if (!avatarOK()) return { v: 'NO EFFECT', note: 'avatar never became ready (__stick missing or clay frames not loaded)' };
-    if (rm()) return { v: 'BY DESIGN', note: 'Reduce Motion is on: she is drawn standing still and ignores taps on purpose' };
+    if (rm()) return { v: 'BY DESIGN', note: 'the site\'s own MOTION OFF is set: she is drawn standing still and ignores taps on purpose' };
     var hero = $('.hero'); if (hero && hero.getBoundingClientRect().top < -40) { jump(0); await wait(250); }
     await until(idleish, 4000);
     var p = herPoint(dx, dy), W = innerWidth; p.x = Math.min(W - 8, Math.max(8, p.x)); p.y = Math.max(8, p.y);
@@ -436,7 +438,7 @@
     }],
     ['headline-wave', 'the name waving', 0, async function () {
       var l = $('h1 .lively'); if (!l) return { v: 'NO EFFECT', note: 'no .lively name' };
-      if (rm()) return { v: 'BY DESIGN', note: 'Reduce Motion is on: the name stays still' };
+      if (rm()) return { v: 'BY DESIGN', note: 'the site\'s own MOTION OFF is set: the name stays still' };
       into($('.hero') || l); l.dispatchEvent(new MouseEvent('mouseenter')); var ms = await until(function () { return l.classList.contains('waving'); }, 600);
       l.dispatchEvent(new MouseEvent('mouseleave')); await wait(100);
       return V(ms, 100, 'touch phones send this on a tap');
@@ -480,7 +482,7 @@
       return { v: 'PASS', ms: s.navBackMs, note: 'hid at y=' + s.navHidAtY + ', back after scrolling up ' + s.navBackMs + 'ms' };
     }],
     ['logo-wisps', 'the logos arriving as dots', 1, async function () {
-      if (rm()) return { v: 'BY DESIGN', note: 'Reduce Motion: logos show still' };
+      if (rm()) return { v: 'BY DESIGN', note: 'the site\'s own MOTION OFF is set: logos show still' };
       var s = R.tests.filter(function (x) { return x.id === 'scroll'; })[0] || {}, row = $('.brands-row');
       if (!row) return { v: 'NO EFFECT', note: 'no logo row' };
       if (s.wisps > 0) return { v: 'PASS', ms: 0, note: 'played on the way down' };
@@ -497,7 +499,7 @@
       var v = cand || $('[data-video] video'), t1 = v ? v.currentTime : 0; await wait(700); var adv = v ? +(v.currentTime - t1).toFixed(2) : 0;
       var all = [].map.call(document.querySelectorAll('video'), function (x) { return (x.currentSrc ? '' : 'nosrc ') + (x.paused ? 'paused' : 'playing') + ' rs' + x.readyState + (x.error ? ' err' + x.error.code : ''); }).slice(0, 10);
       var r = V(ms, 2500, null, { advanced: adv, refused: R.playRefused, src: v ? !!v.currentSrc : false, all: all });
-      if (ms < 0 && rm()) return Object.assign(r, { v: 'BY DESIGN', note: 'Reduce Motion: project clips wait for their play button' });
+      if (ms < 0 && rm()) return Object.assign(r, { v: 'BY DESIGN', note: 'the site\'s own MOTION OFF is set: project clips wait for their play button' });
       if (ms < 0) r.note = R.playRefused ? 'the phone refused to play it (Low Power Mode does this)' : !v || !v.currentSrc ? 'the clip never loaded' : 'loaded but its time never moved';
       return r;
     }],
@@ -535,7 +537,7 @@
     }],
     ['koi', 'the koi jumping out of the pot', 4, async function () {
       var pot = $('.pot'); if (!pot) return { v: 'NO EFFECT', note: 'no pot' };
-      if (rm()) return { v: 'BY DESIGN', note: 'Reduce Motion: the koi stays in the pot' };
+      if (rm()) return { v: 'BY DESIGN', note: 'the site\'s own MOTION OFF is set: the koi stays in the pot' };
       var fishOK = ('adoptedStyleSheets' in document) && window.CSS && CSS.supports && CSS.supports('selector(:has(a))');
       if (!fishOK) return { v: 'BY DESIGN', note: 'this engine is older than Safari 16.4: no koi, no error' };
       if (!window.WebGLRenderingContext) return { v: 'BLOCKED', note: 'no WebGL (Lockdown Mode or an old GPU)' };
@@ -570,7 +572,8 @@
       return V(ms, 300, null, Object.assign(h, { nextCard: swipe, restored: work.getAttribute('data-view') === was, worst: fx.worst }));
     }],
     ['tool-demo', 'the AI tool demos', 4, async function () {
-      var b = $('#ai-tools-band .tb-open'); if (!b) return { v: 'NO EFFECT', note: 'no tool demo button' };
+      if (!$('#ai-tools-band')) return { v: 'BY DESIGN', note: 'the AI tools band is not on this page (AI_TOOLS_LIVE is off on the live site)' };
+      var b = $('#ai-tools-band .tb-open'); if (!b) return { v: 'NO EFFECT', note: 'the AI tools band is on the page but has no demo button' };
       var vp = $('meta[name=viewport]'), vp0 = vp && vp.content;
       into(b); await wait(150); var h = hit(b), fx = frStart();
       tapEl(b); var ms = await until(function () { var d = $('dialog.td'); return d && d.open; }, 1500);
@@ -583,7 +586,9 @@
       return V(ms, 500, null, Object.assign(h, { closed: gone >= 0, bandVideoAdvanced: adv, worst: fx.worst }));
     }],
     ['resume-plane', 'the resume paper plane', 6, async function () {
-      var a = [].filter.call(document.querySelectorAll('a[href*="Resume.pdf"],a[href*="resume.pdf"]'), vis)[0];
+      /* a resume link IN THE PAGE, never the nav's: the nav tucks away on scroll (rule), and testing its link while tucked put the finger on
+         #work under it, so her mom's run read "something covers it" (2026-11-25; with the nav showing, all 3 links hit 5/5 at 390) */
+      var rl = [].filter.call(document.querySelectorAll('a[href*="Resume.pdf"],a[href*="resume.pdf"]'), vis), a = rl.filter(function (x) { return !x.closest('nav'); })[0] || rl[0];
       if (!a) return { v: 'NO EFFECT', note: 'no visible resume link' };
       into(a); await wait(200); var h = hit(a), n0 = linkStops.length, fx = frStart();
       tapEl(a);

@@ -35,7 +35,6 @@ r.innerHTML=`<style>
 
 .talk .sp{flex:1;min-width:0;font:400 13px/1.3 -apple-system,system-ui,sans-serif;color:#9ea3ad}
 @keyframes ring{from{transform:scale(.92);opacity:.9}to{transform:scale(1.3);opacity:0}}
-@media (prefers-reduced-motion:reduce){.talk .mk.on::after{animation:none}}
 @keyframes in{from{transform:scale(.6) translateY(8px);opacity:0}}@keyframes rise{from{transform:translateY(120%)}}@keyframes beat{50%{opacity:.25}}
 </style><div class="pop" hidden><button class="up" aria-label="Thumbs up">${UP}</button><button class="dn" aria-label="Thumbs down">${DN}</button><button class="mic" aria-label="Say what you think">${MIC}</button></div>
 <div class="talk" hidden><button class="grab" aria-label="Close"></button><b></b><textarea placeholder="Say or type what you think"></textarea><div class="row"><span class="sp" aria-live="polite"></span><button class="mk" aria-label="Talk">${MIC}</button><button class="go" aria-label="Send">${ARW}</button></div></div>`;
@@ -105,7 +104,7 @@ document.addEventListener('contextmenu',e=>{if(hit(e))e.preventDefault()},true);
 // her 2026-11-24: "a jiggle or something to let people know that they could long press on it, like bloop bloop ... then people
 // tap on it and it just says long press feedback". Each switch's options hop twice, one after another, when it first scrolls
 // into view; the first few plain taps show a small HOLD FOR FEEDBACK label over the option.
-const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const still=false;
 const io=null;   // the option hop is retired (her 2026-11-24); the switches open from a closed pill instead
 // pages often add their switches after load: pick each one up whenever it appears (saved votes back on, hop once in view)
 const seenG=new WeakSet();let mt=0;
@@ -124,6 +123,6 @@ document.addEventListener('click',e=>{
   if(g.__vLast===hb){e.preventDefault();e.stopImmediatePropagation();g.__vLast=null;open(hb);return}g.__vLast=hb;tip(hb)}
  const sp=e.target.closest&&e.target.closest('[role=group]:is([data-review],[class*=rv-sw]) > span');if(sp&&!sp.parentElement.matches('.rv-sw2')){   // her drafts' pills open and scroll themselves
 const g=sp.parentElement,sel=g.dataset.target||(g.getAttribute('aria-controls')?'#'+g.getAttribute('aria-controls'):''),t=sel&&document.querySelector(sel);
-  if(t){e.preventDefault();t.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}}
+  if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'center'})}}
  if(!pop.hidden&&!e.composedPath().includes(pop))close()},true);
 }catch(e){}})()

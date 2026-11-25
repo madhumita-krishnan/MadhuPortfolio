@@ -24,7 +24,7 @@
      the release frame, her height in a cell */
   var SP = { n: 62, cols: 8, fw: 119, fh: 175, fps: 18, feet: 170, cx: 50.5, figH: 154, release: 44, plane: [64, 28.5] };   // 18fps: the fold no longer drags (her: "super disjointed")
   var NOSE = 25 * Math.PI / 180;   // the plane picture's nose points right and ~25° down
-  var rm = function () { return matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('rm-mode'); };
+  var rm = function () { return document.documentElement.classList.contains('rm-mode') || document.body.classList.contains('rm-mode'); };   // the OS Reduce Motion setting is ignored (her 2026-11-25 full-motion rule)
   var el, flash, sheet, opener, busy = false;
 
   function css() {

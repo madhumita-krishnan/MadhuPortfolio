@@ -7,11 +7,11 @@
    - VIDEO EDITOR: a real editor on her raw zoom-demo recording (see video() below).
    window.toolDemo.open(id, {name, line, from}). Native <dialog>: Esc, focus trap; ✕ / outside click close; focus goes back to `from`.
    The page behind is blurred under a wash (on ::backdrop, like her gallery); her cursor rides INTO the dialog so it never disappears;
-   held knobs SQUISH (window.tasteSquish, taste-sliders.js); Reduce Motion = no easing, no squish. No network, ever. */
+   held knobs SQUISH (window.tasteSquish, taste-sliders.js); Full motion for everyone (the OS Reduce Motion setting is ignored, 2026-11-25). No network, ever. */
 (function () {
   if (window.toolDemo) return;
   const A = (document.currentScript && document.currentScript.src || '').replace(/[^/]*$/, '') || 'assets/case-studies/ai-tools/';
-  const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = () => !!(document.body && document.body.classList.contains('rm-mode'));   // only the site's own rm-mode; the OS Reduce Motion setting is ignored (her 2026-11-25 full-motion rule)
   const css = document.createElement('style');
   css.textContent = `
 .td{--bg:#fbfaf7;--tile:#e9e8e3;--card:#fff;--ink:#161a24;--mut:#4f5866;--line:rgba(22,26,36,.16);--ac:#6a91de;--on-ac:#161a24;
@@ -185,7 +185,6 @@ html[data-theme=night] .vx,html[data-look=dark] .vx{--zc:#8fb2f2;--zt:#121418;--
 .vx-tip.on{opacity:1}
 .vx-ph.hint i::after{content:'';position:absolute;inset:-6px;border-radius:50%;box-shadow:0 0 0 2px var(--ink);opacity:.0;animation:vx-breathe 1.8s ease-in-out infinite}
 @keyframes vx-breathe{0%,100%{opacity:0;transform:scale(.7)}50%{opacity:.7;transform:scale(1.15)}}
-@media (prefers-reduced-motion:reduce){.vx-ph.hint i::after{animation:none;opacity:.7}}
 .vx-b.u{padding:0;width:44px;min-width:44px;height:44px}
 .vx-b svg.s{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .vx-insp h4{margin:0;font:600 13px/1.3 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
@@ -268,7 +267,6 @@ html[data-theme=night] .vx-z .r,html[data-look=dark] .vx-z .r{background:rgba(18
   .vx-pt span{display:inline}.vx-pt svg{translate:0 -.85px}   /* beside its words: on the capitals' middle line (icon audit 2026-11-25) */
   .vx.rail .vx-pt{width:auto;padding:0 12px}.vx-pb>h4:first-child{display:none}.vx.rail .vx-insp{padding:8px 14px}
   .vx-tl{grid-template-columns:58px minmax(0,1fr)}.vx-heads span{left:8px;font-size:12px;letter-spacing:.04em}.vx-sp{display:none}.vx-zg{flex:1 1 100%}.vx-zm{width:auto;flex:1}}
-@media (prefers-reduced-motion:reduce){.vx *{transition:none!important}.vx input[type=range]::-webkit-slider-thumb,.vx-ph i{transform:none!important}}
 @media (max-width:700px){.td{padding:10px 18px}.td-in{padding:64px 0 6px;gap:16px}.ed{grid-template-columns:minmax(0,1fr);grid-template-areas:"card" "panel" "chat";grid-template-rows:none;padding:16px;gap:12px}.ed-w{--tw:120px}
 /* EDITOR ON PHONES (her 2026-11-24: "I need to be able to differentiate what is like the viewport and what are the things that I'm
    editing ... I don't immediately think that these like little knobs are going to be affecting my thing at the top"): the sample is a
@@ -317,9 +315,7 @@ html[data-theme=night] .td,html[data-look=dark] .td{--hi:rgba(255,255,255,.07);-
 .vx-clip{box-shadow:inset 0 0 0 1px rgba(22,26,36,.18),0 1px 2px rgba(22,26,36,.22),0 4px 10px -4px rgba(22,26,36,.3)}
 .vx-z{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 2px rgba(22,26,36,.25),0 4px 10px -4px rgba(22,26,36,.3)}
 .vx-z:hover{box-shadow:0 0 0 2px var(--mut),0 4px 10px -4px rgba(22,26,36,.3)}.vx-z.sel{box-shadow:0 0 0 3px var(--ink),0 4px 10px -4px rgba(22,26,36,.3)}
-@media (prefers-reduced-motion:reduce){.td,.td::backdrop,.td-in,.ed-x,.ed-p{transition:none}
-  .td.out{opacity:0;transition:opacity .2s ease}.td.out::backdrop{transition:opacity .2s ease}.td.out .td-in{transform:none;opacity:1;transition:none}
-  .ed-p input::-webkit-slider-thumb{transform:none!important}.ed-p input::-moz-range-thumb{transform:none!important}}`;
+`;
   document.head.appendChild(css);
 
   const dg = document.createElement('dialog');
@@ -962,7 +958,7 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
      picked as you cross. A STILL hold (350ms) is never a drag: it belongs to Vantage's vote bubble. Self-contained (it is also written
      into the demo phone's page), so it uses only its own window. */
   function goo(g) {
-    var W = g.ownerDocument.defaultView, RM = W.matchMedia('(prefers-reduced-motion: reduce)');
+    var W = g.ownerDocument.defaultView;
     if (g.__goo) return; var bs = [].slice.call(g.querySelectorAll('button')); if (bs.length < 2) return; g.__goo = 1;
     var k = g.ownerDocument.createElement('i'); k.className = 'rv-knob'; k.setAttribute('aria-hidden', 'true'); g.insertBefore(k, g.firstChild);
     var x = null, w = 0, vx = 0, vw = 0, tx = 0, tw = 0, raf = 0, last = 0, drag = null, dragEnd = 0, holdT = 0;
@@ -982,7 +978,7 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
     function run() { if (!raf) { last = W.performance.now(); raf = W.requestAnimationFrame(step); } }
     function settle() {
       if (!g.offsetWidth) { x = null; return; } var b = cur(); tx = b.offsetLeft; tw = b.offsetWidth; k.style.top = b.offsetTop + 'px'; k.style.height = b.offsetHeight + 'px';
-      if (x === null || RM.matches) { x = tx; w = tw; vx = vw = 0; paint(); } else run();
+      if (x === null) { x = tx; w = tw; vx = vw = 0; paint(); } else run();
     }
     new W.MutationObserver(function () { if (!drag) settle(); }).observe(g, { subtree: true, attributes: true, attributeFilter: ['aria-pressed'] });
     g.addEventListener('pointerdown', function (e) {
@@ -1008,7 +1004,7 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
   /* the demo phone's own page script (written into its srcdoc; its settings come in window.PD_CFG). Her before/after card: the orbit
      maths are hers verbatim (make-driftwood-top.py BA_JS at/geo/bounds), the TAP rings are her .bh-tap presets and ripple() pace */
   function pdInner() {
-    var C = window.PD_CFG, de = document.documentElement, RM = matchMedia('(prefers-reduced-motion: reduce)').matches, PI = Math.PI;
+    var C = window.PD_CFG, de = document.documentElement, PI = Math.PI;
     var st = document.getElementById('ba'), box = st.querySelector('.ba-box'), A_ = st.querySelector('.ba-after'), B_ = st.querySelector('.ba-before'),
       tap = st.querySelector('.bh-tap'), sws = [].slice.call(document.querySelectorAll('.rv-sw')), M = { tap: 'halo', swap: 'orbit' };
     var K = .53, AR = 546 / 896, LB = 26, BX = -.42, BY = -.27, G = null, O = { x: 0, y: 0 }, th = 0, anim = 0, cyc = 0, litT = 0;
@@ -1039,7 +1035,6 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
        pull-back mid-turn. TAP's demo always swaps on her ORBIT. Reduce Motion: a quick fade (her 2026-11-23) */
     function swap() {
       if (anim || !G) return; stopTap(); var t0 = th, t1 = th + PI, flash = M.swap === 'flash';
-      if (RM) { anim = 1; box.style.transition = 'opacity .15s'; box.style.opacity = 0; setTimeout(function () { th = t1; render(th); box.style.opacity = 1; anim = 0; label(); }, 160); return; }
       var D = flash ? 600 : 1100, s0 = performance.now();
       anim = requestAnimationFrame(function f(now) {
         var k = Math.min(1, Math.max(0, (now - s0) / D)), e = ease(k);
@@ -1069,7 +1064,7 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
     function stopTap() { clearTimeout(cyc); clearTimeout(litT); tap.classList.add('gone'); tap.querySelectorAll('i,em').forEach(function (e) { if (e.getAnimations) e.getAnimations().forEach(function (a) { a.cancel(); }); }); }
     function startTap() {
       stopTap(); tap.dataset.tv = M.tap; placeTap(); tap.classList.remove('gone', 'calm', 'on', 'lit'); void tap.offsetWidth; tap.classList.add('on', 'lit');
-      if (!RM) cyc = setTimeout(ripple, 200); litT = setTimeout(function () { tap.classList.remove('lit'); tap.classList.add('calm'); }, 2900);
+      cyc = setTimeout(ripple, 200); litT = setTimeout(function () { tap.classList.remove('lit'); tap.classList.add('calm'); }, 2900);
     }
     /* the part a switch changes gets her hairline ring: fades in, holds, fades out (on its first use, and when its name is tapped) */
     function glow(t) {
@@ -1089,12 +1084,12 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
       nm.setAttribute('role', 'button'); nm.tabIndex = 0; nm.setAttribute('aria-expanded', 'false');
       function toggle() {
         var o = !sw.classList.contains('open'); sws.forEach(function (x) { x.classList.remove('open'); x.querySelector(':scope > span').setAttribute('aria-expanded', 'false'); });
-        if (o) { sw.classList.add('open'); nm.setAttribute('aria-expanded', 'true'); dispatchEvent(new Event('resize')); setTimeout(function () { glow(st); }, RM ? 60 : 650); }   /* Vantage scrolls (capture), then the ring */
+        if (o) { sw.classList.add('open'); nm.setAttribute('aria-expanded', 'true'); dispatchEvent(new Event('resize')); setTimeout(function () { glow(st); }, 650); }   /* Vantage scrolls (capture), then the ring */
       }
       nm.addEventListener('click', toggle); nm.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
       paint(sw); goo(sw);
     });
-    setTimeout(function () { document.querySelector('.rv-stack').classList.add('in'); }, RM ? 0 : 900);   /* they pop into place once the page is there */
+    setTimeout(function () { document.querySelector('.rv-stack').classList.add('in'); }, 900);   /* they pop into place once the page is there */
     st.addEventListener('click', swap);
     st.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); swap(); } });
     layout(); label();
@@ -1102,7 +1097,7 @@ ${CHAT.replace('class="ed-chat"', 'class="ed-chat vx-chat"')}
     /* a real iPhone lifts Vantage's note sheet above its home bar (env(safe-area-inset-bottom), 0 inside this little page): the same lift here,
        so the screen's rounded corners never clip it */
     addEventListener('load', function () { var h = [].filter.call(document.body.children, function (e) { return e.shadowRoot; })[0]; if (!h) return; var s = document.createElement('style'); s.textContent = '.talk{bottom:30px}'; h.shadowRoot.appendChild(s); });
-    setTimeout(startTap, RM ? 0 : 700);   /* after the dialog has eased in */
+    setTimeout(startTap, 700);   /* after the dialog has eased in */
     window.__pd = { swap: swap, get mode() { return M; }, get front() { return front(); }, get anim() { return !!anim; } };   /* for checks */
   }
 
@@ -1175,7 +1170,6 @@ html.night .bh-tap em{color:#dbe7ff}
 .rv-stack .rv-sw{position:relative!important;left:auto!important;bottom:auto!important;opacity:0;transform:translateX(-56px)}
 .rv-stack.in .rv-sw{opacity:1;transform:none;transition:transform .6s cubic-bezier(.2,.9,.3,1.25) calc(var(--i)*170ms),opacity .3s ease calc(var(--i)*170ms)}
 .rv-sw:not(.open) button,.rv-sw:not(.open) .rv-knob{display:none}.rv-sw:not(.open){padding:4px 12px}.rv-sw:not(.open){min-height:38px;box-sizing:border-box}.rv-sw:not(.open)>span{margin-right:-.08em;padding:0;display:block;line-height:1;text-box:trim-both cap alphabetic}   /* closed: the word dead centre (her 2026-11-25) */
-@media (prefers-reduced-motion:reduce){.rv-stack .rv-sw{transform:none}.rv-stack.in .rv-sw{transition:opacity .2s ease}}
 .rv-sw{position:fixed;left:14px;bottom:22px;z-index:10;display:flex;align-items:center;gap:2px;padding:4px 4px 4px 12px;border-radius:999px;background:rgba(22,26,36,.92);color:#fff;font:600 11px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
 html.night .rv-sw{background:rgba(46,50,60,.95)}
 .rv-sw>span{margin-right:6px;padding:9px 0;opacity:.85;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
@@ -1186,7 +1180,6 @@ html .rv-sw[role=group] button{touch-action:none}
 .rv-knob{position:absolute;left:0;top:0;border-radius:999px;background:#fff;pointer-events:none}
 .rv-glow{position:absolute;z-index:5;pointer-events:none;box-sizing:border-box;border:1px solid var(--gl);box-shadow:0 0 22px var(--gl2);animation:rv-glow 1.8s cubic-bezier(.2,.7,.3,1) both}
 @keyframes rv-glow{0%{opacity:0;transform:scale(1.015)}25%{opacity:1;transform:none}65%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.bh-tap i,.bh-tap em{animation:none}.bh-tap.on span{animation:none;transform:translate(-50%,-50%);opacity:1}.bh-tap i{opacity:.3}.rv-glow{animation-name:rv-glow-rm}@keyframes rv-glow-rm{0%,100%{opacity:0}25%,65%{opacity:1}}}
 </style>
 <script>/* nothing leaves this page: storage lives in memory, fetch and beacons go nowhere (the CSP blocks them too), and the microphone is a
    pretend: it shows the stop icon for a moment and hears nothing */
@@ -1284,7 +1277,6 @@ html[data-theme=night] .pd .phone-screen,html[data-look=dark] .pd .phone-screen{
 .td-glow{position:fixed;z-index:2147483600;pointer-events:none;box-sizing:border-box;border:1px solid rgba(58,98,171,.55);box-shadow:0 0 22px rgba(58,98,171,.22);animation:td-glow 1.8s cubic-bezier(.2,.7,.3,1) both}
 html[data-theme=night] .td-glow{border-color:rgba(219,231,255,.5);box-shadow:0 0 22px rgba(219,231,255,.16)}
 @keyframes td-glow{0%{opacity:0;transform:scale(1.015)}25%{opacity:1;transform:none}65%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.td-glow{animation-name:td-glow-rm}@keyframes td-glow-rm{0%,100%{opacity:0}25%,65%{opacity:1}}}
 @media (max-width:1000px){.td.td-rv .td-in{padding-bottom:68px}}`;
     document.head.appendChild(css);
     rv.insertAdjacentHTML('beforeend', `<div class="rv-sw rv-pdemo" role="group" aria-label="Phone demo" data-target="${pdTarget()}"><span tabindex="0" role="button">DEMO</span>${Object.keys(PD).map(k => `<button type="button" data-d="${k}" aria-pressed="${k === pdKind}">${PD[k][0]}</button>`).join('')}</div>`);

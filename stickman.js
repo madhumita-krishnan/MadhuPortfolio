@@ -37,11 +37,10 @@
   var hero = document.querySelector('.hero');
   if (!hero) return;
   var fine = matchMedia('(hover: hover) and (pointer: fine)');
-  /* Reduce Motion used to RETURN here, so every visitor with it on (a common iPhone setting) never saw her at all
-     (found 2026-10-24 by device-check). start() already draws her still under it. */
-  var prefersRM = matchMedia('(prefers-reduced-motion: reduce)');
+  /* FULL MOTION FOR EVERYONE (her 2026-11-25: "I don't care about reduced motion"): the OS Reduce Motion setting is ignored;
+     only the site's own rm-mode class (no switch for it yet) stills her. */
   var touchMode = !fine.matches;
-  var rmActive = function () { return prefersRM.matches || document.body.classList.contains('rm-mode'); };
+  var rmActive = function () { return document.body.classList.contains('rm-mode'); };
 
   var cv = document.createElement('canvas');
   cv.className = 'stick-cv';

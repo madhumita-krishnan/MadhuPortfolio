@@ -15,10 +15,10 @@
    Poses: assets/clay/lean/{lean,catch,glance}.png, lifted from Flora (project "Loader · clay bar break") off green. */
 (function () {
   var root = document.documentElement, sd = document.querySelector('.sdeck'); if (!sd) return;
-  var fine = matchMedia('(hover: hover) and (pointer: fine)').matches, rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   var seen = false; try { seen = localStorage.getItem('mk-lean') === '1'; } catch (e) {}
   if (/[?&]lean\b/.test(location.search)) seen = false;   // ?lean plays it again (for checking)
-  if (seen || rm || !fine) return;
+  if (seen || !fine) return;
   var base = (document.querySelector('script[src*="lean.js"]') || {}).src || '', ver = (base.match(/\?v=[^&]*/) || [''])[0];
   var DIR = 'assets/clay/', P = {   // each pose: the image's own fractions (feet x, top and bottom of the figure, the forearm)
     lean: { f: 'lean/lean.png', fx: .756, top: .0054, bot: .993, tipX: .0126, armY: .287, ar: 476 / 1112 },

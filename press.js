@@ -14,7 +14,6 @@
   var SEL = 'button,[role=button],[role=tab],[role=switch],[role=option],.btn,summary,a.cta-resume,a.scard,a.wproject,a.brand-slot,'
     + 'a.cta,a.lk-btn,a.btn-o,a.ff-card,a.ff-hey,a.v-live';   // links drawn as buttons / cards (home; the case-study pages)
   var SKIP = 'input,textarea,select,.vx-cv *,.vx-aim,.tw,.tw *,.cta-socials a,.vt-clay a,.tune-acts button,:disabled,[aria-disabled=true]';
-  var still = matchMedia('(prefers-reduced-motion: reduce)');
   var ADD = typeof KeyframeEffect !== 'undefined' && 'composite' in KeyframeEffect.prototype;
   var cur = null;   // { el, x, y, anim, timer, up }
   var st = document.createElement('style');
@@ -28,7 +27,6 @@
     return el;
   }
   function frames(on) {
-    if (still.matches) return { filter: on ? ['brightness(1)', 'brightness(.86)'] : ['brightness(.86)', 'brightness(1)'] };
     var a = on ? 1 : .96, b = on ? .96 : 1;
     return ADD ? { transform: ['scale(' + a + ')', 'scale(' + b + ')'] } : { scale: [String(a), String(b)] };
   }
@@ -42,7 +40,7 @@
     var wait = Math.max(0, 80 - (performance.now() - c.at));   // let the dip land before the spring, or a fast click shows nothing
     setTimeout(function () {
       var d = c.anim; c.anim = null;
-      c.el.animate(frames(false), { duration: still.matches ? 160 : 280, easing: still.matches ? 'ease-out' : 'cubic-bezier(.34,1.56,.64,1)', composite: ADD ? 'add' : 'replace' });
+      c.el.animate(frames(false), { duration: 280, easing: 'cubic-bezier(.34,1.56,.64,1)', composite: ADD ? 'add' : 'replace' });
       d.cancel();
     }, wait);
   }

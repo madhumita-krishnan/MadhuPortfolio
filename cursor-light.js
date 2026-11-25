@@ -5,7 +5,7 @@
      --la       the angle of the bezel's rail highlight, which turns to face the cursor; CSS default 152deg
    Mouse/trackpad only: on touch the light stays where the CSS puts it. Only objects on screen are updated, once a frame. */
 (function () {
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   var SEL = '.phone,.mac,.browser,.cta-socials img,.headshot,.cs-hero-phones>img,.cs-phones>img';
   var seen = new Set(), mx = -1, my = -1, raf = 0;
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { e.isIntersecting ? seen.add(e.target) : seen.delete(e.target); }); });

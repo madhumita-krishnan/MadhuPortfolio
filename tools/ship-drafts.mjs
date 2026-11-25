@@ -53,9 +53,9 @@ var c=document.createElement('style');c.textContent=
 '@property --ra{syntax:"<angle>";inherits:false;initial-value:20deg}@keyframes bh-turn2{to{--ra:380deg}}'+
 'html[data-look=dark] .bh-tap em{color:#dbe7ff}'+
 '@keyframes bh-pop{0%{transform:translate(-50%,-50%) scale(.82);opacity:0}60%{transform:translate(-50%,-50%) scale(1.03);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}'+
-'@media (prefers-reduced-motion:reduce){.bh-tap em,.bh-tap i{animation:none}.bh-tap.on span{animation:none;transform:translate(-50%,-50%);opacity:1}.bh-tap i{opacity:.3}}';
+'@media (prefers-reduced-motion:x-never){.bh-tap em,.bh-tap i{animation:none}.bh-tap.on span{animation:none;transform:translate(-50%,-50%);opacity:1}.bh-tap i{opacity:.3}}';
 document.head.appendChild(c);
-var RM=matchMedia('(prefers-reduced-motion: reduce)'),P={n:3,g:320,gm:1.4,d:1800,dm:1.06,s0:.55,c:3900};   // MIST's own pace
+var RM=matchMedia('(prefers-reduced-motion:x-never)'),P={n:3,g:320,gm:1.4,d:1800,dm:1.06,s0:.55,c:3900};   // MIST's own pace
 document.querySelectorAll('.ba').forEach(function(st){var box=st.querySelector('.ba-box');if(!st.__ba||!box)return;
  var tap=document.createElement('div');tap.className='bh-tap';tap.dataset.tv='mist';tap.setAttribute('aria-hidden','true');tap.innerHTML='<span><i></i><i></i><i></i><em>TAP</em></span>';box.appendChild(tap);
  var touched=false,cyc=0,lt=0;

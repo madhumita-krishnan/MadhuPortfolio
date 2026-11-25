@@ -1007,19 +1007,12 @@ body[data-phone] .v-side img{max-height:min(100%,600px);width:auto;max-width:100
 .btn-o .ic{width:14px;height:14px}
 .ds-row{margin-top:26px;display:flex;justify-content:center}
 
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .q-in{transition:none}
-  html{scroll-behavior:auto}
-  .js .fu{opacity:1;transform:none}
-}
 `;
 
 /* client JS — plain, no dependencies */
 const JS = `(() => {
 if (!/^#view-/.test(location.hash)) scrollTo(0, 0);
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* fade-ups + chart draws: once, as each block enters */
 /* a callout's line starts just outside its label's box, so it never crosses the letters.
@@ -1093,7 +1086,7 @@ where();
 
 /* hero parallax: the floating cards drift up faster than the laptop */
 const stage = $('.stage');
-if (stage && !reduce) {
+if (stage) {
   let tick = false;
   addEventListener('scroll', () => { if (tick) return; tick = true; requestAnimationFrame(() => {
     stage.style.setProperty('--p', Math.min(1, scrollY / innerHeight).toFixed(3)); tick = false; }); }, { passive: true });
@@ -1117,7 +1110,7 @@ $$('img[data-gif]').forEach(img => {
 
 /* cursor badge */
 const cur = $('.cursor');
-if (cur && matchMedia('(hover: hover) and (pointer: fine)').matches && !reduce) {
+if (cur && matchMedia('(hover: hover) and (pointer: fine)').matches) {
   let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
   let opened = false;
   addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; cur.classList.remove('gone'); if (!opened) { opened = true; setTimeout(() => cur.classList.add('opened'), 180); }

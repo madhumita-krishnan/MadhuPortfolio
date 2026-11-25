@@ -212,7 +212,6 @@ html:not([data-theme="night"]) .view-btn:focus-visible{outline-color:#3a62ab}
 .dg-slide figcaption em{font:300 16px/1.5 'Plus Jakarta Sans',system-ui,sans-serif;font-style:normal;color:#a9adb7}
 html.dg-on{overflow:hidden}
 @media (max-width:640px){.dg-slide{flex-basis:86vw}.dg-strip{padding:0 7vw;gap:5vw}.dg-slide img,.dg-slide video{max-height:56vh}.dg-slide figcaption b{font-size:19px}}
-@media (prefers-reduced-motion:reduce){.dg[open]{animation:none}.dg-slide{transition:none}}
 /* the disciplines panels keep their NIGHT inks in both looks (her 2026-11-22: "the text on the images … need to stay in night mode
    so you can read it"): the words sit on a photo under a fixed dark wash, never on the page */
 html:not([data-theme="night"]) .panel{--text-on-deep:#f3f4f6;--text-on-deep-secondary:#c3c7cf;--accent-bright:#a9c4f5}
@@ -243,7 +242,6 @@ html[data-hov=c]:not([data-theme="night"]) .work-sec[data-wash].wh-on .wproject.
 @keyframes hov-wave{from{-webkit-mask-position:100% 0;mask-position:100% 0}to{-webkit-mask-position:0% 0;mask-position:0% 0}}
 @keyframes hov-drift{from{background-position:0 0}to{background-position:200px 60px}}
 html[data-hov=d]:not([data-theme="night"]) .work-sec[data-view="list"].wh-on .wproject:not(.wh-cur)>*{filter:grayscale(.7) opacity(.45);transition:filter .32s cubic-bezier(.2,.7,.2,1)}
-@media (prefers-reduced-motion:reduce){html[data-hov=c] .wproject::after{animation:none!important}}
 
 /* THE KNOB, by day = WHITE (her pick 2026-11-22: "Lets do white nobs", option D): both toggles (day/night + projects) — a white knob
    lifted off a soft grey track, no ring, the chosen icon in ink. Night keeps its light knob on the ring */
@@ -283,7 +281,6 @@ html[data-gal=film] .dg-thumbs::-webkit-scrollbar{display:none}
 .dg-th img{width:100%;height:100%;object-fit:cover;display:block}
 .dg-th:hover{opacity:.75}.dg-th.on{opacity:1;transform:translateY(-6px);box-shadow:0 0 0 2px #8fb2f2}
 .dg-th:focus-visible{outline:2px solid #8fb2f2;outline-offset:2px}
-@media (prefers-reduced-motion:reduce){html[data-gal=prints] .dg-slide{transition:opacity .2s linear}}
 @media (max-width:640px){html[data-gal=prints] .dg-slide{width:86vw}.dg-th{width:58px;height:40px}}
 
 /* BRANDS colour options (review switch; her 2026-11-22: "is there any color for the brands listing. they feel boring and bland"). Her rule
@@ -307,7 +304,6 @@ html[data-gal=film] .dg-cap{bottom:110px}html[data-gal=film] .dg-strip{padding-b
 html[data-gal=prints] .dg-cap{background:rgba(250,250,248,.86);padding:12px 18px;border-radius:12px;width:auto;max-width:min(620px,88vw)}
 html[data-gal=prints] .dg-cap .dg-org{color:#3a62ab}html[data-gal=prints] .dg-cap b{color:#161a24}html[data-gal=prints] .dg-cap em{color:#3d4552}
 @media (max-width:640px){.dg-cap b{font-size:18px}.dg-slide img,.dg-slide video{max-height:52vh}}
-@media (prefers-reduced-motion:reduce){.dg-cap{transition:none}}
 /* the pile always sits ABOVE the caption, never under it (on a phone the caption covered the print) */
 html[data-gal=prints] .dg-strip{padding:72px 0 180px;box-sizing:border-box}
 html[data-gal=prints] .dg-slide img,html[data-gal=prints] .dg-slide video{max-height:calc(100dvh - 300px)}
@@ -381,7 +377,6 @@ html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[
 html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{translate:calc(var(--side)*46vw) -6px;filter:none}
 @media (max-width:640px){html[data-gal=prints] .dg-slide[data-pile=next],html[data-gal=prints] .dg-slide[data-pile=prev]{transform:translateY(calc(var(--dd,0)*6px - 2vh)) rotate(var(--tilt));translate:calc(var(--side)*52vw) 0;scale:.38}
   html[data-gal=prints] .dg-slide[data-pile=next]:hover,html[data-gal=prints] .dg-slide[data-pile=prev]:hover{translate:calc(var(--side)*52vw) 0}}
-@media (prefers-reduced-motion:reduce){html[data-gal=prints] .dg-slide,html[data-gal=prints] .dg-slide[data-pile]{transition:opacity .2s linear}html[data-gal=prints] .dg-slide.cyc,html[data-gal=prints] .dg-slide.cyc-back{animation:none}}
 
 /* project names: ONE font for every card, the deck's own (her 2026-11-23: "use the same font for the company names on the case study cards"; brand lettering retired) */
 /* the project names are INK, not blue (her 2026-11-23: "I don't like that it's blue... it should not be blue") */
@@ -418,7 +413,6 @@ html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::backdrop{backgrou
 html[data-theme="night"][data-desk=soap][data-gal=prints] .dg::before{opacity:.09;mix-blend-mode:screen}
 @keyframes soap-in{from{background:rgba(250,250,248,0);-webkit-backdrop-filter:blur(0) saturate(1);backdrop-filter:blur(0) saturate(1)}}
 @keyframes soap-sheen{from{opacity:0}}
-@media (prefers-reduced-motion:reduce){html[data-desk=soap][data-gal=prints] .dg::backdrop,html[data-desk=soap][data-gal=prints] .dg::before{animation-duration:.01s}}
 
 /* THE GALLERY BACK = A PLAIN BLUR (her 2026-11-23: "the soap thing just looks weird ... just do something like blurred ... basic"): the page
    softly blurred behind the prints, a light veil by day, a dark one at night; eases in on open. Clay desk + soap film retired */
@@ -428,7 +422,6 @@ html[data-theme="night"][data-desk=blur][data-gal=prints] .dg,html[data-theme="n
 html[data-desk=blur][data-gal=prints] .dg::before{content:none}
 @keyframes blur-in{from{background:rgba(250,250,248,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}}
 html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-n{color:#c9ced6}html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-x{background:rgba(255,255,255,.12)}html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-x svg{stroke:#f3f4f6}
-@media (prefers-reduced-motion:reduce){html[data-desk=blur][data-gal=prints] .dg::backdrop{animation-duration:.01s}}
 
 /* the SOUND button inside the day/night pill (her 2026-11-23 "a mute site button"): same size and ink as the sun and moon, a hairline before it */
 .lt-sep{flex:0 0 1px;align-self:stretch;margin:6px 2px;background:rgba(22,26,36,.18)}
@@ -447,7 +440,6 @@ html[data-theme="night"][data-desk=blur][data-gal=prints] .dg-n{color:#c9ced6}ht
 html[data-mute=on] .lt-mute .lm-on{stroke-dashoffset:1;opacity:0}html[data-mute=on] .lt-mute .lm-off{stroke-dashoffset:0;opacity:1;--o:0s}
 html[data-mute=on] .lt-mute .lm-w2{--d:0s;--o:.26s}html[data-mute=on] .lt-mute .lm-w1{--d:.12s;--o:.38s}html[data-mute=on] .lt-mute .lm-x1{--d:.3s}html[data-mute=on] .lt-mute .lm-x2{--d:.42s}
 .lt-mute svg path:first-child{transition:transform .3s cubic-bezier(.2,.8,.2,1) .2s;transform-origin:8px 12px}html[data-mute=on] .lt-mute svg path:first-child{transform:scale(.92)}
-@media (prefers-reduced-motion:reduce){.lt-mute .lm-on,.lt-mute .lm-off,.lt-mute svg path:first-child{transition:none!important}}
 @media (max-width:640px){.lt-mute{width:34px;height:28px}.lt-mute svg{width:16px;height:16px}}
 /* the sound button never just appears (her 2026-11-23: "can there be like a transition ... of the mute button showing itself? ... I hate when
    things just appear. It looks glitchy"): it eases in, fading up, growing a touch and sharpening, just after the loader lifts (html.booted);
@@ -495,3 +487,12 @@ html[data-gal=prints] .dg-cap{width:max-content}
   html[data-gal=prints] .dg-slide video{height:var(--pile-h)}
   html[data-gal=prints] .dg-slide img.dg-fit{width:min(100%,calc((var(--pile-h) - 20px) * var(--ar) + 16px))}}
 html[data-gal=prints] .dg{touch-action:none}
+
+/* ZOOM INTO A PRINT (her 2026-11-25, app.js "ZOOM INTO A PRINT"): the zoomed print rides above the piles; its exit is her zoom-out tile,
+   the ✕'s twin beside it, easing in with the zoom */
+.dg-slide.zoom{z-index:50}.dg.zoomed .dg-slide.zoom img{cursor:grab}
+.dg.zoomed .dg-x{z-index:60}   /* a mode never hides its own way out: the ✕ and the zoom-out tile stay over the zoomed print */
+.dg-n{transition:opacity .35s ease}.dg.zoomed .dg-cap,.dg.zoomed .dg-n{opacity:0;pointer-events:none}   /* the words step aside so the details show */
+.dg-zout{right:76px;opacity:0;pointer-events:none;transition:opacity .45s cubic-bezier(.2,.7,.2,1)}.dg.zoomed .dg-zout{opacity:1;pointer-events:auto}
+.dg-zout svg{width:20px;height:20px}
+html .dg.zoomed .dg-x{background:rgba(250,250,248,.86)}html[data-theme="night"] .dg.zoomed .dg-x{background:rgba(22,26,36,.82)}   /* over a dark (or light) photo the exits keep a solid ground */

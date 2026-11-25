@@ -592,7 +592,6 @@ nav.bar{transition:max-width .5s cubic-bezier(.22,1,.36,1)}
 body.hero-cta-on nav.bar{max-width:var(--nav-compact,820px)}
 body.hero-cta-on .nav-wrap .bar>.btn.sm{opacity:0;transform:scale(.9);visibility:hidden;pointer-events:none;max-width:0;padding-left:0;padding-right:0;border-width:0;overflow:hidden;
   transition:opacity .25s var(--ease-standard),transform .25s var(--ease-standard),max-width .5s cubic-bezier(.22,1,.36,1),padding .5s cubic-bezier(.22,1,.36,1),visibility 0s linear .5s}
-@media (prefers-reduced-motion:reduce){.nav-wrap,.nav-wrap.nav-hidden{transition:none}}
 nav.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 20px;border-radius:var(--r-pill);max-width:820px;width:100%;justify-content:space-between}
 /* The SVG displacement warp lives on the nav and on the company chips, and nowhere else.
    Every element carrying backdrop-filter:url() costs a full backdrop snapshot + turbulence +
@@ -959,7 +958,6 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
 /* the clay tiles beside say hey! wiggle a little on hover (her ask 2026-10-24) */
 .cta-socials a:hover img,.cta-socials a:focus-visible img{animation:jb-wiggle .5s cubic-bezier(.3,1.4,.5,1)}
 @keyframes jb-wiggle{0%{transform:none}20%{transform:rotate(-9deg) scale(1.06)}45%{transform:rotate(7deg) scale(1.06)}70%{transform:rotate(-4deg) scale(1.03)}100%{transform:none}}
-@media (prefers-reduced-motion:reduce){.cta-socials a:hover img,.cta-socials a:focus-visible img{animation:none}}
 /* PRESS = the clay CAVES IN (her asks 2026-10-24: "squish a little like clay would if I pressed", then "squish inside,
    not top to bottom", "getting smaller isn't what clay does", and "the squishing would make the clay buttons cave in").
    The rim stays exactly where it is; the MIDDLE sinks: a copy of the tile (::before, --tile set on each link) masked
@@ -978,7 +976,6 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
   background:radial-gradient(closest-side,transparent 48%,rgba(0,0,0,.38) 66%,transparent 88%);transition:opacity var(--clay-back,.6s) ease-out}
 .cta-socials a:active::after{opacity:var(--clay-dent,.8);transition:opacity var(--clay-in,80ms) ease-out}
 .cta-socials a:active img{animation:none}
-@media (prefers-reduced-motion:reduce){.cta-socials a::before,.cta-socials a::after{transition:none}}
 /* ---- the cinematic load. The hero used to arrive in two registers at once: the
    handwriting wrote itself in word by word while the blooms, the headline and the two
    buttons just APPEARED at first paint — which is the harshness she named (2026-08-19,
@@ -1030,7 +1027,6 @@ html.booted .hero:not(.revealed) .reveal-words{animation:mk-late-h1 .5s ease .6s
 .hero.tiles-in .cta-socials a{animation:tile-pop 640ms cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(var(--i,0) * 120ms)}
 @keyframes tile-pop{0%{opacity:0;transform:translateY(28px) scale(.6)}45%{opacity:1;transform:translateY(-10px) scale(.94,1.1)}
   70%{transform:translateY(0) scale(1.1,.9)}86%{transform:translateY(-2px) scale(.98,1.03)}100%{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.cta-socials a,.hero.tiles-in .cta-socials a{opacity:1;transform:none;animation:none}}
 /* words land clean — the blur-resolve tried on the whole hero came straight back out
    (2026-08-19, same day: "it hurts my eyes"). It survives on the EYEBROW ONLY below,
    because she asked to keep it for the word portfolio. */
@@ -1053,13 +1049,12 @@ html.booted .hero:not(.revealed) .reveal-words{animation:mk-late-h1 .5s ease .6s
    flowers in the background") — the same blur-resolve the eyebrow kept, on the eyebrow's
    own 900ms cue with the same pair of clocks, so word and paint read as one layer
    resolving. Only the HIDDEN state is written, so each bloom lands on the stylesheet's
-   own resting opacity — 1 on desktop, .5 on a phone. Gated to no-preference rather than
-   patched in the reduced-motion block: under RM the blooms must simply BE there, at
-   whatever opacity their width tier says, from the first frame. */
-@media (prefers-reduced-motion:no-preference){
+   own resting opacity — 1 on desktop, .5 on a phone. Was gated to no-preference; since
+   2026-11-25 (her full-motion rule) it runs for everyone, Reduce Motion included. */
+
   .hero-flora img{transition:opacity 900ms var(--ease-enter) 900ms,filter 1400ms var(--ease-standard) 900ms}
   .hero:not(.revealed) .hero-flora img{opacity:0;filter:blur(14px)}
-}
+
 .lively .ch{display:inline-block;white-space:pre;transition:transform var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard)}
 .lively:hover .ch{color:var(--accent)}
 .lively.waving .ch{transform:translateY(-7px);color:var(--accent)}   /* rises in the accent, on hover and in the load hand-off */
@@ -1153,7 +1148,6 @@ a.brand-slot:hover .brand,a.brand-slot:focus-visible .brand{background:var(--acc
 .work-sec[data-view="list"].wh-on:not([data-wh="off"]) .wproject:not(.wh-cur)>*{filter:opacity(var(--wh-op))}
 .work-sec[data-view="list"].wh-on[data-wh="blur"] .wproject:not(.wh-cur)>*{filter:opacity(var(--wh-op)) blur(var(--wh-blur))}
 .work-sec[data-view="list"].wh-on[data-wh="lift"] .wproject.wh-cur>.project-media-wrap{scale:var(--wh-scale)}
-@media (prefers-reduced-motion:reduce){.wproject>*{transition:none}}
 /* ------------------------------------------------ the swipe deck (deck.html, see sdeckHTML)
    Her v2 brief, measured from reference-swipe-deck.mov: the active card is ~73% of the width (capped by the
    screen's height so card + headline fit) and centred at 51% of the deck's height; every other card waits at
@@ -1219,7 +1213,6 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .turn-hint .th-phone rect+rect{fill:currentColor;stroke:none}
 .turn-hint.play .th-phone{animation:th-turn 2.2s cubic-bezier(.65,0,.35,1) 2}
 @keyframes th-turn{0%,12%{transform:rotate(0)}38%,70%{transform:rotate(-90deg)}96%,100%{transform:rotate(0)}}
-@media (prefers-reduced-motion:reduce){.turn-hint .th-phone{transform:rotate(-90deg)}.turn-hint.play .th-phone{animation:none}}
 .view-toggle{touch-action:none}   /* so a drag across it slides the switch instead of scrolling the page */
 /* the circle's own blue ring (her 2026-10-26: "I want that circle to be visible with that blue line and then I want it to pause
    there for a little"): the bar's border only shows top and bottom while it's clipped to a circle, so the circle gets one */
@@ -1252,7 +1245,6 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .scard-stack-label{display:block;margin-bottom:.7em;font-family:var(--font-utility);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
 .scard-stack ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .scard-stack li{font-family:var(--font-utility);font-size:.75rem;line-height:1.2;color:var(--text-primary);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-pill);padding:5px 11px}
-@media (prefers-reduced-motion:reduce){.scard-stack{transition:none}}
 .scard-media>*{max-width:100%;max-height:100%}
 .scard-media .phone-media{height:100%;width:auto;max-width:none;aspect-ratio:1.1036/2.2705}
 /* her photo as a card's picture (site.json project.photo; her 2026-11-22 "can we use this image?"): it stands in for the phone;
@@ -1307,7 +1299,6 @@ html.orient-views .view-toggle{display:none!important}   /* phones: turning the 
 .sdeck.t0 .sdeck-co .sdeck-name{display:block;margin-bottom:.45em;font-family:var(--font-utility);font-size:.75rem;font-weight:400;letter-spacing:.14em;text-transform:uppercase;line-height:inherit;color:var(--accent)}
 .sdeck.side.t0 .sdeck-co .sdeck-name{margin-bottom:.7em;font-size:.76rem}
 .sdeck.side.t0 .sdeck-title{font-size:clamp(1.45rem,1.9vw,2.05rem);line-height:1.25}
-@media (prefers-reduced-motion:reduce){.sdeck-title>span{transition:none}}
 /* WHERE YOU ARE, AND A WAY TO THE END (her ask 2026-10-23): one thin segment per project under the headline;
    the current one is bright, the ones passed stay lit, the rest are faint. Tap a segment or drag along the bar
    to jump straight there. Each segment's hit area is taller than its 3px line. */
@@ -1927,7 +1918,7 @@ body:has(.nav-wrap.nav-hidden) .cs-edge{transform:translateY(-160%);opacity:0;po
   transition:transform var(--motion-base) var(--ease-standard)}
 .cs-next-peek.is-phone{width:190px}
 .cs-next-peek.is-mac{width:470px}
-@media (hover:hover) and (min-width:900px) and (prefers-reduced-motion:no-preference){
+@media (hover:hover) and (min-width:900px){
   .cs-next-card:hover,.cs-next-card:focus-visible{margin-top:-128px;padding-bottom:calc(clamp(24px,4vw,48px) + 128px)}
   /* a fixed 190px slice rises whatever the device: with top:100% the visible
      height IS the translate, so phone and MacBook tease equally */
@@ -1965,25 +1956,17 @@ main:focus{outline:none}   /* the skip link's landing spot, not a control */
 .rm-mode .hero-flora,.rm-mode .stick-cv{opacity:1;transition:none}
 .rm-mode .nav-links a::after,.rm-mode .btn::after,.rm-mode .theme-toggle::after{transition:none}
 .rm-mode .hero-line span.hs,.rm-mode .hero-line:hover span.hs{color:var(--ink-blue);transition:none}
-@media (prefers-reduced-motion:reduce){.hero-line span.hs:hover,.hero-line .hs.waving .ch{transform:none}}
 .rm-mode .hero-line span.hs:hover,.rm-mode .hero-line .hs.waving .ch{transform:none}
-@media (prefers-reduced-motion:reduce){
-  .w,.fade{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
-  .hero h1,.hero-cta-row{opacity:1 !important;transform:none !important;transition:none !important}
-  .hero-flora,.stick-cv{opacity:1 !important;transition:none !important}
-  .hero-line span.hs{transition:none !important}
-  .play-btn{display:flex}
-  html{scroll-behavior:auto}
-}
 `;
 }
 
 /* ---------------------------------------------------------------- JS */
 function makeJS() {
   return `(function(){
-  const prefersRM=matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer=matchMedia('(hover: hover) and (pointer: fine)');
-  const rmActive=()=>prefersRM.matches||document.body.classList.contains('rm-mode');
+  /* FULL MOTION FOR EVERYONE (her 2026-11-25: "I don't care about reduced motion ... I don't want to have to follow Apple's reduced
+     motion policy"): the OS Reduce Motion setting is ignored; only the site's own rm-mode class (no switch for it yet) calms it */
+  const rmActive=()=>document.body.classList.contains('rm-mode');
 
   /* ---- day/night (2026-08-19). The boot script in <head> already stamped the right
      theme before paint; this is the live half: the labelled toggle, the smooth
@@ -3047,7 +3030,7 @@ function makeJS() {
      it back up and turns the page. Pointer-only — on touch, coarse pointers or reduced
      motion it never arms and the real cursor is left alone. */
   const dc=document.getElementById('dc');
-  if(dc&&finePointer.matches&&!prefersRM.matches){
+  if(dc&&finePointer.matches&&!rmActive()){
     document.body.classList.add('dc-on');
     let tx=innerWidth/2, ty=innerHeight/2, x=tx, y=ty, seen=false, raf=0;
     addEventListener('pointermove',e=>{
@@ -3142,7 +3125,9 @@ function makeJS() {
      honours. One closure per clip, registered by both the boxes below and the
      disciplines panels. */
   const gestureRetries=[];
-  addEventListener('touchend',()=>{gestureRetries.forEach(f=>f())},{passive:true});
+  /* (2026-11-25, her "my clip did not autoplay on my phone"): the retry listens in the CAPTURE phase on touchend AND click, so a tap on
+     anything (the girl, the pot, a panel, even a control that stops the event) is the gesture that starts a refused clip */
+  ['touchend','click'].forEach(t=>addEventListener(t,()=>{gestureRetries.forEach(f=>f())},{passive:true,capture:true}));
   document.querySelectorAll('[data-video]').forEach(box=>{
     const vid=box.querySelector('video');if(!vid)return;
     const btn=box.querySelector('.play-btn');
@@ -3239,7 +3224,44 @@ function makeJS() {
       const pic=(im,t)=>{if(im.dataset.t===String(t))return;im.dataset.t=t;
         if(!t){im.removeAttribute('srcset');im.removeAttribute('sizes');im.src=im.dataset.ph;return}   // let go: the empty stand-in, same shape
         im.sizes=t===2?im.dataset.sizes:im.dataset.peek;im.srcset=im.dataset.srcset;if(t===2&&im.decode)im.decode().catch(()=>{})};
-      const setCur=i=>{cur=i;const sl=slides[cur];num.textContent=sl.dataset.name+' · '+sl.dataset.k+' / '+sl.dataset.of;setCap(sl);
+      /* ZOOM INTO A PRINT (her 2026-11-25: "I want you to be able to zoom into those photos. So maybe it doesn't need to be perfect, but it
+         needs to be big enough that I can zoom into the details"): on the top print, pinch or double-tap (phones), double-click, a trackpad
+         pinch or ctrl+scroll (laptops). Zoomed, that ONE print swaps to its full original (2400px) so details are sharp, and a drag or a
+         swipe pans it instead of flipping; double-tap, pinching back out, the zoom-out tile (her Driftwood icon) or paging away returns
+         it to its sized copy, so memory holds at most one extra full picture. Up to 4x. */
+      const Z={im:null,s:1,x:0,y:0,full:null};let zg=0,lastTap=0,tapT=0;
+      const zb=document.createElement('button');zb.type='button';zb.className='dg-x dg-zout';zb.setAttribute('aria-label','Zoom out');
+      zb.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><g transform="translate(.64 .64)"><circle cx="8.5" cy="8.5" r="5.75"/><path d="M12.75 12.75L17 17M6 8.5h5"/></g></svg>';dg.appendChild(zb);
+      const topImg=()=>{const sl=slides[cur],im=sl&&sl.querySelector('img');return im&&im.dataset.ph&&mode()==='prints'?im:null};
+      const zPaint=()=>{const im=Z.im,w=im.offsetWidth,h=im.offsetHeight;Z.x=Math.min(0,Math.max(w*(1-Z.s),Z.x));Z.y=Math.min(0,Math.max(h*(1-Z.s),Z.y));
+        im.style.transform='translate('+Z.x+'px,'+Z.y+'px) scale('+Z.s+')'};
+      const unzoom=()=>{const im=Z.im;if(!im)return;clearTimeout(tapT);Z.im=Z.full=null;Z.s=1;Z.x=Z.y=0;dg.classList.remove('zoomed');im.closest('.dg-slide').classList.remove('zoom');
+        im.style.transition='transform .35s cubic-bezier(.2,.7,.2,1)';im.style.transform='';setTimeout(()=>{if(Z.im!==im){im.style.transition='';im.style.transformOrigin=''}},400);
+        if(!im.getAttribute('srcset')){delete im.dataset.t;pic(im,2);im.src=im.dataset.ph}};   // back to the sized copy; the original is let go
+      const zoomTo=(im,s,cx,cy)=>{if(!Z.im){if(!im||s<=1.01)return;Z.im=im;Z.s=1;Z.x=Z.y=0;im.style.transformOrigin='0 0';im.style.transition='none';dg.classList.add('zoomed');im.closest('.dg-slide').classList.add('zoom');
+          const f=new Image(),src=im.dataset.srcset.split(', ').pop().split(' ')[0];Z.full=f;f.src=src;
+          (f.decode?f.decode():Promise.resolve()).then(()=>{if(Z.full!==f)return;im.removeAttribute('srcset');im.removeAttribute('sizes');im.src=src}).catch(()=>{})}
+        s=Math.max(1,Math.min(4,s));const r=Z.im.getBoundingClientRect(),bx=r.left-Z.x,by=r.top-Z.y,lx=(cx-bx-Z.x)/Z.s,ly=(cy-by-Z.y)/Z.s;
+        Z.s=s;Z.x=cx-bx-lx*s;Z.y=cy-by-ly*s;if(s<=1.01)unzoom();else zPaint()};
+      zb.addEventListener('click',e=>{e.stopPropagation();unzoom()});
+      /* fingers and the mouse: two pointers pinch, one pans while zoomed (the swipe handlers below stand down while zg is fresh) */
+      const pts=new Map();let pinch=null,pan=null;
+      const mid=()=>{const [a,b]=[...pts.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.hypot(a.x-b.x,a.y-b.y)||1}};
+      strip.addEventListener('pointerdown',e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+        if(pts.size===2&&(Z.im||topImg())){const m=mid();pinch={d:m.d,s:Z.s};pan=null}else if(pts.size===1&&Z.im)pan={x:e.clientX,y:e.clientY,ox:Z.x,oy:Z.y}});
+      strip.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+        if(pinch&&pts.size===2){const m=mid();zg=performance.now();zoomTo(Z.im||topImg(),pinch.s*m.d/pinch.d,m.x,m.y)}
+        else if(pan&&Z.im){const dx=e.clientX-pan.x,dy=e.clientY-pan.y;if(Math.abs(dx)+Math.abs(dy)>4)zg=performance.now();Z.x=pan.ox+dx;Z.y=pan.oy+dy;zPaint()}});
+      const lift=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(pts.size===1&&Z.im){const p=[...pts.values()][0];pan={x:p.x,y:p.y,ox:Z.x,oy:Z.y}}if(!pts.size)pan=null};
+      strip.addEventListener('pointerup',lift);strip.addEventListener('pointercancel',lift);
+      /* Safari's own pinch events (a Mac trackpad; on iPhones the pointers above already pinch, so these only stop the page zooming) */
+      let gs=1;dg.addEventListener('gesturestart',e=>{e.preventDefault();gs=Z.s});
+      dg.addEventListener('gesturechange',e=>{e.preventDefault();if(pts.size)return;zg=performance.now();zoomTo(Z.im||topImg(),gs*e.scale,e.clientX||innerWidth/2,e.clientY||innerHeight/2)});
+      /* a tap on the top print flips it a beat later, unless a second tap makes it a double-tap (zoom in at that spot / back out) */
+      const tapTop=e=>{const im=topImg();if(!im){if(!Z.im)flip(1);return}const now=performance.now();
+        if(now-lastTap<300){clearTimeout(tapT);lastTap=0;Z.im?unzoom():zoomTo(im,2.5,e.clientX,e.clientY);return}
+        lastTap=now;clearTimeout(tapT);if(!Z.im)tapT=setTimeout(()=>{lastTap=0;flip(1)},300)};
+      const setCur=i=>{if(Z.im)unzoom();cur=i;const sl=slides[cur];num.textContent=sl.dataset.name+' · '+sl.dataset.k+' / '+sl.dataset.of;setCap(sl);
         /* PILES (her 2026-11-22: "when you're done, the next pile should come to the side … it shouldn't automatically go to the next
            picture"): the current project is the pile in the middle; the next project's pile waits at the right, the previous at the left */
         const P=+sl.dataset.i,projs=[...new Set(slides.map(x=>+x.dataset.i))],pi=projs.indexOf(P),nextP=projs[pi+1],prevP=projs[pi-1];
@@ -3284,7 +3306,7 @@ function makeJS() {
          up the wheel/trackpad) sends the top print off the desk; down brings the last one back. One gesture, one print (her rule);
          sideways flicks still work. The filmstrip keeps sideways. */
       let sx=null,sy=null;strip.addEventListener('pointerdown',e=>{if(mode()!=='strip'){sx=e.clientX;sy=e.clientY;try{strip.setPointerCapture(e.pointerId)}catch(_){}}});strip.addEventListener('pointercancel',()=>{sx=sy=null});
-      strip.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=sy=null;
+      strip.addEventListener('pointerup',e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=sy=null;if(Z.im||performance.now()-zg<350)return;   // zoomed: a drag pans
         const up=mode()==='prints'&&Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx);
         if(up||Math.abs(dx)>40){strip.dataset.swiped='1';if(mode()==='prints'){up?flip(dy<0?1:-1):pile(dx<0?1:-1)}else go(cur+(dx<0?1:-1),true);setTimeout(()=>delete strip.dataset.swiped,0)}});
       dg.addEventListener('touchmove',e=>{if(mode()==='prints')e.preventDefault()},{passive:false});   // the pile owns the vertical gesture; the whole gallery, so a drag that starts on the counter or the ✕ can't pull the page behind it
@@ -3293,7 +3315,10 @@ function makeJS() {
       /* her 2026-11-22 again: "when i swipe i cant move one picture at a time everytim": the momentum tail used to re-arm on its own
          jitter. Now a print, once flipped, holds until the gesture goes quiet (220ms) or, after the flip has landed (550ms), a NEW swipe
          clearly starts (deltas climb to 3× the tail's low point) */
-      let wLock=false,wAcc=0,wT=0,wMin=1e9,wAt=0,wSideAcc=0;strip.addEventListener('wheel',e=>{if(mode()!=='prints')return;e.preventDefault();const now=performance.now(),a=Math.max(Math.abs(e.deltaY),Math.abs(e.deltaX)),b=Math.abs(e.deltaX);
+      let wLock=false,wAcc=0,wT=0,wMin=1e9,wAt=0,wSideAcc=0;strip.addEventListener('wheel',e=>{if(mode()!=='prints')return;e.preventDefault();
+        if(e.ctrlKey){zg=performance.now();zoomTo(Z.im||topImg(),Z.s*Math.exp(-e.deltaY/100),e.clientX,e.clientY);return}   // a trackpad pinch (Chrome) or ctrl+scroll zooms
+        if(Z.im){zg=performance.now();Z.x-=e.deltaX;Z.y-=e.deltaY;zPaint();return}   // zoomed: scrolling pans
+        const now=performance.now(),a=Math.max(Math.abs(e.deltaY),Math.abs(e.deltaX)),b=Math.abs(e.deltaX);
         if(now-wT>220){wLock=false;wAcc=0;wSideAcc=0}else if(wLock){wMin=Math.min(wMin,a);if(now-wAt>550&&a>wMin*3&&a>25){wLock=false;wAcc=0;wSideAcc=0}}wT=now;if(wLock)return;
         const lock=()=>{wLock=true;wAt=now;wMin=a};
         if(b>Math.abs(e.deltaY)){wSideAcc+=e.deltaX;if(Math.abs(wSideAcc)>60){lock();wSideAcc=0;pile(e.deltaX>0?1:-1)}return}
@@ -3301,11 +3326,11 @@ function makeJS() {
       const dcEl=document.getElementById('dc'),dcHome=dcEl&&dcEl.parentNode;
       const open=i=>{cur=-1;capFor=null;num.textContent='';dg._seen={};dg.showModal();if(dcEl)dg.appendChild(dcEl);{const rv=document.querySelector('.rv-sws');if(rv)dg.appendChild(rv)}   /* local review switch rides along, so GALLERY A/B/C can be seen while the gallery is open (her 2026-11-22: "i didnt see anything change") */   /* her cursor goes WITH the gallery (2026-11-22: "the cursor disappears when i click on the pictures") */document.documentElement.classList.add('dg-on');requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i);strip.focus({preventScroll:true})});
         if(!pushed){history.pushState({dg:1},'');pushed=true}};
-      const close=()=>{slides.forEach(sl=>{const v=sl.querySelector('video');v&&v.pause();const im=sl.querySelector('img');im&&im.dataset.ph&&pic(im,0)});if(dcEl&&dcHome)dcHome.appendChild(dcEl);{const rv=dg.querySelector('.rv-sws');if(rv)document.body.appendChild(rv)}dg.close();document.documentElement.classList.remove('dg-on')};
+      const close=()=>{unzoom();slides.forEach(sl=>{const v=sl.querySelector('video');v&&v.pause();const im=sl.querySelector('img');im&&im.dataset.ph&&pic(im,0)});if(dcEl&&dcHome)dcHome.appendChild(dcEl);{const rv=dg.querySelector('.rv-sws');if(rv)document.body.appendChild(rv)}dg.close();document.documentElement.classList.remove('dg-on')};
       strip.addEventListener('scroll',()=>requestAnimationFrame(mark),{passive:true});
       document.addEventListener('mk-gal',()=>{if(!dg.open)return;const i=Math.max(cur,0);cur=-1;capFor=null;strip.scrollLeft=0;requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i)})});   // re-lay the open gallery when the review switch changes
-      slides.forEach((sl,i)=>sl.addEventListener('click',()=>{if(strip.dataset.swiped)return;
-        if(mode()==='prints'){if(sl.dataset.pile==='next')pile(1);else if(sl.dataset.pile==='prev')pile(-1);else if(i===cur)flip(1);return}
+      slides.forEach((sl,i)=>sl.addEventListener('click',e=>{if(strip.dataset.swiped||performance.now()-zg<350)return;
+        if(mode()==='prints'){if(sl.dataset.pile==='next')pile(1);else if(sl.dataset.pile==='prev')pile(-1);else if(i===cur)tapTop(e);return}
         go(i!==cur?i:cur+1,true)}));   // the picture you're on → the next one
       dg.querySelector('.dg-x').addEventListener('click',()=>pushed?history.back():close());
       dg.addEventListener('cancel',e=>{e.preventDefault();pushed?history.back():close()});
@@ -3676,8 +3701,8 @@ const LOOK_TOGGLE_JS = `<script>
 })();
 (function(){var h=document.documentElement,tg=document.querySelector('.lt-toggle');if(!tg)return;
  var bs=[].slice.call(tg.querySelectorAll('.lt-btn')),cur=function(){return h.getAttribute('data-theme')==='night'?'night':'day'};
- /* read live, like the view toggle's rmActive(): the OS setting OR the site's own reduce-motion switch (body.rm-mode) */
- var calm=function(){return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)||document.body.classList.contains('rm-mode')};
+ /* read live, like the view toggle's rmActive(): only the site's own reduce-motion class (body.rm-mode); the OS setting is ignored (her 2026-11-25) */
+ var calm=function(){return document.body.classList.contains('rm-mode')};
  function mark(){bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.lookTo===cur()))})}
  /* aim = the look asked for. The theme lands a frame or two later (inside the cross-fade's callback), so a drag that crosses
     back before it lands waits for mk-theme instead of clicking the switch twice */
@@ -4036,9 +4061,9 @@ function renderHome() {
   /* The GIF's own background is --bg-base, so it sits on the page with no visible edge —
      the notebook page bleeding into the site rather than a framed picture.
 
-     Four sources, first match wins: narrow screens get the stacked cut (side by side, her
-     handwriting lands at ~120px on a phone and stops being readable), and anyone who has
-     asked their OS for less motion gets the matching still instead of the loop. The alt
+     Two sources, first match wins: narrow screens get the stacked cut (side by side, her
+     handwriting lands at ~120px on a phone and stops being readable). The loop plays for
+     everyone, Reduce Motion included (her 2026-11-25 full-motion rule). The alt
      text carries the whole story, because in this section the words ARE the artwork. */
   const st = site.story;
   const storyHTML = !st ? '' : `
@@ -4047,8 +4072,6 @@ function renderHome() {
   <h2 class="section-title fade">${typo(st.title)}</h2>
   <figure class="story fade">
     <picture>
-      <source media="(prefers-reduced-motion:reduce) and (max-width:${esc(st.tallBelow)})" srcset="${esc(st.posterTall)}">
-      <source media="(prefers-reduced-motion:reduce)" srcset="${esc(st.poster)}">
       <source media="(max-width:${esc(st.tallBelow)})" srcset="${esc(st.gifTall)}">
       <img src="${esc(st.gif)}" alt="${esc(st.alt)}" width="${esc(String(st.width))}" height="${esc(String(st.height))}" loading="lazy" decoding="async">
     </picture>
@@ -4602,7 +4625,7 @@ scan();document.addEventListener('DOMContentLoaded',scan);addEventListener('load
 <style>.rv-sws{position:fixed;left:16px;bottom:16px;z-index:2147483100;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 /* SLIDE IN (her 2026-11-24: "when you come on a page, the toggles for the, the asks should kind of slide in from the left and onto the screen, like boom, boom, or how many ever there are … so that you can kind of see the motion and know that, ooh, that's what I need to consider"): each review switch slides in from the left once the page is there, one after another */
 .rv-sws>*{animation:rv-in .6s cubic-bezier(.2,.9,.3,1.25) both}.rv-sws>:nth-child(1){animation-delay:0.60s}.rv-sws>:nth-child(2){animation-delay:0.77s}.rv-sws>:nth-child(3){animation-delay:0.94s}.rv-sws>:nth-child(4){animation-delay:1.11s}.rv-sws>:nth-child(5){animation-delay:1.28s}.rv-sws>:nth-child(6){animation-delay:1.45s}.rv-sws>:nth-child(7){animation-delay:1.62s}.rv-sws>:nth-child(8){animation-delay:1.79s}
-@keyframes rv-in{from{opacity:0;transform:translateX(-72px)}}@media (prefers-reduced-motion:reduce){.rv-sws>*{animation-name:rv-in-rm}@keyframes rv-in-rm{from{opacity:0}}}
+@keyframes rv-in{from{opacity:0;transform:translateX(-72px)}}
 
 .dg .rv-sws{top:64px;bottom:auto}
 .rv-sw{display:flex;align-items:center;gap:4px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(22,26,36,.9);color:#fff;font:600 12px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
@@ -4749,15 +4772,13 @@ ${[0, 1, 2, 3, 4, 5, 6].map(i => `.ve-strip b:nth-child(${i + 1}){background-pos
 /* the NAME is always there; only her one line waits for a hover (her 2026-11-23: "the names should be underneath each one regardless ... when I hover, then the subline pops up"), easing up, never popping */
 @media (hover:hover){.tb-tool figcaption span{opacity:0;transform:translateY(-4px);transition:opacity .35s ease,transform .35s cubic-bezier(.2,.8,.2,1)}.tb-tool:hover figcaption span,.tb-tool:focus-within figcaption span{opacity:1;transform:none}}
 @media (max-width:860px){.tb{padding-top:72px}.tb-row{grid-template-columns:1fr;gap:40px}.tb .section-title{margin-bottom:28px}}
-@media (prefers-reduced-motion:reduce){.tb-tool figcaption{transition:none}}
 </style>`;
   /* ?v= (2026-11-23): without it her browser kept the OLD demos (max-age 3600 + stale-while-revalidate) while every fix was on disk */
   const TB_JS = `<script src="${T}taste-sliders.js?v=${BUILD_V}" defer></script>
 <script src="${T}tool-demos.js?v=${BUILD_V}" defer></script>
 <script>document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#ai-tools-band .tb-open');if(!b||!window.toolDemo)return;var f=b.closest('.tb-tool');
 window.toolDemo.open(f.dataset.tool,{name:f.querySelector('figcaption a').textContent,line:f.querySelector('figcaption span').textContent,from:b})});</script>
-<script>(function(){/* Reduce Motion: the zoom clip holds its still */
-if(matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('#ai-tools-band video').forEach(function(v){v.removeAttribute('autoplay');v.pause()})
+<script>(function(){
 var v=document.querySelector('[data-tool=video-editor] video'),ph=document.querySelector('.ve-ph'),on=0;
 if(v&&ph){var r=function(){ph.style.transform='translateX('+(v.duration?v.currentTime/v.duration*100:0)+'%)';if(!v.paused)requestAnimationFrame(r);else on=0},go=function(){if(!on){on=1;r()}};
 v.addEventListener('play',go);v.addEventListener('seeked',r);if(!v.paused)go()}})();</script>`;
