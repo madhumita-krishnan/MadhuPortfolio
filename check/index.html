@@ -3,66 +3,95 @@
 <title>Phone check</title>
 <script>try{sessionStorage.setItem("__vantage_nobtn","1")}catch(e){}window.__vantageNoReload=true;</script>
 <style>
-/* A check page for someone else's phone (her mom's iPhone 13, 2026-11-24). Her rules: "they don't need to see all the code", "there
-   should be a timer to say how much longer they need to keep this thing open for", "it's kind of weird just having your phone open like
-   that". They see her REAL site at its real address (so it behaves exactly as for any visitor); the relay puts Vantage's probe
-   (check/probe.js, loaded first by the home page when it sees ?vcheck) measures and sends to the site's cloud collector (api/check.js),
-   so the check works whatever the Mac is doing (her 2026-11-25). This page only counts down, and says done once the Mac has
-   confirmed the report arrived. */
+/* A check page for someone else's phone (her mom's iPhone 13, 2026-11-24/25). The visitor does NOTHING but open the link and wait (her
+   2026-11-25: "I thought she doesn't have to do anything on the screen"): her REAL site loads in the frame with ?vcheck, check/probe.js
+   tests every interaction itself and sends the results to the site's cloud collector (api/check.js), so nothing depends on the Mac.
+   Her rules kept here: a timer that says how much longer, only the real time ("don't say it's only going to take 30 seconds … if it's
+   not"), and when it is slow, say what the holdup is ("if it keeps saying almost done, there should be messaging as to like what is
+   happening and what the holdup is"). The three questions are optional and only come after "All done". */
 html,body{margin:0;height:100%;background:#111318}
 iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#111318}
 #pill{position:fixed;z-index:2;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;
-  max-width:calc(100% - 32px);padding:10px 16px 10px 10px;border-radius:999px;background:rgba(22,26,36,.94);color:#fff;
-  font:500 14px/1.25 -apple-system,system-ui,sans-serif;box-shadow:0 12px 32px -12px rgba(0,0,0,.55);animation:pill-in .5s cubic-bezier(.2,.9,.3,1.2) .3s both}
+  width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;padding:10px 16px 10px 10px;border-radius:22px;background:rgba(22,26,36,.95);color:#fff;
+  font:500 15px/1.3 -apple-system,system-ui,sans-serif;box-shadow:0 12px 32px -12px rgba(0,0,0,.55);animation:pill-in .5s cubic-bezier(.2,.9,.3,1.2) .3s both}
 #pill svg{flex:none}#pill .ring{transition:stroke-dashoffset 1s linear}#pill b{font-weight:600;font-variant-numeric:tabular-nums}
+#pill small{display:block;font-size:13px;opacity:.72;font-weight:400}
 #pill.done{padding-left:16px}
+#ask{position:fixed;z-index:3;left:16px;right:16px;bottom:calc(150px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;padding:18px;border-radius:22px;
+  background:rgba(22,26,36,.97);color:#fff;font:500 17px/1.35 -apple-system,system-ui,sans-serif;box-shadow:0 16px 40px -12px rgba(0,0,0,.6);display:none}
+#ask p{margin:0 0 4px}#ask .q{font-size:20px;font-weight:600;margin:0 0 14px}
+#ask .row{display:flex;gap:10px}#ask button{flex:1;min-height:56px;border:0;border-radius:16px;background:#fff;color:#111318;font:600 18px -apple-system,system-ui,sans-serif}
+#ask button.alt{background:rgba(255,255,255,.14);color:#fff}
 @keyframes pill-in{from{opacity:0;transform:translate(-50%,16px)}}
 @media (prefers-reduced-motion:reduce){#pill{animation:none}#pill .ring{transition:none}}
 </style></head><body>
 <noscript><p style="color:#fff;font:16px/1.5 -apple-system,system-ui,sans-serif;padding:24px">This check needs JavaScript. Please turn it on in your browser settings, then open the link again.</p></noscript>
 <iframe id="site" title="Madhu's website"></iframe>
-<div id="pill" role="status" aria-live="polite" style="display:none"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle class="ring" cx="14" cy="14" r="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="69.1" stroke-dashoffset="0" transform="rotate(-90 14 14)"/></svg><span>Opening the site…</span></div>
+<div id="pill" role="status" aria-live="polite" style="display:none"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle class="ring" cx="14" cy="14" r="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="69.1" stroke-dashoffset="69.1" transform="rotate(-90 14 14)"/></svg><span>Opening the site… No need to touch anything.</span></div>
+<div id="ask" role="dialog" aria-label="Three quick questions"></div>
 <script>
 /* restored from the back/forward cache (a reopened tab): start a fresh check, never resume a half-finished one */
 addEventListener('pageshow',function(e){if(e.persisted)location.reload()});
 (function(){
   var Q=location.search, run=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var who=(/[?&]who=([\w-]{1,40})/.exec(Q)||[])[1]||'', self=/[?&]selftest/.test(Q);
-  var site=document.getElementById('site'), pill=document.getElementById('pill'), ring=pill.querySelector('.ring');
+  var site=document.getElementById('site'), pill=document.getElementById('pill'), ring=pill.querySelector('.ring'), ask=document.getElementById('ask');
   pill.style.display='';   // shown only when JavaScript runs (with it off, the noscript line is the only thing on screen)
   site.src='/?vcheck=1&run='+run+(who?'&who='+who:'')+(self?'&selftest=1':'');
-  var T=27,left=T,sent=false,failed=false,started=false,opened=0,st='',retry=0,offline=false;
-  var heard=false;
-  /* the probe tells this page what it is doing, so the pill always says what's really happening (her 2026-11-25: "if it keeps saying
-     almost done, there should be messaging as to like what is happening and what the holdup is") */
-  addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.vcheck)return;var d=e.data;heard=true;
-    if(d.start)started=true;if(d.sending)st='sending';if(d.retry){retry=d.retry;offline=!!d.offline;st='retry'}if(d.sent)sent=true;if(d.failed)failed=true;});
+  var stressing=null,stressDone=false,sent=false,failed=false,started=false,opened=0,sending=0,retry=0,offline=false,heard=0,total=0,left=0,test='',slowFor=0,i=0,n=0,since=0,doneShown=false;
+  var T0=Date.now(), log=[];   // what this page saw, in order: sent with the answers so the triage knows where a run stopped
+  var note=function(s){if(log.length<40)log.push(Math.round((Date.now()-T0)/1000)+'s '+s)};
+  /* the probe tells this page what it is doing, so the pill always says what's really happening */
+  addEventListener('message',function(e){if(e.origin!==location.origin||!e.data||!e.data.vcheck)return;var d=e.data;heard=Date.now();
+    if(d.start&&!started){started=true;total=d.total||60;left=total;note('probe started, plan '+total+'s')}
+    if(d.test){if(d.test!==test)note('testing '+d.test);test=d.test;i=d.i;n=d.n;left=d.left;slowFor=d.slowFor||0}
+    if(d.sending&&!sending){sending=Date.now();note('sending')}if(d.retry){retry=d.retry;offline=!!d.offline;note('retry '+d.retry+' '+(d.why||''))}
+    if(d.sent&&!sent){sent=true;note('sent')}if(d.stress){stressing=d;if(doneShown)setDone()}if(d.stressDone&&!stressDone){stressDone=true;note('memory test done');if(doneShown)setDone()}if(d.failed&&!failed){failed=true;note('failed '+d.failed)}});
   /* the site never came up (server down, blocked, crashed before the probe): this page reports that itself, so nothing vanishes */
-  setTimeout(function(){if(heard||sent)return;var w=site.contentWindow,has=false;try{has=!!(w&&w.__vcheck)}catch(e){}if(has)return;
-    fetch('/api/check',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({diag:1,check:'site-check',stage:'site-never-loaded',run:run,who:who,self:self,ua:navigator.userAgent,
-      report:{env:{screen:screen.width+'x'+screen.height+'@'+devicePixelRatio,view:innerWidth+'x'+innerHeight},frameUrl:String(site.src),frameTitle:(function(){try{return w.document.title}catch(e){return 'unreadable'}})()}})})
-      .then(function(r){if(r.ok)sent=true}).catch(function(){})},45000);
+  setTimeout(function(){if(heard||sent)return;var w=site.contentWindow,has=false;try{has=!!(w&&w.__vcheck)}catch(e){}if(has)return;note('site never loaded');
+    report('site-never-loaded',{env:{screen:screen.width+'x'+screen.height+'@'+devicePixelRatio,view:innerWidth+'x'+innerHeight},frameUrl:String(site.src),frameTitle:(function(){try{return w.document.title}catch(e){return 'unreadable'}})()})},45000);
+  function report(stage,rep){return fetch('/api/check',{method:'POST',keepalive:true,headers:{'content-type':'text/plain'},body:JSON.stringify({diag:1,check:'site-check',stage:stage,run:run,who:who,self:self,ua:navigator.userAgent,report:rep})}).then(function(r){return r.ok}).catch(function(){return false})}
   /* the moment this page is hidden or closed, the probe sends what it has (iPhones freeze hidden pages) */
-  function bye(st){try{site.contentWindow.__vcheckLast&&site.contentWindow.__vcheckLast(st)}catch(e){}}
-  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')bye('hidden')});
+  function bye(st){note(st);try{site.contentWindow.__vcheckLast&&site.contentWindow.__vcheckLast(st)}catch(e){}}
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')bye('hidden');else note('shown again')});
   addEventListener('pagehide',function(){bye('closed-early')});
   function say(h){pill.querySelector('span').innerHTML=h}
-  function done(h){pill.classList.add('done');pill.innerHTML='<span>'+h+'</span>'}
+  var doneMsg='';
+  function done(h){if(doneShown)return;doneShown=true;doneMsg=h;pill.classList.add('done');setDone();if(sent)setTimeout(questions,1200)}
+  /* after the main results are sent, the site runs one more test (big photos, for memory). It is said honestly, and closing is fine */
+  function setDone(){pill.innerHTML='<span>'+doneMsg+(sent&&stressing&&!stressDone?'<small>One extra test is still running: the big photos ('+stressing.i+' of '+stressing.n+', about '+sec(stressing.left)+'). Closing the page now is fine.</small>':'')+'</span>'}
+  var sec=function(s){s=Math.max(1,Math.round(s));return s<90?s+' second'+(s===1?'':'s'):'about '+Math.round(s/60)+' minutes'};
   function tick(){
+    var el=Math.round((Date.now()-T0)/1000);
     if(!started){opened++;   // the site is still opening: say so, with the real seconds, never a countdown that isn't running yet
-      if(opened>=45){if(!sent)done('The site didn\'t open on this phone. Thank you anyway, you can close this page.');else done('All done, thank you. You can close this page.');return}
-      say(opened<8?'Opening the site…':'The site is slow to open on this connection. Still opening… <b>'+opened+'</b>s');return setTimeout(tick,1000)}
-    if(left>0){left--;ring.style.strokeDashoffset=(69.1*(1-left/T)).toFixed(1)}
-    if(left>0){say('Look around for <b>'+left+'</b> more second'+(left===1?'':'s'));return setTimeout(tick,1000)}
+      if(opened>=45){done(sent?'All done, thank you. You can close this page.':'The site didn\'t open on this phone. Thank you anyway, you can close this page.');return}
+      say(opened<8?'Opening the site… No need to touch anything.':'The site is slow to open on this connection. Still opening… <b>'+opened+'</b>s');return setTimeout(tick,1000)}
     if(sent){done('All done, thank you. You can close this page.');return}
     if(failed){done('Couldn\'t reach the server. The results are saved on this phone and send next time this link is opened. You can close this page.');return}
-    left--;
-    if(left<=-40){done('Couldn\'t reach the server. Thank you anyway, you can close this page.');return}   // never stuck forever
-    if(st==='retry')say(offline?'This phone is offline. Waiting for a connection… (try '+(retry+1)+' of 4)':'Can\'t reach the server yet. Trying again… (try '+(retry+1)+' of 4)');
-    else say('Sending the results… <b>'+(-left)+'</b>s');
+    if(!sending){
+      ring.style.strokeDashoffset=(69.1*Math.max(0,left)/Math.max(total,1)).toFixed(1);
+      var quiet=Math.round((Date.now()-heard)/1000);
+      if(quiet>=20){say('The site has stopped answering for <b>'+quiet+'</b>s while testing '+(test||'it')+'. Still waiting…');if(quiet>=120){bye('stalled');done('The site stopped answering. What it found so far was sent. Thank you, you can close this page.');return}}
+      else if(slowFor>=6)say('Still testing '+test+': this phone is taking a while here (<b>'+slowFor+'</b>s).<small>Please keep this page open. No need to touch anything.</small>');
+      else say((test?'Testing '+test+(n?' ('+i+' of '+n+')':''):'Starting')+'. About <b>'+sec(left)+'</b> left.<small>Please keep this page open. No need to touch anything.</small>');
+      if(left>1)left--;
+      return setTimeout(tick,1000)}
+    var s=Math.round((Date.now()-sending)/1000);
+    if(s>=60){done('Couldn\'t reach the server. Thank you anyway, you can close this page.');return}   // never stuck forever
+    if(retry)say(offline?'This phone is offline. Waiting for a connection… (try '+(retry+1)+' of 4)':'Can\'t reach the server yet. Trying again… (try '+(retry+1)+' of 4)');
+    else say('Sending the results… <b>'+s+'</b>s');
     setTimeout(tick,1000);
   }
   setTimeout(tick,1000);
+  /* OPTIONAL, after "All done" (her 2026-11-25): three taps at most, nothing waits on them, closing the page is fine */
+  var QS=[['moved','Did you see the little girl move?',['Yes','No']],['stuck','Did anything feel stuck or slow?',['Yes','No']],['silent','Was your phone on silent?',['Yes','No','Not sure']]],ans={},qi=0;
+  function questions(){
+    if(qi>=QS.length){ask.innerHTML='<p class="q" style="margin:0">Thank you!</p>';setTimeout(function(){ask.style.display='none'},2500);return}
+    var q=QS[qi];ask.style.display='block';
+    ask.innerHTML=(qi?'':'<p>One more thing, if you like</p>')+'<p class="q">'+q[1]+'</p><div class="row">'+q[2].map(function(a,k){return '<button type="button" class="'+(k?'alt':'')+'" data-a="'+a+'">'+a+'</button>'}).join('')+'</div>';
+    [].forEach.call(ask.querySelectorAll('button'),function(b){b.addEventListener('click',function(){ans[q[0]]=b.dataset.a;note('answer '+q[0]+'='+b.dataset.a);qi++;
+      report('answers',{answers:ans,outer:log,asked:QS.length});questions()})});
+  }
 })();
 </script>
 </body></html>
