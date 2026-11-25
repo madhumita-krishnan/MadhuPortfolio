@@ -452,10 +452,9 @@ html[data-mute=on] .lt-mute .lm-w2{--d:0s;--o:.26s}html[data-mute=on] .lt-mute .
 /* the sound button never just appears (her 2026-11-23: "can there be like a transition ... of the mute button showing itself? ... I hate when
    things just appear. It looks glitchy"): it eases in, fading up, growing a touch and sharpening, just after the loader lifts (html.booted);
    pages without a loader get it on a later clock. Reduce Motion: a plain fade */
-.lt-mute,.lt-sep{opacity:0}
-.lt-mute.lm-show,.lt-sep.lm-show{animation:lm-in .55s cubic-bezier(.2,.8,.2,1) .35s both}
-@keyframes lm-in{from{opacity:0;transform:scale(.6);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
-@media (prefers-reduced-motion:reduce){.lt-mute.lm-show,.lt-sep.lm-show{animation:lm-fade .3s ease .2s both}@keyframes lm-fade{from{opacity:0}to{opacity:1}}}
+/* RETIRED 2026-11-24 (her: "The mute part of the mobile app toggle load in at a weird time"): that own entrance made the sound button
+   arrive 0.4-0.75s AFTER the sun and moon beside it (and after the nav), on every load. It is part of the pill now: it is there
+   whenever the sun, moon and nav are (revealed by the loader with the page, or painted with the page when there is no loader) */
 
 /* READABILITY 2026-11-23 (case-study-drafts/design-system/audit/readability/confirmed.md) */
 /* the night play button's ring was thin white on a light picture (1.25:1): a two-tone ring, white inside, ink outside, reads on anything */

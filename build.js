@@ -8,7 +8,7 @@ const wordmarkSVG = require('./wordmark.js');   // the logo: the stretched goo M
 const LOADER = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/loader.json'), 'utf8')).values;   // her loader study numbers
 
 const ROOT = __dirname;
-const DIST = path.join(ROOT, 'dist');
+const DIST = process.env.DIST_DIR ? path.resolve(process.env.DIST_DIR) : path.join(ROOT, 'dist');   // DIST_DIR: a test build that leaves the live dist/ (her phone link) alone
 const readJSON = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 
 const theme = readJSON(path.join(ROOT, 'data/theme.json'));
@@ -33,7 +33,7 @@ const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 /* Play / pause are drawn shapes centred on their 24-unit box, never the ▶ / ❚❚ characters —
    a font glyph sits wherever its font puts it, so it is never truly centred in the disc
    (2026-10-12, her rule: no off-centre icons in buttons, ever). lintIcons below enforces it. */
-const PLAY_IC = '<svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 L7 18 L17 12 Z"/></svg>';
+const PLAY_IC = '<svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.67 6 L8.67 18 L18.67 12 Z"/></svg>';   // drawn 1.67 right: the triangle's ink centre (a third in from its flat side) sits on the disc's centre (icon audit 2026-11-25)
 const PAUSE_IC = '<svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 H10 V18 H7 Z M14 6 H17 V18 H14 Z"/></svg>';
 const BUILD_V = Date.now().toString(36); // cache-buster: every rebuild gets fresh CSS/JS
 
@@ -65,6 +65,40 @@ function imageSize(rel) {
     }
   } catch { /* remote or unreadable — fall back to cover */ }
   return null;
+}
+/* SIZED PICTURES (2026-11-25, her LinkedIn in-app browser: "the whole site reloaded" while the architecture gallery loaded). The gallery
+   shipped 2400px JPEGs to phones (~17MB each once decoded) and every print loaded at once; iOS ends a web page that goes over its memory
+   limit and an in-app browser silently reloads it. Each picture now also exists 320 (thumbnails), 800, 1200 and 1600 wide, made here by
+   macOS `sips` the first time a build sees it, saved beside it in sized/. COMMIT sized/: Vercel builds on Linux (no sips) and uses
+   whichever sized copies exist; with none it falls back to the original alone. The page picks one by its shown width (srcset + sizes). */
+const SIZED_W = [320, 800, 1200, 1600];
+function sizedSet(rel) {
+  const d = imageSize(rel); if (!d) return null;
+  const dir = path.join(path.dirname(rel), 'sized'), base = path.basename(rel).replace(/\.[^.]+$/, ''), srcAt = fs.statSync(path.join(ROOT, rel)).mtimeMs, set = [];
+  for (const w of SIZED_W.filter(w => w < d.w)) {
+    const r = `${dir}/${base}.w${w}.jpg`, abs = path.join(ROOT, r);
+    if (!fs.existsSync(abs) || fs.statSync(abs).mtimeMs < srcAt) {
+      try { fs.mkdirSync(path.join(ROOT, dir), { recursive: true }); require('child_process').execFileSync('sips', ['--resampleWidth', String(w), '-s', 'format', 'jpeg', '-s', 'formatOptions', '85', path.join(ROOT, rel), '--out', abs], { stdio: 'ignore' }) } catch { /* no sips (Linux): use what is committed */ }
+    }
+    if (fs.existsSync(abs)) set.push([r, w]);
+  }
+  return { w: d.w, h: d.h, set: set.concat([[rel, d.w]]) };
+}
+/* pictures cropped to fit their print by her name (2026-11-22: "some pictures can be cropped to fit like the boat house one"), at its building;
+   one list for the markup (sizes) and app.js (the crop) */
+const GAL_FIT = { 'boat-house-01': '38% 50%' };
+/* a gallery print's picture. It starts EMPTY (an empty picture of the same shape, so the print keeps its size and nothing downloads
+   before the gallery opens); app.js gives it a real picture only while it can be seen (see MEMORY in the gallery code). Shown width: 84vw
+   on phones, 70vw up to 1000px above (skin-walkthrough.css prints); a picture CROPPED to fit (.dg-fit) shows wider than its print by
+   r/ar, so it asks for that much more (her rule: never blurry). data-peek = a print seen small (side piles, under the pile) */
+function galImg(rel, alt) {
+  const s = sizedSet(rel);
+  if (!s) return `<img src="${esc(rel)}?v=${BUILD_V}" alt="${esc(alt)}" loading="lazy" decoding="async">`;
+  const r = s.w / s.h, ar = r > 1.15 ? 4 / 3 : r < .87 ? 3 / 4 : 1, keep = Math.min(r, ar) / Math.max(r, ar), name = path.basename(rel).replace(/\.[^.]+$/, '');
+  const f = (keep >= .8 || GAL_FIT[name]) && r > ar ? r / ar : 1;
+  const sz = k => `(max-width:640px) ${Math.ceil(84 * f * k)}vw, (max-width:1428px) ${Math.ceil(70 * f * k)}vw, ${Math.ceil(1000 * f * k)}px`;
+  const ph = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${s.w}' height='${s.h}'/%3E`;
+  return `<img src="${ph}" data-ph="${ph}" data-srcset="${s.set.map(([u, w]) => `${esc(u)}?v=${BUILD_V} ${w}w`).join(', ')}" data-sizes="${sz(1)}" data-peek="${sz(.42)}" data-thumb="${esc(s.set[0][0])}?v=${BUILD_V}" data-pic="${esc(name)}" alt="${esc(alt)}" decoding="async">`;
 }
 const fitWarnings = [];
 /* Hand-lifted artwork that build.js expects but cannot generate itself. Collected rather
@@ -973,6 +1007,10 @@ section{padding:calc(var(--space)*14) calc(var(--space)*6);max-width:1240px;marg
    normal connection the opening starts ~0.15s after the lift, so this never fires */
 html.booted .hero:not(.revealed) h1{animation:mk-late-h1 .5s ease .6s forwards}
 @keyframes mk-late-h1{to{opacity:1;transform:none}}
+/* the eyebrow and bio wait the same way (her 2026-11-24, M--K from a case study on her phone: "it's glitchy"): with no loader in front
+   (arriving from another page), the plain words painted before app.js cut them into .w spans, then vanished and wrote in again */
+.hero:not(.revealed) .reveal-words{opacity:0}
+html.booted .hero:not(.revealed) .reveal-words{animation:mk-late-h1 .5s ease .6s forwards}
 .hero.instant,.hero.instant *{transition:none!important}
 /* THE HAND-OFF (her ask 2026-10-23: "once hi I'm Madhu loads in and rises with the blue and falls, it
    should shrink and my bio words would become the big focal"). app.js plays one wave after the
@@ -1960,6 +1998,7 @@ function makeJS() {
       if(mode==='night')root.setAttribute('data-theme','night');else root.removeAttribute('data-theme');
       if(tgl)tgl.setAttribute('aria-label',mode==='night'?'Switch to day mode':'Switch to night mode');
       dispatchEvent(new Event('mk-theme'));
+      try{localStorage.setItem('mk-shown',mode)}catch(e){}   /* the case studies read this: one day/night across the whole site */
     };
     if(anim&&!rmActive()){
       /* one snapshot cross-fade where the API exists; the per-element .theme-anim
@@ -1971,13 +2010,19 @@ function makeJS() {
     }
     apply();
   }
+  /* back from a case study with the back button: this page comes out of the browser's cache as it was; take up the mode shown there */
+  /* mk-shown = the mode on screen NOW, written by EVERY page on load and on every switch (her 2026-11-24: switching here then going back
+     to a case study flipped it, because only the case studies wrote mk-shown and the back button restored their stale one) */
+  const shown=()=>{try{localStorage.setItem('mk-shown',root.getAttribute('data-theme')==='night'?'night':'day')}catch(_){}};shown();
+  addEventListener('pageshow',e=>{if(!e.persisted)return;let s=null;try{s=localStorage.getItem('mk-shown')}catch(_){}
+    if((s==='night'||s==='day')&&s!==(root.getAttribute('data-theme')==='night'?'night':'day'))setTheme(s,false)});
   if(tgl){
     tgl.setAttribute('aria-label',root.getAttribute('data-theme')==='night'?'Switch to day mode':'Switch to night mode');
     tgl.addEventListener('click',()=>{
       const next=root.getAttribute('data-theme')==='night'?'day':'night';
       /* the timestamp is what lets the boot script expire this at the next sunrise or
          sunset — a choice made at noon should not still be pinning the site at 1am */
-      try{localStorage.setItem('mk-theme',next);localStorage.setItem('mk-theme-at',String(Date.now()))}catch(e){}
+      try{localStorage.setItem('mk-theme',next);localStorage.setItem('mk-theme-at',String(Date.now()));localStorage.setItem('mk-shown',next)}catch(e){}
       setTheme(next,true);
     });
   }
@@ -2944,7 +2989,10 @@ function makeJS() {
      project, or back to the same one for a small nudge, with power3.out (no overshoot, no spring). Swiping above
      the first project or below the last hands back to ordinary scrolling, so the list never traps you. Measures
      layout positions (offsetTop), which the GSAP focus effect doesn't shift. */
-  if(phoneList.matches&&cardsM.length){
+  /* OFF for now (her 2026-11-24: "I was told to remove scroll snap on vertical scroll on mobile. Let's turn it off for now."): the
+     project list on phones scrolls like the rest of the page. Set REELS = true to bring the paging back exactly as it was. */
+  const REELS=false;
+  if(REELS&&phoneList.matches&&cardsM.length){
     const workSec=document.getElementById('work'),root=document.documentElement;let inMid=false;
     const sync=()=>{root.classList.toggle('reels-on',inMid&&workSec.dataset.view==='list');if(!inMid){const h=workSec.querySelector('.work-head');h&&h.classList.remove('tuck')}};
     new IntersectionObserver(es=>es.forEach(e=>{inMid=e.isIntersecting;sync()}),{rootMargin:'-50% 0px -50% 0px'}).observe(workSec);
@@ -3177,17 +3225,20 @@ function makeJS() {
       const mode=()=>document.documentElement.dataset.gal||'prints';   // her pick 2026-11-22: "gallery b" (prints on the clay desk)
       /* CROPPED TO FIT (her 2026-11-22: "some pictures can be cropped to fit like the boat house one"): a print is 4:3, 3:4 or square. A picture
          that keeps 80% or more of itself in that shape fills it; the wide drawings stay whole; boat-house-01 by her name, at its building */
-      const FIT={'boat-house-01':'38% 50%'};slides.forEach(sl=>{const im=sl.querySelector('img');if(!im)return;const tag=()=>{const w=im.naturalWidth,h=im.naturalHeight;if(!w)return;const r=w/h,
-        ar=r>1.15?4/3:r<.87?3/4:1,keep=Math.min(r,ar)/Math.max(r,ar),k=(im.getAttribute('src')||'').split('/').pop().split('.')[0];
+      const FIT=${JSON.stringify(GAL_FIT)};slides.forEach(sl=>{const im=sl.querySelector('img');if(!im)return;const tag=()=>{const w=im.naturalWidth,h=im.naturalHeight;if(!w)return;const r=w/h,
+        ar=r>1.15?4/3:r<.87?3/4:1,keep=Math.min(r,ar)/Math.max(r,ar),k=im.dataset.pic||(im.getAttribute('src')||'').split('/').pop().split('.')[0];
         if(keep>=.8||FIT[k]){im.classList.add('dg-fit');im.style.setProperty('--ar',ar);if(FIT[k])im.style.objectPosition=FIT[k]}};im.complete?tag():im.addEventListener('load',tag,{once:true})});
       const thumbs=dg.querySelector('.dg-thumbs');
       if(thumbs&&!thumbs.childElementCount)slides.forEach((sl,i)=>{const m=sl.querySelector('img,video'),t=document.createElement('button');t.type='button';t.className='dg-th';
-        t.setAttribute('aria-label',sl.dataset.name+' '+sl.dataset.k+' of '+sl.dataset.of);const im=document.createElement('img');im.alt='';im.loading='lazy';im.src=m.tagName==='VIDEO'?m.poster:m.getAttribute('src');t.appendChild(im);
+        t.setAttribute('aria-label',sl.dataset.name+' '+sl.dataset.k+' of '+sl.dataset.of);const im=document.createElement('img');im.alt='';im.loading='lazy';im.src=m.tagName==='VIDEO'?m.poster:m.dataset.thumb||m.getAttribute('src');t.appendChild(im);
         t.addEventListener('click',e=>{e.stopPropagation();go(i,true)});thumbs.appendChild(t)});
       const cap=dg.querySelector('.dg-cap');let capFor=null;
       /* ONE caption per project (her 2026-11-22: "i dont want a new caption with every photo"): it changes only when the project does */
       const setCap=sl=>{if(!cap||capFor===sl.dataset.i)return;capFor=sl.dataset.i;const f=sl.querySelector('figcaption');cap.classList.remove('in');
         requestAnimationFrame(()=>{cap.innerHTML=f?f.innerHTML:'';dg.style.setProperty('--capb',cap.offsetHeight+'px');requestAnimationFrame(()=>cap.classList.add('in'))})};   // --capb: the caption's real height, so on a phone the pile shrinks to sit above it instead of under it
+      const pic=(im,t)=>{if(im.dataset.t===String(t))return;im.dataset.t=t;
+        if(!t){im.removeAttribute('srcset');im.removeAttribute('sizes');im.src=im.dataset.ph;return}   // let go: the empty stand-in, same shape
+        im.sizes=t===2?im.dataset.sizes:im.dataset.peek;im.srcset=im.dataset.srcset;if(t===2&&im.decode)im.decode().catch(()=>{})};
       const setCur=i=>{cur=i;const sl=slides[cur];num.textContent=sl.dataset.name+' · '+sl.dataset.k+' / '+sl.dataset.of;setCap(sl);
         /* PILES (her 2026-11-22: "when you're done, the next pile should come to the side … it shouldn't automatically go to the next
            picture"): the current project is the pile in the middle; the next project's pile waits at the right, the previous at the left */
@@ -3208,18 +3259,24 @@ function makeJS() {
           else if(xp===nextP){d=k>2?'far':String(k);x.dataset.pile='next'}else if(xp===prevP){d=k>2?'far':String(k);x.dataset.pile='prev'}else{d='far';x.dataset.pile='off'}
           const was=x.dataset.pile+x.dataset.d;x.dataset.d=d;x.style.setProperty('--tilt',((j*37)%7-3)*.9+'deg');
           if(hid[j]&&was!==x.dataset.pile+d&&!rmActive()){x.style.transition=changed?'opacity .3s cubic-bezier(.2,.7,.2,1) .5s':'opacity .45s cubic-bezier(.2,.7,.2,1)';   /* on a pile change an unseen print appears only once its pile has landed (her 2026-11-23: "there is already a photo there before the photo pile reaches there") */if(changed)setTimeout(()=>{x.style.transition=''},900);else requestAnimationFrame(()=>requestAnimationFrame(()=>{x.style.transition=''}))}});
-        /* SMOOTH FLIPS (her 2026-11-22: "the pictures dont switch smoothly"): every print the next flip or side-swipe can show is fetched
-           and DECODED ahead, so no 2400px picture is decoded mid-animation */
-        slides.forEach(x=>{if(x.dataset.d==='far'||x.dataset.d==='gone'&&x.dataset.pile!=='cur')return;const im=x.querySelector('img');if(!im)return;im.loading='eager';if(im.decode&&!im.dataset.dec){im.dataset.dec='1';im.decode().catch(()=>{})}});
+        /* SMOOTH FLIPS (her 2026-11-22: "the pictures dont switch smoothly"): every print the next flip or side-swipe brings is fetched
+           and DECODED ahead, so no picture is decoded mid-animation.
+           MEMORY (2026-11-25, her LinkedIn reload): only prints that can be seen hold a picture, at the size they show. Full size (2): the
+           top print, the two a flip brings (the next under it, the last that swings back round) and each side pile's top. Small (1): the
+           rest you can see, under the piles. Every other print lets its picture go (0), so memory stays flat however far she pages */
+        slides.forEach(x=>{const im=x.querySelector('img');if(!im||!im.dataset.ph)return;const d=x.dataset.d,of=+x.dataset.of,cp=x.dataset.pile==='cur';
+          pic(im,mode()!=='prints'||d==='0'||(cp&&d==='1')||(cp&&(+x.dataset.k-+sl.dataset.k+of)%of===of-1)?2:d==='far'||x.dataset.pile==='off'?0:1)});
         dg.classList.toggle('at-end',projs.length&&slides.filter(x=>+x.dataset.i===P).pop()===sl);
         if(thumbs){[...thumbs.children].forEach((t,j)=>t.classList.toggle('on',j===cur));const t=thumbs.children[cur];t&&t.scrollIntoView({block:'nearest',inline:'center',behavior:rmActive()?'auto':'smooth'})}
         clearTimeout(dg._pl);dg._pl=setTimeout(play,mode()==='prints'&&!rmActive()?650:0)};
       const pileOf=i=>slides.filter(x=>x.dataset.i===slides[i].dataset.i),firstOf=pid=>slides.findIndex(x=>+x.dataset.i===pid);
       const bounce=()=>{const t=slides[cur];if(!t||rmActive())return;t.classList.remove('bounce');void t.offsetWidth;t.classList.add('bounce')};
-      const flip=dir=>{const pile=pileOf(cur),k=pile.indexOf(slides[cur]);if(pile.length<2){bounce();return}const n=(k+dir+pile.length)%pile.length,
+      /* a flip or pile change that lands between open() and its first frame found no current print (cur is -1 until then) and threw in
+         pileOf (2026-11-25, seen 3x paging on a phone check): wait for the print instead */
+      const flip=dir=>{if(!slides[cur])return;const pile=pileOf(cur),k=pile.indexOf(slides[cur]);if(pile.length<2){bounce();return}const n=(k+dir+pile.length)%pile.length,
         mv=dir>0?slides[cur]:pile[n];if(!rmActive()){mv.classList.remove('cyc','cyc-back');void mv.offsetWidth;mv.classList.add(dir>0?'cyc':'cyc-back');
         mv.addEventListener('animationend',()=>mv.classList.remove('cyc','cyc-back'),{once:true})}setCur(slides.indexOf(pile[n]))};   // up: the top print swings round and under; down: the bottom one swings back on top   // one print, never into the next project
-      const pile=dir=>{const projs=[...new Set(slides.map(x=>+x.dataset.i))],pi=projs.indexOf(+slides[cur].dataset.i),np=projs[pi+dir];if(np===undefined){bounce();return}
+      const pile=dir=>{if(!slides[cur])return;const projs=[...new Set(slides.map(x=>+x.dataset.i))],pi=projs.indexOf(+slides[cur].dataset.i),np=projs[pi+dir];if(np===undefined){bounce();return}
         let t=firstOf(np);const k=(dg._seen||{})[np];if(k)t+=k-1;else if(dir<0)while(slides[t+1]&&+slides[t+1].dataset.i===np)t++;setCur(t)};   // back = the print you left on top
       const go=(i,smooth)=>{i=(i+slides.length)%slides.length;if(mode()!=='strip'){setCur(i);return}const sl=slides[i];strip.scrollTo({left:sl.offsetLeft-(strip.clientWidth-sl.offsetWidth)/2,behavior:smooth&&!rmActive()?'smooth':'auto'})};
       /* swipe on the pile / the big picture: a horizontal flick of 40px moves one */
@@ -3244,7 +3301,7 @@ function makeJS() {
       const dcEl=document.getElementById('dc'),dcHome=dcEl&&dcEl.parentNode;
       const open=i=>{cur=-1;capFor=null;num.textContent='';dg._seen={};dg.showModal();if(dcEl)dg.appendChild(dcEl);{const rv=document.querySelector('.rv-sws');if(rv)dg.appendChild(rv)}   /* local review switch rides along, so GALLERY A/B/C can be seen while the gallery is open (her 2026-11-22: "i didnt see anything change") */   /* her cursor goes WITH the gallery (2026-11-22: "the cursor disappears when i click on the pictures") */document.documentElement.classList.add('dg-on');requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i);strip.focus({preventScroll:true})});
         if(!pushed){history.pushState({dg:1},'');pushed=true}};
-      const close=()=>{slides.forEach(sl=>{const v=sl.querySelector('video');v&&v.pause()});if(dcEl&&dcHome)dcHome.appendChild(dcEl);{const rv=dg.querySelector('.rv-sws');if(rv)document.body.appendChild(rv)}dg.close();document.documentElement.classList.remove('dg-on')};
+      const close=()=>{slides.forEach(sl=>{const v=sl.querySelector('video');v&&v.pause();const im=sl.querySelector('img');im&&im.dataset.ph&&pic(im,0)});if(dcEl&&dcHome)dcHome.appendChild(dcEl);{const rv=dg.querySelector('.rv-sws');if(rv)document.body.appendChild(rv)}dg.close();document.documentElement.classList.remove('dg-on')};
       strip.addEventListener('scroll',()=>requestAnimationFrame(mark),{passive:true});
       document.addEventListener('mk-gal',()=>{if(!dg.open)return;const i=Math.max(cur,0);cur=-1;capFor=null;strip.scrollLeft=0;requestAnimationFrame(()=>{if(mode()==='strip'){go(i,false);mark()}else setCur(i)})});   // re-lay the open gallery when the review switch changes
       slides.forEach((sl,i)=>sl.addEventListener('click',()=>{if(strip.dataset.swiped)return;
@@ -3525,13 +3582,14 @@ if(!t){
 }
 window.__mkSun={next:nxt?nxt[1]:null,mode:nxt?(nxt[0]==='rise'?'day':'night'):null};
 if(t==='night')document.documentElement.setAttribute('data-theme','night');var gq=/[?&]ground=(cool)/.exec(location.search);if(gq)document.documentElement.setAttribute('data-ground',gq[1]);var tq=/[?&]theme=(day|night)/.exec(location.search);if(tq){if(tq[1]==='night')document.documentElement.setAttribute('data-theme','night');else document.documentElement.removeAttribute('data-theme')}
+try{localStorage.setItem('mk-shown',document.documentElement.getAttribute('data-theme')==='night'?'night':'day')}catch(e){}   /* what's on screen, for the case studies */
 }catch(e){}})();</script>
 <link rel="stylesheet" href="styles.css?v=${BUILD_V}">
 <!-- .w is the word wrapper reveal-words puts around every word, and it starts at opacity 0
      waiting for the .revealed class, which only JS ever adds. Without this the hero sentence
      is invisible to a no-JS visitor. It is real text now, so a reader with no JS still gets
      the copy — but it would look like the hero simply has none. -->
-<noscript><style>.w{opacity:1;transform:none;filter:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row,.cta-socials a{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}</style></noscript>
+<noscript><style>.w{opacity:1;transform:none;filter:none}.fade{opacity:1;transform:none}.hero h1,.hero-cta-row,.cta-socials a{opacity:1;transform:none}.hero-flora{opacity:1}.dc{display:none}.hero .reveal-words{opacity:1!important}</style></noscript>
 <!-- her handwriting carries the one sentence the hero exists for, and it is same-origin and
      14kb, so it is worth the early connection rather than waiting on the stylesheet -->
 <link rel="preload" href="assets/fonts/madhu-hand.woff?v=${BUILD_V}" as="font" type="font/woff" crossorigin>
@@ -3560,7 +3618,7 @@ html:not(.booted) .wm-load .wm-m,html:not(.booted) .wm-load .wm-k,html:not(.boot
 html.boot-swoop .dc{opacity:0!important;transition:none!important}
 @keyframes boot-out{to{opacity:0;visibility:hidden}}</style>
 <script>${bootJS()}</script>` : ''}
-<a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}main:focus{outline:none}</style>
+<a class="skip" href="#main">Skip to content</a><style>.skip{position:fixed;left:12px;top:12px;z-index:2147483600;padding:12px 18px;border-radius:999px;background:#8fb2f2;color:#0f1013;font:600 14px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none;outline:2px solid #fff;outline-offset:2px}.skip:not(:focus){opacity:0;pointer-events:none}html{-webkit-tap-highlight-color:transparent}a:focus:not(:focus-visible),button:focus:not(:focus-visible){outline:none}@media (max-width:760px){html::before{content:"";position:fixed;left:0;right:0;top:-160px;height:160px;background:var(--bg-base);z-index:49;pointer-events:none}}main:focus{outline:none}</style>
 ${svgFilters()}
 <div class="atmosphere" aria-hidden="true"></div>
 <div class="dc" id="dc" aria-hidden="true"><div class="dc-spin"><div class="dc-body"><span>I'm curious</span></div></div></div>`;
@@ -3607,16 +3665,15 @@ function photoBlock(p) { return `<div class="project-media scard-photo${p.photo.
 
 const LOOK_TOGGLE = '<span class="lt-toggle" role="group" aria-label="Day or night">'
   + '<button type="button" class="lt-btn" data-look-to="day" aria-label="Day mode" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.35 5.35l1.63 1.63M17.02 17.02l1.63 1.63M5.35 18.65l1.63-1.63M17.02 6.98l1.63-1.63"/></svg></button>'
-  + '<button type="button" class="lt-btn" data-look-to="night" aria-label="Night mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19.6 14.9A8 8 0 0 1 9.1 4.4a8 8 0 1 0 10.5 10.5z"/></svg></button>'
+  + '<button type="button" class="lt-btn" data-look-to="night" aria-label="Night mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21.24 13.45A8 8 0 0 1 10.74 2.95a8 8 0 1 0 10.5 10.5z"/></svg></button>'   // moon drawn 1.64 right, 1.45 up so its ink centre sits on the button's centre (icon audit 2026-11-25)
   /* SOUND (her 2026-11-23: "We probably need like a mute site button somewhere"): mutes her avatar's sounds, the only sounds on the site; remembered */
   + '<span class="lt-sep" aria-hidden="true"></span><button type="button" class="lt-mute" aria-label="Mute sounds" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.6h3.2L12 5.6v12.8l-4.8-4H4z"/><path class="lm-on lm-w1" pathLength="1" d="M15.4 9.2a4 4 0 0 1 0 5.6"/><path class="lm-on lm-w2" pathLength="1" d="M17.9 6.7a7.6 7.6 0 0 1 0 10.6"/><path class="lm-off lm-x1" pathLength="1" d="M16 9.6l4.8 4.8"/><path class="lm-off lm-x2" pathLength="1" d="M20.8 9.6L16 14.4"/></svg></button></span>';
 const LOOK_TOGGLE_JS = `<script>
 (function(){var h=document.documentElement,m=document.querySelector('.lt-mute'),on=false;try{on=localStorage.getItem('mk-mute')==='on'}catch(e){}
  function set(x){on=x;if(x)h.dataset.mute='on';else delete h.dataset.mute;if(m){m.setAttribute('aria-pressed',String(x));m.setAttribute('aria-label',x?'Turn sounds on':'Mute sounds')}}
  set(on);if(m)m.addEventListener('click',function(){set(!on);try{localStorage.setItem('mk-mute',on?'on':'off')}catch(e){}});
- /* ease in once the loader has lifted (pages without one: straight away) — her 2026-11-23 "I hate when things just appear" */
- var show=function(){[].slice.call(document.querySelectorAll('.lt-mute,.lt-sep')).forEach(function(e){e.classList.add('lm-show')})};
- var go=function(){Promise.resolve(window.__mkBoot).then(show,show)};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
+ /* (no entrance of its own since 2026-11-24: it arrives with the sun, moon and nav, see .lt-mute in skin-walkthrough.css) */
+})();
 (function(){var h=document.documentElement,tg=document.querySelector('.lt-toggle');if(!tg)return;
  var bs=[].slice.call(tg.querySelectorAll('.lt-btn')),cur=function(){return h.getAttribute('data-theme')==='night'?'night':'day'};
  /* read live, like the view toggle's rmActive(): the OS setting OR the site's own reduce-motion switch (body.rm-mode) */
@@ -3707,6 +3764,7 @@ function footerHTML(extra = '') {
 </footer>
 <script src="app.js?v=${BUILD_V}" defer></script>
 <script src="resume-plane.js?v=${BUILD_V}" defer></script>
+<script src="press.js?v=${BUILD_V}" defer></script>
 <!-- CURSOR LIGHT, saved for later (her 2026-10-26: "remove cursor lighting. save it, I'll use it later. it's very cool though"):
      cursor-light.js + the .lit-glint / --lx --ly --la CSS are all still here; to bring it back, put this tag back:
      <script src="cursor-light.js?v=${BUILD_V}" defer></script> (and the same line in walkthrough.js) -->
@@ -3965,8 +4023,8 @@ function renderHome() {
       /* every picture of the project (her 2026-11-22: "im not able to click through multiple pictures … I normally have way more
          pictures"): the panel's own picture or film first, then her project folder's pictures (site.json panels[].gallery) */
       /* galleryLeads: the gallery's first picture IS the panel's picture at full resolution, so the panel's smaller copy is not shown twice */
-      const pics = (p.galleryLeads ? [] : [p.video ? `<video muted loop playsinline preload="none" poster="${esc(p.img)}?v=${BUILD_V}" data-src="${esc(p.video)}?v=${BUILD_V}" aria-label="${esc(p.alt)}"></video>` : `<img src="${esc(p.img)}?v=${BUILD_V}" alt="${esc(p.alt)}" loading="lazy" decoding="async">`])
-        .concat((p.gallery || []).map(g => `<img src="${esc(g)}?v=${BUILD_V}" alt="${esc(p.shortLabel)}" loading="lazy" decoding="async">`));
+      const pics = (p.galleryLeads ? [] : [p.video ? `<video muted loop playsinline preload="none" poster="${esc(p.img)}?v=${BUILD_V}" data-src="${esc(p.video)}?v=${BUILD_V}" aria-label="${esc(p.alt)}"></video>` : galImg(p.img, p.alt)])
+        .concat((p.gallery || []).map(g => galImg(g, p.shortLabel)));
       return pics.map((m, k) => `<figure class="dg-slide" data-i="${i}" data-k="${k + 1}" data-of="${pics.length}" data-name="${esc(p.shortLabel)}">
       ${m}
       <figcaption><span class="dg-org">${esc(p.org)}</span><b>${typo(p.title)}</b><em>${typo(p.desc)}</em></figcaption>
@@ -4330,6 +4388,7 @@ fs.copyFileSync(path.join(ROOT, 'stickman.js'), path.join(DIST, 'stick.js'));
    pays the ~150k gz unless they scroll near the about section (app.js lazy-imports). */
 fs.copyFileSync(path.join(ROOT, 'fish.js'), path.join(DIST, 'fish.js'));
 fs.copyFileSync(path.join(ROOT, 'resume-plane.js'), path.join(DIST, 'resume-plane.js'));
+fs.copyFileSync(path.join(ROOT, 'press.js'), path.join(DIST, 'press.js'));   // press down / press up on every button, every page
 fs.copyFileSync(path.join(ROOT, 'lean.js'), path.join(DIST, 'lean.js'));   // her lean on the logo row, the first time someone enters focus mode   // the paper-airplane resume, on every page
 fs.copyFileSync(path.join(ROOT, 'cursor-light.js'), path.join(DIST, 'cursor-light.js'));   // the cursor is the light, on every page
 for (const f of ['three.module.min.js', 'three.core.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']) {
@@ -4534,13 +4593,17 @@ scan();document.addEventListener('DOMContentLoaded',scan);addEventListener('load
     /* HANG LOOK (her 2026-11-23: "The hanging avatar feels like a different treatment ... than the normal avatar"): NOW / COLOUR (the hang
        sheets graded to her walk, assets/clay/graded/) / STEPPED (that, and pose changes cut like her walk instead of blending). Read by
        stickman.js from html[data-hang], set in the <head> so it is there before her frames load; a pick reloads the page. Never on Vercel */
-    const HANG = !process.env.VERCEL;
+    const HANG = false; // retired 2026-11-24: her pick was NOW ("I don't see any difference"), and she asked for decided switches to leave the screen
     const HANG_SW = HANG ? `<div class="rv-sw rv-hang" role="group" aria-label="Hanging look"><span>HANG LOOK</span><button type="button" data-g="">NOW</button><button type="button" data-g="colour">COLOUR</button><button type="button" data-g="step">STEPPED</button></div>` : '';
     const HANG_HEAD = HANG ? `<script>try{var mkHg=localStorage.getItem('mk-review-hang');if(mkHg)document.documentElement.setAttribute('data-hang',mkHg)}catch(e){}</script>` : '';
     const HANG_JS = HANG ? `(function(){var K='mk-review-hang',cur=document.documentElement.getAttribute('data-hang')||'';document.querySelectorAll('.rv-hang button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.g===cur));
  b.addEventListener('click',function(){if(b.dataset.g===cur)return;try{if(b.dataset.g)localStorage.setItem(K,b.dataset.g);else localStorage.removeItem(K)}catch(e){}location.reload()})})})();` : '';
-    const SW = `<div class="rv-sws">${HANG_SW}<div class="rv-sw rv-ppan" role="group" aria-label="Phone panel text"><span>PHONE PANEL</span><button type="button" data-p="now">NOW</button><button type="button" data-p="a">A</button></div></div>
+    const SW = `<div class="rv-sws">${HANG_SW}</div>
 <style>.rv-sws{position:fixed;left:16px;bottom:16px;z-index:2147483100;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+/* SLIDE IN (her 2026-11-24: "when you come on a page, the toggles for the, the asks should kind of slide in from the left and onto the screen, like boom, boom, or how many ever there are … so that you can kind of see the motion and know that, ooh, that's what I need to consider"): each review switch slides in from the left once the page is there, one after another */
+.rv-sws>*{animation:rv-in .6s cubic-bezier(.2,.9,.3,1.25) both}.rv-sws>:nth-child(1){animation-delay:0.60s}.rv-sws>:nth-child(2){animation-delay:0.77s}.rv-sws>:nth-child(3){animation-delay:0.94s}.rv-sws>:nth-child(4){animation-delay:1.11s}.rv-sws>:nth-child(5){animation-delay:1.28s}.rv-sws>:nth-child(6){animation-delay:1.45s}.rv-sws>:nth-child(7){animation-delay:1.62s}.rv-sws>:nth-child(8){animation-delay:1.79s}
+@keyframes rv-in{from{opacity:0;transform:translateX(-72px)}}@media (prefers-reduced-motion:reduce){.rv-sws>*{animation-name:rv-in-rm}@keyframes rv-in-rm{from{opacity:0}}}
+
 .dg .rv-sws{top:64px;bottom:auto}
 .rv-sw{display:flex;align-items:center;gap:4px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(22,26,36,.9);color:#fff;font:600 12px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
 .rv-sw span{margin-right:6px;opacity:.8}.rv-sw button{all:unset;cursor:pointer;display:grid;place-items:center;min-width:32px;padding:0 8px;box-sizing:border-box;height:32px;border-radius:999px}
@@ -4565,7 +4628,7 @@ document.querySelectorAll('.rv-hov button').forEach(function(b){b.addEventListen
 function paint(x){if(x==='a')h.removeAttribute('data-knob');else h.setAttribute('data-knob',x);document.querySelectorAll('.rv-knob button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.k===x))})}
 document.querySelectorAll('.rv-knob button').forEach(function(b){b.addEventListener('click',function(){try{localStorage.setItem(K,b.dataset.k)}catch(e){}paint(b.dataset.k)})});paint(v())})();
 /* DEPTH retired: her pick 2026-11-23, B (PHONE_CSS) */
-/* READABILITY options 2026-11-23 (skin-walkthrough.css data-plab / data-ppan): NOW = as shipped; her pick owed */
+/* READABILITY options 2026-11-23: PHONE PANEL switch retired 2026-11-24 (its A styles were gone, so it did nothing; she asked for undecided-looking switches to leave the screen) */
 [['ppan','.rv-ppan']].forEach(function(s){var h=document.documentElement,K='mk-review-'+s[0],bs=document.querySelectorAll(s[1]+' button');
 function v(){try{return localStorage.getItem(K)||'now'}catch(e){return 'now'}}
 function paint(x){if(x==='now')h.removeAttribute('data-'+s[0]);else h.setAttribute('data-'+s[0],x);bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.p===x))})}
@@ -4635,6 +4698,9 @@ ${tool('editor', 'Editor', 'Click any text on a page and rewrite it in place.', 
 ${tool('video-editor', 'Video editor', 'A demo video of a real site, the camera easing in on each click.', `<div class="ve-pre"><video src="${T}zoom-demo-click.mp4" poster="${T}zoom-demo-click.jpg" muted loop playsinline autoplay preload="metadata" aria-label="The video editor's camera easing in on a SHOP NOW button as it is clicked"></video><span class="vf" aria-hidden="true"></span></div>`
   + `<div class="ve-tl" aria-hidden="true"><div class="ve-keys">${[.95, 1.55, 2.55, 3.12].map(k => `<i style="left:${(k / 5.9 * 100).toFixed(1)}%"></i>`).join('')}</div>`
   + `<div class="ve-strip">${'<b></b>'.repeat(7)}</div><span class="ve-ph"></span></div>`)}
+${/* her 2026-11-24: "I didn't see the mobile website editor in my Ai tool set up". Name + line = her words ("Making mobile website editing
+   easier"). Picture = the real vote bubble on iPhone Safari, in her iPhone bezel; tap → tool-demos.js phone() */
+  tool('phone', 'Mobile website editor', 'Making mobile website editing easier.', `<div class="phone-media"><div class="phone">${['l action', 'l volup', 'l voldn', 'r power', 'r camera'].map(c => `<span class="phone-btn ${c}" aria-hidden="true"></span>`).join('')}<div class="phone-screen"><img src="${T}phone-vote.jpg" alt="Her Driftwood draft on an iPhone: the TITLE switch on A, with a thumbs up, thumbs down and microphone bubble above it" loading="lazy" decoding="async"></div><span class="phone-island" aria-hidden="true"></span></div></div>`)}
   </div>
 </section>`;
   /* HIDDEN ON THE LIVE SITE for now (her 2026-11-23 push: "Hide it this push" while the hi-fi demos are rebuilt): on Vercel only the
@@ -4646,12 +4712,13 @@ ${tool('video-editor', 'Video editor', 'A demo video of a real site, the camera 
 .tb{--f:#e9e8e3;--ink:#161a24;--mut:#4f5866;width:min(1180px,calc(100vw - 48px));margin:0 auto;padding:96px 0 24px}
 html[data-theme=night] .tb{--f:#1b1e24;--ink:#f3f4f6;--mut:#a9adb7}
 .tb .section-title{margin:0 0 40px}
-.tb-row{display:grid;grid-template-columns:repeat(2,1fr);gap:32px}   /* two tools (her 2026-11-24: "the demo is literally the same between the editor and the taste slider thing ... We can just have one"; the tweaker tile came back 2026-11-23 and went again) */   /* two tools since 2026-11-23: her "the editor and the taste sliders are like the same tool" (the Editor demo now holds the taste-slider controls) */
+.tb-row{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}   /* three tools since 2026-11-24 (Mobile website editor joined): one row, no card alone on a second line */   /* two tools (her 2026-11-24: "the demo is literally the same between the editor and the taste slider thing ... We can just have one"; the tweaker tile came back 2026-11-23 and went again) */   /* two tools since 2026-11-23: her "the editor and the taste sliders are like the same tool" (the Editor demo now holds the taste-slider controls) */
 .tb-tool{margin:0;display:flex;flex-direction:column;gap:18px}
 .tb-vis{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--f)}
 .tb-open{position:absolute;inset:0;z-index:1;margin:0;padding:0;border:0;background:none;border-radius:inherit;cursor:pointer}
 .tb-open:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
 .tb-vis .ts-demo{z-index:2;pointer-events:none}.tb-vis .ts-rows{pointer-events:auto}   /* the band's own sliders stay draggable in place; the rest of the tile opens the demo */
+.tb-vis>.phone-media{width:62%;max-width:none;margin:0 auto;transform:translateY(-37%)}   /* the 4:3 tile frames the vote bubble + switch */
 .tb-vis>img,.tb-vis>video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;display:block}
 /* the video editor IS a camera (her 2026-11-23: "I feel like I made a video editor"): viewfinder corners over the clip as it eases in */
 /* her 2026-11-23: "the video editor does not actually look like a video editor" -> an editor view made from the real recording:

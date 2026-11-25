@@ -1,9 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){var q=location.search,m;if(m=/[?&]hero=([abc])/.exec(q))document.documentElement.dataset.hero=m[1];document.documentElement.dataset.bg="fade";if(/[?&]look=dark/.test(q))document.documentElement.dataset.look="dark";else if(!/[?&]look=day/.test(q)){try{if(localStorage.getItem("mk-look")==="dark")document.documentElement.dataset.look="dark"}catch(e){}}if(m=/[?&]panel=([a-z]+)/.exec(q))document.documentElement.dataset.panel=m[1];if(m=/[?&]accent=([a-z]+)/.exec(q))document.documentElement.dataset.accent=m[1];else{try{var av=localStorage.getItem("mk-accent");if(av==="site")document.documentElement.dataset.accent="site";else if(av==="own"&&/spotify/.test(location.pathname))document.documentElement.dataset.accent="spotify"}catch(e){}}})();</script>
+<script>(function(){try{
+var Z={'America/New_York':[40.7,-74],'America/Detroit':[42.3,-83],'America/Chicago':[41.9,-87.7],'America/Denver':[39.7,-105],'America/Los_Angeles':[34.1,-118.2],'America/Phoenix':[33.4,-112.1],'America/Toronto':[43.7,-79.4],'America/Vancouver':[49.3,-123.1],'America/Mexico_City':[19.4,-99.1],'America/Sao_Paulo':[-23.5,-46.6],'America/Argentina/Buenos_Aires':[-34.6,-58.4],'America/Bogota':[4.7,-74.1],'America/Lima':[-12,-77],'America/Santiago':[-33.4,-70.7],'America/Anchorage':[61.2,-149.9],'Pacific/Honolulu':[21.3,-157.9],'Europe/London':[51.5,-.1],'Europe/Dublin':[53.3,-6.3],'Europe/Paris':[48.9,2.3],'Europe/Berlin':[52.5,13.4],'Europe/Madrid':[40.4,-3.7],'Europe/Rome':[41.9,12.5],'Europe/Amsterdam':[52.4,4.9],'Europe/Stockholm':[59.3,18.1],'Europe/Oslo':[59.9,10.8],'Europe/Copenhagen':[55.7,12.6],'Europe/Zurich':[47.4,8.5],'Europe/Vienna':[48.2,16.4],'Europe/Warsaw':[52.2,21],'Europe/Athens':[38,23.7],'Europe/Istanbul':[41,29],'Europe/Moscow':[55.8,37.6],'Europe/Lisbon':[38.7,-9.1],'Africa/Cairo':[30,31.2],'Africa/Lagos':[6.5,3.4],'Africa/Nairobi':[-1.3,36.8],'Africa/Johannesburg':[-26.2,28],'Asia/Dubai':[25.2,55.3],'Asia/Karachi':[24.9,67],'Asia/Kolkata':[19,72.8],'Asia/Dhaka':[23.8,90.4],'Asia/Bangkok':[13.8,100.5],'Asia/Singapore':[1.3,103.8],'Asia/Hong_Kong':[22.3,114.2],'Asia/Shanghai':[31.2,121.5],'Asia/Taipei':[25,121.5],'Asia/Seoul':[37.6,127],'Asia/Tokyo':[35.7,139.7],'Asia/Jakarta':[-6.2,106.8],'Asia/Manila':[14.6,121],'Asia/Jerusalem':[31.8,35.2],'Asia/Riyadh':[24.7,46.7],'Australia/Sydney':[-33.9,151.2],'Australia/Melbourne':[-37.8,145],'Australia/Brisbane':[-27.5,153],'Australia/Perth':[-32,115.9],'Pacific/Auckland':[-36.8,174.8]};
+var zone='';try{zone=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){}
+var co=Z[zone];
+if(!co){var off=-(new Date().getTimezoneOffset())/60;
+  var south=/Australia|Auckland|Johannesburg|Sao_Paulo|Argentina|Santiago|Lima|La_Paz|Asuncion|Montevideo|Harare|Maputo|Antarctica/.test(zone);
+  co=[south?-30:35,off*15];}
+function sunUTC(d,lat,lon){
+  var r=Math.PI/180,doy=Math.floor((d-Date.UTC(d.getUTCFullYear(),0,0))/864e5),
+      g=2*Math.PI/365*(doy-1+.5),
+      eq=229.18*(75e-6+.001868*Math.cos(g)-.032077*Math.sin(g)-.014615*Math.cos(2*g)-.040849*Math.sin(2*g)),
+      dec=.006918-.399912*Math.cos(g)+.070257*Math.sin(g)-.006758*Math.cos(2*g)+9.07e-4*Math.sin(2*g)-.002697*Math.cos(3*g)+.00148*Math.sin(3*g),
+      ch=(Math.cos(90.833*r)-Math.sin(lat*r)*Math.sin(dec))/(Math.cos(lat*r)*Math.cos(dec));
+  if(ch>1||ch<-1)return null; /* polar day/night: fall through to the 7-19 fallback */
+  var ha=Math.acos(ch)/r,noon=720-4*lon-eq,
+      day0=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());
+  return{rise:day0+(noon-4*ha)*6e4,set:day0+(noon+4*ha)*6e4};}
+var now=new Date(),t=null,at=NaN;
+try{t=localStorage.getItem('mk-theme');at=Number(localStorage.getItem('mk-theme-at'))}catch(e){}
+if(t!=='day'&&t!=='night')t=null;
+/* the last solar event before now decides — computed across yesterday/today/tomorrow
+   (UTC dates), because east of Greenwich "today's" set can precede "today's" rise and
+   a naive before/after check calls a Sydney morning night */
+var evs=[];[-1,0,1].forEach(function(k){
+  var su=sunUTC(new Date(now.getTime()+k*864e5),co[0],co[1]);
+  if(su){evs.push(['rise',su.rise],['set',su.set])}});
+evs.sort(function(a,b){return a[1]-b[1]});
+var last=null,nxt=null;
+for(var i=0;i<evs.length;i++){if(evs[i][1]<=now.getTime())last=evs[i];else{nxt=evs[i];break}}
+/* a toggle click is an OVERRIDE of the current stretch of day or night, not a policy
+   (2026-08-20: her site sat in day at 1am because a stored choice used to win forever).
+   It expires the moment the sun next rises or sets after it was made; a stored choice
+   with no timestamp is from before this rule and counts as already expired. */
+if(t&&(!isFinite(at)||(last&&last[1]>at))){
+  t=null;try{localStorage.removeItem('mk-theme');localStorage.removeItem('mk-theme-at')}catch(e){}}
+if(!t){
+  if(last)t=last[0]==='rise'?'day':'night';
+  else{var h=now.getHours();t=(h<7||h>=19)?'night':'day';}
+}
+window.__mkSun={next:nxt?nxt[1]:null,mode:nxt?(nxt[0]==='rise'?'day':'night'):null};
+if(t==='night')document.documentElement.setAttribute('data-theme','night');var gq=/[?&]ground=(cool)/.exec(location.search);if(gq)document.documentElement.setAttribute('data-ground',gq[1]);var tq=/[?&]theme=(day|night)/.exec(location.search);if(tq){if(tq[1]==='night')document.documentElement.setAttribute('data-theme','night');else document.documentElement.removeAttribute('data-theme')}
+try{localStorage.setItem('mk-shown',document.documentElement.getAttribute('data-theme')==='night'?'night':'day')}catch(e){}   /* what's on screen, for the case studies */
+}catch(e){}})();</script><script>(function(){var d=document.documentElement;window.__mkNight=d.getAttribute("data-theme")==="night";d.removeAttribute("data-theme")})()</script>
+<script>(function(){var q=location.search,m;if(m=/[?&]hero=([abc])/.exec(q))document.documentElement.dataset.hero=m[1];document.documentElement.dataset.bg="fade";if(/[?&]look=dark/.test(q))document.documentElement.dataset.look="dark";else if(!/[?&]look=day/.test(q)){if(window.__mkNight)document.documentElement.dataset.look="dark";}if(m=/[?&]panel=([a-z]+)/.exec(q))document.documentElement.dataset.panel=m[1];if(m=/[?&]accent=([a-z]+)/.exec(q))document.documentElement.dataset.accent=m[1];else{try{var av=localStorage.getItem("mk-accent");if(av==="site")document.documentElement.dataset.accent="site";else if(av==="own"&&/spotify/.test(location.pathname))document.documentElement.dataset.accent="spotify"}catch(e){}}})();</script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Spotify Mix — Madhu — Product Design Engineer</title>
 <meta name="description" content="Driftwood was refunding more than half its revenue. A shorter onboarding on the founder's call, a storyboard editor, and a calmer dashboard got new clients to their first demo in 7 business days.">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32.png">
@@ -753,6 +796,23 @@ nav.pill{background:#1c232c!important}
   .fw-widget{width:84%}
 }
 
+/* THE STRIP UNDER THE PHONE'S CLOCK (her 2026-11-24 screenshot, circled: a blurred pill and the page showing above the nav). The
+   browser paints that strip from whatever sits behind it: the skip link parked just above the screen showed through blurred, and a
+   see-through nav let the page show above it. The skip link is now invisible until a keyboard reaches it, and on phones the nav is
+   one solid colour, which the browser carries up into the strip */
+.skip:not(:focus){opacity:0;pointer-events:none}html{-webkit-tap-highlight-color:transparent}a:focus:not(:focus-visible),button:focus:not(:focus-visible){outline:none}
+@media (max-width:760px){html body nav.pill{background:#f1efe9!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+ html[data-look=dark] body nav.pill{background:#0f1013!important}
+ html body .nav-wrap{background:#f1efe9}html[data-look=dark] body .nav-wrap{background:#0f1013}
+ /* her 2026-11-24: "the nav bar at the top isn't extending far enough off the screen". The page now reaches under the clock
+    (viewport-fit=cover): the nav grows up into that strip, and a strip of the nav's own colour stays there when the nav tucks away,
+    like an app's status bar, so the page never shows (or blurs) behind the clock */
+ html body{padding-top:env(safe-area-inset-top)}
+ html body .nav-wrap{padding-top:env(safe-area-inset-top)}
+ /* iPhone 26+ browsers draw the page ABOVE its own top edge, behind the clock; so the strip starts above the edge too (measured on the
+    simulator: the hidden skip link showed there), and also covers the clock's inset where the page reaches under it */
+ html::before{content:"";position:fixed;left:0;right:0;top:-160px;height:calc(160px + env(safe-area-inset-top));background:#f1efe9;z-index:49;pointer-events:none}
+ html[data-look=dark]::before{background:#0f1013}}   /* html body: outranks the later see-through nav rules; the WRAPPER (the fixed box at the top edge) is what the phone colours the strip from */
 /* the ground: lifted from near-black #0f1013 to a tide-tinted slate (her 2026-11-22 "the background feels too dark") */
 :root{--ink:#1c232c;--navy:#1c232c}
 .toc:hover{background:rgba(28,35,44,.92)}
@@ -776,6 +836,9 @@ nav.pill{background:#0f1013}
 .fw-lead,.fw-body{color:var(--body);font-size:18px;line-height:1.6;max-width:720px;margin:20px 0 0}
 .fw-lead b,.fw-body b{color:var(--hi);font-weight:500}
 .fw-h3{color:var(--hi);font-size:22px;line-height:1.3;font-weight:500;margin:80px 0 24px;max-width:720px}
+/* "The light check" reads as its own part, so it wears the section-title type (her 2026-11-24: "light check's title is really small font
+   compared to everybody else's"); the other sub-heads stay questions at 22px */
+.fw-h3.fw-h3-sec{font-size:clamp(34px,4vw,48px);line-height:1.05;font-weight:600;letter-spacing:-.025em;word-spacing:.06em;color:#161a24}
 .fw-next{color:var(--dim);font-size:18px;margin:96px 0 0}
 .fw-src{color:var(--dim);font-size:14px;margin:16px 0 0}
 .fw-todo{display:inline-block;margin:24px 0 0;padding:8px 14px;border:1px dashed var(--dim);border-radius:10px;color:var(--dim);font-size:14px}
@@ -970,7 +1033,7 @@ html:not([data-bars=now]) #impact .fw-out{display:none}
 .fw-test figcaption b{font-size:44px;line-height:1;font-weight:600;letter-spacing:-.02em;color:#9aa3ad}.fw-test.win figcaption b{color:var(--acc)}
 .fw-test figcaption span{font-size:17px;color:#2b323d}
 .fw-port{display:flex;justify-content:center}.fw-port img{width:min(720px,100%);border-radius:14px;box-shadow:0 0 0 1px rgba(22,26,36,.06),0 18px 40px -22px rgba(20,40,60,.35)}
-@media (max-width:760px){.fw-tests{grid-template-columns:1fr}.fw-test .fw-stage{height:auto}.fw-one{padding:16px}}
+@media (max-width:760px){.fw-tests{grid-template-columns:1fr}.fw-test .fw-stage{height:auto}.fw-one{padding:20px}}
 /* ?look=dark: the same page in her site's dark look (rgb 15,16,19 ground, #f3f4f6 heads, #a9adb7 body), to judge "does it fit" (2026-11-22) */
 html[data-look=dark],html[data-look=dark] body{background:#0f1013!important;color:#a9adb7}
 html[data-look=dark] body::after{opacity:.18}
@@ -1163,7 +1226,7 @@ html[data-look=dark] .fb-sign{color:#8b909b}
      Vantage       #24407d  Vantage blue #3D7BFF (assets/case-studies/vantage/vantage-logo.svg), 45% over #0f1013 */
 html:not([data-look=dark]) .ff-card.ff-next2::before,html[data-bg=fade]:not([data-look=dark]) .ff-card.ff-next2::before{background:#ecebe7}
 .ff-next2[href*="spotify"]{--nf:#1f4a35}.ff-next2[href*="stack"]{--nf:#7c0709}.ff-next2[href*="message-testing"]{--nf:#052359}
-.ff-next2[href*="driftwood"]{--nf:#0d3c5b}.ff-next2[href*="pratus-kitchen"]{--nf:#7d1119}.ff-next2[href*="vantage"]{--nf:#24407d}
+.ff-next2[href*="driftwood"]{--nf:#0d3c5b}.ff-next2[href*="pratus-kitchen"]{--nf:#7d1119}.ff-next2[href*="vantage"]{--nf:#3d1f57}   /* Vantage is purple now (her 2026-11-24): its tease matches its page */
 html[data-look=dark] .ff-next2 .ff-field{background:var(--nf,var(--acc))!important;animation:none!important}
 html[data-look=dark] .ff-next2 .ff-field::after{display:none!important}
 /* the day / night toggle: HER view toggle (build.js .view-toggle / .view-btn / .vt-knob), in this page's inks */
@@ -1246,7 +1309,6 @@ html[data-look=dark] .q-front p{color:#c9ced6!important}html[data-look=dark] .q-
 .fw-fold-btn::after{content:"";position:absolute;left:0;right:0;bottom:8px;height:1.5px;background:var(--t-label);transform-origin:left;
   transition:height .25s var(--ease),background .3s var(--ease),transform .5s var(--ease)}
 .fw-fold-btn:hover::before{transform:rotate(90deg)}.fw-fold-btn:hover::after{height:2.5px;background:var(--t-title)}
-.fw-fold-btn:active{transform:scale(.97)}
 .fw-fold.open .fw-fold-btn::before{transform:rotate(180deg);background-size:12px 1.5px,1.5px 0}
 .fw-fold{display:flex;flex-direction:column;align-items:flex-start}.fw-fold-body{align-self:stretch}.fw-fold.open .fw-fold-btn{order:2;margin-top:32px}   /* open: the button sits under the research it opened */
 .fw-fold.open .fw-fold-btn:hover::before{transform:rotate(180deg)}
@@ -1287,15 +1349,45 @@ html[data-accent=site]{--acc:#3a62ab;--acc-rgb:58,98,171}
 html[data-shipped=whole] .fw-bleed{display:flex;align-items:center;justify-content:center;padding:32px 40px!important;aspect-ratio:auto!important}
 html[data-shipped=whole] .fw-bleed .mac-media{position:static!important;width:min(760px,100%)!important;left:auto!important;top:auto!important}
 .rv-sw2{display:flex;align-items:center;gap:4px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(22,26,36,.9);color:#fff;font:600 12px/1 'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:.08em}
+/* CLOSED PILLS (her 2026-11-24: "start with a pill that has just the thing ... they're all closed, and then you can click on the pill, and
+   then it takes you to the place and it extends the options ... it doesn't need to all be open at once"): a switch shows only its name;
+   tapping the name scrolls to what it changes and opens its options (one switch open at a time); tapping the name again closes it */
+.rv-sw2:not(.open){padding:5px 14px}.rv-sw2:not(.open)>button,.rv-sw2:not(.open)>.rv-knob{display:none!important}
+.rv-sw2:not(.open){min-height:44px;box-sizing:border-box}.rv-sw2:not(.open)>span{margin-right:-.08em!important;opacity:1!important;display:block;line-height:1;text-box:trim-both cap alphabetic}   /* her 2026-11-25: a closed pill's word sits dead centre: the tracking after the last letter is given back, and the box is the capitals' own height (the underline never pulls it off centre) */
+.rv-sw2.open>button{animation:rv-open .42s cubic-bezier(.3,1.35,.5,1) both}.rv-sw2.open>button:nth-of-type(2){animation-delay:.04s}.rv-sw2.open>button:nth-of-type(3){animation-delay:.08s}.rv-sw2.open>button:nth-of-type(4){animation-delay:.12s}.rv-sw2.open>button:nth-of-type(5){animation-delay:.16s}
+@keyframes rv-open{from{opacity:0;transform:translateX(-8px) scale(.9)}}
+@media (prefers-reduced-motion:reduce){.rv-sw2.open>button{animation:none}}
 .rv-sw2 span{margin-right:6px;opacity:.8}.rv-sw2 button{all:unset;cursor:pointer;display:grid;place-items:center;width:32px;height:32px;border-radius:999px}.rv-sw2 button[aria-pressed=true]{background:#fff;color:#161a24}
 .rv-stack{position:fixed;left:16px;bottom:62px;z-index:2147483100;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-@media (max-width:640px){.rv-stack{bottom:122px}}
+/* SLIDE IN (her 2026-11-24: "when you come on a page, the toggles for the, the asks should kind of slide in from the left and onto the screen, like boom, boom, or how many ever there are … so that you can kind of see the motion and know that, ooh, that's what I need to consider"): each review switch slides in from the left once the page is there, one after another */
+.rv-stack>*{animation:rv-in .6s cubic-bezier(.2,.9,.3,1.25) both}.rv-stack>:nth-child(1){animation-delay:0.60s}.rv-stack>:nth-child(2){animation-delay:0.77s}.rv-stack>:nth-child(3){animation-delay:0.94s}.rv-stack>:nth-child(4){animation-delay:1.11s}.rv-stack>:nth-child(5){animation-delay:1.28s}.rv-stack>:nth-child(6){animation-delay:1.45s}.rv-stack>:nth-child(7){animation-delay:1.62s}.rv-stack>:nth-child(8){animation-delay:1.79s}
+@keyframes rv-in{from{opacity:0;transform:translateX(-72px)}}@media (prefers-reduced-motion:reduce){.rv-stack>*{animation-name:rv-in-rm}@keyframes rv-in-rm{from{opacity:0}}}
 
+.rv-sw2.has-knob{position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none}   /* GOO knob (REVIEW_SW): the white pill is one blob on a spring */
+.rv-sw2.has-knob button{position:relative;z-index:1;transition:color .18s ease}.rv-sw2.has-knob button[aria-pressed=true]{background:transparent}
+/* OPTICAL CENTRE (her 2026-11-24: "their visual center should be what's in the center of the circle"): the letter's box is trimmed to
+   the capital letters' own top and baseline (text-box), so the circle centres the ink, not the font's padded line; and the tracking
+   that letter-spacing adds AFTER the last letter is given back on the left, so a lone A sits dead centre across too */
+html body .rv-sw2 button{line-height:1;text-box:trim-both cap alphabetic;padding-left:calc(9px + .08em);padding-bottom:1px}
+.rv-knob{position:absolute;left:0;top:5px;width:32px;height:32px;border-radius:999px;background:#fff;z-index:0;pointer-events:none;transform-origin:0 50%;will-change:transform,width}
+.rv-sw2[data-target] > span{cursor:pointer;outline:none;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:rgba(255,255,255,.45)}
+.rv-sw2[data-target] > span:focus-visible{text-decoration-color:#fff}
+/* GLOW: the part a switch changes, ringed in a hairline that fades in, holds and fades (no browser focus box, nothing pops) */
+.rv-glow{position:absolute;z-index:5;pointer-events:none;box-sizing:border-box;border:1px solid rgba(var(--acc-rgb,21,85,126),.55);box-shadow:0 0 22px rgba(var(--acc-rgb,21,85,126),.22);
+  animation:rv-glow 1.8s cubic-bezier(.2,.7,.3,1) both}
+html[data-look=dark] .rv-glow{border-color:rgba(219,231,255,.5);box-shadow:0 0 22px rgba(219,231,255,.16)}
+@keyframes rv-glow{0%{opacity:0;transform:scale(1.015)}25%{opacity:1;transform:none}65%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.rv-glow{animation-name:rv-glow-rm}@keyframes rv-glow-rm{0%,100%{opacity:0}25%,65%{opacity:1}}}
+@media (max-width:640px){.rv-stack{bottom:21px}}   /* her 2026-11-24 "not in the bottom left corner. It's randomly floating": the bottom pill sits on the day/night toggle's row (toggle 54 tall at 16 from the bottom, pill 44 tall) */
+
+
+/* TOP-HEAVY TITLES (her 2026-11-24): greedy wrap fills the first line; NOWIDOW keeps a title's tie only if it stays top-heavy */
+html :is(h1,h2,h3,.fw-short,.fw-cap b){text-wrap:wrap}
 
 /* PHONE-DS:start */
 .ph-sw{display:none}
 @media (max-width:640px){
-html{--ph-gut:16px;--ph-sec:88px;--ph-ts:8px;--ph-s1:24px;--ph-blk:32px;--ph-qa:56px;--ph-qb:24px;--ph-nx:48px;--ph-cap:8px;--ph-row:16px;
+html{--ph-gut:16px;--ph-sec:88px;--ph-ts:8px;--ph-s1:24px;--ph-blk:32px;--ph-qa:56px;--ph-qb:24px;--ph-nx:48px;--ph-cap:24px;--ph-shd:18px;--ph-cs:16px;--ph-row:16px;
   --ph-t1:36px;--ph-t1-lh:.9;--ph-h:30px;--ph-h-lh:30px;--ph-sub:18px;--ph-sub-lh:23px;--ph-q:18px;--ph-q-lh:23px;--ph-lede:17px;--ph-lede-lh:21px;
   --ph-body:17px;--ph-body-lh:26px;--ph-w:300;--ph-call:20px;--ph-call-lh:25px;--ph-cb:15px;--ph-cb-lh:22px;--ph-ct:17px;--ph-ct-lh:21px;
   --ph-stat:28px;--ph-lab:15px;--ph-lab-lh:22px;--ph-fn:13px;--ph-fn-lh:20px;--ph-ws-stat:.15em;--ph-ws-title:.05em;
@@ -1327,6 +1419,11 @@ html:not([data-phone-type=off]) .fw-rows{margin-top:var(--ph-s1)!important}
 html:not([data-phone-type=off]) .fw-row + .fw-row{margin-top:var(--ph-qa)!important}
 html:not([data-phone-type=off]) :is(.fw-row,.fw-part) .fw-cap{margin-top:var(--ph-cap)!important}
 html:not([data-phone-type=off]) .fw-part > :is(.fw-stage,.fw-macpair,.fw-tests,.sp-media,.fw-collage) + .fw-cap{margin-top:var(--ph-cap)!important}
+/* gaps under a shadowed panel count from where its shadow is at half strength (--ph-shd, worked out in half_shadow() above; her 2026-11-24:
+   "choose like a middle point in the opacity of the drop shadow"): then her 8pt grid, caption 16, block 32 */
+html:not([data-phone-type=off]) :is(.fw-part,.fw-row) > .fw-stage + .fw-cap{margin-top:calc(var(--ph-cs) + var(--ph-shd))!important}
+html:not([data-phone-type=off]) .fw-part > .fw-stage + :not(.fw-h3,.fw-next,h2,.fw-short,.fw-cap){margin-top:calc(var(--ph-blk) + var(--ph-shd))!important}
+html:not([data-phone-type=off]) .fw-test .fw-stage + figcaption{margin-top:calc(var(--ph-cs) + var(--ph-shd))!important}
 html:not([data-phone-type=off]) .fw-test figcaption{margin-top:var(--ph-cap)}
 html:not([data-phone-type=off]) .fw-tests{gap:var(--ph-blk)}
 html:not([data-phone-type=off]) .fw-macpair{gap:var(--ph-blk)}
@@ -1341,6 +1438,7 @@ html:not([data-phone-type=off]) .fw-banner .sub{font-size:var(--ph-lede)!importa
 html:not([data-phone-type=off]) .fw-short{font-size:var(--ph-h)!important;line-height:var(--ph-h-lh)!important;word-spacing:var(--ph-ws-title)!important;color:var(--ph-ink1)!important}
 html:not([data-phone-type=off]) :is(.fw-part,.fw) > h2.fw-h{font-size:var(--ph-sub)!important;line-height:var(--ph-sub-lh)!important;font-weight:400!important;color:var(--ph-ink2)!important}
 html:not([data-phone-type=off]) .fw-h3{font-size:var(--ph-q)!important;line-height:var(--ph-q-lh)!important;font-weight:600!important;color:var(--ph-ink1)!important}
+html:not([data-phone-type=off]) .fw-h3.fw-h3-sec{font-size:var(--ph-h)!important;line-height:var(--ph-h-lh)!important;word-spacing:var(--ph-ws-title)!important}
 html:not([data-phone-type=off]) :is(.fw-lead,.fw-body,.fw-list > li,.fw-list > li > span){font-size:var(--ph-body)!important;line-height:var(--ph-body-lh)!important;font-weight:var(--ph-w);color:var(--ph-ink2)!important}
 html:not([data-phone-type=off]) .fw-next{font-size:var(--ph-body)!important;line-height:var(--ph-body-lh)!important;color:var(--ph-ink3)!important}
 html:not([data-phone-type=off]) :is(.fw-cap p,.fw-test figcaption span,.pair-cap,.sp-media figcaption,.ff-copy > span,.meta dd){font-size:var(--ph-cb)!important;line-height:var(--ph-cb-lh)!important;color:var(--ph-ink3)!important}
@@ -1537,8 +1635,8 @@ html[data-look=dark] .pill a:not([data-hand]):hover{color:#f3f4f6}
 <style>/* one-line titles: a wider title line on laptops (her 2026-11-23) */.hero h1{max-width:min(1200px,92vw)!important;margin-left:auto;margin-right:auto}</style>
 <style>
 /* the stack. Without JS: the sketch's two rest places in % of the panel (cqw). With JS, ba-orbit sets every size and place in px */
-#moments .fw-stage.ba{padding:0;container-type:inline-size;--m:6;--F:64;--k:.55}
-@media (max-width:600px){#moments .fw-stage.ba{--m:4;--F:72}}
+.fw-stage.ba{padding:0;container-type:inline-size;--m:6;--F:64;--k:.55}
+@media (max-width:600px){.fw-stage.ba{--m:4;--F:72}}
 .ba-box{position:relative;height:calc((var(--m)*2 + var(--k)*var(--F)*.3047 + var(--F)*.6094)*1cqw + 18px)}
 .ba-card{position:absolute;left:0;top:0;margin:0;width:calc(var(--F)*1cqw);transform-origin:0 0;will-change:transform,opacity}
 .ba-card .mac-media{display:block}
@@ -1560,11 +1658,27 @@ html[data-look=dark] .pill a:not([data-hand]):hover{color:#f3f4f6}
    while the pointer is over the panel (= the wheel turns the laptops, not the page) the panel lifts: deeper soft shadow, a hairline rim of
    light, a 1.2% rise. Nothing on touch; Reduce Motion = the shadow only */
 @media (hover:hover) and (pointer:fine){
-  #moments .fw-stage.ba{transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s cubic-bezier(.2,.7,.2,1)}
-  #moments .fw-stage.ba:hover{transform:scale(1.012);box-shadow:0 34px 70px -34px rgba(20,40,60,.42),0 14px 28px -14px rgba(20,40,60,.22),inset 0 0 0 1px rgba(255,255,255,.6)}
-  html[data-look=dark] #moments .fw-stage.ba:hover{box-shadow:0 34px 70px -30px rgba(0,0,0,.65),0 14px 28px -14px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.14)}
+  .fw-stage.ba{transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s cubic-bezier(.2,.7,.2,1)}
+  .fw-stage.ba.cap{transform:scale(1.012);box-shadow:0 34px 70px -34px rgba(20,40,60,.42),0 14px 28px -14px rgba(20,40,60,.22),inset 0 0 0 1px rgba(255,255,255,.6)}
+  html[data-look=dark] .fw-stage.ba.cap{box-shadow:0 34px 70px -30px rgba(0,0,0,.65),0 14px 28px -14px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.14)}
 }
-@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:reduce){#moments .fw-stage.ba:hover{transform:none}}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:reduce){.fw-stage.ba.cap{transform:none}}
+@media (pointer:coarse){
+  .fw-stage.ba{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s cubic-bezier(.2,.7,.2,1)}
+  .fw-stage.ba.ready{transform:scale(1.01);box-shadow:0 28px 56px -28px rgba(20,40,60,.4),0 10px 22px -12px rgba(20,40,60,.2),inset 0 0 0 1px rgba(255,255,255,.6)}
+  html[data-look=dark] .fw-stage.ba.ready{box-shadow:0 28px 56px -26px rgba(0,0,0,.6),0 10px 22px -12px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.14)}
+}
+@media (pointer:coarse) and (prefers-reduced-motion:reduce){.fw-stage.ba.ready{transform:none}}
+/* ZOOM OUT is an icon (her 2026-11-24: "Rather than zoom out can you use the zoom out icon"; 2026-11-25: "I don't think we ever fixed that
+   zoom out button. and like changed it to an icon"): a magnifier with a minus, flat in her ink, a 44px tile with 8px corners, the glyph
+   shifted so its ink centre of mass sits on the tile's centre */
+.ba .ba-zout{position:absolute;right:12px;bottom:12px;z-index:5;opacity:0;pointer-events:none;transition:opacity .25s;display:grid;place-items:center;width:44px;height:44px;padding:12px;box-sizing:border-box;color:#fff;background:#161a24;border:0;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ba .ba-zout svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.ba .ba-zout:focus-visible{outline:2px solid #161a24;outline-offset:2px}
+html[data-look=dark] .ba .ba-zout{background:#f3f4f6;color:#161a24}
+.ba-zv{position:absolute;z-index:4;pointer-events:none;margin:0}
+.ba-zv .mac-media{width:100%!important;opacity:1!important}
+.ba.zoomed .ba-zout{opacity:1;pointer-events:auto}.ba.zoomed .bh-tap,.ba.zoomed .ba-l{opacity:0!important;transition:opacity .2s}
 .ba-scroll{position:absolute;inset:0;z-index:3;overflow:hidden;touch-action:pan-y;cursor:pointer;border-radius:20px;-webkit-tap-highlight-color:transparent;outline:none}
 .ba-scroll:focus-visible{outline:2px solid var(--t-label);outline-offset:-6px}
 .ba-orbit{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
@@ -1595,6 +1709,53 @@ html[data-orbit] .ba-ring{display:inline}
 #moments .fw-needs b i{font-style:normal;color:var(--t-grey)}
 #moments .fw-needs small{display:block;margin-top:4px;font-size:14px;line-height:1.45;color:var(--t-grey)}
 </style>
+<style>
+#moments .fw-d8{display:none}
+@media (max-width:640px){
+html #moments .fw-needs{gap:4px!important}
+html #moments .fw-needs li{grid-template-columns:minmax(0,1fr) auto 24px!important;grid-template-areas:"tab dots ic" "s s s"!important;gap:0 12px!important;align-items:center!important;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+html #moments .fw-needs li > .fw-bar,html #moments .fw-needs li > b,html #moments .fw-needs .fw-ar{display:none!important}
+html #moments .fw-needs li > em{grid-area:tab;font-style:normal;font-weight:600;color:var(--ph-ink1,var(--hi))!important;text-decoration:underline;text-decoration-color:rgba(21,85,126,.3);text-decoration-thickness:1.5px;text-underline-offset:4px}
+html #moments .fw-needs .fw-d8{grid-area:dots;display:flex;gap:5px}
+#moments .fw-d8 i{width:12px;height:12px;border-radius:50%;background:#e3e9ee}#moments .fw-d8 i.f{background:var(--acc)}#moments .fw-d8 i.l{background:#b9cfdf}
+html[data-look=dark] #moments .fw-d8 i{background:rgba(255,255,255,.14)}html[data-look=dark] #moments .fw-d8 i.f{background:#8cbbe0}html[data-look=dark] #moments .fw-d8 i.l{background:rgba(140,187,224,.42)}   /* night: the tide blue, light enough to read on the dark page (her 2026-11-24: "Why are those dots colorless?") */
+html #moments .fw-needs li > span:not(.fw-d8):not(.fw-bar){grid-area:s;display:none!important;padding:6px 0 10px}
+html #moments .fw-needs li.open > span:not(.fw-d8):not(.fw-bar){display:block!important}
+html #moments .fw-needs li.open > em{text-decoration-color:var(--acc)}
+}
+</style>
+<script>document.addEventListener('click',function(e){var li=e.target.closest&&e.target.closest('#moments .fw-needs li');if(li&&matchMedia('(max-width:640px)').matches)li.classList.toggle('open')})</script>
+<style>.fw-q.fw-q-nc{display:flex!important;flex-direction:column;justify-content:center}@media (max-width:640px){#why .fw-q.fw-q-nc{align-self:center!important;height:auto!important;min-height:0!important;flex:0 0 auto}}</style>
+<style>/* STATS-B:start · "Demos took too long" on phones (stats_driftwood.py) */
+.st-pay{display:none}
+@media (max-width:640px){
+html:not([data-phone-type=off]) #why .st-pay{display:block}
+html:not([data-phone-type=off]) #why .fw-c-stripe:not(.st-open) .fw-shot{display:none}
+html:not([data-phone-type=off]) #why .fw-c-stripe.st-open .fw-shot{margin-top:12px;animation:st-in .4s var(--ease) both}
+.st-pay-btn{all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;padding:16px 18px 18px;border-radius:14px;background:#fff;
+  box-shadow:0 0 0 1px rgba(22,26,36,.06),0 18px 36px -24px rgba(20,40,60,.35);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1a1b25;-webkit-tap-highlight-color:transparent}
+.st-pay-btn:focus-visible{outline:2px solid var(--t-label);outline-offset:3px}
+.st-ph{display:flex;justify-content:space-between;align-items:center;font:600 14px/1 'Plus Jakarta Sans',system-ui;color:#30313d;margin:0 0 12px}
+.st-big{display:block;font:700 32px/1.05 'Plus Jakarta Sans',system-ui;letter-spacing:-.01em}
+.st-lab{display:block;margin:4px 0 12px;font:500 14px/1.3 'Plus Jakarta Sans',system-ui;color:#5b6472}
+.st-bar{display:flex;gap:2px;height:9px;border-radius:3px;overflow:hidden;margin:0 0 10px}.st-bar i{display:block;height:100%}
+.st-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 12px/1.4 'Plus Jakarta Sans',system-ui;color:#414552}.st-leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.st-plus{flex:none;width:12px;height:12px;background:linear-gradient(var(--t-label),var(--t-label)) center/12px 1.5px no-repeat,linear-gradient(var(--t-label),var(--t-label)) center/1.5px 12px no-repeat;transition:transform .45s var(--ease),background-size .4s var(--ease)}
+.st-open .st-plus{transform:rotate(180deg);background-size:12px 1.5px,1.5px 0}
+html[data-look=dark] .st-pay-btn{background:#171a21;color:#f3f4f6;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+html[data-look=dark] .st-ph,html[data-look=dark] .st-leg{color:#c9ced6}html[data-look=dark] .st-lab{color:#9aa1ad}
+/* the three stats: smaller and airier */
+html:not([data-phone-type=off]) #why .fw-stats{gap:32px 16px!important}
+html:not([data-phone-type=off]) #why .fw-stats > div > b{font-size:22px!important;font-weight:600!important}
+html:not([data-phone-type=off]) #why .fw-stats > div > span{font-size:14px!important;line-height:20px!important;color:var(--ph-ink3,#5b6472)!important}
+}
+@keyframes st-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html:not([data-phone-type=off]) #why .fw-c-stripe.st-open .fw-shot{animation:none}.st-plus{transition:none}}
+/* STATS-B:end */</style>
+<style>.fw-row>.fw-stage.ba{aspect-ratio:auto!important;height:auto!important}.dw-pair{margin:0!important}.dw-panel{padding:22px!important}@media (max-width:640px){.dw-panel{padding:20px!important}}.dw-pair{display:grid;grid-template-columns:minmax(0,26%) minmax(0,1fr);gap:14px;align-items:center}.dw-pair .dw-menu{margin:0}.dw-pair .dw-menu img{width:100%;height:auto;border-radius:10px;display:block;box-shadow:0 0 0 1px rgba(22,26,36,.06),0 18px 36px -24px rgba(20,40,60,.35)}.dw-pair>.fw-stage{margin:0!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;padding:12px 10px!important}.dw-pair>.fw-stage .mac-media{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:auto!important;transform:none!important;margin:0!important}@media (max-width:640px){.dw-pair{grid-template-columns:minmax(0,30%) minmax(0,1fr);gap:10px}}.dw-pair{align-items:stretch}.dw-zoom{position:relative;margin:0;border-radius:10px;overflow:hidden;background:#e9eef2;box-shadow:0 0 0 1px rgba(22,26,36,.06),0 18px 36px -24px rgba(20,40,60,.35)}.dw-zoom video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;display:block}</style><style>/* previous project | view design system, one line */
+.ds-row.ds-two{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+</style>
+<style>.fw-bleed{display:flex;align-items:center;justify-content:center;padding:40px!important;aspect-ratio:auto!important}.fw-bleed .mac-media{position:static!important;width:min(760px,100%)!important;left:auto!important;top:auto!important}@media (max-width:640px){.fw-bleed{padding:24px 20px!important}}html:not([data-mm]) #final .fw-row .fw-stage.fw-bleed{aspect-ratio:auto!important}html:not([data-mm]) #final .fw-row .fw-bleed .mac-media{width:min(760px,100%)!important}@media (max-width:760px){.fw-row .fw-stage.fw-lift{aspect-ratio:auto!important;padding:24px 20px!important}html:not([data-phone=now]) #final .fw-email{width:100%!important}}@media (max-width:640px){.fw-stage.fw-ctx{padding:20px!important}}@media (max-width:600px){#why .fw-c-dash{margin-bottom:14px}}.ff-next2 .ff-field{aspect-ratio:1/1!important}.ff-next2 .ff-phone{top:20px!important;width:calc(48.7% - 19.5px)!important}</style>
 <style>/* her 2026-11-23: "too squished" (the two-line title + its line): leading 1.04 → 1.16, tracking −.025em → −.012em, line 12 → 22px below */
 h1[data-edit=title]{line-height:1.16!important;letter-spacing:-.012em!important}p.sub[data-edit=subtitle]{margin-top:22px!important;line-height:1.45!important}
 /* her 2026-11-23: "within the sections on Spotify ... things are just running up a little bit close to each other": measured gaps
@@ -1729,7 +1890,7 @@ html:not([data-look=dark]) .frame:focus-visible{outline-color:#47899A}
 <nav class="pill" aria-label="Main">
   <a class="wm wm-load" href="index.html" aria-label="M--K, home"><svg class="wm-svg" viewBox="2 -84 276 92" role="img" aria-label="M--K" focusable="false" style="--wm-dx:65.8px"><g fill="currentColor"><path class="wm-m" d="M13.3 -74.6L11.3 -74.4L10.1 -73.9L9.4 -73.4L8.6 -72.6L8.3 -71.9L7.9 -70.9L7.6 -69.1L7.6 -6.8L7.8 -3.9L8.3 -2.5L8.7 -1.8L9.9 -0.7L11.3 -0.1L12.5 0.1L15.2 0L16.6 -0.4L17.6 -0.9L18.4 -1.7L19.1 -3.2L19.4 -4.8L19.6 -7.1L19.6 -42.2L19.9 -45.6L20.2 -46.8L20.9 -47.8L21 -49.3L21.9 -48L22.4 -48L23.3 -47.5L25.6 -45.1L38.4 -27.3L40.3 -24.9L41.8 -23.5L42.9 -23L43.4 -22.9L44.4 -23L45.2 -23.3L46.3 -23.9L47.4 -25.1L49.8 -28.2L51.2 -30.3L61.6 -44.4L62.8 -45.7L64.3 -47.1L64.9 -47.4L65.5 -47.4L66.4 -48.7L66.4 -47.4L66.5 -47.1L67.1 -46.5L67.4 -45.7L67.8 -42.5L67.9 -5.9L68.1 -3.8L68.5 -2.6L69.1 -1.6L69.9 -0.9L71.1 -0.3L72.6 0.1L74.9 0.1L76.7 -0.3L77.9 -1L78.9 -2.1L79.4 -3.2L79.7 -4.8L79.8 -7L79.8 -67.2L79.5 -70.9L79.2 -71.8L78.6 -72.9L78 -73.4L76.7 -74.2L75.4 -74.5L74.1 -74.6L72.3 -74.6L70.8 -74.3L69.5 -73.9L67.9 -72.9L66.4 -71.4L64.4 -68.8L48.1 -45.6L46.2 -43.6L45.1 -42.9L44.3 -42.7L43.9 -42.1L43.4 -42.7L42.6 -42.9L41.6 -43.6L39.6 -45.7L23.8 -67.8L20.5 -72L19.2 -73.1L17.6 -74L15.6 -74.5L13.3 -74.6Z"/><path class="wm-d" d="M211.3 -41.2L211.2 -39.7L210.8 -39.7L210.2 -38.2L209.2 -37.1L207.7 -36.3L205.2 -35.7L198.3 -34.8L182.9 -33.1L160.2 -31.6L150.3 -31.3L136.1 -31.4L114.7 -32.6L105 -33.4L88.3 -35.3L83.6 -36.2L82.1 -36.9L80.9 -38.1L80.3 -39.6L79.8 -39.6L79.8 -41.1L78.3 -41.1L78.3 -33.3L78.1 -31.3L78.1 -24.8L78.3 -22.5L78.3 -14.7L79.8 -14.7L79.8 -16.2L80.3 -16.2L80.8 -17.6L82.2 -18.9L83.1 -19.4L84.6 -19.8L90.1 -20.7L108.8 -22.7L117.1 -23.3L138.3 -24.4L150.4 -24.5L157.8 -24.3L180.2 -22.9L196.2 -21.3L204.1 -20.3L207.4 -19.6L208.7 -19L210.1 -17.8L210.5 -17L210.8 -16.1L211.2 -16.1L211.2 -14.6L212.7 -14.6L212.7 -22.4L212.9 -24.1L212.9 -31.7L212.7 -33.4L212.7 -41.2L211.3 -41.2Z"/><path class="wm-k" d="M257.8 -74.6L256.4 -74.5L254.4 -73.9L253.3 -73.4L251.9 -72.4L248.8 -69.1L229.7 -46.8L227.4 -44.8L226.4 -44.2L225.6 -44.1L224.6 -42.9L224.6 -44.5L224.2 -44.8L223.6 -46.2L223.3 -48.4L223.3 -68.4L223.1 -70.4L222.7 -71.7L221.9 -72.9L220.9 -73.8L219.5 -74.4L218.3 -74.6L216.1 -74.6L214 -74.1L213.2 -73.6L212.1 -72.4L211.5 -70.9L211.2 -68.3L211.2 -6.6L211.3 -4.7L211.7 -2.9L212.3 -1.8L213.2 -0.9L213.9 -0.4L215.2 -0.1L215.9 0.1L218.4 0.1L220.2 -0.3L221.3 -0.9L222.1 -1.8L222.8 -3.1L223.1 -4.6L223.3 -6.2L223.3 -17.9L223.6 -19.8L224.1 -21.4L224.6 -22.6L225.7 -24.2L229.4 -28.6L231 -30.1L232.4 -30.9L233.3 -31.1L233.8 -31.6L234.1 -31L234.6 -30.9L235.8 -30.2L237.6 -28.1L252.3 -5L253.8 -3L255 -1.7L255.8 -1.1L257.3 -0.4L259.8 0.1L262.6 0.1L264.3 -0.1L265.7 -0.7L266.5 -1.5L266.9 -2.4L266.9 -3.4L266.6 -4.6L265.9 -6.1L245.6 -38.2L244.3 -40.5L243.8 -42.5L243.9 -44.4L244.5 -45.9L245.3 -47.2L262.3 -67.1L263.7 -68.9L264.5 -70.3L264.9 -71.6L264.9 -72.4L264.6 -73.1L263.8 -73.8L262.6 -74.3L261.7 -74.5L257.8 -74.6Z"/></g></svg></a>
   <span class="pill-links"><a href="index.html#work" data-hand="Work">Work</a><a class="nav-opt" href="index.html#disciplines" data-hand="Disciplines">Disciplines</a><a class="nav-opt" href="index.html#about" data-hand="About">About</a><a href="assets/Madhumita-Krishnan-Resume.pdf" target="_blank" rel="noopener" data-hand="Resume">Resume</a></span>
-  <span class="lt-toggle" role="group" aria-label="Day or night"><button type="button" class="lt-btn" data-look-to="day" aria-label="Day mode" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.35 5.35l1.63 1.63M17.02 17.02l1.63 1.63M5.35 18.65l1.63-1.63M17.02 6.98l1.63-1.63"/></svg></button><button type="button" class="lt-btn" data-look-to="night" aria-label="Night mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19.6 14.9A8 8 0 0 1 9.1 4.4a8 8 0 1 0 10.5 10.5z"/></svg></button></span>
+  <span class="lt-toggle" role="group" aria-label="Day or night"><button type="button" class="lt-btn" data-look-to="day" aria-label="Day mode" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.35 5.35l1.63 1.63M17.02 17.02l1.63 1.63M5.35 18.65l1.63-1.63M17.02 6.98l1.63-1.63"/></svg></button><button type="button" class="lt-btn" data-look-to="night" aria-label="Night mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21.24 13.45A8 8 0 0 1 10.74 2.95a8 8 0 1 0 10.5 10.5z"/></svg></button></span>
   <a class="cta" href="https://calendly.com/meet-madhu" target="_blank" rel="noopener">say hey!</a>
 </nav>
 
@@ -2352,8 +2513,13 @@ document.documentElement.dataset.lk='a';
  var bs=[].slice.call(tg.querySelectorAll('.lt-btn')),cur=function(){return h.dataset.look==='dark'?'night':'day'};
  var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  function mark(){bs.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.lookTo===cur()))})}
+ try{localStorage.setItem('mk-shown',cur())}catch(e){}   /* mk-shown = what's on screen NOW, written on every load (her 2026-11-24 flip bug) */
+ /* back here with the back button: the page comes out of the browser's cache as it was, so take up whatever was chosen since */
+ addEventListener('pageshow',function(e){if(!e.persisted)return;var s;try{s=localStorage.getItem('mk-shown')}catch(_){}if(!s||s===cur())return;if(s==='night')h.dataset.look='dark';else delete h.dataset.look;mark();if(typeof settle==='function')settle(s)});
  function setLook(v){if(v===cur())return;var go=function(){if(v==='night')h.dataset.look='dark';else delete h.dataset.look;mark();settle(v)};
-  try{localStorage.setItem('mk-look',v==='night'?'dark':'day')}catch(e){}
+  /* one shared memory with the home page: the same override the home toggle stores (expires at the next sunrise/sunset there), plus
+     mk-shown = what's on screen now (her 2026-11-24: day on a case study must still be day back on the home page) */
+  try{localStorage.setItem('mk-look',v==='night'?'dark':'day');localStorage.setItem('mk-theme',v);localStorage.setItem('mk-theme-at',String(Date.now()));localStorage.setItem('mk-shown',v)}catch(e){}
   /* the old cross-fade, kept (her 2026-11-23: "I liked the old transition from day to night mode better"; the circle is retired) */
   if(document.startViewTransition&&!calm)document.startViewTransition(go);else go()}
  /* her GOOEY SWITCH (build.js, 2026-10-26), unchanged: spring k 520 / d 17, stretch from speed, squash against the ring, rubber band */
@@ -2390,8 +2556,15 @@ document.documentElement.dataset.lk='a';
 </script><script>
 /* NO WIDOWS (her standing rule; readability 2026-11-23 found 10 on this page at 320 wide, e.g. "Rebuilding the / dashboard"): the last two
    words of every text block are tied with a no-break space, the way build.js's typo() ties them on the home page. Where the pair can't fit
-   its column (a narrow details column at 320) the tie is left off rather than push the text out of its box. Re-tied on resize */
-(function(){var NB=' ',tied=[],tm;
+   its column (a narrow details column at 320) the tie is left off rather than push the text out of its box. Re-tied on resize, and again once
+   the web fonts land (fonts.ready can resolve before the print-media font sheet even registers its faces: "Hybrid onboarding trade-off"
+   was tied in the fallback font, then ran 29px off a 402 phone in Plus Jakarta).
+   TOP-HEAVY TITLES (her 2026-11-24: "I hate when texts are not top-heavy"): titles wrap greedily (CSS below), and on a title the tie only
+   stays if the first line is still the longest, so "Hybrid onboarding / trade-off", never "Hybrid / onboarding trade-off" */
+(function(){var NB=' ',tied=[],tm,HEAD='h1,h2,h3,.fw-short,.fw-cap b';
+function lines(e){var r=document.createRange();r.selectNodeContents(e);var L={};[].slice.call(r.getClientRects()).forEach(function(q){if(q.width<1)return;var k=Math.round(q.top/4);
+ L[k]=L[k]?[Math.min(L[k][0],q.left),Math.max(L[k][1],q.right)]:[q.left,q.right]});return Object.keys(L).sort(function(a,b){return a-b}).map(function(k){return L[k][1]-L[k][0]})}
+function bottomHeavy(e){var w=lines(e);return w.length>1&&w[w.length-1]>w[0]+1}
 function tie(){tied.forEach(function(x){x[0].textContent=x[1]});tied=[];
  [].slice.call(document.querySelectorAll('p,li,dd,dt,h1,h2,h3,h4,figcaption,blockquote,b,span,em,.bn')).forEach(function(e){
   if(e.closest('svg,[aria-hidden=true],.rv-sws,.rv-stack,[contenteditable=true]')||getComputedStyle(e).display.indexOf('inline')===0)return;
@@ -2403,11 +2576,12 @@ function tie(){tied.forEach(function(x){x[0].textContent=x[1]});tied=[];
   else if(/^[ \t\n]+\S/.test(s))now=s.replace(/^[ \t\n]+/,NB);
   else if(pv&&/[ \t\n]+$/.test(pv.textContent)){node=pv;was=pv.textContent;now=was.replace(/[ \t\n]+$/,NB)}else return;
   node.textContent=now;
-  if(e.scrollWidth>e.clientWidth+1){node.textContent=was;return}
+  if(e.scrollWidth>e.clientWidth+1||(e.matches(HEAD)&&bottomHeavy(e))){node.textContent=was;return}
   tied.push([node,was])})}
 (document.fonts&&document.fonts.ready||Promise.resolve()).then(tie);
-addEventListener('resize',function(){clearTimeout(tm);tm=setTimeout(tie,150)})})();
-</script><script>/* PHONE-DS tap to reveal */
+var re=function(){clearTimeout(tm);tm=setTimeout(tie,150)};
+addEventListener('resize',re);addEventListener('load',re);document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',re)})();
+</script><script src="press.js" defer></script><script>try{localStorage.removeItem("mk-rv-phone")}catch(e){}</script><script>/* PHONE-DS tap to reveal */
 (function(){var mq=matchMedia('(max-width:640px)'),h=document.documentElement,rows=[].slice.call(document.querySelectorAll('.fw-needs > li,.fw-opts > li'));if(!rows.length)return;
  function set(){var on=mq.matches&&h.dataset.phone!=='now';rows.forEach(function(r){if(on&&!r.classList.contains('ph-tap')){r.classList.add('ph-tap');r.setAttribute('role','button');r.tabIndex=0;r.setAttribute('aria-expanded','false')}
   else if(!on&&r.classList.contains('ph-tap')){r.classList.remove('ph-tap','ph-open');r.removeAttribute('role');r.removeAttribute('tabindex');r.removeAttribute('aria-expanded')}})}
@@ -2438,7 +2612,7 @@ html[data-look=dark] #final > .fw-short ~ h2.fw-h{color:#c9ced6}html[data-stitle
    Mouse / trackpad: while the pointer is over the box the wheel turns only the orbit, endlessly, either way (the page holds still, her
    call: a contained region; outside the box nothing changes), then it settles to the nearer screen. Touch: a native nested scroller with
    two snap points turns it, and the page scrolls on past its end, so a phone is never trapped. */
-(function(){var st=document.querySelector('.ba');if(!st)return;
+document.querySelectorAll('.ba').forEach(function(st){   /* one orbit per widget (her 2026-11-24: the face-cloning before/after works the same way) */
 var de=document.documentElement,box=st.querySelector('.ba-box'),sc=st.querySelector('.ba-scroll'),ring=st.querySelector('.ba-ring'),
  A_=st.querySelector('.ba-after'),
  B_=st.querySelector('.ba-before'),v=A_.querySelector('video'),calm=matchMedia('(prefers-reduced-motion: reduce)'),
@@ -2456,7 +2630,10 @@ function bounds(g){var r={l:1e9,r:-1e9,t:1e9,b:-1e9};for(var i=0;i<72;i++){var q
 function path(g,a0,a1,n){var d='';for(var i=0;i<=n;i++){var p=at(g,a0+(a1-a0)*i/n);d+=(i?'L':'M')+(O.x+p.x).toFixed(1)+' '+(O.y+p.y).toFixed(1)}return d}
 function layout(){var W=box.clientWidth;if(!W)return;var pad=W<600?20:Math.min(64,Math.max(28,W*.06)),F=W*.84,g,b;   // the panel's own inset (.fw-stage padding), so the front laptop never hugs an edge   // her: the front screen "dramatic, more large"
  for(var k=0;k<4;k++){g=geo(F);b=bounds(g);var r=(W-2*pad)/(b.r-b.l);if(r>=1)break;F*=r}   // the whole orbit fits: nothing is ever clipped
- G=g;O={x:pad+((W-2*pad)-(b.r-b.l))/2-b.l,y:pad-b.t};box.style.height=Math.round(b.b-b.t+2*pad)+'px';
+ // her 2026-11-24: "so much random white space on the top of the two laptops". The full orbit's top is only ever used for a split second
+ // mid-turn; the card now fits the two REST places (plus the labels) and the turn is allowed to swing past the edge for that moment
+ var rt=1e9,rb=-1e9;[0,PI].forEach(function(t){var q=box_(g,at(g,t));rt=Math.min(rt,q.t);rb=Math.max(rb,q.b)});
+ G=g;O={x:pad+((W-2*pad)-(b.r-b.l))/2-b.l,y:pad-rt};box.style.height=Math.round(rb-rt+2*pad)+'px';
  A_.style.width=B_.style.width=F+'px';
  ring.setAttribute('d',path(g,0,2*PI,96)+'Z');
  render()}
@@ -2475,39 +2652,178 @@ st.__ba={at:at,get:function(){return {G:G,O:O,th:th,front:front}}};   // read-on
    overshoot and keep on spinning"): any wheel / trackpad / swipe / tap / key turns exactly half a turn, start to finish, eased. While a
    step runs, and until the gesture is over (220ms of quiet, or a fresh flick: the deltas grow again after dying down), input is ignored */
 function park(){th=(((Math.round(th/PI))%2)+2)%2*PI}
-var inout=function(k){return .5-.5*Math.cos(PI*k)};
-var busy=false;
-function turn(to,ms,ease){cancelAnimationFrame(anim);busy=true;
+var inout=function(k){return k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2};   /* gentle start, long soft settle */
+var TURN=1150;
+var busy=false,goal=0;
+function turn(to,ms,ease){cancelAnimationFrame(anim);busy=true;goal=to;
  if(calm.matches){box.animate([{opacity:1},{opacity:0}],{duration:160}).onfinish=function(){th=to;render();park();busy=false;box.animate([{opacity:0},{opacity:1}],{duration:220})};return}
+ if(ms>=TURN&&box.animate)box.animate([{transform:'scale(1)'},{transform:'scale(.975)',offset:.5},{transform:'scale(1)'}],{duration:ms,easing:'cubic-bezier(.45,0,.25,1)'});   /* the camera eases back mid-turn */
  var a=th,t0=0;anim=requestAnimationFrame(function step(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/ms);th=a+(to-a)*ease(k);render();
   if(k<1)anim=requestAnimationFrame(step);else{park();busy=false}})}
-function swap(dir){if(busy)return false;stopHint();turn(Math.round(th/PI)*PI+(dir<0?-PI:PI),600,inout);return true}
-sc.addEventListener('click',function(){swap(1)});
+/* a swipe that lands while the laptops are still turning is never lost (her 2026-11-24: "it's not reading it every time"): it adds
+   another half turn to where they're heading and the move carries on from where it is, easing out, so every swipe is one step */
+function swap(dir){stopHint();if(zoomed)zoomOut();var d=dir<0?-PI:PI;
+ if(busy){if(!calm.matches)turn(goal+d,900,function(k){return 1-Math.pow(1-k,3)});return true}
+ turn(Math.round(th/PI)*PI+d,TURN,inout);return true}
+var lastTouchEnd=-1e9;   // a touch decides for itself; the click the browser sends after it is ignored
+/* her 2026-11-24: "I can tap on the laptop to zoom in further and see it fully and then I need a way to zoom out": tapping the laptop IN
+   FRONT opens it full size in its bezel (ZOOM below); tapping the one behind, or the space around, still brings the other forward */
+function frontCard(){return (front==='after'?A_:B_)}
+function onFront(x,y){var m=frontCard().querySelector('.mac')||frontCard(),r=m.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+/* her 2026-11-24: "No I don't want it to expand into a light box ... Operating in the widget only": the zoom happens INSIDE the panel.
+   The view moves in until the front laptop's screen fills the panel (the panel clips the rest); ZOOM OUT, or another tap, moves it back */
+var zoomed=false,zb=null,zv=null,zcard=null;
+/* SHARP WHEN ZOOMED (her 2026-11-24: "when I zoom in. The screens are super blurring and low quality"): a scaled layer is painted at its
+   small size and stretched. So the move in is the scale, and the moment it lands a copy of the front laptop is laid out at its TRUE zoomed
+   size on top (container units re-lay the bezel, the 1600px stills and the clip draw at full sharpness); the stretched one hides under it */
+function zoomFront(){if(zoomed){zoomOut();return}var B=box.getBoundingClientRect(),S=frontCard().querySelector('.mac-screen').getBoundingClientRect(),m=10,
+ z=Math.min((B.width-2*m)/S.width,(B.height-2*m)/S.height),sx=S.left-B.left,sy=S.top-B.top,tx=(B.width-S.width*z)/2-sx*z,ty=(B.height-S.height*z)/2-sy*z;
+ var card=frontCard(),M=card.querySelector('.mac-media'),R=M.getBoundingClientRect();
+ zoomed=true;st.classList.add('zoomed');box.style.transformOrigin='0 0';
+ var an=box.animate([{transform:'none'},{transform:'translate('+tx+'px,'+ty+'px) scale('+z+')'}],{duration:calm.matches?1:520,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
+ an.onfinish=function(){if(!zoomed)return;var c=document.createElement('div');c.className='ba-zv';c.setAttribute('aria-hidden','true');
+  c.style.cssText='left:'+(box.offsetLeft+(R.left-B.left)*z+tx)+'px;top:'+(box.offsetTop+(R.top-B.top)*z+ty)+'px;width:'+(R.width*z)+'px;opacity:0';
+  var cm=M.cloneNode(true);cm.style.opacity='';c.appendChild(cm);st.appendChild(c);zv=c;zcard=card;
+  var ov=M.querySelector('video'),cv=cm.querySelector('video');
+  function show(){if(zv!==c)return;c.style.opacity='';card.style.visibility='hidden'}
+  if(cv&&ov){cv.removeAttribute('poster');cv.muted=true;cv.addEventListener('loadeddata',function(){try{cv.currentTime=ov.currentTime}catch(e){}var p=cv.play();p&&p.catch&&p.catch(function(){});cv.addEventListener('seeked',show,{once:true});setTimeout(show,400)},{once:true});cv.load()}
+  else{var im=cm.querySelector('img.poster');if(im&&!im.complete)im.addEventListener('load',show,{once:true});else requestAnimationFrame(show)}};
+ if(!zb){zb=document.createElement('button');zb.type='button';zb.className='ba-zout';zb.setAttribute('aria-label','Zoom out');
+  zb.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><g transform="translate(.64 .64)"><circle cx="8.5" cy="8.5" r="5.75"/><path d="M12.75 12.75L17 17M6 8.5h5"/></g></svg>';
+  zb.addEventListener('click',function(e){e.stopPropagation();zoomOut()});st.appendChild(zb)}
+ sc.setAttribute('aria-label','Zoom out')}
+function zoomOut(){if(!zoomed)return;zoomed=false;st.classList.remove('zoomed');if(zv){zv.remove();zv=null}if(zcard){zcard.style.visibility='';zcard=null}
+ var a=box.getAnimations()[0],cur=a?getComputedStyle(box).transform:'none';box.getAnimations().forEach(function(x){x.cancel()});
+ box.animate([{transform:cur},{transform:'none'}],{duration:calm.matches?1:420,easing:'cubic-bezier(.4,0,.2,1)'});sc.setAttribute('aria-label',front==='after'?'Show Before in front':'Show After in front')}
+addEventListener('resize',function(){if(zoomed&&box.clientWidth!==lw)zoomOut()});
+sc.addEventListener('click',function(e){if(performance.now()-lastTouchEnd<700)return;if(zoomed){zoomOut();return}if(e.clientX&&onFront(e.clientX,e.clientY)){stopHint();zoomFront();return}swap(1)});
 sc.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();swap(1)}});
 /* the wheel / trackpad, inside the box only (the page doesn't move): a few px = one step; the rest of that gesture is spent */
-var spent=false,last=0,lastT=0,firedT=0,acc=0;
-sc.addEventListener('wheel',function(e){e.preventDefault();var now=performance.now();
- var d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(e.deltaMode)d*=16;var m=Math.abs(d);
- if(now-lastT>220){spent=false;acc=0}                                         // quiet long enough: a new gesture
- else if(spent&&now-firedT>350&&m>8&&m>last*1.8)spent=false;                  // momentum had died down and a fresh flick came in
- lastT=now;last=m;if(spent)return;acc+=m;
+var spent=false,last=0,lastT=0,firedT=0,acc=0,lastSg=0,pk=0,tr=Infinity,ema=40;
+/* NEVER A TRAP (her 2026-11-24: "my scroll gets stuck and I didn't realize"): a page scroll that sweeps the panel under a resting cursor
+   passes straight through. The panel only takes the wheel on a FRESH gesture (no wheel for 220ms and the page still for 150ms) that
+   starts over it while at least 60% of it is on screen; if it isn't fully on screen it first glides to the centre of the viewport (350ms,
+   instant under Reduce Motion) and that gesture is spent on the glide. Moving the pointer off lets go. The lift (.cap) shows only while
+   the wheel is really captured */
+var cap=false,anyW=-1e9,pageS=-1e9,glide=0;
+addEventListener('wheel',function(){anyW=performance.now()},{passive:true});
+addEventListener('scroll',function(){pageS=performance.now()},{passive:true});
+function vis(){var r=st.getBoundingClientRect();return Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,0))/r.height}
+function setCap(v){cap=v;st.classList.toggle('cap',v)}
+st.addEventListener('pointerleave',function(){setCap(false)});
+function centre(r){var y0=scrollY,to=Math.max(0,y0+r.top+r.height/2-innerHeight/2),t0=0;cancelAnimationFrame(glide);
+ if(calm.matches){scrollTo({top:to,behavior:'instant'});return}
+ glide=requestAnimationFrame(function f(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/350);scrollTo({top:y0+(to-y0)*inout(k),behavior:'instant'});if(k<1)glide=requestAnimationFrame(f)})}
+sc.addEventListener('wheel',function(e){var now=performance.now();
+ if(!cap){if(now-anyW<220||now-pageS<150||vis()<.6)return;   // mid page-scroll, or mostly off screen: the page keeps the wheel
+  setCap(true);var r=st.getBoundingClientRect();
+  if(r.top<0||r.bottom>innerHeight){e.preventDefault();centre(r);spent=true;lastT=now;firedT=now;return}}
+ e.preventDefault();
+ var hz=Math.abs(e.deltaX)>Math.abs(e.deltaY),d=hz?e.deltaX:e.deltaY;if(e.deltaMode)d*=16;var m=Math.abs(d),sg=(d<0?-1:1)*(hz?2:1);
+ /* a NEW swipe is any of: a gap (≥60ms and ≥3× this gesture's usual spacing: momentum arrives every frame, fingers landing stop it; a
+    busy page that delivers events slowly raises the bar instead of splitting one flick into many), a turn of direction, or the deltas
+    climbing again after the last swipe's momentum had started to die (×1.5 and +1.5px over the lowest point since it peaked).
+    Anything else is that momentum tail, and is spent: one swipe = one step */
+ var rise=false;if(tr===Infinity&&m>=pk)pk=m;else if(m<=(tr===Infinity?pk:tr))tr=m;else rise=m>=1.5*tr&&m-tr>=1.5;
+ var dt=now-lastT;
+ if(dt>=Math.max(60,3*ema)||(sg!==lastSg&&m>1)||rise){spent=false;acc=0;pk=m;tr=Infinity;ema=40}else ema=.7*ema+.3*dt;
+ lastT=now;last=m;lastSg=sg;if(spent)return;acc+=m;
  // the laptops move the way the page would (her 2026-11-24: "the scroll pattern … should be the same"): the deltas already carry her
  // natural-scrolling setting. Down-scroll (content would rise) sends the front laptop UP its orbit; a sideways one sends it the content's way
- if(acc>=4&&swap(Math.abs(e.deltaX)>Math.abs(e.deltaY)?(e.deltaX>0?1:-1):(e.deltaY>0?-1:1))){spent=true;firedT=now;acc=0}},{passive:false});
-/* touch: a sideways swipe on the box steps once (touch-action:pan-y leaves vertical swipes to the page, so a phone never traps) */
-var tx=0,ty=0,tdone=false;
-sc.addEventListener('touchstart',function(e){var t=e.touches[0];tx=t.clientX;ty=t.clientY;tdone=false},{passive:true});
-sc.addEventListener('touchmove',function(e){if(tdone)return;var t=e.touches[0],dx=t.clientX-tx,dy=t.clientY-ty;
- if(Math.abs(dx)>=10&&Math.abs(dx)>Math.abs(dy)){tdone=true;swap(dx<0?1:-1)}},{passive:true});
+ if(acc>=4){spent=true;firedT=now;acc=0;swap(hz?(e.deltaX>0?1:-1):(e.deltaY>0?-1:1))}},{passive:false});
+/* TOUCH, the way iOS reads a sideways pager inside a vertical page (her 2026-11-24: "bring that data into the design"):
+   · DIRECTION LOCK: nothing is decided for the first 10px of travel (touch slop); then within 30° of level = a flip (one swipe = one
+     step, the way the finger goes), anything steeper = the page scrolls and the panel neither flips nor holds that touch
+   · MOMENTUM CATCH: a finger that lands while the page is still coasting (scrolled in the last 120ms) only catches the page: no flip, even a tap
+   · TAP vs HOLD: a tap (<200ms, <10px) flips one step; a still press past 400ms is "looking closely": the back laptop peeks 15% of the way
+     forward along its orbit and settles back on release (no peek under Reduce Motion)
+   · DWELL: with the panel near the middle of the screen and the page still for 500ms it lifts a little, the same signal as a mouse over it */
+var T={},peekA=0,hold=0,TAN30=.577;
+function peek(to){if(calm.matches)return;cancelAnimationFrame(peekA);var a=hoff,t0=0;
+ peekA=requestAnimationFrame(function f(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/260);hoff=a+(to-a)*inout(k);render();if(k<1)peekA=requestAnimationFrame(f)})}
+sc.addEventListener('touchstart',function(e){var p=e.touches[0],now=performance.now();
+ T={x:p.clientX,y:p.clientY,t:now,lock:null,moved:0,caught:now-pageS<120,peeked:false};clearTimeout(hold);
+ if(!T.caught)hold=setTimeout(function(){if(!T.lock&&T.moved<10&&!busy){T.peeked=true;peek(PI*.15)}},400)},{passive:true});
+sc.addEventListener('touchmove',function(e){var p=e.touches[0],dx=p.clientX-T.x,dy=p.clientY-T.y;T.moved=Math.max(T.moved,Math.hypot(dx,dy));
+ if(!T.lock&&T.moved>=10){T.lock=Math.abs(dy)<=Math.abs(dx)*TAN30?'h':'v';clearTimeout(hold);if(T.peeked){T.peeked=false;peek(0)}
+  if(T.lock==='h'&&!T.caught){stopHint();swap(dx<0?1:-1)}}
+ if(T.lock==='h'&&e.cancelable)e.preventDefault()},{passive:false});   // locked sideways: the page holds still for this touch
+function tend(e){var now=performance.now();clearTimeout(hold);lastTouchEnd=now;if(T.peeked){T.peeked=false;peek(0)}
+ if(zoomed){if(!T.lock&&T.moved<10)zoomOut();return}
+ if(!T.lock&&!T.caught&&now-T.t<200&&T.moved<10){var p=e&&e.changedTouches&&e.changedTouches[0];if(p&&onFront(p.clientX,p.clientY)){stopHint();zoomFront();return}stopHint();swap(1)}}
+sc.addEventListener('touchend',tend,{passive:true});sc.addEventListener('touchcancel',function(){T.caught=true;tend()},{passive:true});
+var dwell=0,coarse=matchMedia('(pointer:coarse)');
+function unready(){st.classList.remove('ready');clearTimeout(dwell);if(!coarse.matches)return;
+ dwell=setTimeout(function(){var r=st.getBoundingClientRect(),mid=r.top+r.height/2;
+  if(r.top>=0&&r.bottom<=innerHeight&&Math.abs(mid-innerHeight/2)<innerHeight*.25)st.classList.add('ready')},500)}
+addEventListener('scroll',unready,{passive:true});unready();
 var lw=0;function relayout(){var W=box.clientWidth;if(W===lw)return;lw=W;layout()}   // keeps the angle; the scroller keeps its place
 addEventListener('resize',relayout);relayout();addEventListener('load',function(){lw=0;relayout()});
-})();
+});
 /* the phone quote card: native scroll-snap, one dot per quote (tap = go to it), the lit dot follows the scroll */
 (function(){var q=document.querySelector('#why .fw-c-q'),d=document.querySelector('#why .q-dots');if(!q||!d)return;
 var n=q.children.length,bs=[];for(var i=0;i<n;i++){var b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Quote '+(i+1)+' of '+n);
  (function(i){b.addEventListener('click',function(){q.scrollTo({left:q.children[i].offsetLeft-q.children[0].offsetLeft,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})})})(i);d.appendChild(b);bs.push(b)}
 function paint(){var w=q.clientWidth||1,k=Math.round(q.scrollLeft/(w+12));bs.forEach(function(b,j){b.setAttribute('aria-current',String(j===k))})}
 q.addEventListener('scroll',paint,{passive:true});paint()})();
+</script>
+<style>video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none}
+video::-webkit-media-controls{display:none!important}canvas.flip{position:absolute;pointer-events:none;z-index:1}</style>
+<script>(function(){var P=HTMLMediaElement.prototype.play,done=new WeakSet(),TEST=/[?&]lpm\b/.test(location.search);   /* ?lpm = act like Low Power Mode (QA: every play() refused) */
+HTMLMediaElement.prototype.play=function(){var v=this,ua=navigator.userActivation&&navigator.userActivation.isActive,r=TEST?Promise.reject(new DOMException('Low Power Mode (test)','NotAllowedError')):P.apply(v,arguments);
+ if(r&&r.catch)r.catch(function(e){if(e&&e.name==='NotAllowedError'){flip(v);window.__vLPM&&window.__vLPM(v,ua)}});return r};
+function flip(v){if(done.has(v))return;done.add(v);var src=v.currentSrc||v.src||(v.querySelector('source')||{}).src||v.dataset.src;if(!src)return;
+ var base=src.replace(/\.mp4(\?.*)?$/,'');fetch(base+'.flip.json').then(function(r){return r.ok?r.json():null}).then(function(m){if(!m)return;
+  var sheets=[],c=document.createElement('canvas'),g=c.getContext('2d'),on=false,t0=0,raf=0;c.className='flip';c.setAttribute('aria-hidden','true');
+  for(var i=0;i<m.sheets;i++){var im=new Image();im.decoding='async';im.src=base+'.flip-'+i+'.jpg';sheets.push(im)}
+  var host=v.offsetParent||v.parentNode;if(getComputedStyle(host).position==='static')host.style.position='relative';host.appendChild(c);
+  function fit(){var d=devicePixelRatio||1;c.style.left=v.offsetLeft+'px';c.style.top=v.offsetTop+'px';c.style.width=v.offsetWidth+'px';c.style.height=v.offsetHeight+'px';
+   c.width=Math.round(v.offsetWidth*d);c.height=Math.round(v.offsetHeight*d);c.style.borderRadius=getComputedStyle(v).borderRadius}
+  function draw(t){if(!on)return;if(!t0)t0=t;var f=Math.floor((t-t0)/1000*m.fps)%m.frames,s=sheets[Math.floor(f/m.per)],k=f%m.per;
+   if(s.complete&&s.naturalWidth){var sx=(k%m.cols)*m.w,sy=Math.floor(k/m.cols)*m.h,R=Math.max(c.width/m.w,c.height/m.h),dw=m.w*R,dh=m.h*R;   /* cover, like the video */
+    g.drawImage(s,sx,sy,m.w,m.h,(c.width-dw)/2,(c.height-dh)/2,dw,dh)}raf=requestAnimationFrame(draw)}
+  fit();addEventListener('resize',fit);
+  new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!on){on=true;fit();raf=requestAnimationFrame(draw)}else if(!e.isIntersecting){on=false;cancelAnimationFrame(raf)}})}).observe(v)})}
+// clips with the autoplay attribute fail silently: ask once the page has loaded, so a refusal shows up here
+addEventListener('load',function(){setTimeout(function(){document.querySelectorAll('video[autoplay]').forEach(function(v){if(v.paused){var r=v.play();r&&r.catch&&r.catch(function(){})}})},1200)});
+// LOW POWER MODE NOTE (her 2026-11-24: "Turn off [icon] low power mode for best experience", then "needs to happen every single time I
+// press play, and it probably should come from the top or whatever is closest to the thing I just like pressed play on ... I need a way to
+// like swipe it out or off of my screen"): every press on a clip that can't play brings it (a refused play() during a tap, or a tap on a clip
+// already showing its flipbook); a refusal nobody pressed for (autoplay on load, scrolling in) brings it once per page load. It slides in from
+// the screen edge nearest that clip, clear of the nav and the day/night toggle. It follows the finger: flicked or dragged far enough sideways
+// (or back toward its edge) it flies off with the flick's speed, otherwise it springs back. A tap sends it back to its edge; 6s, it leaves alone.
+var told=false,T=null,Tt=0;
+document.addEventListener('click',function(e){var vs=document.querySelectorAll('video');for(var i=0;i<vs.length;i++){var v=vs[i];if(!done.has(v))continue;
+ var r=(v.closest('.mac-screen,.phone-screen,.v-stage,.fw-stage')||v).getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){window.__vLPM(v,true);return}}});
+window.__vLPM=function(v,pressed){var now=Date.now();if(now-Tt<400)return;if(!pressed&&told)return;told=true;Tt=now;if(T)T.__kill();
+ var f=v&&(v.closest('.mac-screen,.phone-screen,.v-stage,.fw-stage')||v).getBoundingClientRect(),top=!!f&&f.height>0&&(f.top+f.height/2)<innerHeight/2,sgn=top?-1:1;
+ var t=document.createElement('div');t.className='v-lpm';t.setAttribute('role','status');
+ t.innerHTML='<span>Turn off <svg viewBox="0 0 30 14" width="30" height="14" aria-label="Low Power Mode"><rect x="1" y="1" width="24" height="12" rx="3.6" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/><rect x="3" y="3" width="13" height="8" rx="1.8" fill="#ffd60a"/><path d="M27 5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/></svg> Low Power Mode</span> <span>for best experience</span>';   /* two pieces: if it has to wrap, it breaks top-heavy */
+ if(top){var n=document.querySelector('nav.pill'),nr=n&&n.getBoundingClientRect();t.style.top=(nr&&nr.bottom>0&&getComputedStyle(n).visibility!=='hidden'&&+getComputedStyle(n).opacity>.1?nr.bottom+8+'px':'calc(env(safe-area-inset-top) + 12px)')}
+ else{var g=document.querySelector('.lt-toggle'),gr=g&&getComputedStyle(g).position==='fixed'&&g.getBoundingClientRect();t.style.bottom=gr&&gr.height&&gr.top<innerHeight-1?Math.max(20,innerHeight-gr.top+8)+'px':'calc(20px + env(safe-area-inset-bottom))'}
+ document.body.appendChild(t);T=t;
+ var tr0=t.getBoundingClientRect(),H=top?tr0.bottom+12:innerHeight-tr0.top+12,dx=0,dy=0,timer=0,p=null;
+ function set(x,y,tr){t.style.transition=tr||'none';t.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';t.style.opacity=String(1-Math.min(1,Math.abs(x)/innerWidth))}
+ function out(x,y,d){clearTimeout(timer);set(x,y,'transform '+d+'s cubic-bezier(.25,.7,.35,1),opacity '+d+'s');setTimeout(function(){t.remove();if(T===t)T=null},d*1000+60)}
+ function arm(){clearTimeout(timer);timer=setTimeout(function(){out(0,sgn*H,.45)},6000)}
+ t.__kill=function(){clearTimeout(timer);t.remove()};
+ var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ set(0,sgn*H);void t.offsetWidth;set(0,0,RM?'none':'transform .55s cubic-bezier(.2,.9,.3,1.15)');arm();
+ t.addEventListener('pointerdown',function(e){p={x:e.clientX-dx,y:e.clientY-dy,t:e.timeStamp,vx:0,vy:0,m:false};clearTimeout(timer);try{t.setPointerCapture(e.pointerId)}catch(_){}});
+ t.addEventListener('pointermove',function(e){if(!p)return;var nx=e.clientX-p.x,ny=e.clientY-p.y;if(!p.m&&Math.abs(nx-dx)+Math.abs(ny-dy)<6)return;p.m=true;
+  var dt=Math.max(8,e.timeStamp-p.t);p.vx=.6*p.vx+.4*(nx-dx)/dt;p.vy=.6*p.vy+.4*(ny-dy)/dt;p.t=e.timeStamp;dx=nx;dy=ny;
+  set(dx,dy*sgn>0?dy:dy*.25)});   /* toward its own edge it follows the finger; away from it, a rubber band */
+ function end(){if(!p)return;var q=p;p=null;if(!q.m){out(0,sgn*H,.4);return}
+  var ty=dy*sgn>0?dy:dy*.25;
+  if(Math.abs(dx)>t.offsetWidth*.35||Math.abs(q.vx)>.45){var s=(Math.abs(q.vx)>.2?q.vx:dx)>0?1:-1;out(s*innerWidth,ty+q.vy*100,Math.max(.18,Math.min(.4,(innerWidth-Math.abs(dx))/Math.max(1,Math.abs(q.vx))/1000)))}
+  else if(dy*sgn>t.offsetHeight*.4||q.vy*sgn>.4)out(dx,sgn*H,.3);
+  else{dx=dy=0;set(0,0,'transform .5s cubic-bezier(.2,.9,.3,1.3),opacity .3s');arm()}}
+ t.addEventListener('pointerup',end);t.addEventListener('pointercancel',end)}})()</script>
+<style>.v-lpm{position:fixed;left:0;right:0;margin:0 auto;z-index:2147483000;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 5px;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;text-align:center;padding:12px 18px;border-radius:24px;
+background:rgba(22,26,36,.92);color:#fff;font:500 14px/1 -apple-system,system-ui,sans-serif;box-shadow:0 10px 30px -10px rgba(0,0,0,.45);touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;will-change:transform}
+.v-lpm span{display:inline-flex;align-items:center;gap:7px}</style>
+<script>/* STATS-B · the Payments summary card opens the real Stripe card under it */
+(function(){var b=document.querySelector('#why .st-pay-btn');if(!b)return;b.addEventListener('click',function(){var c=b.closest('.fw-c-stripe'),o=c.classList.toggle('st-open');b.setAttribute('aria-expanded',String(o))})})();
 </script>
 
 <style>.tt-stack{position:fixed;left:16px;bottom:62px;z-index:2147483100;display:flex;flex-direction:column;align-items:flex-start;gap:8px}

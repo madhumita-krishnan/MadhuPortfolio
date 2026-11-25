@@ -18,3 +18,5 @@ font-proofs/
 
 # local-only review links to the case-study drafts (build.js): never ship
 data/*.local.json
+.vercel
+.env*

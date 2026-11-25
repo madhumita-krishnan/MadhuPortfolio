@@ -42,10 +42,23 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
 .tw{position:relative;width:var(--tw,96px);height:var(--tw,96px);flex:none;touch-action:none;cursor:pointer;color:var(--ink)}
 .tw-disc{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line,rgba(22,26,36,.18))}
 .tw-k{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;box-sizing:border-box;
-  box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(22,26,36,.9);cursor:grab;transform:var(--sq,none);border-radius:var(--sq-br,50%)}   /* a solid disc of the applied colour; white + dark hairline rings read on any colour, day or night */
+  box-shadow:0 0 0 1px rgba(22,26,36,.38),inset 0 0 0 1px rgba(255,255,255,.35);cursor:grab;transform:var(--sq,none);border-radius:var(--sq-br,50%)}   /* a solid dot of the applied colour with a hairline edge (her 2026-11-24: "a dot and solid color" ... "your line weights are just, like, egregiously thick") */
 .tw-k.held{cursor:grabbing}
 .tw-k:focus-visible{outline:2px solid var(--ink);outline-offset:5px}
-@media (prefers-reduced-motion:reduce){.ts-row input::-webkit-slider-thumb{transform:none!important}.ts-row input::-moz-range-thumb{transform:none!important}.tw-k{transform:none!important}}`;
+@media (prefers-reduced-motion:reduce){.ts-row input::-webkit-slider-thumb{transform:none!important}.ts-row input::-moz-range-thumb{transform:none!important}.tw-k{transform:none!important}}
+/* THE BUBBLE (her 2026-11-24: "a little glass orb ... a little bubble, a little watery ... magnifying the color that it's picking"): while
+   a knob is held it becomes a glass bubble that magnifies what's under it. .tbub-l = a live copy of the control's own paint, scaled up
+   round the knob's point; .tbub-g = the bubble picture on top. Only exists while held. */
+.tbub{position:fixed;left:0;top:0;z-index:2147483000;pointer-events:none;width:var(--tbs,24px);height:var(--tbs,24px);margin:calc(var(--tbs,24px) / -2) 0 0 calc(var(--tbs,24px) / -2);opacity:0;transition:opacity .1s ease;contain:layout style}
+.tbub.on{opacity:1}
+.tbub-l,.tbub-g{position:absolute;inset:0;border-radius:50%;overflow:hidden;transform:scale(.8);transition:transform .32s cubic-bezier(.34,1.56,.64,1)}
+.tbub.on .tbub-l,.tbub.on .tbub-g{transform:none}   /* the one bit of motion: it settles into place */
+.tbub-l{background:var(--tbub-bg,#fff);box-shadow:0 1px 2px rgba(20,24,40,.35),0 2px 6px -1px rgba(20,24,40,.28)}
+@media (prefers-reduced-motion:reduce){.tbub-l,.tbub-g{transform:none;transition:none}}
+.tbub-s{position:absolute;left:0;top:0}
+.tbub-g{background:var(--tbub-img,none) center/100% 100% no-repeat}
+.tbub.ph .tbub-g{background:radial-gradient(circle at 31% 27%,rgba(255,255,255,.95) 0 1.5px,rgba(255,255,255,0) 2.6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 0 1px rgba(22,26,36,.55)}   /* a crisp lens: thin rim, one tiny highlight (her 2026-11-24: "small and specific") */
+.ts-row input.tbub-on::-webkit-slider-thumb,.ed-p input.tbub-on::-webkit-slider-thumb{opacity:0}.ts-row input.tbub-on::-moz-range-thumb,.ed-p input.tbub-on::-moz-range-thumb{opacity:0}.tw-k.tbub-on{opacity:0}`;
   document.head.appendChild(css);
 
   /* SQUISH: a soft body driven by the pointer. Grab = a quick pinch; drag = stretch along the drag, more the faster you go, with the
@@ -88,6 +101,45 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
   }
   window.tasteSquish = squish;
 
+  /* BUBBLE: bubble(el, {src, at, target}) — while `el` is held, a glass bubble sits on the knob (at() = its centre, client px) and
+     magnifies `src`'s own paint (its background: the track, the wheel's colours) round that point, M times. Knob-sized
+     (her 2026-11-24: "small and specific ... it's kind of just big"), still on the point; it only settles in. One bubble per page,
+     moved into the open dialog (the top layer) when there is one. Touch: 32px, floating just above the finger. */
+  const BUBBLE_IMG = '';   // ponytail: the Flora bubble picture goes here once approved (a bubble on black, screen-blended); until then .ph draws a stand-in
+  const M = 1.6;
+  let bub = null;
+  function bubble(el, o) {
+    if (!window.__wantBubble) return;   // retired 2026-11-24 (her: "why are we using the bubble ... a dot and solid color"); the knob stays a solid dot
+    let id = null, raf = 0, lift = 0;
+    const tg = o.target || el;
+    const paint = () => {
+      const p = o.at(), s = o.src.getBoundingClientRect(), cs = getComputedStyle(o.src), b = bub, z = parseFloat(b.style.getPropertyValue('--tbs')) || 24;
+      const cx = p.x, cy = p.y - lift, ox = p.x - s.left, oy = p.y - s.top;
+      const src = b.firstChild.firstChild;
+      Object.assign(src.style, { width: s.width + 'px', height: s.height + 'px', backgroundImage: cs.backgroundImage, backgroundSize: cs.backgroundSize, backgroundPosition: cs.backgroundPosition,
+        backgroundRepeat: cs.backgroundRepeat, backgroundColor: cs.backgroundColor, borderRadius: cs.borderRadius,
+        transformOrigin: `${ox}px ${oy}px`, transform: `translate(${z / 2 - ox}px,${z / 2 - oy}px) scale(${M})` });
+      b.style.transform = `translate(${cx}px,${cy}px)`;   // still, exactly on the point: no squish, no wobble
+    };
+    const tick = t => { if (id === null) { raf = 0; return; } paint(); raf = requestAnimationFrame(tick); };
+    el.addEventListener('pointerdown', e => {
+      if (!bub) { bub = document.createElement('div'); bub.className = 'tbub' + (BUBBLE_IMG ? '' : ' ph'); bub.innerHTML = '<div class="tbub-l"><div class="tbub-s"></div></div><i class="tbub-g"></i>';
+        if (BUBBLE_IMG) bub.style.setProperty('--tbub-img', `url(${BUBBLE_IMG})`); }
+      (el.closest('dialog') || document.body).appendChild(bub);
+      const touch = e.pointerType !== 'mouse';
+      bub.style.setProperty('--tbs', (touch ? 32 : o.size || 24) + 'px'); lift = touch ? 36 : 0;   // knob-sized; on touch it floats just above the finger
+      bub.style.setProperty('--tbub-bg', getComputedStyle(el.closest('.ed-p, .ts-demo, .td-stage') || document.body).getPropertyValue('--card').trim() || (document.documentElement.dataset.theme === 'night' ? '#23272e' : '#fff'));
+      id = e.pointerId; tg.classList.add('tbub-on');
+      requestAnimationFrame(() => { if (id !== null) bub.classList.add('on'); });
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
+    const up = e => { if (id === null || (e.pointerId !== undefined && e.pointerId !== id)) return; id = null; tg.classList.remove('tbub-on'); if (bub) bub.classList.remove('on'); };
+    ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, up)); el.addEventListener('lostpointercapture', up);
+  }
+  /* the centre of a range input's thumb (thumb = its width in px) */
+  bubble.range = (i, thumb) => () => { const r = i.getBoundingClientRect(), f = (i.value - i.min) / ((i.max - i.min) || 1); return { x: r.left + thumb / 2 + (r.width - thumb) * f, y: r.top + r.height / 2 }; };
+  window.tasteBubble = bubble;
+
   /* opts: {h, r, base: 'white' | 'ink', l (0..1: centre = grey at that lightness, colour = exactly hsl(h, r, l)), label, change(rgbArray)} */
   function wheel(el, o) {
     el.classList.add('tw');
@@ -115,6 +167,7 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
     el.addEventListener('pointermove', e => { if (el.hasPointerCapture(e.pointerId)) at(e); });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => el.addEventListener(t, () => k.classList.remove('held')));
     squish(el, { target: k });
+    bubble(el, { src: disc, target: k, size: 26, at: () => { const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; } });
     k.addEventListener('keydown', e => {
       const d = { ArrowRight: [5, 0], ArrowLeft: [-5, 0], ArrowUp: [0, .05], ArrowDown: [0, -.05] }[e.key];
       if (!d) return; e.preventDefault(); api.set(h + d[0], (r < .05 && d[0] ? .6 : r) + d[1]); el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -141,7 +194,7 @@ html[data-theme=night] .ts-demo,html[data-look=dark] .ts-demo{--ink:#f3f4f6;--mu
     };
     ins.forEach(i => {
       i.addEventListener('input', () => { held.add(i); apply(); });
-      i.addEventListener('pointerdown', () => i.classList.add('held')); squish(i, { axis: 'x' });
+      i.addEventListener('pointerdown', () => i.classList.add('held')); squish(i, { axis: 'x' }); bubble(i, { src: i, at: bubble.range(i, 16) });
       ['pointerup', 'pointercancel', 'lostpointercapture', 'blur'].forEach(t => i.addEventListener(t, () => i.classList.remove('held')));
     });
     wh.el.addEventListener('input', () => held.add(wh.el));

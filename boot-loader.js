@@ -32,7 +32,10 @@
   var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0], how = nav ? nav.type : '';
   /* same HOST, any port (her 2026-11-23: "when I click the M-K logo to go back home... are we really reloading everything"): the
      local case-study drafts run on another port (:4191), which made the home page treat them as another site and replay the loader */
-  var fromSite = false; try { var rf = document.referrer && new URL(document.referrer); fromSite = !!rf && rf.hostname === location.hostname && (rf.port !== location.port || rf.pathname !== location.pathname); } catch (e) {}
+  /* and the home page's OWN M--K counts as the site too (her 2026-11-24, phone app: "when I'm clicking the MK, it's not really loading and
+     it's glitchy and it's not taking me to the homepage"): a tap on it from home came back with this page as referrer, so the whole goo
+     loader replayed for ~7 s. A real reload still plays it (the how !== 'reload' check below) */
+  var fromSite = false; try { var rf = document.referrer && new URL(document.referrer); fromSite = !!rf && rf.hostname === location.hostname; } catch (e) {}
   if (how !== 'reload' && (how === 'back_forward' || fromSite) && !/[?&]boot\b/.test(location.search)) { B.parentNode.removeChild(B); de.classList.add('booted'); window.__mkBootAt = now(); window.__mkBoot = Promise.resolve(); return; }
   var res; window.__mkBoot = new Promise(function (r) { res = r; });
   if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches)

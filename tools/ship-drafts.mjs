@@ -23,6 +23,59 @@ const MAP = {                                               // real url ← draf
 // ap1's Stack screens are 313px copies of the 780px crops the site already has (make-stack-top.py's ponytail note): use the sharp ones
 const PREFER_SITE = ['assets/case-studies/stack/raw/'];
 
+/* TAP SHIPS (her 2026-11-25: "I want, like, the tap feature to be on there"; her RULE: "tap needs to be on every single before and after
+   widget that I create"). In make-driftwood-top.py TAP is built inside the BA hint lab (HINTLAB=1, local only, cut above), so the live
+   page had none. This is the lab's TAP at her decided settings: MIST (her "I like mist"), nothing dims ("No dim for sure"), no glint
+   ("skip glimmer"), the default MIST pace, lit 2.9s then calm, starts when a third of the widget is in view, first rings after 0.2s,
+   gone once the card is touched. No switches, no TUNE sheet. CSS and timings copied from the lab, 2026-11-25.
+   ponytail: a copy of the lab's TAP; when TAP moves out of the lab in the draft source, the guard where it's injected skips this. */
+const TAP_SHIP = `<script>/* TAP: the before/after hint (shipped copy of the draft's MIST) */
+(function(){var st0=document.querySelector('.ba');if(!st0)return;
+var c=document.createElement('style');c.textContent=
+'.bh-tap{position:absolute;z-index:4;left:20%;top:80%;width:0;height:0;pointer-events:none}'+
+'.bh-tap span{position:absolute;left:0;top:0;transform:translate(-50%,-50%) scale(0);opacity:0}'+
+'.bh-tap.on span{animation:bh-pop 1.1s cubic-bezier(.33,.9,.35,1) .25s forwards}'+
+'html:not([data-look=dark]) .bh-tap.lit em{opacity:1;color:#0d2a44;text-shadow:0 0 14px rgba(255,255,255,.95)}'+
+'html:not([data-look=dark]) .bh-tap.calm em{opacity:.78}'+
+'html:not([data-look=dark]) .bh-tap[data-tv=mist]{--tr-col:#15557E;--tr-a:.58;--tr-ta:.28;--tr-blur:2.4px}'+
+'.bh-tap em{transition:opacity .9s ease}.bh-tap.lit em{opacity:.95}.bh-tap.calm em{opacity:.42}'+
+'.bh-tap.gone{opacity:0;transition:opacity .6s ease}'+
+'.bh-tap em{display:block;padding-left:.16em;font:500 11px/1 "Plus Jakarta Sans",system-ui,sans-serif;font-style:normal;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;color:var(--t-label);opacity:.55}'+
+'.bh-tap{--tr-col:var(--t-label);--tr-size:44px;--tr-in:52%;--tr-peak:64%;--tr-tail:72%;--tr-out:80%;--tr-a:.38;--tr-ta:.14;--tr-blur:1.6px;--tr-scale:1.8;--tr-dur:3s;--tr-lo:.1;--tr-turn:9s;--tr-gap:.36s}'+
+'html[data-look=dark] .bh-tap{--tr-col:#dbe7ff}'+
+'.bh-tap[data-tv=mist]{--tr-size:70px;--tr-in:34%;--tr-peak:58%;--tr-tail:74%;--tr-out:88%;--tr-a:.26;--tr-ta:.16;--tr-blur:3.2px;--tr-scale:1.6;--tr-dur:4s;--tr-lo:.05}'+
+'html[data-look=dark] .bh-tap[data-tv=mist]{--tr-a:.34;--tr-ta:.2}'+
+'.bh-tap i{position:absolute;left:50%;top:50%;width:var(--tr-size);height:var(--tr-size);margin:calc(var(--tr-size)/-2) 0 0 calc(var(--tr-size)/-2);border-radius:50%;opacity:0;'+
+'background:radial-gradient(circle closest-side,transparent var(--tr-in),color-mix(in srgb,var(--tr-col) calc(var(--tr-a)*100%),transparent) var(--tr-peak),color-mix(in srgb,var(--tr-col) calc(var(--tr-ta)*100%),transparent) var(--tr-tail),transparent var(--tr-out));'+
+'-webkit-mask:conic-gradient(from var(--ra,20deg),#000,rgba(0,0,0,var(--tr-lo)) 30%,rgba(0,0,0,calc(var(--tr-lo) + .45)) 55%,rgba(0,0,0,var(--tr-lo)) 80%,#000);'+
+'mask:conic-gradient(from var(--ra,20deg),#000,rgba(0,0,0,var(--tr-lo)) 30%,rgba(0,0,0,calc(var(--tr-lo) + .45)) 55%,rgba(0,0,0,var(--tr-lo)) 80%,#000);'+
+'filter:blur(var(--tr-blur));animation:bh-turn2 var(--tr-turn) linear infinite}'+
+'@property --ra{syntax:"<angle>";inherits:false;initial-value:20deg}@keyframes bh-turn2{to{--ra:380deg}}'+
+'html[data-look=dark] .bh-tap em{color:#dbe7ff}'+
+'@keyframes bh-pop{0%{transform:translate(-50%,-50%) scale(.82);opacity:0}60%{transform:translate(-50%,-50%) scale(1.03);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}'+
+'@media (prefers-reduced-motion:reduce){.bh-tap em,.bh-tap i{animation:none}.bh-tap.on span{animation:none;transform:translate(-50%,-50%);opacity:1}.bh-tap i{opacity:.3}}';
+document.head.appendChild(c);
+var RM=matchMedia('(prefers-reduced-motion: reduce)'),P={n:3,g:320,gm:1.4,d:1800,dm:1.06,s0:.55,c:3900};   // MIST's own pace
+document.querySelectorAll('.ba').forEach(function(st){var box=st.querySelector('.ba-box');if(!st.__ba||!box)return;
+ var tap=document.createElement('div');tap.className='bh-tap';tap.dataset.tv='mist';tap.setAttribute('aria-hidden','true');tap.innerHTML='<span><i></i><i></i><i></i><em>TAP</em></span>';box.appendChild(tap);
+ var touched=false,cyc=0,lt=0;
+ function place(){var b=box.getBoundingClientRect(),fr=st.__ba.get().front==='after',F=st.querySelector(fr?'.ba-after .mac-lid':'.ba-before .mac-lid'),B=st.querySelector(fr?'.ba-before .mac-media':'.ba-after .mac-media');if(!F||!B)return;
+  var f=F.getBoundingClientRect(),k=B.getBoundingClientRect();tap.style.left=((f.left-b.left)/2).toFixed(1)+'px';tap.style.top=(((k.bottom-b.top)+b.height)/2).toFixed(1)+'px'}
+ function ripple(){if(touched||!tap.classList.contains('on')||!tap.animate)return;
+  var rs=tap.querySelectorAll('i'),S=parseFloat(getComputedStyle(tap).getPropertyValue('--tr-scale'))||1.6,d=0,g=P.g;
+  for(var q=0;q<P.n;q++){var pk=.9*Math.pow(.8,q),kf=[];for(var z=0;z<=14;z++){var t=z/14;kf.push({opacity:+(pk*Math.pow(Math.sin(Math.PI*Math.pow(t,.55)),1.6)).toFixed(3),offset:t})}
+   kf[0].transform='scale('+P.s0+')';kf[14].transform='scale('+(S*(1+q*.06)).toFixed(2)+')';rs[q].animate(kf,{duration:P.d*Math.pow(P.dm,q),delay:d,easing:'cubic-bezier(.33,.5,.35,1)'});d+=g;g*=P.gm}
+  var em=tap.querySelector('em'),o=getComputedStyle(em).opacity;em.animate([{transform:'scale(1)',opacity:o},{transform:'scale(.95)',opacity:1,offset:.3},{transform:'scale(1)',opacity:o}],{duration:1800,easing:'cubic-bezier(.45,0,.55,1)'});
+  cyc=setTimeout(ripple,P.c)}
+ function stop(){clearTimeout(cyc);clearTimeout(lt);tap.classList.remove('on','lit')}
+ function start(){stop();if(touched)return;place();tap.classList.add('on');
+  if(RM.matches){tap.classList.add('calm');return}
+  cyc=setTimeout(ripple,200);tap.classList.add('lit');lt=setTimeout(function(){tap.classList.remove('lit');tap.classList.add('calm')},2900)}
+ addEventListener('resize',place);
+ st.addEventListener('ba-touch',function(){touched=true;clearTimeout(cyc);clearTimeout(lt);tap.classList.add('gone')});
+ new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)start();else stop()})},{threshold:.3}).observe(st)})})();
+</script>`;
+
 const same = (a, b) => fs.existsSync(b) && fs.statSync(a).size === fs.statSync(b).size && fs.readFileSync(a).equals(fs.readFileSync(b));
 let added = 0; const copied = new Map(), unresolved = new Set();
 function put(src, rel) {
@@ -55,8 +108,10 @@ for (const [url, draft] of Object.entries(MAP)) {
   h = cut(h, /<script>\(function\(\)\{var st=document\.querySelector\('\.rv-stack'\)[\s\S]*?<\/script>/, 'WHAT SHIPPED switches');
   h = cut(h, /<script>\(function\(\)\{var h=document\.documentElement;document\.querySelectorAll\('\.rv-sw2'\)[\s\S]*?<\/script>/, 'rv-sw2 painter');
   h = cut(h, '<div class="rv-stack"></div>', 'rv-stack');
-  h = cut(h, /<script>\/\* PHONE-DS review switch[\s\S]*?<\/script>\n?/, 'PHONE switch (local review of the phone design system)');
+  h = cut(h, /<script>\/\* PHONE-DS review switch[\s\S]*?<\/script>\n?/, 'PHONE switch (local review of the phone design system)', true);   // retired on every draft 2026-11-24 (HERS kept)
   h = cut(h, /<script>\/\* BA hint lab[\s\S]*?<\/script>\n?/, 'BA hint lab (local only)', true);
+  // TAP lives inside that lab in the drafts, so without this the before/after widgets would ship with no TAP (see TAP_SHIP)
+  if (/class="[^"]*\bba\b[^"]*"/.test(h) && h.includes('st.__ba=') && !h.includes("className='bh-tap'")) h = h.replace('</body>', TAP_SHIP + '\n</body>');
   h = cut(h, '<div class="tt-stack"></div>', 'tt-stack', true);
   h = cut(h, /<script>document\.querySelectorAll\('\.tt-sw:not\(\.grn-sw\)'\)[\s\S]*?<\/script>/, 'tt-sw painter', true);
   if (h.includes('<div class="tt-sw" role="group" aria-label="Section title drafts to compare">')) {

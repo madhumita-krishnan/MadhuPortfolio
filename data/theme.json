@@ -50,7 +50,7 @@
   "body": "'Plus Jakarta Sans',system-ui,sans-serif",
   "utility": "'Plus Jakarta Sans',system-ui,sans-serif",
   "hand": "'Madhu Hand',ui-rounded,cursive",
-  "google-css": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+  "google-css": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Plus+Jakarta+Sans:wght@200..800&display=swap"
  },
  "radii": {
   "card": "18px",
